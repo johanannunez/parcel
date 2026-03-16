@@ -52,17 +52,14 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#0A0E14] text-[#A0A8B4] relative overflow-hidden">
-      {/* Subtle brand gradient line at top */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-brand-bright to-transparent opacity-30" />
-
+    <footer className="bg-[#1A1815] text-[#A8A298] relative overflow-hidden border-t border-white/[0.06]">
       <div className="mx-auto max-w-[var(--max-width)] px-[var(--section-pad-x)]">
         {/* Main grid */}
         <div className="grid grid-cols-1 gap-12 pt-16 pb-12 md:grid-cols-12 md:gap-8 lg:gap-12">
           {/* Brand column */}
           <div className="md:col-span-4 lg:col-span-4">
             <Logo height={30} variant="white" />
-            <p className="mt-4 text-sm leading-relaxed text-[#8A8F98] max-w-[280px]">
+            <p className="mt-4 text-sm font-[family-name:var(--font-raleway)] leading-relaxed text-[#9A9590] max-w-[280px]">
               Premium Vacation Rentals across Washington state. Book direct and
               save 10% on every stay.
             </p>
@@ -78,7 +75,7 @@ export default function Footer() {
                   aria-label={social.label}
                   className="
                     flex items-center justify-center w-9 h-9
-                    rounded-full bg-white/[0.06] text-[#8A8F98]
+                    rounded-full bg-white/[0.06] text-[#9A9590]
                     hover:bg-brand-bright hover:text-white
                     transition-[background-color,color] duration-200
                     focus-visible:outline-2 focus-visible:outline-offset-2
@@ -95,7 +92,7 @@ export default function Footer() {
           <div className="md:col-span-8 lg:col-span-8 grid grid-cols-2 gap-8 sm:grid-cols-4">
             {footerColumns.map((col) => (
               <div key={col.title}>
-                <h4 className="font-heading text-xs font-semibold uppercase tracking-[0.12em] text-[#F0F2F5] mb-4">
+                <h4 className="font-[family-name:var(--font-poppins)] text-xs font-semibold uppercase tracking-[0.12em] text-[#F0EDE8] mb-4">
                   {col.title}
                 </h4>
                 <ul className="flex flex-col gap-2.5">
@@ -104,7 +101,7 @@ export default function Footer() {
                       <Link
                         href={link.href}
                         className="
-                          text-sm text-[#8A8F98] hover:text-white
+                          text-sm font-[family-name:var(--font-raleway)] text-[#9A9590] hover:text-white
                           transition-colors duration-200
                         "
                       >
@@ -122,10 +119,10 @@ export default function Footer() {
         <div className="border-t border-white/[0.06] py-10">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h4 className="font-heading text-sm font-semibold text-[#F0F2F5]">
+              <h4 className="font-[family-name:var(--font-poppins)] text-sm font-semibold text-[#F0EDE8]">
                 Stay in the loop
               </h4>
-              <p className="mt-1 text-xs text-[#8A8F98]">
+              <p className="mt-1 text-xs font-[family-name:var(--font-raleway)] text-[#9A9590]">
                 New properties, exclusive deals, and travel tips.
               </p>
             </div>
@@ -143,7 +140,7 @@ export default function Footer() {
                 className="
                   flex-1 min-w-0 px-4 py-2.5 rounded-l-full
                   bg-white/[0.06] border border-white/[0.08] border-r-0
-                  text-sm text-[#F0F2F5] placeholder:text-[#6B7280]
+                  text-sm font-[family-name:var(--font-raleway)] text-[#F0EDE8] placeholder:text-[#706B62]
                   focus:outline-none focus:border-brand-bright/40 focus:bg-white/[0.08]
                   transition-[border-color,background-color] duration-200
                 "
@@ -152,10 +149,10 @@ export default function Footer() {
                 type="submit"
                 className="
                   inline-flex items-center gap-2 px-5 py-2.5
-                  rounded-r-full bg-brand-bright text-sm font-semibold
-                  font-heading text-white tracking-wide
-                  hover:bg-brand-deep active:scale-[0.97]
-                  transition-[background-color,transform] duration-200
+                  rounded-r-full bg-[image:var(--brand-gradient)] text-sm font-semibold
+                  font-[family-name:var(--font-poppins)] text-white
+                  hover:bg-[image:var(--brand-gradient-hover)] active:scale-[0.97]
+                  transition-transform duration-200
                   focus-visible:outline-2 focus-visible:outline-offset-2
                   focus-visible:outline-brand-bright
                 "
@@ -169,7 +166,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-white/[0.06] py-6">
-          <div className="flex flex-col gap-3 text-xs text-[#6B7280] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 text-xs font-[family-name:var(--font-raleway)] text-[#706B62] sm:flex-row sm:items-center sm:justify-between">
             <p>
               &copy; {currentYear} The Parcel Company. All rights reserved.
             </p>
@@ -178,7 +175,7 @@ export default function Footer() {
             </p>
             <Link
               href="/llm/home"
-              className="text-[#6B7280] hover:text-[#8A8F98] transition-colors duration-200"
+              className="text-[#706B62] hover:text-[#9A9590] transition-colors duration-200"
             >
               View as text
             </Link>

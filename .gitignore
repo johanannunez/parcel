@@ -36,3 +36,9 @@ next-env.d.ts
 
 # screenshots
 temporary screenshots/
+
+# brand source assets (large files, not for repo)
+/assets/
+
+# inspiration (local reference only)
+/inspiration/

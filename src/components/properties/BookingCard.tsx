@@ -3,6 +3,7 @@ import {
   CalendarCheck,
   ShieldCheck,
   PawPrint,
+  Tag,
 } from "@phosphor-icons/react";
 import Button from "@/components/ui/Button";
 import type { Property } from "@/types/property";
@@ -16,17 +17,29 @@ export default function BookingCard({ property }: BookingCardProps) {
 
   return (
     <div className="lg:sticky lg:top-[calc(var(--header-height)+24px)]">
-      <div className="
-        p-6 rounded-[var(--radius-xl)] bg-[var(--surface)]
-        border border-[var(--border)] shadow-[var(--shadow-md)]
-      ">
+      <div
+        className="
+          p-6 rounded-[20px] bg-[var(--surface)] border border-[var(--border-subtle)]
+          shadow-[var(--shadow-card)]
+          hover:shadow-[var(--shadow-glow-brand)]
+          transition-[box-shadow] duration-300 ease-out
+        "
+      >
         {/* Price */}
-        <div className="flex items-baseline gap-1.5 mb-6">
-          <span className="text-3xl font-bold text-[var(--text-primary)] font-[family-name:var(--font-heading)]">
+        <div className="flex items-baseline gap-1.5 mb-2">
+          <span className="text-4xl font-bold text-[var(--accent-warm)] font-[family-name:var(--font-nexa)]">
             ${pricePerNight}
           </span>
-          <span className="text-sm text-[var(--text-tertiary)] font-[family-name:var(--font-body)]">
+          <span className="text-sm text-[var(--text-tertiary)] font-[family-name:var(--font-raleway)]">
             / night
+          </span>
+        </div>
+
+        {/* Book Direct badge */}
+        <div className="mb-6">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-[var(--accent-warm-muted)] text-[var(--accent-warm-dark)] font-[family-name:var(--font-nexa)]">
+            <Tag size={12} weight="bold" />
+            Book Direct, Save 10%
           </span>
         </div>
 
@@ -61,11 +74,6 @@ export default function BookingCard({ property }: BookingCardProps) {
         <Button variant="primary" size="lg" className="w-full">
           Book This Property
         </Button>
-
-        {/* Hospitable placeholder */}
-        <p className="mt-4 text-center text-xs text-[var(--text-tertiary)] font-[family-name:var(--font-body)]">
-          Booking widget loads here (Phase 2)
-        </p>
       </div>
     </div>
   );
@@ -84,10 +92,10 @@ function DetailRow({
     <div className="flex items-start gap-3">
       <span className="text-[var(--brand-bright)] mt-0.5 shrink-0">{icon}</span>
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-[var(--text-tertiary)] font-[family-name:var(--font-heading)] uppercase tracking-wider">
+        <p className="text-xs font-semibold text-[var(--text-tertiary)] font-[family-name:var(--font-poppins)] uppercase tracking-wider">
           {label}
         </p>
-        <p className="text-sm text-[var(--text-secondary)] font-[family-name:var(--font-body)] leading-snug mt-0.5">
+        <p className="text-sm text-[var(--text-secondary)] font-[family-name:var(--font-raleway)] leading-snug mt-0.5">
           {value}
         </p>
       </div>

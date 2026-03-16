@@ -40,14 +40,24 @@ export default function Header() {
         backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300
         ${
           scrolled
-            ? "bg-[var(--bg)]/90 border-b border-[var(--border)]/60 shadow-[var(--shadow-xs)]"
-            : "bg-transparent border-b border-transparent"
+            ? "border-b border-[var(--border)]/60 shadow-[var(--shadow-xs)]"
+            : "border-b border-transparent"
         }
       `}
+      style={{
+        backgroundColor: scrolled
+          ? "var(--header-glass-scrolled)"
+          : "var(--header-glass)",
+      }}
     >
       <div className="mx-auto w-full max-w-[var(--max-width)] px-[var(--section-pad-x)] flex items-center justify-between">
-        {/* Logo */}
-        <Logo height={32} />
+        {/* Logo with scroll-aware sizing */}
+        <div
+          className="transition-transform duration-300 ease-out origin-left"
+          style={{ transform: `scale(${scrolled ? 28 / 36 : 1})` }}
+        >
+          <Logo height={36} />
+        </div>
 
         {/* Desktop nav */}
         <nav
@@ -59,11 +69,12 @@ export default function Header() {
               key={link.href}
               href={link.href}
               className="
-                font-heading text-sm font-medium tracking-wide
+                font-[family-name:var(--font-raleway)] text-sm font-medium
                 text-[var(--text-secondary)] hover:text-[var(--text-primary)]
                 transition-colors duration-200
                 relative after:absolute after:bottom-[-2px] after:left-0
-                after:h-[2px] after:w-0 after:bg-[var(--brand-bright)]
+                after:h-[2.5px] after:w-0 after:rounded-full
+                after:bg-[image:var(--brand-gradient)]
                 after:transition-[width] after:duration-300
                 hover:after:w-full
               "
@@ -83,11 +94,11 @@ export default function Header() {
             href="/properties"
             className="
               inline-flex items-center px-5 py-2 rounded-full
-              font-heading text-sm font-semibold tracking-wide
+              font-[family-name:var(--font-poppins)] text-sm font-semibold
               text-white bg-[var(--brand-bright)]
               shadow-[var(--shadow-brand)]
-              hover:bg-[var(--brand-deep)] active:scale-[0.97]
-              transition-[background-color,transform] duration-200
+              hover:shadow-[var(--shadow-glow-brand)] active:scale-[0.97]
+              transition-[transform,box-shadow] duration-200
               focus-visible:outline-2 focus-visible:outline-offset-2
               focus-visible:outline-[var(--brand-bright)]
             "
@@ -120,78 +131,86 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile full-screen overlay */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.25 }}
             className="
               fixed inset-0 top-[var(--header-height)] z-[calc(var(--z-header)-1)]
-              bg-[var(--overlay)]
+              backdrop-blur-xl bg-[var(--bg)]/95
             "
-            onClick={() => setMobileOpen(false)}
           >
-            <motion.nav
-              initial={{ opacity: 0, y: -12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            <nav
+              className="flex flex-col items-center justify-center h-full px-[var(--section-pad-x)]"
               onClick={(e) => e.stopPropagation()}
-              className="
-                bg-[var(--bg)] border-b border-[var(--border)]
-                shadow-[var(--shadow-lg)] px-[var(--section-pad-x)] py-6
-              "
             >
-              <ul className="flex flex-col gap-1">
+              <ul className="flex flex-col items-center gap-6">
                 {navLinks.map((link, i) => (
                   <motion.li
                     key={link.href}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 * i, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{
+                      delay: 0.06 * i,
+                      duration: 0.35,
+                      ease: [0.22, 1, 0.36, 1] as const,
+                    }}
+                    className="flex flex-col items-center"
                   >
                     <Link
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
                       className="
-                        block py-3 px-4 rounded-[var(--radius-md)]
-                        font-heading text-base font-medium
+                        text-2xl font-[family-name:var(--font-poppins)] font-bold
                         text-[var(--text-primary)]
-                        hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]
+                        hover:text-[var(--brand-bright)]
                         transition-colors duration-200
                       "
                     >
                       {link.label}
                     </Link>
+                    {/* Brand gradient accent line */}
+                    <div
+                      className="mt-2 h-[2px] w-10 rounded-full bg-[image:var(--brand-gradient)] opacity-30"
+                      aria-hidden="true"
+                    />
                   </motion.li>
                 ))}
               </ul>
 
+              {/* Book Now CTA at bottom of centered stack */}
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="mt-4 pt-4 border-t border-[var(--border)]"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{
+                  delay: 0.06 * navLinks.length,
+                  duration: 0.35,
+                  ease: [0.22, 1, 0.36, 1] as const,
+                }}
+                className="mt-10 w-full max-w-xs"
               >
                 <Link
                   href="/properties"
                   onClick={() => setMobileOpen(false)}
                   className="
-                    flex items-center justify-center w-full py-3
-                    rounded-full font-heading text-base font-semibold
+                    flex items-center justify-center w-full py-3.5
+                    rounded-full font-[family-name:var(--font-poppins)] text-base font-semibold
                     text-white bg-[var(--brand-bright)]
                     shadow-[var(--shadow-brand)]
-                    hover:bg-[var(--brand-deep)] active:scale-[0.98]
-                    transition-[background-color,transform] duration-200
+                    hover:shadow-[var(--shadow-glow-brand)] active:scale-[0.98]
+                    transition-[transform,box-shadow] duration-200
                   "
                 >
                   Book Now
                 </Link>
               </motion.div>
-            </motion.nav>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>
