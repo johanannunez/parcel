@@ -1,0 +1,33 @@
+/* [project]/workspace/pvtwo/src/app/generalsans_746e87d8.module.css [app-client] (css) */
+@font-face {
+  font-family: generalSans;
+  src: url("../media/GeneralSans_Variable-s.p.b604abb5.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: generalSans;
+  src: url("../media/GeneralSans_VariableItalic-s.p.1097e608.ttf") format("truetype");
+  font-display: swap;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: generalSans Fallback;
+  src: local(Arial);
+  ascent-override: 91.05%;
+  descent-override: 21.64%;
+  line-gap-override: 9.01%;
+  size-adjust: 110.93%;
+}
+
+.generalsans_746e87d8-module__3Sseoq__className {
+  font-family: generalSans, generalSans Fallback;
+}
+
+.generalsans_746e87d8-module__3Sseoq__variable {
+  --font-general-sans: "generalSans", "generalSans Fallback";
+}
+
+/*# sourceMappingURL=workspace_pvtwo_src_app_generalsans_746e87d8_module_css_bad6b30c._.single.css.map*/

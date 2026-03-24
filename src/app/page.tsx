@@ -1,17 +1,31 @@
-import Hero from "@/components/home/Hero";
-import TrustBar from "@/components/home/TrustBar";
-import FeaturedProperties from "@/components/home/FeaturedProperties";
-import SocialProofStrip from "@/components/home/SocialProofStrip";
-import ManagementTeaser from "@/components/home/ManagementTeaser";
+import FrostedNav from "@/components/FrostedNav";
+import HeroBookingBar from "@/components/HeroBookingBar";
+import TrustedPlatforms from "@/components/TrustedPlatforms";
+import PropertiesSection from "@/components/PropertiesSection";
+import CategoriesSection from "@/components/CategoriesSection";
+import StatsSection from "@/components/StatsSection";
+import HowItWorksSection from "@/components/HowItWorksSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
+import JournalSection from "@/components/JournalSection";
+import CTASection from "@/components/CTASection";
+import DarkFooter from "@/components/DarkFooter";
 
-export default function HomePage() {
+export default function Home() {
   return (
     <>
-      <Hero />
-      <TrustBar />
-      <FeaturedProperties />
-      <SocialProofStrip />
-      <ManagementTeaser />
+      <FrostedNav />
+      <main>
+        <HeroBookingBar />
+        <TrustedPlatforms />
+        <PropertiesSection />
+        <CategoriesSection />
+        <StatsSection />
+        <HowItWorksSection />
+        <TestimonialsSection />
+        <JournalSection />
+        <CTASection />
+      </main>
+      <DarkFooter />
     </>
   );
 }

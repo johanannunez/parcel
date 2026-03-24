@@ -1,0 +1,11 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/workspace/pvtwo/src/app/page": [
+      "static/media/GeneralSans_Variable-s.p.b604abb5.ttf",
+      "static/media/GeneralSans_VariableItalic-s.p.1097e608.ttf"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}
