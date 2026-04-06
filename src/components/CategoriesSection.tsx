@@ -41,6 +41,8 @@ export default function CategoriesSection() {
                 {/* Image */}
                 <div className="relative aspect-[16/9] overflow-hidden">
                   <div
+                    role="img"
+                    aria-label={cat.title}
                     className="h-full w-full bg-cover bg-center transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                     style={{ backgroundImage: `url('${cat.image}')` }}
                   />

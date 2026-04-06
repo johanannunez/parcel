@@ -13,8 +13,11 @@ import DarkFooter from "@/components/DarkFooter";
 export default function Home() {
   return (
     <>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <FrostedNav />
-      <main>
+      <main id="main-content">
         <HeroBookingBar />
         <TrustedPlatforms />
         <PropertiesSection />

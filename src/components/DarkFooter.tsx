@@ -37,7 +37,7 @@ const SOCIAL_LINKS = [
 
 export default function DarkFooter() {
   return (
-    <footer id="contact" className="bg-navy">
+    <footer id="contact" aria-label="Site footer" className="bg-navy">
       <div className="mx-auto max-w-[1280px] px-6 pt-16 pb-8 md:px-12 md:pt-20 lg:px-16">
         {/* Top Row */}
         <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">
@@ -62,7 +62,7 @@ export default function DarkFooter() {
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/50 transition-all duration-300 hover:bg-white/10 hover:text-white"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-white/50 transition-all duration-300 hover:bg-white/10 hover:text-white"
                 >
                   <s.icon size={18} weight="bold" />
                 </a>
@@ -73,7 +73,7 @@ export default function DarkFooter() {
           {/* Link Columns */}
           {Object.entries(FOOTER_LINKS).map(([title, links]) => (
             <div key={title} className="md:col-span-2">
-              <h4 className="text-label text-white/30">{title}</h4>
+              <h4 className="text-label text-white/60">{title}</h4>
               <ul className="mt-4 space-y-3">
                 {links.map((link) => (
                   <li key={link.href}>
@@ -95,26 +95,26 @@ export default function DarkFooter() {
 
         {/* Bottom Row */}
         <div className="mt-6 flex flex-col items-center justify-between gap-4 md:flex-row">
-          <p className="text-xs text-white/30">
+          <p className="text-xs text-white/50">
             &copy; {new Date().getFullYear()} The Parcel Company. All rights
             reserved.
           </p>
           <div className="flex gap-6">
             <Link
               href="/privacy"
-              className="text-xs text-white/30 transition-colors duration-300 hover:text-white/60"
+              className="text-xs text-white/50 transition-colors duration-300 hover:text-white/80"
             >
               Privacy Policy
             </Link>
             <Link
               href="/terms"
-              className="text-xs text-white/30 transition-colors duration-300 hover:text-white/60"
+              className="text-xs text-white/50 transition-colors duration-300 hover:text-white/80"
             >
               Terms
             </Link>
             <Link
               href="/cookies"
-              className="text-xs text-white/30 transition-colors duration-300 hover:text-white/60"
+              className="text-xs text-white/50 transition-colors duration-300 hover:text-white/80"
             >
               Cookies
             </Link>

@@ -50,16 +50,18 @@ export default function TestimonialsSection() {
                   size={28}
                   weight="fill"
                   className="text-brand/20"
+                  aria-hidden="true"
                 />
 
                 {/* Stars */}
-                <div className="mt-4 flex gap-0.5">
+                <div className="mt-4 flex gap-0.5" role="img" aria-label={`${t.rating} out of 5 stars`}>
                   {Array.from({ length: t.rating }).map((_, j) => (
                     <Star
                       key={j}
                       size={16}
                       weight="fill"
                       className="text-star"
+                      aria-hidden="true"
                     />
                   ))}
                 </div>

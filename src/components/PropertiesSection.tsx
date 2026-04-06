@@ -113,7 +113,8 @@ export default function PropertiesSection() {
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
+                aria-pressed={activeFilter === filter}
+                className={`min-h-[44px] rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${
                   activeFilter === filter
                     ? "bg-gradient-to-r from-brand-light to-brand text-white shadow-md"
                     : "bg-warm-gray-50 text-text-secondary hover:bg-warm-gray-100 hover:text-text-primary"

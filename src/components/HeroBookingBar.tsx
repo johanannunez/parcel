@@ -16,6 +16,8 @@ export default function HeroBookingBar() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <div
+          role="img"
+          aria-label="Modern luxury vacation home exterior"
           className="h-full w-full bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage:
@@ -56,6 +58,8 @@ export default function HeroBookingBar() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          role="search"
+          aria-label="Search properties"
           className="frosted w-full rounded-[var(--radius-lg)] p-2 shadow-xl md:p-3"
         >
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-0">
@@ -65,12 +69,14 @@ export default function HeroBookingBar() {
                 size={20}
                 weight="bold"
                 className="shrink-0 text-brand"
+                aria-hidden="true"
               />
               <div className="flex-1">
-                <label className="text-label text-text-tertiary">
+                <label htmlFor="booking-location" className="text-label text-text-tertiary">
                   Location
                 </label>
                 <input
+                  id="booking-location"
                   type="text"
                   placeholder="Where to?"
                   className="mt-0.5 block w-full bg-transparent text-sm font-medium text-text-primary outline-none placeholder:text-text-tertiary"
@@ -84,12 +90,14 @@ export default function HeroBookingBar() {
                 size={20}
                 weight="bold"
                 className="shrink-0 text-brand"
+                aria-hidden="true"
               />
               <div className="flex-1">
-                <label className="text-label text-text-tertiary">
+                <label htmlFor="booking-checkin" className="text-label text-text-tertiary">
                   Check in
                 </label>
                 <input
+                  id="booking-checkin"
                   type="text"
                   placeholder="Add date"
                   className="mt-0.5 block w-full bg-transparent text-sm font-medium text-text-primary outline-none placeholder:text-text-tertiary"
@@ -103,12 +111,14 @@ export default function HeroBookingBar() {
                 size={20}
                 weight="bold"
                 className="shrink-0 text-brand"
+                aria-hidden="true"
               />
               <div className="flex-1">
-                <label className="text-label text-text-tertiary">
+                <label htmlFor="booking-checkout" className="text-label text-text-tertiary">
                   Check out
                 </label>
                 <input
+                  id="booking-checkout"
                   type="text"
                   placeholder="Add date"
                   className="mt-0.5 block w-full bg-transparent text-sm font-medium text-text-primary outline-none placeholder:text-text-tertiary"
@@ -122,10 +132,12 @@ export default function HeroBookingBar() {
                 size={20}
                 weight="bold"
                 className="shrink-0 text-brand"
+                aria-hidden="true"
               />
               <div className="flex-1">
-                <label className="text-label text-text-tertiary">Guests</label>
+                <label htmlFor="booking-guests" className="text-label text-text-tertiary">Guests</label>
                 <input
+                  id="booking-guests"
                   type="text"
                   placeholder="Add guests"
                   className="mt-0.5 block w-full bg-transparent text-sm font-medium text-text-primary outline-none placeholder:text-text-tertiary"
@@ -134,7 +146,9 @@ export default function HeroBookingBar() {
             </div>
 
             {/* Search Button */}
-            <button className="flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gradient-to-r from-brand-light to-brand px-6 py-4 text-sm font-semibold text-white transition-opacity duration-300 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:ml-2 md:px-8">
+            <button
+              aria-label="Search properties"
+              className="flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gradient-to-r from-brand-light to-brand px-6 py-4 text-sm font-semibold text-white transition-opacity duration-300 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:ml-2 md:px-8">
               <MagnifyingGlass size={18} weight="bold" />
               <span>Search</span>
             </button>
