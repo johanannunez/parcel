@@ -1,6 +1,10 @@
 import StaticPage from "@/components/StaticPage";
 
-export const metadata = { title: "Privacy Policy | The Parcel Company" };
+export const metadata = {
+  title: "Privacy Policy",
+  description: "How The Parcel Company collects, uses, and protects your personal information when you use our platform.",
+  alternates: { canonical: "https://theparcelco.com/privacy" },
+};
 
 export default function PrivacyPage() {
   return (

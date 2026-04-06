@@ -1,6 +1,10 @@
 import StaticPage from "@/components/StaticPage";
 
-export const metadata = { title: "Careers | The Parcel Company" };
+export const metadata = {
+  title: "Careers",
+  description: "Join The Parcel Company. We're building a better way to book vacation rentals and corporate housing.",
+  alternates: { canonical: "https://theparcelco.com/careers" },
+};
 
 export default function CareersPage() {
   return (

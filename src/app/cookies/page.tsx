@@ -1,6 +1,10 @@
 import StaticPage from "@/components/StaticPage";
 
-export const metadata = { title: "Cookie Policy | The Parcel Company" };
+export const metadata = {
+  title: "Cookie Policy",
+  description: "Learn how The Parcel Company uses cookies to improve your browsing experience.",
+  alternates: { canonical: "https://theparcelco.com/cookies" },
+};
 
 export default function CookiesPage() {
   return (

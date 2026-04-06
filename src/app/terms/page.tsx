@@ -1,6 +1,10 @@
 import StaticPage from "@/components/StaticPage";
 
-export const metadata = { title: "Terms of Service | The Parcel Company" };
+export const metadata = {
+  title: "Terms of Service",
+  description: "Terms of service for using The Parcel Company platform for vacation rental and corporate housing bookings.",
+  alternates: { canonical: "https://theparcelco.com/terms" },
+};
 
 export default function TermsPage() {
   return (
