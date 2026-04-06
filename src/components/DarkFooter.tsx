@@ -42,9 +42,9 @@ export default function DarkFooter() {
     <footer id="contact" aria-label="Site footer" className="bg-navy">
       <div className="mx-auto max-w-[1280px] px-6 pt-16 pb-8 md:px-12 md:pt-20 lg:px-16">
         {/* Top Row */}
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
           {/* Brand Column */}
-          <div className="md:col-span-4">
+          <div className="md:col-span-3">
             <Image
               src="/brand/logo-white.png"
               alt="The Parcel Company"
@@ -74,7 +74,7 @@ export default function DarkFooter() {
 
           {/* Link Columns */}
           {Object.entries(FOOTER_LINKS).map(([title, links]) => (
-            <div key={title} className="md:col-span-2">
+            <div key={title} className="md:col-span-3">
               <h4 className="text-label text-white/80">{title}</h4>
               <ul className="mt-4 space-y-0">
                 {links.map((link) => (
@@ -96,7 +96,7 @@ export default function DarkFooter() {
         <LlmsToggle />
 
         {/* Divider */}
-        <div className="mt-16 border-t border-white/10" />
+        <div className="mt-12 border-t border-white/10" />
 
         {/* Bottom Row */}
         <div className="mt-6 flex flex-col items-center justify-between gap-4 md:flex-row">
