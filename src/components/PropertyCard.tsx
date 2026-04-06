@@ -9,7 +9,7 @@ export interface Property {
   id: string;
   name: string;
   location: string;
-  price: number;
+  price?: number | null;
   rating: number;
   reviewCount: number;
   maxGuests: number;
@@ -66,12 +66,21 @@ export default function PropertyCard({ property, index = 0 }: PropertyCardProps)
 
         {/* Price Tag */}
         <div className="absolute bottom-3 left-3">
-          <span className="rounded-[var(--radius-sm)] bg-surface/90 px-3 py-1.5 text-sm font-bold text-text-primary backdrop-blur-sm">
-            ${property.price}{" "}
-            <span className="text-xs font-normal text-text-secondary">
-              /night
+          {property.price != null ? (
+            <span className="rounded-[var(--radius-sm)] bg-surface/90 px-3 py-1.5 text-sm font-bold text-text-primary backdrop-blur-sm">
+              <span className="text-xs font-normal text-text-secondary">
+                from{" "}
+              </span>
+              ${property.price}
+              <span className="text-xs font-normal text-text-secondary">
+                /night
+              </span>
             </span>
-          </span>
+          ) : (
+            <span className="rounded-[var(--radius-sm)] bg-surface/90 px-3 py-1.5 text-xs font-medium text-text-secondary backdrop-blur-sm">
+              Contact for pricing
+            </span>
+          )}
         </div>
       </div>
 
