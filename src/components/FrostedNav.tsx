@@ -66,7 +66,7 @@ export default function FrostedNav() {
             ))}
             <button
               onClick={toggleTheme}
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 ${
+              className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-300 ${
                 scrolled
                   ? "text-text-primary hover:bg-warm-gray-100"
                   : "text-white hover:bg-white/10"
@@ -91,7 +91,7 @@ export default function FrostedNav() {
           <div className="flex items-center gap-2 md:hidden">
             <button
               onClick={toggleTheme}
-              className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 ${
+              className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-300 ${
                 scrolled
                   ? "text-text-primary hover:bg-warm-gray-100"
                   : "text-white hover:bg-white/10"

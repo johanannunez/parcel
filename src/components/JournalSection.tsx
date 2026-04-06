@@ -9,7 +9,7 @@ const FEATURED_POSTS = BLOG_POSTS.slice(0, 3);
 
 export default function JournalSection() {
   return (
-    <section id="journal" className="bg-warm-gray-50 py-24 md:py-32">
+    <section id="journal" aria-label="Journal" className="bg-warm-gray-50 py-24 md:py-32">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16">
         <ScrollReveal>
           <div className="flex items-end justify-between">
@@ -62,7 +62,7 @@ export default function JournalSection() {
         <div className="mt-10 text-center md:hidden">
           <a
             href="/blog"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-brand"
+            className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-brand"
           >
             View all posts
             <ArrowRight size={16} weight="bold" />

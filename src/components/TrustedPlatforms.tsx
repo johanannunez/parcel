@@ -27,7 +27,7 @@ const ROW_2 = [
 
 export default function TrustedPlatforms() {
   return (
-    <section className="py-10 md:py-14">
+    <section aria-label="Trusted platforms" className="py-10 md:py-14">
       <p className="text-label text-center mb-8 text-warm-gray-400">
         Trusted by property managers listing on
       </p>

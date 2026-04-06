@@ -93,7 +93,7 @@ export default function PropertiesSection() {
   });
 
   return (
-    <section id="properties" className="bg-surface py-24 md:py-32">
+    <section id="properties" aria-label="Properties" className="bg-surface py-24 md:py-32">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16">
         <ScrollReveal>
           <p className="text-label text-brand">Properties</p>
@@ -108,7 +108,7 @@ export default function PropertiesSection() {
 
         {/* Filter Pills */}
         <ScrollReveal delay={0.1} className="mt-8">
-          <div className="flex flex-wrap gap-2">
+          <div role="group" aria-label="Filter properties" className="flex flex-wrap gap-2">
             {FILTERS.map((filter) => (
               <button
                 key={filter}
@@ -137,7 +137,7 @@ export default function PropertiesSection() {
         <ScrollReveal delay={0.2} className="mt-12 text-center">
           <a
             href="/properties"
-            className="inline-flex items-center gap-2 rounded-full border border-warm-gray-200 px-8 py-3 text-sm font-semibold text-text-primary transition-all duration-300 hover:border-brand hover:text-brand"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-warm-gray-200 px-8 py-3 text-sm font-semibold text-text-primary transition-all duration-300 hover:border-brand hover:text-brand"
           >
             View all properties
           </a>
