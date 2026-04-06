@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -96,6 +97,30 @@ The best vacation rentals anticipate these needs. At The Parcel Company, our pro
 
 export function generateStaticParams() {
   return Object.keys(POSTS).map((slug) => ({ slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const post = POSTS[slug];
+  if (!post) return {};
+  return {
+    title: post.title,
+    description: post.body.slice(0, 155).replace(/[#\n]/g, " ").trim(),
+    openGraph: {
+      title: `${post.title} | The Parcel Company`,
+      description: post.body.slice(0, 155).replace(/[#\n]/g, " ").trim(),
+      type: "article",
+      publishedTime: post.date,
+      images: [{ url: post.image }],
+    },
+    alternates: {
+      canonical: `https://theparcelco.com/blog/${slug}`,
+    },
+  };
 }
 
 export default async function BlogPostPage({

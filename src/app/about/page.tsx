@@ -1,6 +1,18 @@
 import StaticPage from "@/components/StaticPage";
 
-export const metadata = { title: "About | The Parcel Company" };
+export const metadata = {
+  title: "About Us",
+  description:
+    "The Parcel Company curates vacation homes and furnished residences for people who notice the details. Learn about our mission, standards, and commitment to quality.",
+  openGraph: {
+    title: "About Us | The Parcel Company",
+    description:
+      "Learn about The Parcel Company's mission to make short-term rentals better, one property at a time.",
+  },
+  alternates: {
+    canonical: "https://theparcelco.com/about",
+  },
+};
 
 export default function AboutPage() {
   return (

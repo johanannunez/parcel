@@ -1,6 +1,11 @@
 import StaticPage from "@/components/StaticPage";
 
-export const metadata = { title: "Contact | The Parcel Company" };
+export const metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with The Parcel Company. Questions about bookings, properties, or listing your home? Email us at hello@theparcelco.com.",
+  alternates: { canonical: "https://theparcelco.com/contact" },
+};
 
 export default function ContactPage() {
   return (

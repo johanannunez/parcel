@@ -1,7 +1,22 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import FrostedNav from "@/components/FrostedNav";
 import DarkFooter from "@/components/DarkFooter";
+
+export const metadata: Metadata = {
+  title: "Journal — Tips, Guides & Vacation Rental Insights",
+  description:
+    "Read expert tips on vacation rentals, corporate housing, travel destinations, and property management. Stories and insights from The Parcel Company.",
+  openGraph: {
+    title: "Journal | The Parcel Company",
+    description:
+      "Expert tips on vacation rentals, corporate housing, and travel destinations.",
+  },
+  alternates: {
+    canonical: "https://theparcelco.com/blog",
+  },
+};
 
 const POSTS = [
   {

@@ -1,6 +1,10 @@
 import StaticPage from "@/components/StaticPage";
 
-export const metadata = { title: "Press | The Parcel Company" };
+export const metadata = {
+  title: "Press",
+  description: "Press resources and media inquiries for The Parcel Company, a premium vacation rental and corporate housing platform.",
+  alternates: { canonical: "https://theparcelco.com/press" },
+};
 
 export default function PressPage() {
   return (

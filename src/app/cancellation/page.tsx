@@ -1,6 +1,10 @@
 import StaticPage from "@/components/StaticPage";
 
-export const metadata = { title: "Cancellation Policy | The Parcel Company" };
+export const metadata = {
+  title: "Cancellation Policy",
+  description: "Flexible cancellation options for vacation rental and corporate housing bookings at The Parcel Company.",
+  alternates: { canonical: "https://theparcelco.com/cancellation" },
+};
 
 export default function CancellationPage() {
   return (
