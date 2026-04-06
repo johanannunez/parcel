@@ -67,6 +67,9 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://theparcelco.com",
+    types: {
+      "text/plain": "https://theparcelco.com/llms.txt",
+    },
   },
 };
 
