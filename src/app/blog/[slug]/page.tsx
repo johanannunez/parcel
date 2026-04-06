@@ -4,99 +4,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import FrostedNav from "@/components/FrostedNav";
 import DarkFooter from "@/components/DarkFooter";
-
-const POSTS: Record<
-  string,
-  { title: string; date: string; readTime: string; image: string; body: string }
-> = {
-  "1": {
-    title: "5 Things to Look for in a Furnished Corporate Stay",
-    date: "Mar 10, 2026",
-    readTime: "4 min read",
-    image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80&auto=format",
-    body: `When you're relocating for work or spending weeks away from home, the difference between a forgettable corporate rental and one that actually supports your life comes down to a handful of details.
-
-## 1. A real workspace
-
-A wobbly desk in the corner doesn't count. Look for a dedicated workspace with good lighting, an ergonomic chair, and reliable high-speed Wi-Fi. Your productivity depends on it.
-
-## 2. A kitchen that works
-
-Eating out every night gets old fast. Make sure the kitchen has real cookware, sharp knives, and enough counter space to prep a meal — not just a microwave and a coffee pod machine.
-
-## 3. Laundry access
-
-In-unit washer and dryer is ideal. At minimum, there should be facilities in the building. You shouldn't need to find a laundromat during a work trip.
-
-## 4. Neighborhood walkability
-
-Being close to a grocery store, a coffee shop, and a gym makes the difference between feeling settled and feeling stranded. Check the surroundings before you book.
-
-## 5. Responsive management
-
-Things break. Schedules change. You need a property manager who responds in hours, not days. Look for reviews that mention responsiveness.
-
----
-
-At The Parcel Company, every property on our platform is vetted against these criteria and more. We believe corporate housing should feel like home — because it is, even if only for a month.`,
-  },
-  "2": {
-    title: "The Best Mountain Getaways for Families This Spring",
-    date: "Mar 5, 2026",
-    readTime: "6 min read",
-    image:
-      "https://images.unsplash.com/photo-1470770841497-7b3200f18201?w=1200&q=80&auto=format",
-    body: `Spring in the mountains is a well-kept secret. The snow is melting, the wildflowers are starting, and the crowds haven't arrived yet. Here are our top picks for families this season.
-
-## Breckenridge, Colorado
-
-Our Mountain Retreat with Hot Tub sleeps six comfortably and sits ten minutes from town. Spring means discounted lift tickets, fewer lines, and warm afternoons on the deck.
-
-## Park City, Utah
-
-World-class trails for hiking and mountain biking open in late April. Our Park City properties offer ski-in convenience that converts to trailhead access in spring.
-
-## Big Sky, Montana
-
-If you want space — real space — Big Sky delivers. Fewer tourists, bigger skies, and properties with views that remind you why you planned this trip in the first place.
-
----
-
-Spring availability fills fast. Browse our [vacation rentals](/properties?type=vacation) to find the right fit for your family.`,
-  },
-  "3": {
-    title: "How to Make a Vacation Rental Feel Like Home",
-    date: "Feb 28, 2026",
-    readTime: "3 min read",
-    image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80&auto=format",
-    body: `A vacation rental gives you more room than a hotel, but it can still feel impersonal when you first walk in. A few small touches change that entirely.
-
-## Bring your morning routine
-
-Pack your favorite coffee or tea. The ritual of making it in a new kitchen instantly makes the space feel more familiar.
-
-## Unpack fully
-
-Don't live out of a suitcase. Use the drawers, hang your clothes, spread out. The ten minutes it takes to unpack pays back in comfort for the rest of the trip.
-
-## Stock the fridge on arrival
-
-Hit a grocery store before you settle in. Having snacks, drinks, and breakfast ingredients means you wake up the next morning already at home.
-
-## Set the mood
-
-A small Bluetooth speaker and a playlist you love can transform any space. Lighting matters too — turn off the overheads and use the lamps.
-
----
-
-The best vacation rentals anticipate these needs. At The Parcel Company, our properties come stocked with quality basics so you can focus on enjoying the trip, not setting it up.`,
-  },
-};
+import { BLOG_POSTS, getPostBySlug } from "@/data/blog-posts";
 
 export function generateStaticParams() {
-  return Object.keys(POSTS).map((slug) => ({ slug }));
+  return BLOG_POSTS.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({
@@ -105,17 +16,25 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = POSTS[slug];
+  const post = getPostBySlug(slug);
   if (!post) return {};
   return {
     title: post.title,
-    description: post.body.slice(0, 155).replace(/[#\n]/g, " ").trim(),
+    description: post.excerpt,
+    keywords: post.keywords,
     openGraph: {
       title: `${post.title} | The Parcel Company`,
-      description: post.body.slice(0, 155).replace(/[#\n]/g, " ").trim(),
+      description: post.excerpt,
       type: "article",
-      publishedTime: post.date,
-      images: [{ url: post.image }],
+      publishedTime: new Date(post.date).toISOString(),
+      images: [{ url: post.image, width: 1200, height: 630 }],
+      section: post.category,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: [post.image],
     },
     alternates: {
       canonical: `https://theparcelco.com/blog/${slug}`,
@@ -129,26 +48,105 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = POSTS[slug];
+  const post = getPostBySlug(slug);
   if (!post) notFound();
+
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    image: post.image,
+    datePublished: new Date(post.date).toISOString(),
+    dateModified: new Date(post.date).toISOString(),
+    author: {
+      "@type": "Organization",
+      name: "The Parcel Company",
+      url: "https://theparcelco.com",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "The Parcel Company",
+      url: "https://theparcelco.com",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://theparcelco.com/brand/logo-mark.png",
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://theparcelco.com/blog/${slug}`,
+    },
+    keywords: post.keywords.join(", "),
+    articleSection: post.category,
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://theparcelco.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Journal",
+        item: "https://theparcelco.com/blog",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: post.title,
+        item: `https://theparcelco.com/blog/${slug}`,
+      },
+    ],
+  };
+
+  // Find related posts (same category, excluding current)
+  const relatedPosts = BLOG_POSTS.filter(
+    (p) => p.category === post.category && p.slug !== post.slug
+  ).slice(0, 2);
 
   return (
     <>
       <FrostedNav />
       <main className="min-h-screen bg-surface pt-[120px] pb-24">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([articleSchema, breadcrumbSchema]),
+          }}
+        />
         <article className="mx-auto max-w-[720px] px-6">
-          <Link
-            href="/blog"
-            className="text-sm font-medium text-brand hover:underline"
+          {/* Breadcrumb */}
+          <nav
+            aria-label="Breadcrumb"
+            className="flex items-center gap-2 text-sm text-text-tertiary"
           >
-            &larr; Back to Journal
-          </Link>
+            <Link href="/" className="hover:text-brand">
+              Home
+            </Link>
+            <span>/</span>
+            <Link href="/blog" className="hover:text-brand">
+              Journal
+            </Link>
+            <span>/</span>
+            <span className="text-text-secondary">{post.category}</span>
+          </nav>
 
           <h1 className="mt-6 text-3xl font-bold leading-tight text-text-primary md:text-4xl">
             {post.title}
           </h1>
 
           <div className="mt-4 flex items-center gap-3 text-sm text-text-tertiary">
+            <span className="font-semibold uppercase tracking-wider text-brand text-xs">
+              {post.category}
+            </span>
+            <span className="h-1 w-1 rounded-full bg-warm-gray-400" />
             <time>{post.date}</time>
             <span className="h-1 w-1 rounded-full bg-warm-gray-400" />
             <span>{post.readTime}</span>
@@ -182,14 +180,69 @@ export default async function BlogPostPage({
                   <hr key={i} className="my-8 border-warm-gray-200" />
                 );
               }
+              // Handle inline links in markdown format [text](url)
+              const parts = block.split(/(\[[^\]]+\]\([^)]+\))/g);
               return (
                 <p key={i} className="mb-4 leading-relaxed">
-                  {block}
+                  {parts.map((part, j) => {
+                    const linkMatch = part.match(
+                      /\[([^\]]+)\]\(([^)]+)\)/
+                    );
+                    if (linkMatch) {
+                      return (
+                        <Link
+                          key={j}
+                          href={linkMatch[2]}
+                          className="font-medium text-brand underline decoration-brand/30 hover:decoration-brand"
+                        >
+                          {linkMatch[1]}
+                        </Link>
+                      );
+                    }
+                    return part;
+                  })}
                 </p>
               );
             })}
           </div>
         </article>
+
+        {/* Related posts */}
+        {relatedPosts.length > 0 && (
+          <section className="mx-auto mt-16 max-w-[1280px] px-6 md:px-12 lg:px-16">
+            <h2 className="text-h3 text-text-primary">Related Articles</h2>
+            <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-2">
+              {relatedPosts.map((rp) => (
+                <Link
+                  key={rp.slug}
+                  href={`/blog/${rp.slug}`}
+                  className="group block"
+                >
+                  <div className="relative aspect-[3/2] overflow-hidden rounded-[var(--radius-md)]">
+                    <Image
+                      src={rp.image}
+                      alt={rp.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-brand">
+                      {rp.category}
+                    </span>
+                    <h3 className="mt-1 text-lg font-semibold leading-snug text-text-primary transition-colors duration-300 group-hover:text-brand">
+                      {rp.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+                      {rp.excerpt}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
       <DarkFooter />
     </>
