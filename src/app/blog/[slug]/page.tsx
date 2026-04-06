@@ -110,7 +110,7 @@ export default async function BlogPostPage({
   return (
     <>
       <FrostedNav />
-      <main className="min-h-screen bg-white pt-[120px] pb-24">
+      <main className="min-h-screen bg-surface pt-[120px] pb-24">
         <article className="mx-auto max-w-[720px] px-6">
           <Link
             href="/blog"

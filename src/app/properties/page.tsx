@@ -102,7 +102,7 @@ export default function PropertiesPage() {
   return (
     <>
       <FrostedNav />
-      <main className="min-h-screen bg-white pt-[120px] pb-24">
+      <main className="min-h-screen bg-surface pt-[120px] pb-24">
         <div className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16">
           <h1 className="text-h1 text-text-primary">Our Properties</h1>
           <p className="mt-4 max-w-lg text-base leading-relaxed text-text-secondary md:text-lg">

@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { List, X } from "@phosphor-icons/react";
+import { List, X, Sun, Moon } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTheme } from "./ThemeProvider";
 
 const NAV_LINKS = [
   { label: "Properties", href: "#properties" },
@@ -16,6 +17,7 @@ const NAV_LINKS = [
 export default function FrostedNav() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -39,7 +41,7 @@ export default function FrostedNav() {
           {/* Logo */}
           <Link href="/" className="relative z-10 flex items-center gap-2">
             <Image
-              src={scrolled ? "/brand/logo-mark.png" : "/brand/logo-mark-white.png"}
+              src={scrolled && theme === "light" ? "/brand/logo-mark.png" : "/brand/logo-mark-white.png"}
               alt="The Parcel Company"
               width={48}
               height={48}
@@ -61,6 +63,21 @@ export default function FrostedNav() {
                 {link.label}
               </Link>
             ))}
+            <button
+              onClick={toggleTheme}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 ${
+                scrolled
+                  ? "text-text-primary hover:bg-warm-gray-100"
+                  : "text-white hover:bg-white/10"
+              }`}
+              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            >
+              {theme === "light" ? (
+                <Moon size={20} weight="bold" />
+              ) : (
+                <Sun size={20} weight="bold" />
+              )}
+            </button>
             <Link
               href="#properties"
               className="rounded-[var(--radius-sm)] bg-gradient-to-r from-brand-light to-brand px-5 py-2.5 text-sm font-semibold text-white transition-opacity duration-300 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -69,16 +86,33 @@ export default function FrostedNav() {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className={`relative z-10 md:hidden ${
-              scrolled ? "text-text-primary" : "text-white"
-            }`}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={24} weight="bold" /> : <List size={24} weight="bold" />}
-          </button>
+          {/* Mobile Controls */}
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              onClick={toggleTheme}
+              className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 ${
+                scrolled
+                  ? "text-text-primary hover:bg-warm-gray-100"
+                  : "text-white hover:bg-white/10"
+              }`}
+              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            >
+              {theme === "light" ? (
+                <Moon size={20} weight="bold" />
+              ) : (
+                <Sun size={20} weight="bold" />
+              )}
+            </button>
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className={`relative z-10 ${
+                scrolled ? "text-text-primary" : "text-white"
+              }`}
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X size={24} weight="bold" /> : <List size={24} weight="bold" />}
+            </button>
+          </div>
         </div>
       </motion.nav>
 

@@ -50,7 +50,7 @@ export default function HowItWorksSection() {
                 )}
 
                 {/* Icon */}
-                <div className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-md)] bg-white shadow-card">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-md)] bg-surface-elevated shadow-card">
                   <step.icon size={28} weight="bold" className="text-brand" />
                 </div>
 

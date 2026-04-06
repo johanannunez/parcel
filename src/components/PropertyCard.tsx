@@ -48,7 +48,7 @@ export default function PropertyCard({ property, index = 0 }: PropertyCardProps)
 
         {/* Favorite Button */}
         <button
-          className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-transform duration-300 hover:scale-110"
+          className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 backdrop-blur-sm transition-transform duration-300 hover:scale-110"
           aria-label="Save to favorites"
         >
           <Heart size={18} weight="bold" className="text-text-primary" />
@@ -56,14 +56,14 @@ export default function PropertyCard({ property, index = 0 }: PropertyCardProps)
 
         {/* Type Badge */}
         <div className="absolute top-3 left-3">
-          <span className="text-label rounded-full bg-white/90 px-3 py-1.5 text-[10px] backdrop-blur-sm">
+          <span className="text-label rounded-full bg-surface/90 px-3 py-1.5 text-[10px] backdrop-blur-sm">
             {property.type === "vacation" ? "Vacation" : "Corporate"}
           </span>
         </div>
 
         {/* Price Tag */}
         <div className="absolute bottom-3 left-3">
-          <span className="rounded-[var(--radius-sm)] bg-white/90 px-3 py-1.5 text-sm font-bold text-text-primary backdrop-blur-sm">
+          <span className="rounded-[var(--radius-sm)] bg-surface/90 px-3 py-1.5 text-sm font-bold text-text-primary backdrop-blur-sm">
             ${property.price}{" "}
             <span className="text-xs font-normal text-text-secondary">
               /night

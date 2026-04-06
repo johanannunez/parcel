@@ -46,12 +46,47 @@
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ─── Dark Mode Tokens ─── */
+:root.dark {
+  /* Backgrounds */
+  --color-white: #0f172a;
+  --color-off-white: #111827;
+  --color-warm-gray-50: #1e293b;
+  --color-warm-gray-100: #334155;
+  --color-warm-gray-200: #475569;
+  --color-warm-gray-400: #94a3b8;
+
+  /* Text */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-tertiary: #64748b;
+
+  /* Brand (stays the same for contrast) */
+  --color-brand-light: #38bdf8;
+  --color-brand: #60a5fa;
+  --color-brand-gradient: linear-gradient(135deg, #38bdf8, #60a5fa);
+
+  /* Dark */
+  --color-navy: #020617;
+  --color-charcoal: #0f172a;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
 /* ─── Tailwind Theme ─── */
 @theme inline {
   --font-sans: var(--font-general-sans), "General Sans", system-ui, sans-serif;
 
   --color-background: var(--color-white);
   --color-foreground: var(--color-text-primary);
+  --color-surface: var(--color-white);
+  --color-surface-alt: var(--color-warm-gray-50);
+  --color-surface-elevated: var(--color-white);
 
   --color-brand-light: var(--color-brand-light);
   --color-brand: var(--color-brand);
@@ -77,6 +112,7 @@ body {
   background: var(--color-white);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ─── Typography Utilities ─── */
@@ -129,6 +165,10 @@ body {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+:root.dark .frosted {
+  background: rgba(15, 23, 42, 0.8);
 }
 
 .frosted-dark {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Script from "next/script";
+import ThemeProvider from "@/components/ThemeProvider";
 import "./globals.css";
 
 const generalSans = localFont({
@@ -38,7 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${generalSans.variable} antialiased`}>
+        <ThemeProvider>
         {children}
+        </ThemeProvider>
         {process.env.NEXT_PUBLIC_GA4_ID && (
           <>
             <Script
