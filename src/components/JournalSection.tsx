@@ -3,33 +3,9 @@
 import Image from "next/image";
 import { ArrowRight } from "@phosphor-icons/react";
 import ScrollReveal from "./ScrollReveal";
+import { BLOG_POSTS } from "@/data/blog-posts";
 
-const POSTS = [
-  {
-    id: "1",
-    title: "5 Things to Look for in a Furnished Corporate Stay",
-    date: "Mar 10, 2026",
-    readTime: "4 min read",
-    image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80&auto=format",
-  },
-  {
-    id: "2",
-    title: "The Best Mountain Getaways for Families This Spring",
-    date: "Mar 5, 2026",
-    readTime: "6 min read",
-    image:
-      "https://images.unsplash.com/photo-1470770841497-7b3200f18201?w=600&q=80&auto=format",
-  },
-  {
-    id: "3",
-    title: "How to Make a Vacation Rental Feel Like Home",
-    date: "Feb 28, 2026",
-    readTime: "3 min read",
-    image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80&auto=format",
-  },
-];
+const FEATURED_POSTS = BLOG_POSTS.slice(0, 3);
 
 export default function JournalSection() {
   return (
@@ -54,9 +30,9 @@ export default function JournalSection() {
         </ScrollReveal>
 
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-          {POSTS.map((post, i) => (
-            <ScrollReveal key={post.id} delay={i * 0.08}>
-              <a href={`/blog/${post.id}`} className="group block">
+          {FEATURED_POSTS.map((post, i) => (
+            <ScrollReveal key={post.slug} delay={i * 0.08}>
+              <a href={`/blog/${post.slug}`} className="group block">
                 <div className="relative aspect-[3/2] overflow-hidden rounded-[var(--radius-md)]">
                   <Image
                     src={post.image}
