@@ -28,6 +28,7 @@ export default function FrostedNav() {
   return (
     <>
       <motion.nav
+        aria-label="Main navigation"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -105,10 +106,12 @@ export default function FrostedNav() {
             </button>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className={`relative z-10 ${
+              className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full ${
                 scrolled ? "text-text-primary" : "text-white"
               }`}
-              aria-label="Toggle menu"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
             >
               {mobileOpen ? <X size={24} weight="bold" /> : <List size={24} weight="bold" />}
             </button>
@@ -120,6 +123,9 @@ export default function FrostedNav() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
+            id="mobile-menu"
+            role="dialog"
+            aria-label="Mobile navigation"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
