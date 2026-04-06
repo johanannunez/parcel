@@ -6,7 +6,6 @@ import {
   LinkedinLogo,
   FacebookLogo,
 } from "@phosphor-icons/react/dist/ssr";
-import LlmsToggle from "./LlmsToggle";
 
 const FOOTER_LINKS = {
   Properties: [
@@ -91,9 +90,6 @@ export default function DarkFooter() {
             </div>
           ))}
         </div>
-
-        {/* LLMs.txt Toggle */}
-        <LlmsToggle />
 
         {/* Divider */}
         <div className="mt-12 border-t border-white/10" />
