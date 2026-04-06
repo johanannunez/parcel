@@ -15,7 +15,7 @@ export default function StatsSection() {
   const inView = useInView(ref, { once: true, amount: 0.4 });
 
   return (
-    <section className="bg-white py-20 md:py-24">
+    <section className="bg-surface py-20 md:py-24">
       <div
         ref={ref}
         className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16"

@@ -5,7 +5,7 @@ import ScrollReveal from "./ScrollReveal";
 
 export default function CTASection() {
   return (
-    <section className="bg-white py-24 md:py-32">
+    <section className="bg-surface py-24 md:py-32">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16">
         <ScrollReveal>
           <div className="relative overflow-hidden rounded-[var(--radius-xl)] bg-navy px-8 py-16 text-center md:px-16 md:py-24">

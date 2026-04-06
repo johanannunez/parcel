@@ -60,7 +60,7 @@ export default function HeroBookingBar() {
         >
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-0">
             {/* Location */}
-            <div className="group flex flex-1 items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 transition-colors duration-200 hover:bg-white/60 md:border-r md:border-warm-gray-200">
+            <div className="group flex flex-1 items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 transition-colors duration-200 hover:bg-surface/60 md:border-r md:border-warm-gray-200">
               <MapPin
                 size={20}
                 weight="bold"
@@ -79,7 +79,7 @@ export default function HeroBookingBar() {
             </div>
 
             {/* Check In */}
-            <div className="group flex flex-1 items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 transition-colors duration-200 hover:bg-white/60 md:border-r md:border-warm-gray-200">
+            <div className="group flex flex-1 items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 transition-colors duration-200 hover:bg-surface/60 md:border-r md:border-warm-gray-200">
               <CalendarBlank
                 size={20}
                 weight="bold"
@@ -98,7 +98,7 @@ export default function HeroBookingBar() {
             </div>
 
             {/* Check Out */}
-            <div className="group flex flex-1 items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 transition-colors duration-200 hover:bg-white/60 md:border-r md:border-warm-gray-200">
+            <div className="group flex flex-1 items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 transition-colors duration-200 hover:bg-surface/60 md:border-r md:border-warm-gray-200">
               <CalendarBlank
                 size={20}
                 weight="bold"
@@ -117,7 +117,7 @@ export default function HeroBookingBar() {
             </div>
 
             {/* Guests */}
-            <div className="group flex flex-1 items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 transition-colors duration-200 hover:bg-white/60">
+            <div className="group flex flex-1 items-center gap-3 rounded-[var(--radius-md)] px-4 py-3 transition-colors duration-200 hover:bg-surface/60">
               <Users
                 size={20}
                 weight="bold"

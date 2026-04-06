@@ -36,7 +36,7 @@ export default function CategoriesSection() {
             <ScrollReveal key={cat.title} delay={i * 0.1}>
               <a
                 href="/properties"
-                className="group relative block overflow-hidden rounded-[var(--radius-xl)] bg-white shadow-card transition-shadow duration-500 hover:shadow-lg"
+                className="group relative block overflow-hidden rounded-[var(--radius-xl)] bg-surface-elevated shadow-card transition-shadow duration-500 hover:shadow-lg"
               >
                 {/* Image */}
                 <div className="relative aspect-[16/9] overflow-hidden">
@@ -48,7 +48,7 @@ export default function CategoriesSection() {
 
                   {/* Count Badge */}
                   <div className="absolute top-4 right-4">
-                    <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-text-primary backdrop-blur-sm">
+                    <span className="rounded-full bg-surface/90 px-3 py-1 text-xs font-bold text-text-primary backdrop-blur-sm">
                       {cat.count} properties
                     </span>
                   </div>

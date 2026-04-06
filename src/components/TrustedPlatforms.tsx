@@ -77,6 +77,14 @@ export default function TrustedPlatforms() {
         .trust-logo:hover {
           opacity: 1 !important;
         }
+        :root.dark .trust-logo {
+          filter: invert(1) grayscale(1);
+          opacity: 0.5;
+        }
+        :root.dark .trust-logo:hover {
+          filter: invert(1) grayscale(0);
+          opacity: 0.85 !important;
+        }
       `}</style>
     </section>
   )

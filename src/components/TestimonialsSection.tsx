@@ -32,7 +32,7 @@ const TESTIMONIALS = [
 
 export default function TestimonialsSection() {
   return (
-    <section className="bg-white py-24 md:py-32">
+    <section className="bg-surface py-24 md:py-32">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16">
         <ScrollReveal>
           <p className="text-label text-brand">Guest experiences</p>
@@ -44,7 +44,7 @@ export default function TestimonialsSection() {
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
           {TESTIMONIALS.map((t, i) => (
             <ScrollReveal key={t.id} delay={i * 0.08}>
-              <div className="flex h-full flex-col rounded-[var(--radius-lg)] border border-warm-gray-100 bg-white p-6 transition-shadow duration-500 hover:shadow-md md:p-8">
+              <div className="flex h-full flex-col rounded-[var(--radius-lg)] border border-warm-gray-100 bg-surface-elevated p-6 transition-shadow duration-500 hover:shadow-md md:p-8">
                 {/* Quote Icon */}
                 <Quotes
                   size={28}

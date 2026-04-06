@@ -93,7 +93,7 @@ export default function PropertiesSection() {
   });
 
   return (
-    <section id="properties" className="bg-white py-24 md:py-32">
+    <section id="properties" className="bg-surface py-24 md:py-32">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16">
         <ScrollReveal>
           <p className="text-label text-brand">Properties</p>
