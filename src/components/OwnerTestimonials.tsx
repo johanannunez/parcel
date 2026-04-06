@@ -36,7 +36,7 @@ const OWNER_TESTIMONIALS = [
 
 export default function OwnerTestimonials() {
   return (
-    <section className="bg-surface py-24 md:py-32">
+    <section aria-label="Owner testimonials" className="bg-surface py-24 md:py-32">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16">
         <ScrollReveal>
           <p className="text-label text-brand">Owner success stories</p>

@@ -24,7 +24,7 @@ const CATEGORIES = [
 
 export default function CategoriesSection() {
   return (
-    <section className="bg-warm-gray-50 py-24 md:py-32">
+    <section aria-label="Property categories" className="bg-warm-gray-50 py-24 md:py-32">
       <div className="mx-auto max-w-[1280px] px-6 md:px-12 lg:px-16">
         <ScrollReveal>
           <p className="text-label text-brand">Stay your way</p>

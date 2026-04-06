@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Star, MapPin, Users, WifiHigh, Heart } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 
@@ -34,22 +35,24 @@ export default function PropertyCard({ property, index = 0 }: PropertyCardProps)
         delay: index * 0.06,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="group cursor-pointer"
+      className="group"
     >
       {/* Image Container */}
       <div className="relative aspect-[3/2] overflow-hidden rounded-[var(--radius-md)]">
-        <Image
-          src={property.image}
-          alt={property.name}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
-        />
+        <Link href={`/properties/${property.id}`} className="absolute inset-0 z-[1]" aria-label={`View ${property.name}`}>
+          <Image
+            src={property.image}
+            alt={property.name}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+          />
+        </Link>
 
         {/* Favorite Button */}
         <button
-          className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 backdrop-blur-sm transition-transform duration-300 hover:scale-110"
-          aria-label="Save to favorites"
+          className="absolute top-2 right-2 z-[2] flex h-11 w-11 items-center justify-center rounded-full bg-surface/80 backdrop-blur-sm transition-transform duration-300 hover:scale-110"
+          aria-label={`Save ${property.name} to favorites`}
         >
           <Heart size={18} weight="bold" className="text-text-primary" />
         </button>
@@ -73,13 +76,13 @@ export default function PropertyCard({ property, index = 0 }: PropertyCardProps)
       </div>
 
       {/* Info */}
-      <div className="mt-3 space-y-1.5">
+      <Link href={`/properties/${property.id}`} className="mt-3 block space-y-1.5">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-base font-semibold text-text-primary leading-snug group-hover:text-brand transition-colors duration-300">
             {property.name}
           </h3>
           <div className="flex shrink-0 items-center gap-1">
-            <Star size={14} weight="fill" className="text-star" />
+            <Star size={14} weight="fill" className="text-star" aria-hidden="true" />
             <span className="text-sm font-medium text-text-primary">
               {property.rating}
             </span>
@@ -90,22 +93,22 @@ export default function PropertyCard({ property, index = 0 }: PropertyCardProps)
         </div>
 
         <div className="flex items-center gap-1.5 text-sm text-text-secondary">
-          <MapPin size={14} weight="bold" className="shrink-0 text-text-tertiary" />
+          <MapPin size={14} weight="bold" className="shrink-0 text-text-tertiary" aria-hidden="true" />
           <span>{property.location}</span>
         </div>
 
         <div className="flex items-center gap-3 text-xs text-text-tertiary">
           <span className="flex items-center gap-1">
-            <Users size={13} weight="bold" />
+            <Users size={13} weight="bold" aria-hidden="true" />
             {property.maxGuests} guests
           </span>
           <span>{property.bedrooms} {property.bedrooms === 1 ? "bedroom" : "bedrooms"}</span>
           <span className="flex items-center gap-1">
-            <WifiHigh size={13} weight="bold" />
+            <WifiHigh size={13} weight="bold" aria-hidden="true" />
             Wi-Fi
           </span>
         </div>
-      </div>
+      </Link>
     </motion.article>
   );
 }
