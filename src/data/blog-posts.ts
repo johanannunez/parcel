@@ -110,7 +110,7 @@ At The Parcel Company, every property on our platform is vetted against these cr
       "family vacation rental mountains",
     ],
     image:
-      "https://images.unsplash.com/photo-1470770841497-7b3200f18201?w=800&q=80&auto=format",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&auto=format",
     body: `Spring in the mountains is a well-kept secret. The snow is melting, the wildflowers are starting, and the crowds haven't arrived yet. Here are our top picks for families this season.
 
 ## Breckenridge, Colorado

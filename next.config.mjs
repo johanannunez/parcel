@@ -8,6 +8,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/faq",
+        destination: "/help",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
