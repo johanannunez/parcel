@@ -39,7 +39,9 @@ pnpm-debug.log*
 temporary screenshots/
 
 # Business records (not code, see CLAUDE.md)
-records/
+# Note: no trailing slash so this matches the symlink at workspace/parcel/records
+# pointing into Google Drive, in addition to the original records directory
+records
 
 # Legacy npm artifacts (we use pnpm)
 package-lock.json
