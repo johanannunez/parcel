@@ -1,5 +1,14 @@
 const BASE_URL = "https://public.api.hospitable.com/v2";
 
+/**
+ * Returns true when the Hospitable integration is configured.
+ * Used by callers (like generateStaticParams) to gracefully fall
+ * back when the env var is missing during build or preview.
+ */
+export function hasHospitable(): boolean {
+  return Boolean(process.env.HOSPITABLE_API);
+}
+
 function getToken(): string {
   const token = process.env.HOSPITABLE_API;
   if (!token) throw new Error("HOSPITABLE_API is not set");
@@ -59,6 +68,8 @@ interface PaginatedResponse<T> {
 }
 
 export async function getProperties(): Promise<HospitableProperty[]> {
+  if (!hasHospitable()) return [];
+
   const all: HospitableProperty[] = [];
   let page = 1;
   let hasMore = true;
@@ -79,6 +90,8 @@ export async function getProperties(): Promise<HospitableProperty[]> {
 export async function getProperty(
   id: string
 ): Promise<HospitableProperty | null> {
+  if (!hasHospitable()) return null;
+
   try {
     const res = await request<{ data: HospitableProperty }>(
       `/properties/${id}`
