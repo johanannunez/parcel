@@ -8,6 +8,7 @@ import {
   CalendarBlank,
   Wallet,
   PlugsConnected,
+  ClipboardText,
   LifebuoyIcon as Lifebuoy,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
@@ -30,6 +31,12 @@ const primaryNav: NavItem[] = [
     label: "Properties",
     icon: <Buildings size={18} weight="duotone" />,
     matchPrefix: "/portal/properties",
+  },
+  {
+    href: "/portal/setup",
+    label: "Setup",
+    icon: <ClipboardText size={18} weight="duotone" />,
+    matchPrefix: "/portal/setup",
   },
   {
     href: "/portal/calendar",
