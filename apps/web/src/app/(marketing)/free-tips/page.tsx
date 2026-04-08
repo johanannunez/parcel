@@ -10,6 +10,19 @@ export const metadata: Metadata = {
   title: "Free tips for rental owners",
   description:
     "One short email every week with proven tactics to increase bookings, revenue, and guest satisfaction.",
+  openGraph: {
+    title: "Free tips for rental owners",
+    description:
+      "One short email every week with proven tactics that quietly make rental owners more money.",
+    type: "website",
+    url: "https://theparcelco.com/free-tips",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free tips for rental owners",
+    description:
+      "One short email every week with proven tactics that quietly make rental owners more money.",
+  },
 };
 
 const bullets = [
@@ -40,7 +53,7 @@ export default function FreeTipsPage() {
           </span>
 
           <h1
-            className="text-[44px] font-semibold leading-[1.05] tracking-tight sm:text-[52px]"
+            className="text-[34px] font-semibold leading-[1.08] tracking-tight sm:text-[44px] lg:text-[52px]"
             style={{ color: "var(--color-text-primary)" }}
           >
             The tactics that quietly make rental owners more money.

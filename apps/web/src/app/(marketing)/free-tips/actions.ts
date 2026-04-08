@@ -6,6 +6,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 const schema = z.object({
   email: z.string().trim().email("Please enter a valid email address."),
   firstName: z.string().trim().max(120).optional().or(z.literal("")),
+  // Honeypot: real users leave this blank, bots fill it.
+  website: z.string().max(0).optional().or(z.literal("")),
 });
 
 export type FreeTipsState = {
@@ -20,8 +22,13 @@ export async function submitFreeTips(
   const parsed = schema.safeParse({
     email: formData.get("email"),
     firstName: formData.get("firstName"),
+    website: formData.get("website"),
   });
   if (!parsed.success) {
+    // Honeypot triggered or input invalid; return success to bots.
+    if (parsed.error.issues.some((i) => i.path[0] === "website")) {
+      return { success: true };
+    }
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 

@@ -7,7 +7,14 @@ export const metadata: Metadata = {
   description: "Reset your Parcel owner portal password.",
 };
 
-export default function ForgotPasswordPage() {
+type SP = Promise<{ expired?: string }>;
+
+export default async function ForgotPasswordPage({
+  searchParams,
+}: {
+  searchParams: SP;
+}) {
+  const { expired } = await searchParams;
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--color-off-white)] px-6 py-24">
       <div className="w-full max-w-md">
@@ -24,6 +31,21 @@ export default function ForgotPasswordPage() {
           Enter the email address you signed up with. We will send you a
           secure link to choose a new password.
         </p>
+
+        {expired ? (
+          <div
+            className="mb-6 rounded-xl border p-4 text-sm"
+            role="status"
+            style={{
+              backgroundColor: "rgba(245, 158, 11, 0.10)",
+              borderColor: "rgba(245, 158, 11, 0.35)",
+              color: "#7c2d12",
+            }}
+          >
+            That reset link has expired or already been used. Request a new
+            one below.
+          </div>
+        ) : null}
 
         <ForgotPasswordForm />
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { X, CheckCircle } from "@phosphor-icons/react";
 import { connectProvider, disconnectProvider } from "./actions";
+import { formatRelative } from "@/lib/format";
 
 export type ConnectionState = {
   provider: string;
@@ -16,6 +17,17 @@ export type ConnectionState = {
 export function ConnectionCard({ c }: { c: ConnectionState }) {
   const [pending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!confirmOpen) return;
+    cancelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setConfirmOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [confirmOpen]);
 
   const onConnect = () =>
     startTransition(async () => {
@@ -32,6 +44,8 @@ export function ConnectionCard({ c }: { c: ConnectionState }) {
     <>
       <div
         className="flex flex-col gap-5 rounded-2xl border p-6"
+        role="dialog"
+        aria-label={`${c.label} connection`}
         style={{
           backgroundColor: "var(--color-white)",
           borderColor: "var(--color-warm-gray-200)",
@@ -69,7 +83,7 @@ export function ConnectionCard({ c }: { c: ConnectionState }) {
           style={{ color: "var(--color-text-tertiary)" }}
         >
           {c.connected && c.lastSync
-            ? `Last synced ${new Date(c.lastSync).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+            ? `Last synced ${formatRelative(c.lastSync)}`
             : "Not connected"}
         </div>
 
@@ -107,6 +121,8 @@ export function ConnectionCard({ c }: { c: ConnectionState }) {
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backgroundColor: "rgba(15, 23, 42, 0.36)" }}
           onClick={() => setConfirmOpen(false)}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             className="w-full max-w-sm rounded-2xl border p-6 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.35)]"
@@ -141,9 +157,10 @@ export function ConnectionCard({ c }: { c: ConnectionState }) {
             </p>
             <div className="mt-6 flex items-center justify-end gap-2">
               <button
+                ref={cancelRef}
                 type="button"
                 onClick={() => setConfirmOpen(false)}
-                className="rounded-lg px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+                className="rounded-lg px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{ color: "var(--color-text-secondary)" }}
               >
                 Cancel

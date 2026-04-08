@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { addProperty, type AddPropertyState } from "./actions";
 
 const initial: AddPropertyState = {};
@@ -46,6 +46,15 @@ export function AddPropertyWizard() {
   const set = (k: keyof typeof values) => (v: string) =>
     setValues((prev) => ({ ...prev, [k]: v }));
 
+  const stepRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // Focus the first focusable input when entering a new step.
+    const el = stepRef.current?.querySelector<HTMLElement>(
+      'input:not([type="hidden"]), select, button[type="button"]:not([disabled])',
+    );
+    el?.focus();
+  }, [step]);
+
   const canNext = () => {
     if (step === 0) return !!values.property_type;
     if (step === 1)
@@ -70,7 +79,8 @@ export function AddPropertyWizard() {
         ))}
 
         <div
-          className="rounded-2xl border p-8"
+          ref={stepRef}
+          className="rounded-2xl border p-6 sm:p-8"
           style={{
             backgroundColor: "var(--color-white)",
             borderColor: "var(--color-warm-gray-200)",
@@ -82,7 +92,7 @@ export function AddPropertyWizard() {
                 title="What kind of property is this?"
                 body="Pick the category that best matches how you plan to rent the home. You can change it later."
               />
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3">
                 {TYPES.map((t) => {
                   const active = values.property_type === t.value;
                   return (
@@ -266,7 +276,7 @@ export function AddPropertyWizard() {
           </p>
         ) : null}
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
             onClick={() => setStep((s) => Math.max(0, s - 1))}
@@ -316,8 +326,8 @@ function Field({
   return (
     <label className="flex flex-col gap-2">
       <span
-        className="text-[11px] font-semibold uppercase tracking-[0.14em]"
-        style={{ color: "var(--color-text-tertiary)" }}
+        className="text-xs font-semibold uppercase tracking-[0.12em]"
+        style={{ color: "var(--color-text-secondary)" }}
       >
         {label}
       </span>

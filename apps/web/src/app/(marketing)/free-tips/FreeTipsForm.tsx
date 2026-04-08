@@ -39,6 +39,15 @@ export function FreeTipsForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      {/* Honeypot — hidden from users, irresistible to bots */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        className="absolute -left-[10000px] h-0 w-0 opacity-0"
+        aria-hidden="true"
+      />
       <div className="flex flex-col gap-2">
         <label
           htmlFor="firstName"
