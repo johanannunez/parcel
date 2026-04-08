@@ -8,7 +8,7 @@ import {
   CalendarBlank,
   Wallet,
   PlugsConnected,
-  LifebuoyIcon,
+  LifebuoyIcon as Lifebuoy,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
@@ -68,6 +68,7 @@ export function PortalSidebar({
 
   return (
     <aside
+      aria-label="Primary navigation"
       className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r lg:flex"
       style={{
         backgroundColor: "var(--color-white)",
@@ -108,7 +109,8 @@ export function PortalSidebar({
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                  aria-current={active ? "page" : undefined}
+                  className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                   style={{
                     color: active
                       ? "var(--color-text-primary)"
@@ -159,7 +161,7 @@ export function PortalSidebar({
                 className="inline-flex h-5 w-5 items-center justify-center"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
-                <LifebuoyIcon size={18} weight="duotone" />
+                <Lifebuoy size={18} weight="duotone" />
               </span>
               Help center
             </Link>

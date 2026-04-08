@@ -14,23 +14,11 @@ import {
   House,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
+import { propertyTypeLongLabels } from "@/lib/labels";
+import { currency0, formatMedium, formatRelative } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Property" };
 export const dynamic = "force-dynamic";
-
-const typeLabels: Record<string, string> = {
-  str: "Short term rental",
-  ltr: "Long term rental",
-  arbitrage: "Arbitrage",
-  mtr: "Mid term rental",
-  "co-hosting": "Co-hosting",
-};
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 type Params = Promise<{ id: string }>;
 
@@ -46,32 +34,52 @@ export default async function PropertyDetailPage({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: property }, { data: bookings }, { data: payouts }] =
-    await Promise.all([
-      supabase.from("properties").select("*").eq("id", id).maybeSingle(),
-      supabase
-        .from("bookings")
-        .select(
-          "id, guest_name, check_in, check_out, source, status, total_amount",
-        )
-        .eq("property_id", id)
-        .order("check_in", { ascending: false })
-        .limit(10),
-      supabase
-        .from("payouts")
-        .select("id, period_start, period_end, net_payout, paid_at")
-        .eq("property_id", id)
-        .order("period_start", { ascending: false })
-        .limit(6),
-    ]);
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const yearStart = `${new Date().getFullYear()}-01-01`;
+
+  const [
+    { data: property },
+    { data: recentBookings },
+    { data: nextStay },
+    { data: ytdBookings },
+    { data: payouts },
+  ] = await Promise.all([
+    supabase.from("properties").select("*").eq("id", id).maybeSingle(),
+    supabase
+      .from("bookings")
+      .select(
+        "id, guest_name, check_in, check_out, source, status, total_amount",
+      )
+      .eq("property_id", id)
+      .order("check_in", { ascending: false })
+      .limit(10),
+    supabase
+      .from("bookings")
+      .select("id, guest_name, check_in")
+      .eq("property_id", id)
+      .gte("check_in", todayIso)
+      .neq("status", "cancelled")
+      .order("check_in", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("bookings")
+      .select("total_amount")
+      .eq("property_id", id)
+      .gte("check_in", yearStart)
+      .neq("status", "cancelled"),
+    supabase
+      .from("payouts")
+      .select("id, period_start, period_end, net_payout, paid_at")
+      .eq("property_id", id)
+      .order("period_start", { ascending: false })
+      .limit(6),
+  ]);
 
   if (!property) notFound();
 
   const title = property.name?.trim() || property.address_line1;
-  const upcomingNext = (bookings ?? []).find(
-    (b) => b.check_in >= new Date().toISOString().slice(0, 10),
-  );
-  const ytdRevenue = (bookings ?? []).reduce(
+  const ytdRevenue = (ytdBookings ?? []).reduce(
     (s, b) => s + Number(b.total_amount ?? 0),
     0,
   );
@@ -89,7 +97,7 @@ export default async function PropertyDetailPage({
         </Link>
       </div>
 
-      <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <header className="flex flex-col-reverse gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <span
             className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
@@ -98,7 +106,7 @@ export default async function PropertyDetailPage({
               color: "var(--color-text-secondary)",
             }}
           >
-            {typeLabels[property.property_type] ?? property.property_type}
+            {propertyTypeLongLabels[property.property_type] ?? property.property_type}
           </span>
           <h1
             className="mt-3 text-[34px] font-semibold leading-tight tracking-tight"
@@ -163,20 +171,20 @@ export default async function PropertyDetailPage({
           icon={<House size={18} weight="duotone" />}
           label="Next stay"
           value={
-            upcomingNext
-              ? `${upcomingNext.guest_name ?? "Guest"} on ${fmt(upcomingNext.check_in)}`
+            nextStay
+              ? `${nextStay.guest_name ?? "Guest"} on ${formatMedium(nextStay.check_in)}`
               : "Nothing booked"
           }
         />
         <InfoCard
           icon={<Wallet size={18} weight="duotone" />}
-          label="Revenue to date"
-          value={currency.format(ytdRevenue)}
+          label="Revenue this year"
+          value={currency0.format(ytdRevenue)}
         />
         <InfoCard
           icon={<CalendarBlank size={18} weight="duotone" />}
-          label="Listed since"
-          value={fmt(property.created_at)}
+          label="Listed"
+          value={formatRelative(property.created_at)}
         />
       </section>
 
@@ -186,14 +194,14 @@ export default async function PropertyDetailPage({
           href="/portal/calendar"
           linkLabel="Open calendar"
         >
-          {(bookings ?? []).length === 0 ? (
+          {(recentBookings ?? []).length === 0 ? (
             <PanelEmpty
               icon={<CalendarBlank size={22} weight="duotone" />}
               text="No bookings yet for this property."
             />
           ) : (
             <ul className="flex flex-col">
-              {(bookings ?? []).slice(0, 5).map((b, i) => (
+              {(recentBookings ?? []).slice(0, 5).map((b, i) => (
                 <li
                   key={b.id}
                   className="flex items-center justify-between py-3"
@@ -215,14 +223,14 @@ export default async function PropertyDetailPage({
                       className="text-xs"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      {fmt(b.check_in)} to {fmt(b.check_out)}
+                      {formatMedium(b.check_in)} to {formatMedium(b.check_out)}
                     </div>
                   </div>
                   <div
                     className="text-sm font-semibold tabular-nums"
                     style={{ color: "var(--color-text-primary)" }}
                   >
-                    {b.total_amount ? currency.format(Number(b.total_amount)) : "—"}
+                    {b.total_amount ? currency0.format(Number(b.total_amount)) : "—"}
                   </div>
                 </li>
               ))}
@@ -258,20 +266,20 @@ export default async function PropertyDetailPage({
                       className="text-sm font-semibold"
                       style={{ color: "var(--color-text-primary)" }}
                     >
-                      {fmt(p.period_start)} to {fmt(p.period_end)}
+                      {formatMedium(p.period_start)} to {formatMedium(p.period_end)}
                     </div>
                     <div
                       className="text-xs"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      {p.paid_at ? `Paid ${fmt(p.paid_at)}` : "Awaiting transfer"}
+                      {p.paid_at ? `Paid ${formatMedium(p.paid_at)}` : "Awaiting transfer"}
                     </div>
                   </div>
                   <div
                     className="text-sm font-semibold tabular-nums"
                     style={{ color: "var(--color-text-primary)" }}
                   >
-                    {currency.format(Number(p.net_payout))}
+                    {currency0.format(Number(p.net_payout))}
                   </div>
                 </li>
               ))}
@@ -288,14 +296,6 @@ export default async function PropertyDetailPage({
       </Panel>
     </div>
   );
-}
-
-function fmt(d: string) {
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function StatTile({

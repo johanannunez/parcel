@@ -12,17 +12,10 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/portal/PageHeader";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { LinkButton } from "@/components/portal/Button";
+import { propertyTypeLabels } from "@/lib/labels";
 
 export const metadata: Metadata = { title: "Properties" };
 export const dynamic = "force-dynamic";
-
-const typeLabels: Record<string, string> = {
-  str: "Short term",
-  ltr: "Long term",
-  arbitrage: "Arbitrage",
-  mtr: "Mid term",
-  "co-hosting": "Co-hosting",
-};
 
 export default async function PropertiesPage() {
   const supabase = await createClient();
@@ -74,7 +67,8 @@ export default async function PropertiesPage() {
               <Link
                 key={p.id}
                 href={`/portal/properties/${p.id}`}
-                className="group flex flex-col gap-5 rounded-2xl border p-6 transition-shadow duration-300 hover:shadow-[0_20px_44px_-28px_rgba(15,23,42,0.22)]"
+                aria-label={`Open ${title}`}
+                className="group flex flex-col gap-5 rounded-2xl border p-6 transition-[transform,box-shadow] duration-300 hover:-translate-y-[2px] hover:shadow-[0_20px_44px_-28px_rgba(15,23,42,0.22)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{
                   backgroundColor: "var(--color-white)",
                   borderColor: "var(--color-warm-gray-200)",
@@ -89,7 +83,7 @@ export default async function PropertiesPage() {
                         color: "var(--color-text-secondary)",
                       }}
                     >
-                      {typeLabels[p.property_type] ?? p.property_type}
+                      {propertyTypeLabels[p.property_type] ?? p.property_type}
                     </span>
                     <h3
                       className="mt-3 truncate text-lg font-semibold tracking-tight"

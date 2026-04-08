@@ -16,6 +16,7 @@ import {
   UpcomingBookings,
   type UpcomingBookingRow,
 } from "@/components/portal/UpcomingBookings";
+import { currency0 } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -24,12 +25,6 @@ export const metadata: Metadata = {
 // Always render fresh on each request. The dashboard is a per-user
 // authenticated view, so it must not be statically cached.
 export const dynamic = "force-dynamic";
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 function greetingFor(date: Date) {
   const h = date.getHours();
@@ -147,15 +142,20 @@ export default async function DashboardPage() {
   // Occupancy = booked nights in the trailing 30 days divided by
   // (active listings * 30). Falls back to null when there is nothing
   // to compute against, which the UI renders as a dash.
+  // Trailing 30 days is *past* nights only. Clamp the booking window
+  // to [thirtyDaysAgo, today] and compute the overlap. Anything that
+  // does not overlap returns zero nights via Math.max.
   const trailingNights = (occupancyBookingsResult.data ?? []).reduce(
     (sum, row) => {
-      const start = new Date(
-        row.check_in > thirtyDaysAgo ? row.check_in : thirtyDaysAgo,
-      );
-      const end = new Date(row.check_out > todayIso ? todayIso : row.check_out);
+      const startStr = row.check_in > thirtyDaysAgo ? row.check_in : thirtyDaysAgo;
+      const endStr = row.check_out < todayIso ? row.check_out : todayIso;
+      if (endStr <= startStr) return sum;
       const nights = Math.max(
         0,
-        Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)),
+        Math.round(
+          (new Date(endStr).getTime() - new Date(startStr).getTime()) /
+            (1000 * 60 * 60 * 24),
+        ),
       );
       return sum + nights;
     },
@@ -249,7 +249,7 @@ export default async function DashboardPage() {
         />
         <MetricCard
           label="Monthly revenue"
-          value={currency.format(monthlyRevenue)}
+          value={currency0.format(monthlyRevenue)}
           hint="Booked stays this month"
           icon={<CurrencyDollar size={20} weight="duotone" />}
           tone="success"
@@ -263,7 +263,7 @@ export default async function DashboardPage() {
         />
         <MetricCard
           label="Pending payouts"
-          value={currency.format(pendingPayouts)}
+          value={currency0.format(pendingPayouts)}
           hint="Awaiting transfer"
           icon={<Wallet size={20} weight="duotone" />}
           tone="amber"
