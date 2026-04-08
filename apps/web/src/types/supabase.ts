@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       activity_log: {
@@ -242,6 +217,35 @@ export type Database = {
           },
         ]
       }
+      onboarding_drafts: {
+        Row: {
+          current_section: string | null
+          draft: Json
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          current_section?: string | null
+          draft?: Json
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          current_section?: string | null
+          draft?: Json
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_drafts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payouts: {
         Row: {
           created_at: string
@@ -295,36 +299,54 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          contact_method: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
           onboarding_completed_at: string | null
           phone: string | null
+          preferred_name: string | null
+          property_count_estimate: string | null
+          referral_source: string | null
           role: Database["public"]["Enums"]["user_role"]
+          timezone: string | null
           updated_at: string
+          years_investing: string | null
         }
         Insert: {
           avatar_url?: string | null
+          contact_method?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id: string
           onboarding_completed_at?: string | null
           phone?: string | null
+          preferred_name?: string | null
+          property_count_estimate?: string | null
+          referral_source?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          timezone?: string | null
           updated_at?: string
+          years_investing?: string | null
         }
         Update: {
           avatar_url?: string | null
+          contact_method?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
           onboarding_completed_at?: string | null
           phone?: string | null
+          preferred_name?: string | null
+          property_count_estimate?: string | null
+          referral_source?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          timezone?: string | null
           updated_at?: string
+          years_investing?: string | null
         }
         Relationships: []
       }
@@ -338,17 +360,30 @@ export type Database = {
           city: string
           country: string
           created_at: string
+          currently_rented: boolean | null
           guest_capacity: number | null
+          half_bathrooms: number | null
           hospitable_property_id: string | null
           id: string
+          latitude: number | null
+          listed_elsewhere: boolean | null
+          longitude: number | null
           name: string | null
+          neighborhood: string | null
           onboarded_at: string | null
           owner_id: string
+          parking_spaces: number | null
+          parking_type: string | null
           postal_code: string
+          property_subtype: string | null
           property_type: Database["public"]["Enums"]["property_type"]
           square_feet: number | null
           state: string
+          stories: number | null
+          timezone: string | null
           updated_at: string
+          year_built: number | null
+          year_purchased: number | null
         }
         Insert: {
           active?: boolean
@@ -359,17 +394,30 @@ export type Database = {
           city: string
           country?: string
           created_at?: string
+          currently_rented?: boolean | null
           guest_capacity?: number | null
+          half_bathrooms?: number | null
           hospitable_property_id?: string | null
           id?: string
+          latitude?: number | null
+          listed_elsewhere?: boolean | null
+          longitude?: number | null
           name?: string | null
+          neighborhood?: string | null
           onboarded_at?: string | null
           owner_id: string
+          parking_spaces?: number | null
+          parking_type?: string | null
           postal_code: string
+          property_subtype?: string | null
           property_type: Database["public"]["Enums"]["property_type"]
           square_feet?: number | null
           state: string
+          stories?: number | null
+          timezone?: string | null
           updated_at?: string
+          year_built?: number | null
+          year_purchased?: number | null
         }
         Update: {
           active?: boolean
@@ -380,17 +428,30 @@ export type Database = {
           city?: string
           country?: string
           created_at?: string
+          currently_rented?: boolean | null
           guest_capacity?: number | null
+          half_bathrooms?: number | null
           hospitable_property_id?: string | null
           id?: string
+          latitude?: number | null
+          listed_elsewhere?: boolean | null
+          longitude?: number | null
           name?: string | null
+          neighborhood?: string | null
           onboarded_at?: string | null
           owner_id?: string
+          parking_spaces?: number | null
+          parking_type?: string | null
           postal_code?: string
+          property_subtype?: string | null
           property_type?: Database["public"]["Enums"]["property_type"]
           square_feet?: number | null
           state?: string
+          stories?: number | null
+          timezone?: string | null
           updated_at?: string
+          year_built?: number | null
+          year_purchased?: number | null
         }
         Relationships: [
           {
@@ -398,6 +459,218 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_amenities: {
+        Row: {
+          amenity_key: string
+          created_at: string
+          metadata: Json
+          property_id: string
+        }
+        Insert: {
+          amenity_key: string
+          created_at?: string
+          metadata?: Json
+          property_id: string
+        }
+        Update: {
+          amenity_key?: string
+          created_at?: string
+          metadata?: Json
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_amenities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_compliance: {
+        Row: {
+          created_at: string
+          hoa_allows_str: string | null
+          hoa_contact: string | null
+          hoa_exists: boolean | null
+          hoa_fees: number | null
+          insurance_carrier: string | null
+          insurance_document_url: string | null
+          insurance_expires: string | null
+          insurance_policy_number: string | null
+          mortgage_allows_str: boolean | null
+          mortgage_holder: string | null
+          permit_document_url: string | null
+          permit_expires: string | null
+          permit_number: string | null
+          permit_required: string | null
+          property_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hoa_allows_str?: string | null
+          hoa_contact?: string | null
+          hoa_exists?: boolean | null
+          hoa_fees?: number | null
+          insurance_carrier?: string | null
+          insurance_document_url?: string | null
+          insurance_expires?: string | null
+          insurance_policy_number?: string | null
+          mortgage_allows_str?: boolean | null
+          mortgage_holder?: string | null
+          permit_document_url?: string | null
+          permit_expires?: string | null
+          permit_number?: string | null
+          permit_required?: string | null
+          property_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hoa_allows_str?: string | null
+          hoa_contact?: string | null
+          hoa_exists?: boolean | null
+          hoa_fees?: number | null
+          insurance_carrier?: string | null
+          insurance_document_url?: string | null
+          insurance_expires?: string | null
+          insurance_policy_number?: string | null
+          mortgage_allows_str?: boolean | null
+          mortgage_holder?: string | null
+          permit_document_url?: string | null
+          permit_expires?: string | null
+          permit_number?: string | null
+          permit_required?: string | null
+          property_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_compliance_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_rules: {
+        Row: {
+          cancellation_policy: string | null
+          check_in_time: string | null
+          check_out_time: string | null
+          children_welcome: boolean | null
+          cleaning_fee: number | null
+          created_at: string
+          damage_deposit: number | null
+          events_allowed: boolean | null
+          extra_guest_fee: number | null
+          extra_guest_threshold: number | null
+          max_nights: number | null
+          min_nights: number | null
+          pet_fee: number | null
+          pets_allowed: boolean | null
+          property_id: string
+          quiet_hours: string | null
+          smoking_policy: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancellation_policy?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          children_welcome?: boolean | null
+          cleaning_fee?: number | null
+          created_at?: string
+          damage_deposit?: number | null
+          events_allowed?: boolean | null
+          extra_guest_fee?: number | null
+          extra_guest_threshold?: number | null
+          max_nights?: number | null
+          min_nights?: number | null
+          pet_fee?: number | null
+          pets_allowed?: boolean | null
+          property_id: string
+          quiet_hours?: string | null
+          smoking_policy?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancellation_policy?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          children_welcome?: boolean | null
+          cleaning_fee?: number | null
+          created_at?: string
+          damage_deposit?: number | null
+          events_allowed?: boolean | null
+          extra_guest_fee?: number | null
+          extra_guest_threshold?: number | null
+          max_nights?: number | null
+          min_nights?: number | null
+          pet_fee?: number | null
+          pets_allowed?: boolean | null
+          property_id?: string
+          quiet_hours?: string | null
+          smoking_policy?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_rules_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_team: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          phone: string | null
+          property_id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          property_id: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          property_id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_team_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -547,9 +820,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       booking_source: [
