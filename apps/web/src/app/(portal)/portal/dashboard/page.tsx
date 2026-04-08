@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   Buildings,
   CalendarCheck,
@@ -6,6 +7,8 @@ import {
   CurrencyDollar,
   House,
   Wallet,
+  Plus,
+  ArrowRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { MetricCard } from "@/components/portal/MetricCard";
@@ -192,6 +195,47 @@ export default async function DashboardPage() {
           revenue, and payouts update the moment a reservation hits Parcel.
         </p>
       </header>
+
+      {totalProperties === 0 ? (
+        <section
+          className="flex flex-col gap-5 rounded-2xl border p-8 lg:flex-row lg:items-center lg:justify-between"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
+          }}
+        >
+          <div>
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.14em]"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              First step
+            </p>
+            <h2
+              className="mt-1 text-xl font-semibold tracking-tight"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Add your first property
+            </h2>
+            <p
+              className="mt-1.5 max-w-md text-sm"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Five quick questions and your portfolio lights up. Bookings,
+              payouts, and connections all flow from here.
+            </p>
+          </div>
+          <Link
+            href="/portal/onboarding/property"
+            className="inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "var(--color-brand)" }}
+          >
+            <Plus size={16} weight="bold" />
+            Add a property
+            <ArrowRight size={14} weight="bold" />
+          </Link>
+        </section>
+      ) : null}
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCard
