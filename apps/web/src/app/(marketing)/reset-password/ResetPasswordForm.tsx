@@ -1,30 +1,32 @@
 "use client";
 
 import { useActionState } from "react";
-import { login, type LoginState } from "./actions";
+import { updatePassword, type ResetPasswordState } from "./actions";
 
-const initialState: LoginState = {};
+const initialState: ResetPasswordState = {};
 
-export function LoginForm({ redirectTo }: { redirectTo: string }) {
-  const [state, formAction, pending] = useActionState(login, initialState);
+export function ResetPasswordForm() {
+  const [state, formAction, pending] = useActionState(
+    updatePassword,
+    initialState,
+  );
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      <input type="hidden" name="redirect" value={redirectTo} />
-
       <div className="flex flex-col gap-2">
         <label
-          htmlFor="email"
+          htmlFor="password"
           className="text-xs font-medium uppercase tracking-wider"
           style={{ color: "var(--color-text-secondary)" }}
         >
-          Email
+          New password
         </label>
         <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          minLength={8}
           required
           className="rounded-lg border border-[var(--color-warm-gray-200)] bg-white px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
           style={{ color: "var(--color-text-primary)" }}
@@ -32,27 +34,19 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between">
-          <label
-            htmlFor="password"
-            className="text-xs font-medium uppercase tracking-wider"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            Password
-          </label>
-          <a
-            href="/forgot-password"
-            className="text-xs font-medium transition-colors hover:opacity-80"
-            style={{ color: "var(--color-brand)" }}
-          >
-            Forgot password?
-          </a>
-        </div>
+        <label
+          htmlFor="confirm"
+          className="text-xs font-medium uppercase tracking-wider"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Confirm new password
+        </label>
         <input
-          id="password"
-          name="password"
+          id="confirm"
+          name="confirm"
           type="password"
-          autoComplete="current-password"
+          autoComplete="new-password"
+          minLength={8}
           required
           className="rounded-lg border border-[var(--color-warm-gray-200)] bg-white px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
           style={{ color: "var(--color-text-primary)" }}
@@ -75,7 +69,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         className="mt-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         style={{ backgroundColor: "var(--color-brand)" }}
       >
-        {pending ? "Signing in..." : "Sign in"}
+        {pending ? "Updating..." : "Update password"}
       </button>
     </form>
   );

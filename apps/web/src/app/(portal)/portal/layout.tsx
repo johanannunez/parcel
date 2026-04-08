@@ -1,19 +1,20 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  PortalSidebar,
+  PortalTopBar,
+} from "@/components/portal/PortalSidebar";
 import { SignOutButton } from "./SignOutButton";
 
 /**
- * Portal layout — wraps every /portal/* page.
+ * Portal shell — wraps every /portal/* page.
  *
- * Phase 2 placeholder: a minimal authenticated shell with a header,
- * brand, user email, and sign-out button. The full designed sidebar
- * lands in Phase 3 when the real portal pages come over from the
- * legacy Vite SPA.
- *
- * Authentication is enforced by proxy.ts before this layout runs,
- * but we double-check here so a direct import cannot bypass auth.
+ * Layout:
+ *   [sidebar (lg+)] [main content]
+ *   On mobile the sidebar is replaced by a thin top bar; a full
+ *   slide-over drawer lands in a later slice when we add more nav
+ *   depth and actually need it.
  */
 export default async function PortalLayout({
   children,
@@ -29,40 +30,46 @@ export default async function PortalLayout({
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .single();
+
+  const fullName =
+    profile?.full_name?.trim() ||
+    user.email?.split("@")[0] ||
+    "Owner";
+  const firstName = fullName.split(" ")[0] ?? fullName;
+  const initials = buildInitials(fullName);
+
   return (
     <div
-      className="min-h-screen"
+      className="flex min-h-screen"
       style={{ backgroundColor: "var(--color-off-white)" }}
     >
-      <header
-        className="border-b"
-        style={{
-          backgroundColor: "var(--color-white)",
-          borderColor: "var(--color-warm-gray-200)",
-        }}
-      >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link
-            href="/portal/dashboard"
-            className="text-lg font-semibold tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Parcel
-          </Link>
+      <PortalSidebar
+        userName={fullName}
+        userEmail={user.email ?? ""}
+        initials={initials}
+        signOutSlot={<SignOutButton />}
+      />
 
-          <div className="flex items-center gap-4">
-            <span
-              className="text-sm"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {user.email}
-            </span>
-            <SignOutButton />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <PortalTopBar userName={firstName} initials={initials} />
+        <main className="flex-1">
+          <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
+            {children}
           </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-6 py-12">{children}</main>
+        </main>
+      </div>
     </div>
   );
+}
+
+function buildInitials(name: string) {
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "O";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
