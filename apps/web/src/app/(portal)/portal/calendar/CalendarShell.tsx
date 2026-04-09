@@ -6,10 +6,15 @@ import { AvailabilityGrid } from "./AvailabilityGrid";
 import { MonthGrid } from "./MonthGrid";
 import { BookingDetailModal, type Booking } from "./BookingDetailModal";
 import { CalendarSyncModal } from "./CalendarSyncModal";
-import { BlockRequestModal } from "./BlockRequestModal";
+import { BlockRequestWizard } from "./BlockRequestWizard";
 import type { BlockRequest } from "./BlockBar";
 
-type Property = { id: string; name: string };
+type Property = {
+  id: string;
+  name: string;
+  address: string;
+  bedrooms: number | null;
+};
 type PastRequest = {
   id: string;
   property_id: string;
@@ -28,6 +33,8 @@ export function CalendarShell({
   blockRequests,
   pastRequests,
   icalUrl,
+  ownerName,
+  ownerEmail,
 }: {
   year: number;
   month: number;
@@ -36,6 +43,8 @@ export function CalendarShell({
   blockRequests: BlockRequest[];
   pastRequests: PastRequest[];
   icalUrl: string | null;
+  ownerName: string;
+  ownerEmail: string;
 }) {
   const [view, setView] = useState<CalendarView>("timeline");
   const [hiddenProperties, setHiddenProperties] = useState<Set<string>>(
@@ -76,14 +85,19 @@ export function CalendarShell({
     return m;
   }, [properties]);
 
+  // Toolbar needs {id, name} shape
+  const toolbarProperties = useMemo(
+    () => properties.map((p) => ({ id: p.id, name: p.name })),
+    [properties],
+  );
+
   return (
     <>
-      {/* Height constraint: full viewport minus portal layout chrome */}
       <div className="flex h-[calc(100dvh-240px)] min-h-[340px] flex-col gap-4">
         <CalendarToolbar
           year={year}
           month={month}
-          properties={properties}
+          properties={toolbarProperties}
           hiddenProperties={hiddenProperties}
           onToggleProperty={onToggleProperty}
           onOpenSync={() => setSyncModalOpen(true)}
@@ -108,7 +122,7 @@ export function CalendarShell({
             <MonthGrid
               year={year}
               month={month}
-              properties={properties}
+              properties={toolbarProperties}
               bookings={filteredBookings}
               blockRequests={filteredBlocks}
               activePropertyId={
@@ -140,9 +154,10 @@ export function CalendarShell({
       ) : null}
 
       {blockModalOpen ? (
-        <BlockRequestModal
-          properties={properties.map((p) => ({ id: p.id, name: p.name }))}
-          pastRequests={pastRequests}
+        <BlockRequestWizard
+          properties={properties}
+          ownerName={ownerName}
+          ownerEmail={ownerEmail}
           onClose={() => setBlockModalOpen(false)}
         />
       ) : null}

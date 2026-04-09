@@ -125,6 +125,22 @@ export type Database = {
           status: string
           created_at: string
           updated_at: string
+          check_in_time: string | null
+          check_out_time: string | null
+          reason: string | null
+          is_owner_staying: boolean
+          guest_name: string | null
+          guest_email: string | null
+          guest_phone: string | null
+          adults: number
+          children: number
+          pets: number
+          needs_lock_code: boolean
+          requested_lock_code: string | null
+          wants_cleaning: boolean
+          cleaning_fee: number | null
+          damage_acknowledged: boolean
+          confirmed_at: string | null
         }
         Insert: {
           id?: string
@@ -136,6 +152,22 @@ export type Database = {
           status?: string
           created_at?: string
           updated_at?: string
+          check_in_time?: string | null
+          check_out_time?: string | null
+          reason?: string | null
+          is_owner_staying?: boolean
+          guest_name?: string | null
+          guest_email?: string | null
+          guest_phone?: string | null
+          adults?: number
+          children?: number
+          pets?: number
+          needs_lock_code?: boolean
+          requested_lock_code?: string | null
+          wants_cleaning?: boolean
+          cleaning_fee?: number | null
+          damage_acknowledged?: boolean
+          confirmed_at?: string | null
         }
         Update: {
           id?: string
@@ -147,6 +179,22 @@ export type Database = {
           status?: string
           created_at?: string
           updated_at?: string
+          check_in_time?: string | null
+          check_out_time?: string | null
+          reason?: string | null
+          is_owner_staying?: boolean
+          guest_name?: string | null
+          guest_email?: string | null
+          guest_phone?: string | null
+          adults?: number
+          children?: number
+          pets?: number
+          needs_lock_code?: boolean
+          requested_lock_code?: string | null
+          wants_cleaning?: boolean
+          cleaning_fee?: number | null
+          damage_acknowledged?: boolean
+          confirmed_at?: string | null
         }
         Relationships: []
       }
