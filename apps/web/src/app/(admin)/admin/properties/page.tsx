@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { hasHospitable } from "@/lib/hospitable";
 import { PropertyRow } from "./PropertyRow";
+import { SyncButton } from "./SyncButton";
 
 export const metadata: Metadata = { title: "Properties (Admin)" };
 export const dynamic = "force-dynamic";
@@ -58,10 +60,23 @@ export default async function AdminPropertiesPage() {
           style={{ color: "rgba(255,255,255,0.7)" }}
         >
           Connect each property to Hospitable by pasting its Hospitable
-          property ID and iCal feed URL. Once connected, bookings and
-          calendar data will be available to the owner in their portal.
+          property ID and iCal feed URL. Once connected, hit Sync to pull
+          bookings and calendar data into the portal.
         </p>
       </div>
+
+      {hasHospitable() ? <SyncButton /> : (
+        <div
+          className="rounded-xl border px-4 py-3 text-sm"
+          style={{
+            backgroundColor: "rgba(248, 113, 113, 0.06)",
+            borderColor: "rgba(248, 113, 113, 0.2)",
+            color: "#fca5a5",
+          }}
+        >
+          HOSPITABLE_API is not set. Add it to Doppler to enable syncing.
+        </div>
+      )}
 
       {unconnected.length > 0 ? (
         <Section

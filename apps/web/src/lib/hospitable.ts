@@ -2,8 +2,6 @@ const BASE_URL = "https://public.api.hospitable.com/v2";
 
 /**
  * Returns true when the Hospitable integration is configured.
- * Used by callers (like generateStaticParams) to gracefully fall
- * back when the env var is missing during build or preview.
  */
 export function hasHospitable(): boolean {
   return Boolean(process.env.HOSPITABLE_API);
@@ -17,7 +15,7 @@ function getToken(): string {
 
 async function request<T>(
   path: string,
-  options?: { params?: Record<string, string> }
+  options?: { params?: Record<string, string>; revalidate?: number },
 ): Promise<T> {
   const url = new URL(`${BASE_URL}${path}`);
   if (options?.params) {
@@ -31,7 +29,7 @@ async function request<T>(
       Authorization: `Bearer ${getToken()}`,
       Accept: "application/json",
     },
-    next: { revalidate: 3600 }, // cache 1 hour
+    next: { revalidate: options?.revalidate ?? 3600 },
   });
 
   if (!res.ok) {
@@ -41,6 +39,10 @@ async function request<T>(
 
   return res.json() as Promise<T>;
 }
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export interface HospitableProperty {
   id: string;
@@ -62,10 +64,55 @@ export interface HospitableProperty {
   };
 }
 
+export interface HospitableGuest {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface HospitableFinancials {
+  host_payout?: { amount?: number; currency?: string };
+  guest_fee?: { amount?: number; currency?: string };
+  nightly_price?: { amount?: number; currency?: string };
+  cleaning_fee?: { amount?: number; currency?: string };
+  total_price?: { amount?: number; currency?: string };
+}
+
+export interface HospitableReservation {
+  id: string;
+  property_id?: string;
+  platform?: string;
+  platform_id?: string;
+  status?: { category?: string };
+  dates?: {
+    arrival?: string;
+    departure?: string;
+    booking?: string;
+  };
+  nights?: number;
+  guest_count?: { adults?: number; children?: number; infants?: number };
+  guest?: HospitableGuest;
+  financials?: HospitableFinancials;
+  properties?: { data?: HospitableProperty[] };
+}
+
+export interface HospitableCalendarDay {
+  date: string;
+  price?: { amount?: number; formatted?: string; currency?: string };
+  status?: { available?: boolean };
+  min_stay?: number;
+}
+
 interface PaginatedResponse<T> {
   data: T[];
   links?: { next?: string | null };
+  meta?: { current_page?: number; last_page?: number };
 }
+
+// ---------------------------------------------------------------------------
+// Properties
+// ---------------------------------------------------------------------------
 
 export async function getProperties(): Promise<HospitableProperty[]> {
   if (!hasHospitable()) return [];
@@ -77,27 +124,113 @@ export async function getProperties(): Promise<HospitableProperty[]> {
   while (hasMore) {
     const res = await request<PaginatedResponse<HospitableProperty>>(
       "/properties",
-      { params: { page: String(page), per_page: "50" } }
+      { params: { page: String(page), per_page: "100" }, revalidate: 0 },
     );
     all.push(...res.data);
     hasMore = res.links?.next != null;
     page++;
   }
 
-  return all.filter((p) => p.listed !== false);
+  return all;
 }
 
 export async function getProperty(
-  id: string
+  id: string,
 ): Promise<HospitableProperty | null> {
   if (!hasHospitable()) return null;
 
   try {
     const res = await request<{ data: HospitableProperty }>(
-      `/properties/${id}`
+      `/properties/${id}`,
     );
     return res.data;
   } catch {
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Reservations
+// ---------------------------------------------------------------------------
+
+export async function getReservations(
+  propertyIds: string[],
+  opts?: { startDate?: string; endDate?: string },
+): Promise<HospitableReservation[]> {
+  if (!hasHospitable() || propertyIds.length === 0) return [];
+
+  const all: HospitableReservation[] = [];
+  let page = 1;
+  let hasMore = true;
+
+  while (hasMore) {
+    const params: Record<string, string> = {
+      page: String(page),
+      per_page: "100",
+      include: "guest,financials",
+    };
+
+    // The API requires properties[] parameter
+    propertyIds.forEach((id, i) => {
+      params[`properties[${i}]`] = id;
+    });
+
+    if (opts?.startDate) params.start_date = opts.startDate;
+    if (opts?.endDate) params.end_date = opts.endDate;
+
+    const res = await request<PaginatedResponse<HospitableReservation>>(
+      "/reservations",
+      { params, revalidate: 0 },
+    );
+    all.push(...res.data);
+    hasMore = res.links?.next != null;
+    page++;
+  }
+
+  return all;
+}
+
+// ---------------------------------------------------------------------------
+// Calendar
+// ---------------------------------------------------------------------------
+
+export async function getCalendar(
+  propertyId: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<HospitableCalendarDay[]> {
+  if (!hasHospitable()) return [];
+
+  const params: Record<string, string> = {};
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+
+  const res = await request<{ data: HospitableCalendarDay[] }>(
+    `/properties/${propertyId}/calendar`,
+    { params, revalidate: 0 },
+  );
+
+  return res.data;
+}
+
+// ---------------------------------------------------------------------------
+// Platform to booking_source mapping
+// ---------------------------------------------------------------------------
+
+const PLATFORM_MAP: Record<string, string> = {
+  airbnb: "airbnb",
+  homeaway: "vrbo",
+  vrbo: "vrbo",
+  "booking.com": "booking_com",
+  booking: "booking_com",
+  direct: "direct",
+  hospitable: "hospitable",
+  manual: "direct",
+};
+
+export function mapPlatformToSource(
+  platform?: string,
+): string {
+  if (!platform) return "other";
+  return PLATFORM_MAP[platform.toLowerCase()] ?? "other";
 }
