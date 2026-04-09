@@ -304,52 +304,93 @@ export default async function SetupHubPage({
           </div>
         </div>
 
-        <Link
-          href="/portal/setup/welcome"
-          className="mt-3 flex items-center justify-between gap-4 rounded-xl border px-5 py-3.5 transition-colors hover:bg-[var(--color-warm-gray-50)]"
-          style={{
-            borderColor: "var(--color-warm-gray-200)",
-            backgroundColor: "var(--color-white)",
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-              style={{
-                background: "linear-gradient(135deg, #02aaeb, #1b77be)",
-              }}
-            >
-              <Sparkle size={16} weight="fill" className="text-white" />
-            </span>
-            <div>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Link
+            href="/portal/setup/welcome"
+            className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-[var(--color-warm-gray-50)]"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-white)",
+            }}
+          >
+            <div className="flex items-center gap-3">
               <span
-                className="text-sm font-semibold"
-                style={{ color: "var(--color-text-primary)" }}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                style={{
+                  background: "linear-gradient(135deg, #02aaeb, #1b77be)",
+                }}
               >
-                Start here
+                <Sparkle size={14} weight="fill" className="text-white" />
               </span>
-              <span
-                className="ml-2 text-sm"
-                style={{ color: "var(--color-text-secondary)" }}
-              >
-                Meet the team, watch the welcome video, and schedule your
-                kickoff call.
-              </span>
+              <div>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  Welcome
+                </span>
+                <span
+                  className="ml-2 text-sm"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Meet the team and schedule your kickoff call.
+                </span>
+              </div>
             </div>
-          </div>
-          <ArrowRight
-            size={16}
-            weight="bold"
-            style={{ color: "var(--color-text-tertiary)" }}
-          />
-        </Link>
+            <ArrowRight
+              size={14}
+              weight="bold"
+              style={{ color: "var(--color-text-tertiary)" }}
+            />
+          </Link>
+
+          <Link
+            href="/portal/dashboard"
+            className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-[var(--color-warm-gray-50)]"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-white)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                style={{
+                  backgroundColor: "var(--color-warm-gray-50)",
+                  color: "var(--color-brand)",
+                }}
+              >
+                <ClipboardText size={14} weight="duotone" />
+              </span>
+              <div>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  Stuck?
+                </span>
+                <span
+                  className="ml-2 text-sm"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Message Parcel and we will jump in.
+                </span>
+              </div>
+            </div>
+            <ArrowRight
+              size={14}
+              weight="bold"
+              style={{ color: "var(--color-text-tertiary)" }}
+            />
+          </Link>
+        </div>
 
         {selected && properties && (
           <div className="mt-2">
             <PropertySelector
               properties={(properties as (PropertyRow & { profiles?: { full_name: string | null } | null })[]).map((p) => ({
                 id: p.id,
-                name: p.name,
+                name: null,
                 address_line1: p.address_line1,
                 city: p.city,
                 state: p.state,
@@ -390,50 +431,6 @@ export default async function SetupHubPage({
         />
       </section>
 
-      <footer
-        className="mx-6 mb-4 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between lg:mx-10"
-        style={{
-          borderColor: "var(--color-warm-gray-200)",
-          backgroundColor: "var(--color-white)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-            style={{
-              backgroundColor: "var(--color-warm-gray-50)",
-              color: "var(--color-brand)",
-            }}
-          >
-            <ClipboardText size={18} weight="duotone" />
-          </span>
-          <div>
-            <p
-              className="text-sm font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              Stuck on a step?
-            </p>
-            <p
-              className="text-[13px]"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Send a message and Johan will jump in. Most owners finish in
-              under an hour.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/portal/dashboard"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
-          style={{
-            borderColor: "var(--color-warm-gray-200)",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          Message Parcel
-        </Link>
-      </footer>
     </div>
   );
 }

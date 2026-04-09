@@ -29,14 +29,16 @@ type PropertySelectorProps = {
 };
 
 function displayName(p: PropertyOption): string {
-  if (p.address_line1) return p.address_line1;
+  if (p.address_line1) {
+    const parts = [p.address_line1, p.city, p.state].filter(Boolean);
+    return parts.join(", ");
+  }
   return p.name || "Untitled property";
 }
 
 function displaySub(p: PropertyOption): string {
-  const location = [p.city, p.state].filter(Boolean).join(", ");
-  const name = p.address_line1 && p.name ? p.name : "";
-  return [name, location].filter(Boolean).join(" · ");
+  // No subtext needed — address already includes city/state
+  return "";
 }
 
 /** Group properties by owner name, preserving order */
