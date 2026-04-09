@@ -236,12 +236,22 @@ export function BlockRequestWizard({
           height: "min(720px, calc(100dvh - 48px))",
         }}
       >
-        {/* Header + step labels */}
+        {/* Header + progress */}
         <div className="shrink-0">
-          <div className="flex items-center justify-between px-6 pt-5 pb-3">
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Block dates
-            </p>
+          <div className="flex items-center justify-between px-6 pt-4 pb-3">
+            <div className="flex items-center gap-3">
+              <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                Block dates
+              </p>
+              {!submitted && (
+                <span
+                  className="text-[11px] font-medium"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  Step {step + 1} of {STEPS.length} · {STEPS[step]}
+                </span>
+              )}
+            </div>
             <button
               type="button"
               onClick={onClose}
@@ -253,75 +263,20 @@ export function BlockRequestWizard({
             </button>
           </div>
 
-          {/* Step progress with labels */}
-          {!submitted && (
-            <div className="flex items-center gap-0 px-6 pb-4">
-              {STEPS.map((label, i) => {
-                const isDone = i < step;
-                const isCurrent = i === step;
-                const isFuture = i > step;
-                return (
-                  <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
-                    <div className="flex w-full items-center">
-                      {i > 0 && (
-                        <div
-                          className="h-[2px] flex-1 transition-colors duration-200"
-                          style={{
-                            backgroundColor: isDone || isCurrent
-                              ? "var(--color-brand)"
-                              : "var(--color-warm-gray-200)",
-                          }}
-                        />
-                      )}
-                      <span
-                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-200"
-                        style={{
-                          backgroundColor: isDone
-                            ? "var(--color-brand)"
-                            : isCurrent
-                              ? "var(--color-brand)"
-                              : "var(--color-warm-gray-100)",
-                          color: isDone || isCurrent
-                            ? "#ffffff"
-                            : "var(--color-text-tertiary)",
-                        }}
-                      >
-                        {isDone ? "✓" : i + 1}
-                      </span>
-                      {i < STEPS.length - 1 && (
-                        <div
-                          className="h-[2px] flex-1 transition-colors duration-200"
-                          style={{
-                            backgroundColor: isDone
-                              ? "var(--color-brand)"
-                              : "var(--color-warm-gray-200)",
-                          }}
-                        />
-                      )}
-                    </div>
-                    <span
-                      className="text-[10px] font-medium leading-tight text-center"
-                      style={{
-                        color: isCurrent
-                          ? "var(--color-brand)"
-                          : isFuture
-                            ? "var(--color-text-tertiary)"
-                            : "var(--color-text-secondary)",
-                      }}
-                    >
-                      {label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Divider */}
+          {/* Thin progress bar */}
           <div
-            className="h-px w-full"
+            className="h-[3px] w-full"
             style={{ backgroundColor: "var(--color-warm-gray-100)" }}
-          />
+          >
+            <div
+              className="h-full transition-[width] duration-300"
+              style={{
+                width: submitted ? "100%" : `${pct}%`,
+                background: "linear-gradient(90deg, #02aaeb 0%, #1b77be 100%)",
+                borderRadius: "0 2px 2px 0",
+              }}
+            />
+          </div>
         </div>
 
         {/* Body */}
@@ -421,39 +376,36 @@ function StepPropertyDates({ properties, data, update, nights }: { properties: P
   const isEnd = (iso: string) => iso === (selEnd ?? selStart);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>Property and dates</h2>
-        <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>Pick the home and the dates you need blocked.</p>
+        <h2 className="text-lg font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>Property and dates</h2>
+        <p className="mt-0.5 text-sm" style={{ color: "var(--color-text-secondary)" }}>Pick the home and the dates you need blocked.</p>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label>Property</Label>
-        <select value={data.propertyId} onChange={(e) => update({ propertyId: e.target.value })} className="h-11 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2" style={{ backgroundColor: "var(--color-white)", borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}>
-          {properties.map((p) => (<option key={p.id} value={p.id}>{p.name} {p.address ? `· ${p.address}` : ""}</option>))}
-        </select>
-      </div>
+      <select value={data.propertyId} onChange={(e) => update({ propertyId: e.target.value })} className="h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2" style={{ backgroundColor: "var(--color-white)", borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}>
+        {properties.map((p) => (<option key={p.id} value={p.id}>{p.name} {p.address ? `· ${p.address}` : ""}</option>))}
+      </select>
 
       {/* Calendar */}
       <div>
         <div className="flex items-center justify-between">
-          <button type="button" onClick={() => { if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); } else setViewMonth((m) => m - 1); }} className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-[var(--color-warm-gray-50)]" style={{ color: "var(--color-text-secondary)" }}><CaretLeft size={14} weight="bold" /></button>
-          <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>{MONTH_NAMES[viewMonth]} {viewYear}</span>
-          <button type="button" onClick={() => { if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); } else setViewMonth((m) => m + 1); }} className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-[var(--color-warm-gray-50)]" style={{ color: "var(--color-text-secondary)" }}><CaretRight size={14} weight="bold" /></button>
+          <button type="button" onClick={() => { if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); } else setViewMonth((m) => m - 1); }} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[var(--color-warm-gray-50)]" style={{ color: "var(--color-text-secondary)" }}><CaretLeft size={13} weight="bold" /></button>
+          <span className="text-[13px] font-semibold" style={{ color: "var(--color-text-primary)" }}>{MONTH_NAMES[viewMonth]} {viewYear}</span>
+          <button type="button" onClick={() => { if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); } else setViewMonth((m) => m + 1); }} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[var(--color-warm-gray-50)]" style={{ color: "var(--color-text-secondary)" }}><CaretRight size={13} weight="bold" /></button>
         </div>
-        <div className="mt-2 grid grid-cols-7 text-center text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: "var(--color-text-tertiary)" }}>
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (<div key={d} className="py-1.5">{d}</div>))}
+        <div className="mt-1 grid grid-cols-7 text-center text-[9px] font-semibold uppercase tracking-[0.06em]" style={{ color: "var(--color-text-tertiary)" }}>
+          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (<div key={d} className="py-1">{d}</div>))}
         </div>
         <div className="grid grid-cols-7">
           {calDays.map((iso, i) => {
-            if (!iso) return <div key={`e-${i}`} className="h-9" />;
+            if (!iso) return <div key={`e-${i}`} className="h-8" />;
             const isPast = iso < today;
             const inRange = isInRange(iso);
             const start = isStart(iso);
             const end = isEnd(iso);
             const isToday = iso === today;
             return (
-              <button key={iso} type="button" disabled={isPast} onClick={() => onDayClick(iso)} onMouseEnter={() => { if (data.startDate && !data.endDate) setHovered(iso); }} onMouseLeave={() => setHovered(null)} className="relative flex h-9 items-center justify-center text-[13px] font-medium tabular-nums transition-colors" style={{ color: isPast ? "var(--color-text-tertiary)" : (start || end) ? "#ffffff" : inRange ? "var(--color-brand)" : "var(--color-text-primary)", backgroundColor: (start || end) ? "var(--color-brand)" : inRange ? "rgba(2, 170, 235, 0.14)" : "transparent", borderRadius: start && end ? "8px" : start ? "8px 0 0 8px" : end ? "0 8px 8px 0" : "0", cursor: isPast ? "default" : "pointer", opacity: isPast ? 0.4 : 1, fontWeight: isToday || start || end ? 700 : 500 }}>
+              <button key={iso} type="button" disabled={isPast} onClick={() => onDayClick(iso)} onMouseEnter={() => { if (data.startDate && !data.endDate) setHovered(iso); }} onMouseLeave={() => setHovered(null)} className="relative flex h-8 items-center justify-center text-[12px] font-medium tabular-nums transition-colors" style={{ color: isPast ? "var(--color-text-tertiary)" : (start || end) ? "#ffffff" : inRange ? "var(--color-brand)" : "var(--color-text-primary)", backgroundColor: (start || end) ? "var(--color-brand)" : inRange ? "rgba(2, 170, 235, 0.14)" : "transparent", borderRadius: start && end ? "6px" : start ? "6px 0 0 6px" : end ? "0 6px 6px 0" : "0", cursor: isPast ? "default" : "pointer", opacity: isPast ? 0.4 : 1, fontWeight: isToday || start || end ? 700 : 500 }}>
                 {new Date(`${iso}T00:00:00`).getDate()}
               </button>
             );
@@ -461,20 +413,29 @@ function StepPropertyDates({ properties, data, update, nights }: { properties: P
         </div>
       </div>
 
-      {/* Date summary */}
+      {/* Date summary + times in one row */}
       {data.startDate && data.endDate ? (
-        <div className="flex items-center justify-between rounded-xl border px-4 py-3" style={{ backgroundColor: "rgba(2, 170, 235, 0.04)", borderColor: "rgba(2, 170, 235, 0.2)" }}>
-          <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "var(--color-brand)" }}><MapPin size={14} weight="duotone" />{fmtDate(data.startDate)} to {fmtDate(data.endDate)}</div>
-          <div className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: "var(--color-brand)" }}><Moon size={14} weight="duotone" />{nights} {nights === 1 ? "night" : "nights"}</div>
+        <div className="flex items-center justify-between rounded-lg border px-3 py-2" style={{ backgroundColor: "rgba(2, 170, 235, 0.04)", borderColor: "rgba(2, 170, 235, 0.2)" }}>
+          <div className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: "var(--color-brand)" }}><Moon size={13} weight="duotone" />{fmtDate(data.startDate)} to {fmtDate(data.endDate)} · {nights} {nights === 1 ? "night" : "nights"}</div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed px-4 py-3 text-center text-sm" style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-tertiary)" }}>Tap a start date, then an end date</div>
+        <div className="rounded-lg border border-dashed px-3 py-2 text-center text-[12px]" style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-tertiary)" }}>Tap a start date, then an end date</div>
       )}
 
-      {/* Times */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5"><Label>Check-in</Label><PillGroup options={CHECK_IN_TIMES} value={data.checkInTime} onChange={(v) => update({ checkInTime: v })} /></div>
-        <div className="flex flex-col gap-1.5"><Label>Check-out</Label><PillGroup options={CHECK_OUT_TIMES} value={data.checkOutTime} onChange={(v) => update({ checkOutTime: v })} /></div>
+      {/* Times as compact dropdowns */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1">
+          <Label>Check-in time</Label>
+          <select value={data.checkInTime} onChange={(e) => update({ checkInTime: e.target.value })} className="h-9 w-full rounded-lg border px-2.5 text-[12px] outline-none focus:ring-2" style={{ backgroundColor: "var(--color-white)", borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}>
+            {CHECK_IN_TIMES.map((t) => (<option key={t} value={t}>{t}</option>))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>Check-out time</Label>
+          <select value={data.checkOutTime} onChange={(e) => update({ checkOutTime: e.target.value })} className="h-9 w-full rounded-lg border px-2.5 text-[12px] outline-none focus:ring-2" style={{ backgroundColor: "var(--color-white)", borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}>
+            {CHECK_OUT_TIMES.map((t) => (<option key={t} value={t}>{t}</option>))}
+          </select>
+        </div>
       </div>
     </div>
   );
