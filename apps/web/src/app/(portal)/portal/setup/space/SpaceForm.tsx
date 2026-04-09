@@ -183,7 +183,7 @@ export function SpaceForm({
                     <select
                       value={bed.type}
                       onChange={(e) => updateBed(bedroomIdx, bedIdx, "type", e.target.value)}
-                      className="flex-1 rounded-lg border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                      className="flex-1 rounded-lg border bg-[var(--color-white)] px-3 py-2 text-sm focus:outline-none focus:ring-2"
                       style={{
                         borderColor: "var(--color-warm-gray-200)",
                         color: "var(--color-text-primary)",

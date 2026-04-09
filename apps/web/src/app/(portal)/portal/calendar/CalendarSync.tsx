@@ -118,7 +118,7 @@ export function CalendarSync({
               <span
                 className="flex h-10 w-10 items-center justify-center rounded-xl"
                 style={{
-                  backgroundColor: "#ffffff",
+                  backgroundColor: "var(--color-white)",
                   border: "1px solid var(--color-warm-gray-200)",
                 }}
                 aria-hidden

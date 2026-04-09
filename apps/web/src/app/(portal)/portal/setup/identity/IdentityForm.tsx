@@ -89,7 +89,7 @@ export function IdentityForm({
               name="issuing_state"
               defaultValue={initial.issuing_state}
               required
-              className="rounded-lg border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+              className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
               style={{
                 borderColor: err("issuing_state") ? "#e3867a" : "var(--color-warm-gray-200)",
                 color: "var(--color-text-primary)",

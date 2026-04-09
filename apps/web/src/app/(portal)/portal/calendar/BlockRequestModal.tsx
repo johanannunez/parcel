@@ -331,7 +331,7 @@ export function BlockRequestModal({
                     color: isPast
                       ? "var(--color-text-tertiary)"
                       : inRange
-                        ? "#ffffff"
+                        ? "var(--color-white)"
                         : "var(--color-text-primary)",
                     backgroundColor: start || end
                       ? "var(--color-brand)"
@@ -353,7 +353,7 @@ export function BlockRequestModal({
                     style={{
                       color:
                         start || end
-                          ? "#ffffff"
+                          ? "var(--color-white)"
                           : inRange
                             ? "var(--color-brand)"
                             : isToday
@@ -457,7 +457,7 @@ export function BlockRequestModal({
             className="rounded-lg px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             style={{
               backgroundColor: "var(--color-brand)",
-              color: "#ffffff",
+              color: "var(--color-white)",
             }}
           >
             {pending ? "Submitting..." : "Submit request"}

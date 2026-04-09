@@ -101,7 +101,7 @@ export function OccupancyCalendar({
                   ? "var(--color-brand)"
                   : "transparent",
                 color: isBooked
-                  ? "#ffffff"
+                  ? "var(--color-white)"
                   : isToday
                     ? "var(--color-brand)"
                     : "var(--color-text-secondary)",

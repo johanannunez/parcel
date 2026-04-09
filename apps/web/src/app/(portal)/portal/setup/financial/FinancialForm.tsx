@@ -159,7 +159,7 @@ function SelectInput({ name, label, options, defaultValue }: { name: string; lab
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-[12px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>{label}</label>
       <select id={id} name={name} defaultValue={defaultValue}
-        className="rounded-lg border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+        className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
         style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}
       >
         <option value="">Select</option>

@@ -198,7 +198,7 @@ function StatusPill({ connected }: { connected: boolean }) {
       ) : (
         <span
           className="h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: "#767170" }}
+          style={{ backgroundColor: "var(--color-text-tertiary)" }}
         />
       )}
       {connected ? "Connected" : "Not connected"}

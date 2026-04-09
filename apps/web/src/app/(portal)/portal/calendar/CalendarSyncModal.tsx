@@ -180,7 +180,7 @@ export function CalendarSyncModal({
                 <span
                   className="flex h-9 w-9 items-center justify-center rounded-lg"
                   style={{
-                    backgroundColor: "#ffffff",
+                    backgroundColor: "var(--color-white)",
                     border: "1px solid var(--color-warm-gray-200)",
                   }}
                   aria-hidden
@@ -234,7 +234,7 @@ export function CalendarSyncModal({
                   className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-opacity hover:opacity-80"
                   style={{
                     backgroundColor: "var(--color-brand)",
-                    color: "#ffffff",
+                    color: "var(--color-white)",
                   }}
                 >
                   {copied ? (

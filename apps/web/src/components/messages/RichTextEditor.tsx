@@ -226,7 +226,7 @@ export function RichTextEditor({ content = "", placeholder = "Write a message...
             className="flex h-7 w-7 items-center justify-center rounded text-xs font-bold transition-colors"
             style={{
               backgroundColor: "#fef08a",
-              color: "#1a1a1a",
+              color: "var(--color-text-primary)",
               borderRadius: "4px",
             }}
           >

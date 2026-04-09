@@ -515,7 +515,7 @@ function DetailField({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-lg border bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
+          className="w-full appearance-none rounded-lg border bg-[var(--color-white)] px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
           style={{
             borderColor: "var(--color-warm-gray-200)",
             color: value
@@ -537,7 +537,7 @@ function DetailField({
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
           min={field.type === "number" ? 0 : undefined}
-          className="w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
+          className="w-full rounded-lg border bg-[var(--color-white)] px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
           style={{
             borderColor: "var(--color-warm-gray-200)",
             color: "var(--color-text-primary)",
@@ -621,7 +621,7 @@ function RepeaterSection({
           {Array.from({ length: count }, (_, i) => (
             <div
               key={i}
-              className="flex flex-col gap-2 rounded-lg border bg-white p-3 sm:flex-row sm:items-end sm:gap-3"
+              className="flex flex-col gap-2 rounded-lg border bg-[var(--color-white)] p-3 sm:flex-row sm:items-end sm:gap-3"
               style={{ borderColor: "var(--color-warm-gray-200)" }}
             >
               <p
@@ -648,7 +648,7 @@ function RepeaterSection({
                           e.target.value,
                         )
                       }
-                      className="w-full appearance-none rounded-lg border bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
+                      className="w-full appearance-none rounded-lg border bg-[var(--color-white)] px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
                       style={{
                         borderColor: "var(--color-warm-gray-200)",
                         color: details[`item_${i}_${field.key}`]
@@ -675,7 +675,7 @@ function RepeaterSection({
                         )
                       }
                       placeholder={field.placeholder}
-                      className="w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
+                      className="w-full rounded-lg border bg-[var(--color-white)] px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
                       style={{
                         borderColor: "var(--color-warm-gray-200)",
                         color: "var(--color-text-primary)",

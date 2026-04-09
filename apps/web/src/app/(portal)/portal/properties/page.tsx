@@ -113,7 +113,7 @@ export default async function PropertiesPage() {
                     <span
                       className="h-1.5 w-1.5 rounded-full"
                       style={{
-                        backgroundColor: p.active ? "#16a34a" : "#767170",
+                        backgroundColor: p.active ? "#16a34a" : "var(--color-text-tertiary)",
                       }}
                     />
                     {p.active ? "Active" : "Paused"}

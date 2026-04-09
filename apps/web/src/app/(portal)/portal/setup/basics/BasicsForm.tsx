@@ -527,7 +527,7 @@ function SelectInput({
         required={required}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className="rounded-lg border bg-white px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+        className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
         style={{
           borderColor: error
             ? "#e3867a"

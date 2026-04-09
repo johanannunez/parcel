@@ -397,7 +397,7 @@ export function AccountForm({
                 name="state"
                 defaultValue={addr?.state ?? ""}
                 required
-                className="rounded-lg border bg-white px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+                className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
                 style={{
                   borderColor: err("state") ? "#e3867a" : "var(--color-warm-gray-200)",
                   color: "var(--color-text-primary)",
@@ -551,7 +551,7 @@ export function AccountForm({
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="rounded-lg border bg-white px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+            className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
             style={{
               borderColor: "var(--color-warm-gray-200)",
               color: "var(--color-text-primary)",

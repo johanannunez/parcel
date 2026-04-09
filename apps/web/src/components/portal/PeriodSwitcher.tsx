@@ -15,14 +15,14 @@ function pill(active: boolean) {
     backgroundColor: active
       ? "var(--color-brand)"
       : "var(--color-warm-gray-100)",
-    color: active ? "#ffffff" : "var(--color-text-secondary)",
+    color: active ? "var(--color-white)" : "var(--color-text-secondary)",
   };
 }
 
 function outlinePill(active: boolean) {
   return {
     backgroundColor: active ? "var(--color-brand)" : "transparent",
-    color: active ? "#ffffff" : "var(--color-text-secondary)",
+    color: active ? "var(--color-white)" : "var(--color-text-secondary)",
     border: active ? "none" : "1px solid var(--color-warm-gray-200)",
   };
 }
@@ -177,7 +177,7 @@ export function PeriodSwitcher({
                     backgroundColor: selected
                       ? "var(--color-brand)"
                       : "var(--color-warm-gray-100)",
-                    color: selected ? "#ffffff" : "var(--color-text-secondary)",
+                    color: selected ? "var(--color-white)" : "var(--color-text-secondary)",
                     opacity: canToggle ? 1 : 0.5,
                   }}
                   aria-pressed={selected}

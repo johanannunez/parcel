@@ -372,7 +372,7 @@ export function PortalMessagesShell({
                           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
                           style={{
                             backgroundColor: isSelected ? "var(--color-brand)" : "var(--color-warm-gray-200)",
-                            color: isSelected ? "white" : "var(--color-text-secondary)",
+                            color: isSelected ? "var(--color-white)" : "var(--color-text-secondary)",
                           }}
                         >
                           PC
@@ -436,7 +436,7 @@ export function PortalMessagesShell({
               >
                 <span
                   className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
-                  style={{ backgroundColor: "var(--color-brand)", color: "white" }}
+                  style={{ backgroundColor: "var(--color-brand)", color: "var(--color-white)" }}
                 >
                   PC
                 </span>
@@ -482,7 +482,7 @@ export function PortalMessagesShell({
                             <SafeHtml
                               html={m.body}
                               className="text-sm leading-relaxed [&_a]:underline [&_img]:rounded-lg"
-                              style={{ color: isOwner ? "white" : "var(--color-text-primary)" }}
+                              style={{ color: isOwner ? "var(--color-white)" : "var(--color-text-primary)" }}
                             />
                           </div>
                           <span

@@ -313,7 +313,7 @@ function PropertyDropdown({
                       }}
                     >
                       {allVisible && (
-                        <Check size={10} weight="bold" color="#fff" />
+                        <Check size={10} weight="bold" color="var(--color-white)" />
                       )}
                     </span>
                     All Homes
@@ -350,7 +350,7 @@ function PropertyDropdown({
                           }}
                         >
                           {visible && (
-                            <Check size={10} weight="bold" color="#fff" />
+                            <Check size={10} weight="bold" color="var(--color-white)" />
                           )}
                         </span>
                         <span className="truncate font-medium">{p.name}</span>
@@ -393,7 +393,7 @@ function PropertyDropdown({
                         {isActive && (
                           <span
                             className="h-1.5 w-1.5 rounded-full"
-                            style={{ backgroundColor: "#fff" }}
+                            style={{ backgroundColor: "var(--color-white)" }}
                           />
                         )}
                       </span>

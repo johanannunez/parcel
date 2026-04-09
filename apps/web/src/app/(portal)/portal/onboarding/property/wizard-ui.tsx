@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
  */
 
 const inputBase =
-  "w-full rounded-lg border bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[rgba(2,170,235,0.16)]";
+  "w-full rounded-lg border bg-[var(--color-white)] px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[rgba(2,170,235,0.16)]";
 
 export function Field({
   label,
