@@ -15,6 +15,7 @@ import {
   CommandPalette,
   CommandPaletteTrigger,
 } from "@/components/portal/CommandPalette";
+import { OwnerLocalTime } from "@/components/portal/OwnerLocalTime";
 
 type NavItem = {
   href: string;
@@ -57,11 +58,13 @@ export function PortalSidebar({
   userName,
   userEmail,
   initials,
+  timezone,
   signOutSlot,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
+  timezone: string | null;
   signOutSlot: ReactNode;
 }) {
   const pathname = usePathname();
@@ -208,6 +211,7 @@ export function PortalSidebar({
             >
               {userEmail}
             </div>
+            <OwnerLocalTime timezone={timezone} />
           </div>
         </div>
         <div className="mt-3">{signOutSlot}</div>

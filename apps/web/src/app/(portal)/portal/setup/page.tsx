@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { PropertySwitcher } from "@/components/portal/PropertySwitcher";
+import { OwnerLocalTime } from "@/components/portal/OwnerLocalTime";
 import {
   setupSearchIndex,
   groupStepsByGroup,
@@ -127,7 +128,7 @@ export default async function SetupHubPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name")
+    .select("full_name, timezone")
     .eq("id", user.id)
     .single();
 
@@ -257,12 +258,15 @@ export default async function SetupHubPage({
           Onboarding
         </p>
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1
-            className="text-[28px] font-semibold leading-tight tracking-tight sm:text-[34px]"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Let us get you set up, {firstName}.
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1
+              className="text-[28px] font-semibold leading-tight tracking-tight sm:text-[34px]"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Let us get you set up, {firstName}.
+            </h1>
+            <OwnerLocalTime timezone={profile?.timezone ?? null} />
+          </div>
           <div className="flex items-center gap-3">
             <div
               className="h-2 w-24 overflow-hidden rounded-full sm:w-32"
