@@ -224,3 +224,32 @@ html {
 .admin-stat-card:hover {
   border-color: rgba(255, 255, 255, 0.15);
 }
+
+/* ------------------------------------------------
+   Portal sidebar footer rows
+   ------------------------------------------------ */
+.sidebar-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px 7px 17px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  text-decoration: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.sidebar-footer-row:hover {
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-secondary);
+}
+.sidebar-footer-signout:hover {
+  background: rgba(230, 100, 80, 0.10);
+  color: #F0836E;
+}
