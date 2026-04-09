@@ -195,3 +195,33 @@ export async function decideBlockRequest(
   revalidatePath("/portal/calendar");
   return { ok: true };
 }
+
+const CancelSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export async function cancelBlockRequest(
+  input: unknown,
+): Promise<BlockRequestResult> {
+  const parsed = CancelSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid request." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  // Only allow cancelling own pending requests
+  const { error } = await supabase
+    .from("block_requests")
+    .update({ status: "cancelled" as string })
+    .eq("id", parsed.data.id)
+    .eq("owner_id", user.id)
+    .eq("status", "pending");
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/portal/calendar");
+  return { ok: true };
+}

@@ -8,6 +8,21 @@ export type BlockRequest = {
   status: "pending" | "approved" | "declined";
   note: string | null;
   created_at: string;
+  check_in_time: string | null;
+  check_out_time: string | null;
+  reason: string | null;
+  is_owner_staying: boolean;
+  guest_name: string | null;
+  guest_email: string | null;
+  guest_phone: string | null;
+  adults: number;
+  children: number;
+  pets: number;
+  needs_lock_code: boolean;
+  requested_lock_code: string | null;
+  wants_cleaning: boolean;
+  cleaning_fee: number | null;
+  damage_acknowledged: boolean;
 };
 
 const HATCHING = `repeating-linear-gradient(
@@ -33,6 +48,7 @@ export function BlockBar({
   daysInMonth,
   colWidth,
   rowHeight,
+  onClick,
 }: {
   block: BlockRequest;
   startDay: number;
@@ -40,6 +56,7 @@ export function BlockBar({
   daysInMonth: number;
   colWidth: number;
   rowHeight: number;
+  onClick?: () => void;
 }) {
   const clampedStart = Math.max(0, startDay);
   const clampedEnd = Math.min(daysInMonth, endDay);
@@ -55,9 +72,11 @@ export function BlockBar({
   const showLabel = span >= 2 && width > 46;
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       title={`${isApproved ? "Blocked" : "Pending block"}: ${block.start_date} to ${block.end_date}${block.note ? ` (${block.note})` : ""}`}
-      className="absolute flex items-center truncate"
+      className="absolute flex items-center truncate text-left transition-opacity hover:opacity-80"
       style={{
         left,
         width,
@@ -78,9 +97,10 @@ export function BlockBar({
           ? "var(--color-text-tertiary)"
           : "#b45309",
         overflow: "hidden",
+        cursor: "pointer",
       }}
     >
       {showLabel ? (isApproved ? "Blocked" : "Pending") : null}
-    </div>
+    </button>
   );
 }

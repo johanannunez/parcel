@@ -31,6 +31,7 @@ export function AvailabilityGrid({
   bookings,
   blockRequests,
   onSelectBooking,
+  onSelectBlock,
 }: {
   year: number;
   month: number;
@@ -38,6 +39,7 @@ export function AvailabilityGrid({
   bookings: Booking[];
   blockRequests: BlockRequest[];
   onSelectBooking: (b: Booking) => void;
+  onSelectBlock?: (r: BlockRequest) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -333,6 +335,7 @@ export function AvailabilityGrid({
                       daysInMonth={daysInMonth}
                       colWidth={colWidth}
                       rowHeight={rowHeight}
+                      onClick={() => onSelectBlock?.(block)}
                     />
                   );
                 })}

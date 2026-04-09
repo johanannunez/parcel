@@ -5,6 +5,7 @@ import { CalendarToolbar, type CalendarView } from "./CalendarToolbar";
 import { AvailabilityGrid } from "./AvailabilityGrid";
 import { MonthGrid } from "./MonthGrid";
 import { BookingDetailModal, type Booking } from "./BookingDetailModal";
+import { BlockDetailModal } from "./BlockDetailModal";
 import { CalendarSyncModal } from "./CalendarSyncModal";
 import { BlockRequestWizard } from "./BlockRequestWizard";
 import type { BlockRequest } from "./BlockBar";
@@ -52,8 +53,10 @@ export function CalendarShell({
   );
   const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<BlockRequest | null>(null);
   const [syncModalOpen, setSyncModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
+  const [editingBlock, setEditingBlock] = useState<BlockRequest | null>(null);
 
   const onToggleProperty = useCallback((id: string) => {
     setHiddenProperties((prev) => {
@@ -85,11 +88,21 @@ export function CalendarShell({
     return m;
   }, [properties]);
 
-  // Toolbar needs {id, name} shape
   const toolbarProperties = useMemo(
     () => properties.map((p) => ({ id: p.id, name: p.name })),
     [properties],
   );
+
+  const handleEditBlock = useCallback((block: BlockRequest) => {
+    setSelectedBlock(null);
+    setEditingBlock(block);
+    setBlockModalOpen(true);
+  }, []);
+
+  const handleCloseWizard = useCallback(() => {
+    setBlockModalOpen(false);
+    setEditingBlock(null);
+  }, []);
 
   return (
     <>
@@ -101,7 +114,7 @@ export function CalendarShell({
           hiddenProperties={hiddenProperties}
           onToggleProperty={onToggleProperty}
           onOpenSync={() => setSyncModalOpen(true)}
-          onOpenBlock={() => setBlockModalOpen(true)}
+          onOpenBlock={() => { setEditingBlock(null); setBlockModalOpen(true); }}
           view={view}
           onChangeView={setView}
           activePropertyId={activePropertyId}
@@ -117,6 +130,7 @@ export function CalendarShell({
               bookings={filteredBookings}
               blockRequests={filteredBlocks}
               onSelectBooking={setSelectedBooking}
+              onSelectBlock={setSelectedBlock}
             />
           ) : (
             <MonthGrid
@@ -146,6 +160,17 @@ export function CalendarShell({
         />
       ) : null}
 
+      {selectedBlock ? (
+        <BlockDetailModal
+          block={selectedBlock}
+          propertyName={
+            propNameMap.get(selectedBlock.property_id) ?? "Property"
+          }
+          onClose={() => setSelectedBlock(null)}
+          onEdit={() => handleEditBlock(selectedBlock)}
+        />
+      ) : null}
+
       {syncModalOpen ? (
         <CalendarSyncModal
           icalUrl={icalUrl}
@@ -158,7 +183,8 @@ export function CalendarShell({
           properties={properties}
           ownerName={ownerName}
           ownerEmail={ownerEmail}
-          onClose={() => setBlockModalOpen(false)}
+          onClose={handleCloseWizard}
+          editingBlock={editingBlock}
         />
       ) : null}
     </>

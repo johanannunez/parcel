@@ -125,16 +125,39 @@ export function BlockRequestWizard({
   ownerName,
   ownerEmail,
   onClose,
+  editingBlock,
 }: {
   properties: Property[];
   ownerName: string;
   ownerEmail: string;
   onClose: () => void;
+  editingBlock?: import("./BlockBar").BlockRequest | null;
 }) {
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<WizardData>({
-    ...INITIAL_DATA,
-    propertyId: properties[0]?.id ?? "",
+  const [data, setData] = useState<WizardData>(() => {
+    if (editingBlock) {
+      return {
+        propertyId: editingBlock.property_id,
+        startDate: editingBlock.start_date,
+        endDate: editingBlock.end_date,
+        checkInTime: editingBlock.check_in_time ?? "4:00 PM",
+        checkOutTime: editingBlock.check_out_time ?? "10:00 AM",
+        reason: editingBlock.reason ?? "",
+        adults: editingBlock.adults ?? 1,
+        children: editingBlock.children ?? 0,
+        pets: editingBlock.pets ?? 0,
+        notes: editingBlock.note ?? "",
+        isOwnerStaying: editingBlock.is_owner_staying ?? true,
+        guestName: editingBlock.guest_name ?? "",
+        guestEmail: editingBlock.guest_email ?? "",
+        guestPhone: editingBlock.guest_phone ?? "",
+        needsLockCode: editingBlock.needs_lock_code ?? false,
+        requestedLockCode: editingBlock.requested_lock_code ?? "",
+        wantsCleaning: editingBlock.wants_cleaning ?? false,
+        damageAcknowledged: editingBlock.damage_acknowledged ?? false,
+      };
+    }
+    return { ...INITIAL_DATA, propertyId: properties[0]?.id ?? "" };
   });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);

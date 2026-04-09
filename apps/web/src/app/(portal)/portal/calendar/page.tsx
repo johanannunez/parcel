@@ -109,6 +109,21 @@ export default async function CalendarPage({
     status: r.status as "pending" | "approved" | "declined",
     note: r.note,
     created_at: r.created_at,
+    check_in_time: (r as Record<string, unknown>).check_in_time as string | null,
+    check_out_time: (r as Record<string, unknown>).check_out_time as string | null,
+    reason: (r as Record<string, unknown>).reason as string | null,
+    is_owner_staying: ((r as Record<string, unknown>).is_owner_staying as boolean) ?? true,
+    guest_name: (r as Record<string, unknown>).guest_name as string | null,
+    guest_email: (r as Record<string, unknown>).guest_email as string | null,
+    guest_phone: (r as Record<string, unknown>).guest_phone as string | null,
+    adults: ((r as Record<string, unknown>).adults as number) ?? 1,
+    children: ((r as Record<string, unknown>).children as number) ?? 0,
+    pets: ((r as Record<string, unknown>).pets as number) ?? 0,
+    needs_lock_code: ((r as Record<string, unknown>).needs_lock_code as boolean) ?? false,
+    requested_lock_code: (r as Record<string, unknown>).requested_lock_code as string | null,
+    wants_cleaning: ((r as Record<string, unknown>).wants_cleaning as boolean) ?? false,
+    cleaning_fee: (r as Record<string, unknown>).cleaning_fee as number | null,
+    damage_acknowledged: ((r as Record<string, unknown>).damage_acknowledged as boolean) ?? false,
   }));
 
   const mappedPastRequests = (recentRequests ?? []).map((r) => ({
