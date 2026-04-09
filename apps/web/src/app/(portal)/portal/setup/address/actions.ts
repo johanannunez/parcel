@@ -1,0 +1,61 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+
+const schema = z.object({
+  property_id: z.string().uuid("Property ID is required."),
+  address_line1: z.string().trim().min(1, "Street address is required."),
+  address_line2: z.string().trim().max(120).optional().or(z.literal("")),
+  city: z.string().trim().min(1, "City is required."),
+  state: z.string().trim().min(2, "State is required."),
+  postal_code: z.string().trim().min(3, "ZIP code is required."),
+});
+
+export type SaveAddressState = {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+};
+
+export async function saveAddress(
+  _prev: SaveAddressState,
+  formData: FormData,
+): Promise<SaveAddressState> {
+  const raw = Object.fromEntries(formData.entries());
+  const parsed = schema.safeParse(raw);
+
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0]?.toString();
+      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+    }
+    return { error: "A few fields need your attention.", fieldErrors };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+
+  const v = parsed.data;
+  const { error } = await supabase
+    .from("properties")
+    .update({
+      address_line1: v.address_line1,
+      address_line2: v.address_line2 || null,
+      city: v.city,
+      state: v.state.toUpperCase(),
+      postal_code: v.postal_code,
+    })
+    .eq("id", v.property_id)
+    .eq("owner_id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/portal/setup");
+  redirect(`/portal/setup?just=address&property=${v.property_id}`);
+}

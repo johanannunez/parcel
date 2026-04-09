@@ -4,5 +4,5 @@ import { redirect } from "next/navigation";
 // new /portal/setup/basics flow. Hard-redirect so stale bookmarks and
 // old dashboard links land on the current UI.
 export default function AddPropertyPage() {
-  redirect("/portal/setup/basics");
+  redirect("/portal/setup");
 }
