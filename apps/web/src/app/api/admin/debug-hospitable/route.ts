@@ -28,39 +28,52 @@ export async function GET() {
     return Response.json({ error: "HOSPITABLE_API not set" }, { status: 500 });
   }
 
+  // Step 1: Get one property ID
+  const propsRes = await fetch(
+    "https://public.api.hospitable.com/v2/properties?per_page=1",
+    {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      cache: "no-store",
+    },
+  );
+  if (!propsRes.ok) {
+    return Response.json(
+      { error: `Properties ${propsRes.status}`, body: await propsRes.text() },
+      { status: 502 },
+    );
+  }
+  const propsJson = await propsRes.json();
+  const propId = propsJson?.data?.[0]?.id;
+  if (!propId) {
+    return Response.json({ error: "No properties found" }, { status: 404 });
+  }
+
+  // Step 2: Get one reservation for that property with financials
   const url = new URL("https://public.api.hospitable.com/v2/reservations");
   url.searchParams.set("per_page", "1");
   url.searchParams.set("include", "guest,financials,properties");
+  url.searchParams.set("properties[0]", propId);
 
   const res = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     cache: "no-store",
   });
 
   if (!res.ok) {
-    const body = await res.text();
     return Response.json(
-      { error: `Hospitable ${res.status}`, body },
+      { error: `Hospitable ${res.status}`, body: await res.text() },
       { status: 502 },
     );
   }
 
   const json = await res.json();
-
-  // Return the full raw shape of the first reservation
-  const firstReservation = json?.data?.[0] ?? null;
+  const first = json?.data?.[0] ?? null;
 
   return Response.json({
-    rawReservation: firstReservation,
-    financialsPath: {
-      "res.financials": firstReservation?.financials ?? "MISSING",
-      "res.financials?.host_payout": firstReservation?.financials?.host_payout ?? "MISSING",
-      "res.financials?.host_payout?.amount": firstReservation?.financials?.host_payout?.amount ?? "MISSING",
-      "res.financials?.data": (firstReservation?.financials as Record<string, unknown>)?.data ?? "MISSING",
-    },
-    topLevelKeys: firstReservation ? Object.keys(firstReservation) : [],
+    propertyUsed: propId,
+    topLevelKeys: first ? Object.keys(first) : [],
+    financials: first?.financials ?? "MISSING",
+    financialsKeys: first?.financials ? Object.keys(first.financials) : [],
+    rawReservation: first,
   });
 }
