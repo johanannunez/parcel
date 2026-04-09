@@ -1,7 +1,28 @@
+export type AmenityDetailField = {
+  key: string;
+  label: string;
+  type: "text" | "number" | "select";
+  placeholder?: string;
+  options?: { value: string; label: string }[];
+};
+
+/** Count-based repeater: "How many TVs?" then per-item fields */
+export type AmenityRepeater = {
+  countLabel: string;
+  countPlaceholder: string;
+  maxCount: number;
+  itemLabel: string;
+  fields: AmenityDetailField[];
+};
+
 export type Amenity = {
   id: string;
   label: string;
   iconName: string;
+  /** Simple detail fields (location, count, type) */
+  detailFields?: AmenityDetailField[];
+  /** Repeater: count + per-item structured fields (TVs, etc.) */
+  repeater?: AmenityRepeater;
 };
 
 export type AmenityCategory = {
@@ -11,11 +32,59 @@ export type AmenityCategory = {
   items: Amenity[];
 };
 
+/** Structured detail values keyed by amenity id, then field key */
+export type AmenityDetails = Record<string, Record<string, string>>;
+
+/* ── Shared option lists ─────────────────────────────────── */
+
+const TV_SIZES: { value: string; label: string }[] = [
+  { value: "24", label: '24" or smaller' },
+  { value: "32", label: '32"' },
+  { value: "40", label: '40"' },
+  { value: "43", label: '43"' },
+  { value: "50", label: '50"' },
+  { value: "55", label: '55"' },
+  { value: "60", label: '60"' },
+  { value: "65", label: '65"' },
+  { value: "70", label: '70"' },
+  { value: "75", label: '75"' },
+  { value: "85", label: '85" or larger' },
+];
+
+const TV_LOCATIONS: { value: string; label: string }[] = [
+  { value: "living_room", label: "Living room" },
+  { value: "primary_bedroom", label: "Primary bedroom" },
+  { value: "bedroom_2", label: "Bedroom 2" },
+  { value: "bedroom_3", label: "Bedroom 3" },
+  { value: "bedroom_4", label: "Bedroom 4" },
+  { value: "bedroom_5", label: "Bedroom 5" },
+  { value: "guest_room", label: "Guest room" },
+  { value: "kitchen", label: "Kitchen" },
+  { value: "dining_area", label: "Dining area" },
+  { value: "den", label: "Den / Study" },
+  { value: "loft", label: "Loft" },
+  { value: "game_room", label: "Game room" },
+  { value: "office", label: "Home office" },
+  { value: "patio", label: "Patio / Outdoor" },
+  { value: "basement", label: "Basement" },
+  { value: "garage", label: "Garage" },
+];
+
+const GRILL_TYPES: { value: string; label: string }[] = [
+  { value: "gas", label: "Gas" },
+  { value: "charcoal", label: "Charcoal" },
+  { value: "pellet", label: "Pellet" },
+  { value: "electric", label: "Electric" },
+  { value: "kamado", label: "Kamado / Ceramic" },
+];
+
+/* ── Categories ──────────────────────────────────────────── */
+
 export const amenityCategories: AmenityCategory[] = [
   {
-    id: "essentials",
-    label: "Essentials",
-    iconName: "Backpack",
+    id: "guest_essentials",
+    label: "Guest essentials",
+    iconName: "Sparkle",
     items: [
       { id: "essentials", label: "Essentials", iconName: "Sparkle" },
       { id: "bed_linens", label: "Bed linens", iconName: "Bed" },
@@ -23,14 +92,24 @@ export const amenityCategories: AmenityCategory[] = [
       { id: "shampoo", label: "Shampoo", iconName: "Drop" },
       { id: "conditioner", label: "Conditioner", iconName: "Drop" },
       { id: "shower_gel", label: "Shower gel", iconName: "Shower" },
-      { id: "hot_water", label: "Hot water", iconName: "Thermometer" },
-      { id: "heating", label: "Heating", iconName: "ThermometerHot" },
-      { id: "air_conditioning", label: "Air conditioning", iconName: "Wind" },
       { id: "hangers", label: "Hangers", iconName: "CoatHanger" },
       { id: "iron", label: "Iron", iconName: "TShirt" },
       { id: "hair_dryer", label: "Hair dryer", iconName: "HairDryer" },
       { id: "extra_pillows_blankets", label: "Extra pillows and blankets", iconName: "Bed" },
       { id: "hot_water_kettle", label: "Hot water kettle", iconName: "CookingPot" },
+    ],
+  },
+  {
+    id: "heating_cooling",
+    label: "Heating and cooling",
+    iconName: "ThermometerHot",
+    items: [
+      { id: "hot_water", label: "Hot water", iconName: "Thermometer" },
+      { id: "heating", label: "Heating", iconName: "ThermometerHot" },
+      { id: "air_conditioning", label: "Air conditioning", iconName: "Wind" },
+      { id: "ceiling_fan", label: "Ceiling fan", iconName: "Fan" },
+      { id: "portable_fans", label: "Portable fans", iconName: "Fan" },
+      { id: "indoor_fireplace", label: "Indoor fireplace", iconName: "Fire" },
     ],
   },
   {
@@ -63,6 +142,18 @@ export const amenityCategories: AmenityCategory[] = [
     ],
   },
   {
+    id: "bed_bath",
+    label: "Bed and bath",
+    iconName: "Bathtub",
+    items: [
+      { id: "bathtub", label: "Bathtub", iconName: "Bathtub" },
+      { id: "bidet", label: "Bidet", iconName: "Drop" },
+      { id: "room_darkening_shades", label: "Room-darkening shades", iconName: "Moon" },
+      { id: "safe", label: "Safe", iconName: "Lock" },
+      { id: "mosquito_net", label: "Mosquito net", iconName: "Bug" },
+    ],
+  },
+  {
     id: "laundry_cleaning",
     label: "Laundry and cleaning",
     iconName: "TShirt",
@@ -77,19 +168,14 @@ export const amenityCategories: AmenityCategory[] = [
     ],
   },
   {
-    id: "bedroom_bath",
-    label: "Bedroom and bath",
-    iconName: "Bed",
+    id: "internet_office",
+    label: "Internet and office",
+    iconName: "WifiHigh",
     items: [
-      { id: "bathtub", label: "Bathtub", iconName: "Bathtub" },
-      { id: "bidet", label: "Bidet", iconName: "Drop" },
-      { id: "crib", label: "Crib", iconName: "Baby" },
-      { id: "pack_n_play", label: "Pack 'n play / Travel crib", iconName: "Baby" },
-      { id: "changing_table", label: "Changing table", iconName: "Baby" },
-      { id: "room_darkening_shades", label: "Room-darkening shades", iconName: "Moon" },
-      { id: "portable_fans", label: "Portable fans", iconName: "Fan" },
-      { id: "safe", label: "Safe", iconName: "Lock" },
-      { id: "mosquito_net", label: "Mosquito net", iconName: "Bug" },
+      { id: "wifi", label: "Wifi", iconName: "WifiHigh" },
+      { id: "pocket_wifi", label: "Pocket wifi", iconName: "WifiHigh" },
+      { id: "ethernet", label: "Ethernet connection", iconName: "WifiHigh" },
+      { id: "dedicated_workspace", label: "Dedicated workspace", iconName: "Desk" },
     ],
   },
   {
@@ -97,7 +183,21 @@ export const amenityCategories: AmenityCategory[] = [
     label: "Entertainment",
     iconName: "Television",
     items: [
-      { id: "tv", label: "TV", iconName: "Television" },
+      {
+        id: "tv",
+        label: "TV",
+        iconName: "Television",
+        repeater: {
+          countLabel: "How many TVs?",
+          countPlaceholder: "e.g. 3",
+          maxCount: 10,
+          itemLabel: "TV",
+          fields: [
+            { key: "size", label: "Screen size", type: "select", options: TV_SIZES },
+            { key: "location", label: "Location", type: "select", options: TV_LOCATIONS },
+          ],
+        },
+      },
       { id: "sound_system", label: "Sound system", iconName: "SpeakerHigh" },
       { id: "game_console", label: "Game console", iconName: "GameController" },
       { id: "record_player", label: "Record player", iconName: "Disc" },
@@ -106,15 +206,17 @@ export const amenityCategories: AmenityCategory[] = [
       { id: "books_reading", label: "Books and reading material", iconName: "Book" },
       { id: "arcade_games", label: "Arcade games", iconName: "GameController" },
       { id: "theme_room", label: "Theme room", iconName: "Star" },
-      { id: "dedicated_workspace", label: "Dedicated workspace", iconName: "Desk" },
-      { id: "ethernet", label: "Ethernet connection", iconName: "WifiHigh" },
     ],
   },
   {
-    id: "family",
-    label: "Family friendly",
+    id: "family_kids",
+    label: "Family and kids",
     iconName: "UsersThree",
     items: [
+      { id: "crib", label: "Crib", iconName: "Baby" },
+      { id: "pack_n_play", label: "Pack 'n play / Travel crib", iconName: "Baby" },
+      { id: "changing_table", label: "Changing table", iconName: "Baby" },
+      { id: "high_chair", label: "High chair", iconName: "Chair" },
       { id: "baby_bath", label: "Baby bath", iconName: "Baby" },
       { id: "baby_monitor", label: "Baby monitor", iconName: "Baby" },
       { id: "baby_safety_gates", label: "Baby safety gates", iconName: "ShieldCheck" },
@@ -123,7 +225,6 @@ export const amenityCategories: AmenityCategory[] = [
       { id: "children_dinnerware", label: "Children's dinnerware", iconName: "ForkKnife" },
       { id: "children_bikes", label: "Children's bikes", iconName: "Bicycle" },
       { id: "children_playroom", label: "Children's playroom", iconName: "Puzzle" },
-      { id: "high_chair", label: "High chair", iconName: "Chair" },
       { id: "outlet_covers", label: "Outlet covers", iconName: "Plug" },
       { id: "table_corner_guards", label: "Table corner guards", iconName: "ShieldCheck" },
       { id: "window_guards", label: "Window guards", iconName: "ShieldCheck" },
@@ -131,7 +232,7 @@ export const amenityCategories: AmenityCategory[] = [
   },
   {
     id: "outdoor",
-    label: "Outdoor",
+    label: "Outdoor spaces",
     iconName: "Tree",
     items: [
       { id: "backyard", label: "Backyard", iconName: "Tree" },
@@ -141,7 +242,14 @@ export const amenityCategories: AmenityCategory[] = [
       { id: "outdoor_kitchen", label: "Outdoor kitchen", iconName: "CookingPot" },
       { id: "outdoor_shower", label: "Outdoor shower", iconName: "Shower" },
       { id: "outdoor_playground", label: "Outdoor playground", iconName: "Ladder" },
-      { id: "bbq_grill", label: "BBQ grill", iconName: "Fire" },
+      {
+        id: "bbq_grill",
+        label: "BBQ grill",
+        iconName: "Fire",
+        detailFields: [
+          { key: "type", label: "What type of grill?", type: "select", options: GRILL_TYPES },
+        ],
+      },
       { id: "firepit", label: "Fire pit", iconName: "Campfire" },
       { id: "hammock", label: "Hammock", iconName: "Tree" },
       { id: "sun_loungers", label: "Sun loungers", iconName: "Sun" },
@@ -152,12 +260,11 @@ export const amenityCategories: AmenityCategory[] = [
       { id: "lake_access", label: "Lake access", iconName: "Waves" },
       { id: "waterfront", label: "Waterfront", iconName: "Waves" },
       { id: "resort_access", label: "Resort access", iconName: "MapPin" },
-      { id: "indoor_fireplace", label: "Indoor fireplace", iconName: "Fire" },
     ],
   },
   {
-    id: "parking_transport",
-    label: "Parking and transport",
+    id: "parking_access",
+    label: "Parking and access",
     iconName: "Car",
     items: [
       { id: "free_parking", label: "Free parking on premises", iconName: "Car" },
@@ -165,41 +272,59 @@ export const amenityCategories: AmenityCategory[] = [
       { id: "paid_parking_on", label: "Paid parking on premises", iconName: "Car" },
       { id: "paid_parking_off", label: "Paid parking off premises", iconName: "Car" },
       { id: "ev_charger", label: "EV charger", iconName: "Lightning" },
-      { id: "elevator", label: "Elevator", iconName: "ArrowsVertical" },
       { id: "private_entrance", label: "Private entrance", iconName: "Door" },
+      { id: "elevator", label: "Elevator", iconName: "ArrowsVertical" },
       { id: "luggage_dropoff", label: "Luggage dropoff allowed", iconName: "Suitcase" },
-      { id: "bikes", label: "Bikes", iconName: "Bicycle" },
+      {
+        id: "bikes",
+        label: "Bikes",
+        iconName: "Bicycle",
+        detailFields: [
+          { key: "count", label: "How many bikes?", type: "number", placeholder: "e.g. 4" },
+        ],
+      },
       { id: "kayak", label: "Kayak", iconName: "Boat" },
       { id: "boat_slip", label: "Boat slip", iconName: "Boat" },
+      { id: "single_level", label: "Single level home", iconName: "House" },
+      { id: "wide_doorways", label: "Wide doorways", iconName: "Door" },
+      { id: "long_term_allowed", label: "Long-term stays allowed", iconName: "Calendar" },
     ],
   },
   {
-    id: "safety",
-    label: "Safety",
+    id: "safety_security",
+    label: "Safety and security",
     iconName: "ShieldCheck",
     items: [
       { id: "smoke_alarm", label: "Smoke alarm", iconName: "Bell" },
       { id: "carbon_monoxide_alarm", label: "Carbon monoxide alarm", iconName: "Bell" },
-      { id: "fire_extinguisher", label: "Fire extinguisher", iconName: "FireExtinguisher" },
-      { id: "first_aid_kit", label: "First aid kit", iconName: "FirstAid" },
+      {
+        id: "fire_extinguisher",
+        label: "Fire extinguisher",
+        iconName: "FireExtinguisher",
+        detailFields: [
+          { key: "count", label: "How many?", type: "number", placeholder: "e.g. 2" },
+          { key: "locations", label: "Where are they?", type: "text", placeholder: "e.g. Kitchen pantry, garage wall" },
+        ],
+      },
+      {
+        id: "first_aid_kit",
+        label: "First aid kit",
+        iconName: "FirstAid",
+        detailFields: [
+          { key: "count", label: "How many?", type: "number", placeholder: "e.g. 2" },
+          { key: "locations", label: "Where are they?", type: "text", placeholder: "e.g. Hall closet, master bath" },
+        ],
+      },
       { id: "fireplace_guards", label: "Fireplace guards", iconName: "ShieldCheck" },
-      { id: "security_cameras", label: "Security cameras", iconName: "SecurityCamera" },
-    ],
-  },
-  {
-    id: "accessibility",
-    label: "Accessibility and features",
-    iconName: "Wheelchair",
-    items: [
-      { id: "single_level", label: "Single level home", iconName: "House" },
-      { id: "wide_doorways", label: "Wide doorways", iconName: "Door" },
-      { id: "private_living_room", label: "Private living room", iconName: "Armchair" },
-      { id: "ceiling_fan", label: "Ceiling fan", iconName: "Fan" },
-      { id: "climbing_wall", label: "Climbing wall", iconName: "Mountains" },
-      { id: "pocket_wifi", label: "Pocket wifi", iconName: "WifiHigh" },
-      { id: "wifi", label: "Wifi", iconName: "WifiHigh" },
-      { id: "long_term_allowed", label: "Long-term stays allowed", iconName: "Calendar" },
-      { id: "mini_golf", label: "Mini golf", iconName: "GolfHole" },
+      {
+        id: "security_cameras",
+        label: "Security cameras",
+        iconName: "SecurityCamera",
+        detailFields: [
+          { key: "count", label: "How many?", type: "number", placeholder: "e.g. 3" },
+          { key: "locations", label: "Where are they?", type: "text", placeholder: "e.g. Front door, back porch, driveway" },
+        ],
+      },
     ],
   },
   {
@@ -211,6 +336,8 @@ export const amenityCategories: AmenityCategory[] = [
       { id: "exercise_equipment", label: "Exercise equipment", iconName: "Barbell" },
       { id: "pool_table", label: "Pool table", iconName: "Circle" },
       { id: "ping_pong", label: "Ping pong table", iconName: "Circle" },
+      { id: "mini_golf", label: "Mini golf", iconName: "GolfHole" },
+      { id: "climbing_wall", label: "Climbing wall", iconName: "Mountains" },
       { id: "bowling_alley", label: "Bowling alley", iconName: "Circle" },
       { id: "hockey_rink", label: "Hockey rink", iconName: "Circle" },
       { id: "ski_in_out", label: "Ski-in / Ski-out", iconName: "Mountains" },

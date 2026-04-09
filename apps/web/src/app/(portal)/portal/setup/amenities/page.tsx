@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { StepShell } from "@/components/portal/setup/StepShell";
 import { AmenitiesForm } from "./AmenitiesForm";
+import type { AmenityDetails } from "@/lib/wizard/amenities";
 
 export const metadata: Metadata = { title: "Amenities" };
 export const dynamic = "force-dynamic";
@@ -30,10 +31,26 @@ export default async function AmenitiesPage({
     property = data;
   }
 
-  const savedAmenities =
-    property?.amenities && Array.isArray(property.amenities)
-      ? (property.amenities as string[])
-      : [];
+  // Handle both old format (string[]) and new format ({ selected, details })
+  let savedAmenities: string[] = [];
+  let savedDetails: AmenityDetails = {};
+
+  if (property?.amenities) {
+    if (Array.isArray(property.amenities)) {
+      // Legacy: plain array of IDs
+      savedAmenities = property.amenities as string[];
+    } else if (
+      typeof property.amenities === "object" &&
+      property.amenities !== null
+    ) {
+      const data = property.amenities as {
+        selected?: string[];
+        details?: AmenityDetails;
+      };
+      savedAmenities = data.selected ?? [];
+      savedDetails = data.details ?? {};
+    }
+  }
 
   return (
     <StepShell
@@ -47,6 +64,7 @@ export default async function AmenitiesPage({
       <AmenitiesForm
         propertyId={property?.id ?? ""}
         savedAmenities={savedAmenities}
+        savedDetails={savedDetails}
         isEditing={savedAmenities.length > 0}
       />
     </StepShell>
