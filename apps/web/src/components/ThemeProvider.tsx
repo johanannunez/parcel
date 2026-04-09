@@ -1,14 +1,19 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 
-type Theme = "light" | "dark";
+type Theme = "light" | "dark" | "system";
+type ResolvedTheme = "light" | "dark";
 
 const ThemeContext = createContext<{
   theme: Theme;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (t: Theme) => void;
   toggleTheme: () => void;
 }>({
-  theme: "light",
+  theme: "system",
+  resolvedTheme: "light",
+  setTheme: () => {},
   toggleTheme: () => {},
 });
 
@@ -16,39 +21,75 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
+function getSystemTheme(): ResolvedTheme {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+function applyTheme(resolved: ResolvedTheme) {
+  document.documentElement.classList.toggle("dark", resolved === "dark");
+}
+
 export default function ThemeProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>("system");
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("theme") as Theme | null;
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-    const initial = stored ?? (prefersDark ? "dark" : "light");
-    setTheme(initial);
-    document.documentElement.classList.toggle("dark", initial === "dark");
-    setMounted(true);
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t);
+    if (t === "system") {
+      localStorage.removeItem("parcel-theme");
+      const resolved = getSystemTheme();
+      setResolvedTheme(resolved);
+      applyTheme(resolved);
+    } else {
+      localStorage.setItem("parcel-theme", t);
+      setResolvedTheme(t);
+      applyTheme(t);
+    }
   }, []);
 
-  const toggleTheme = () => {
-    const next = theme === "light" ? "dark" : "light";
-    setTheme(next);
-    localStorage.setItem("theme", next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-  };
+  const toggleTheme = useCallback(() => {
+    setTheme(resolvedTheme === "light" ? "dark" : "light");
+  }, [resolvedTheme, setTheme]);
 
-  // Prevent flash by not rendering until mounted
-  if (!mounted) {
-    return <>{children}</>;
-  }
+  useEffect(() => {
+    const old = localStorage.getItem("theme");
+    if (old) {
+      localStorage.setItem("parcel-theme", old);
+      localStorage.removeItem("theme");
+    }
+
+    const stored = localStorage.getItem("parcel-theme") as Theme | null;
+    const initial: Theme = stored ?? "system";
+    setThemeState(initial);
+    const resolved = initial === "system" ? getSystemTheme() : initial;
+    setResolvedTheme(resolved);
+    applyTheme(resolved);
+    setMounted(true);
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => {
+      if (!localStorage.getItem("parcel-theme")) {
+        const sys = getSystemTheme();
+        setResolvedTheme(sys);
+        applyTheme(sys);
+      }
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  if (!mounted) return <>{children}</>;
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

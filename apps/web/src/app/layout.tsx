@@ -126,6 +126,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${generalSans.variable} antialiased`}>
         <script
+          dangerouslySetInnerHTML={{
+            __html: '(function(){try{var o=localStorage.getItem("theme");if(o){localStorage.setItem("parcel-theme",o);localStorage.removeItem("theme")}var t=localStorage.getItem("parcel-theme");var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})();',
+          }}
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify([organizationSchema, websiteSchema, serviceSchema]),
