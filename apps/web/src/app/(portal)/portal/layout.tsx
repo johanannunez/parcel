@@ -33,7 +33,7 @@ export default async function PortalLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, timezone, role")
+    .select("full_name, role")
     .eq("id", user.id)
     .single();
 
@@ -53,7 +53,6 @@ export default async function PortalLayout({
         userName={fullName}
         userEmail={user.email ?? ""}
         initials={initials}
-        timezone={profile?.timezone ?? null}
         isAdmin={profile?.role === "admin"}
         signOutSlot={<SignOutButton />}
       />
