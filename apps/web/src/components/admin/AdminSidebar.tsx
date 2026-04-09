@@ -11,6 +11,7 @@ import {
   EnvelopeSimple,
   ClipboardText,
   UserCircle,
+  ChatCircle,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
@@ -57,6 +58,12 @@ const mainNav: NavItem[] = [
     label: "Inquiries",
     icon: <EnvelopeSimple size={18} weight="duotone" />,
     matchPrefix: "/admin/inquiries",
+  },
+  {
+    href: "/admin/messages",
+    label: "Messages",
+    icon: <ChatCircle size={18} weight="duotone" />,
+    matchPrefix: "/admin/messages",
   },
 ];
 

@@ -1046,15 +1046,196 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          id: string
+          owner_id: string | null
+          subject: string | null
+          type: Database["public"]["Enums"]["conversation_type"]
+          last_message_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id?: string | null
+          subject?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+          last_message_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string | null
+          subject?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+          last_message_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          sender_id: string
+          body: string
+          is_system: boolean
+          delivery_method: string
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          sender_id: string
+          body?: string
+          is_system?: boolean
+          delivery_method?: string
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          sender_id?: string
+          body?: string
+          is_system?: boolean
+          delivery_method?: string
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reads: {
+        Row: {
+          id: string
+          message_id: string
+          reader_id: string
+          first_read_at: string
+          read_count: number
+          last_read_at: string
+          device_info: string | null
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          reader_id: string
+          first_read_at?: string
+          read_count?: number
+          last_read_at?: string
+          device_info?: string | null
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          reader_id?: string
+          first_read_at?: string
+          read_count?: number
+          last_read_at?: string
+          device_info?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reads_reader_id_fkey"
+            columns: ["reader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          id: string
+          owner_id: string
+          type: string
+          title: string
+          body: string
+          link: string | null
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          type: string
+          title: string
+          body?: string
+          link?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          type?: string
+          title?: string
+          body?: string
+          link?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      increment_message_read: {
+        Args: {
+          p_message_id: string
+          p_reader_id: string
+          p_device_info?: string | null
+        }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
       user_owns_property: { Args: { p_property_id: string }; Returns: boolean }
     }
     Enums: {
+      conversation_type: "direct" | "announcement" | "email_log"
       booking_source:
         | "direct"
         | "airbnb"
@@ -1193,6 +1374,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      conversation_type: ["direct", "announcement", "email_log"],
       booking_source: [
         "direct",
         "airbnb",
