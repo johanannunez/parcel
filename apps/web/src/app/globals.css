@@ -49,33 +49,37 @@
 /* ─── Dark Mode Tokens ─── */
 :root.dark {
   /* Backgrounds */
-  --color-white: #0f172a;
-  --color-off-white: #111827;
-  --color-warm-gray-50: #1e293b;
-  --color-warm-gray-100: #334155;
-  --color-warm-gray-200: #475569;
-  --color-warm-gray-400: #94a3b8;
+  --color-white: #141414;
+  --color-off-white: #1a1a1a;
+  --color-warm-gray-50: #222222;
+  --color-warm-gray-100: #2a2a2a;
+  --color-warm-gray-200: #3a3a3a;
+  --color-warm-gray-400: #8a8a8a;
 
   /* Text */
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-tertiary: #8692a6;
+  --color-text-primary: #ececec;
+  --color-text-secondary: #a0a0a0;
+  --color-text-tertiary: #787878;
 
-  /* Brand (stays the same for contrast) */
-  --color-brand-light: #38bdf8;
-  --color-brand: #60a5fa;
-  --color-brand-gradient: linear-gradient(135deg, #38bdf8, #60a5fa);
+  /* Brand (unchanged) */
+  --color-brand-light: #02aaeb;
+  --color-brand: #1b77be;
+  --color-brand-gradient: linear-gradient(135deg, #02aaeb, #1b77be);
 
   /* Dark */
-  --color-navy: #020617;
-  --color-charcoal: #0f172a;
+  --color-navy: #0a0a0a;
+  --color-charcoal: #111111;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.4);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.3);
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+
+  /* Shadows (stronger for dark surfaces) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 1px rgba(0, 0, 0, 0.4);
 }
 
 /* ─── Tailwind Theme ─── */
@@ -168,7 +172,7 @@ body {
 }
 
 :root.dark .frosted {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(20, 20, 20, 0.8);
 }
 
 .frosted-dark {
@@ -213,6 +217,10 @@ html {
 ::selection {
   background: rgba(2, 170, 235, 0.15);
   color: var(--color-text-primary);
+}
+
+:root.dark ::selection {
+  background: rgba(2, 170, 235, 0.25);
 }
 
 /* ─── Admin Stat Cards ─── */
