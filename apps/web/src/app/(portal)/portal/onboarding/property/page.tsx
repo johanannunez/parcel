@@ -1,18 +1,8 @@
-import type { Metadata } from "next";
-import { PageHeader } from "@/components/portal/PageHeader";
-import { AddPropertyWizard } from "./AddPropertyWizard";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Add a property" };
-
+// The legacy /portal/onboarding/property wizard is superseded by the
+// new /portal/setup/basics flow. Hard-redirect so stale bookmarks and
+// old dashboard links land on the current UI.
 export default function AddPropertyPage() {
-  return (
-    <div className="flex flex-col gap-10">
-      <PageHeader
-        eyebrow="Onboarding"
-        title="Add a property"
-        description="Four quick steps. Details you can skip now, you can always fill in later from the property page."
-      />
-      <AddPropertyWizard />
-    </div>
-  );
+  redirect("/portal/setup/basics");
 }

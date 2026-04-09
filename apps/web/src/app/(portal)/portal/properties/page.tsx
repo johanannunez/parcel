@@ -40,7 +40,7 @@ export default async function PropertiesPage() {
         title="Your properties"
         description="Every home under Parcel management. Add a new one, or open any card to see bookings, payouts, and documents."
         actions={
-          <LinkButton href="/portal/onboarding/property">
+          <LinkButton href="/portal/setup/basics">
             <Plus size={16} weight="bold" />
             Add property
           </LinkButton>
@@ -53,7 +53,7 @@ export default async function PropertiesPage() {
           title="No properties yet"
           body="Add your first home to unlock the dashboard, calendar, and payouts. The onboarding wizard takes about five minutes."
           action={
-            <LinkButton href="/portal/onboarding/property">
+            <LinkButton href="/portal/setup/basics">
               <Plus size={16} weight="bold" />
               Add your first property
             </LinkButton>

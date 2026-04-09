@@ -38,12 +38,43 @@ type Track = {
   steps: Step[];
 };
 
-export default async function SetupHubPage() {
+type PropertyRow = {
+  id: string;
+  name: string | null;
+  address_line1: string | null;
+  city: string | null;
+  property_type: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  guest_capacity: number | null;
+  active: boolean | null;
+};
+
+function isBasicsComplete(p: PropertyRow | null | undefined) {
+  if (!p) return false;
+  return Boolean(
+    p.property_type &&
+      p.address_line1 &&
+      p.city &&
+      p.bedrooms !== null &&
+      p.bathrooms !== null &&
+      p.guest_capacity !== null,
+  );
+}
+
+export default async function SetupHubPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ just?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
+
+  const params = await searchParams;
+  const justCompleted = params?.just ?? null;
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -53,7 +84,9 @@ export default async function SetupHubPage() {
 
   const { data: properties } = await supabase
     .from("properties")
-    .select("id, name, address_line1, city, active")
+    .select(
+      "id, name, address_line1, city, property_type, bedrooms, bathrooms, guest_capacity, active",
+    )
     .order("created_at", { ascending: true });
 
   const firstName =
@@ -61,31 +94,28 @@ export default async function SetupHubPage() {
     user.email?.split("@")[0] ??
     "there";
 
-  const hasProperty = (properties?.length ?? 0) > 0;
-  const firstProperty = properties?.[0] ?? null;
+  const firstProperty = (properties?.[0] as PropertyRow | undefined) ?? null;
   const propertyLabel =
     firstProperty?.name ||
     firstProperty?.address_line1 ||
     firstProperty?.city ||
-    "Your property";
+    "your property";
 
-  // Slice 1 is the hub scaffold. States here are intentionally derived
-  // from simple signals (does a property row exist yet) so the hub
-  // renders a real, honest picture today. Later slices will replace
-  // these with true per-step completion flags.
+  const basicsDone = isBasicsComplete(firstProperty);
+
   const propertySteps: Step[] = [
     {
       key: "basics",
       label: "Property basics",
-      hint: "Address, bedrooms, what makes it special.",
-      state: hasProperty ? "done" : "active",
-      href: "/portal/onboarding/property",
+      hint: "Address, type, bedrooms, bathrooms, guests.",
+      state: basicsDone ? "done" : "active",
+      href: "/portal/setup/basics",
     },
     {
       key: "amenities",
       label: "Photos and amenities",
       hint: "Upload photos and check off what guests get.",
-      state: hasProperty ? "active" : "locked",
+      state: basicsDone ? "active" : "locked",
     },
     {
       key: "rules",
@@ -177,6 +207,28 @@ export default async function SetupHubPage() {
 
   return (
     <div className="flex flex-col gap-10">
+      {justCompleted === "basics" ? (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-sm"
+          style={{
+            borderColor: "#bfe5cd",
+            backgroundColor: "#f2fbf5",
+            color: "#166534",
+          }}
+        >
+          <CheckCircle
+            size={18}
+            weight="fill"
+            style={{ color: "#15803d" }}
+          />
+          <span>
+            <span className="font-semibold">Property basics saved.</span>{" "}
+            Photos and amenities is next.
+          </span>
+        </div>
+      ) : null}
+
       <header className="flex flex-col gap-6">
         <div>
           <p
@@ -340,6 +392,7 @@ function TrackCard({
   const nextStep =
     track.steps.find((s) => s.state === "active") ??
     track.steps.find((s) => s.state === "todo");
+  const nextHasHref = Boolean(nextStep?.href);
 
   return (
     <article
@@ -442,9 +495,9 @@ function TrackCard({
             {nextStep?.label ?? "All done"}
           </p>
         </div>
-        {nextStep?.href ? (
+        {nextStep && nextHasHref ? (
           <Link
-            href={nextStep.href}
+            href={nextStep.href ?? "#"}
             className="inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ backgroundColor: track.tint }}
           >
@@ -452,17 +505,16 @@ function TrackCard({
             <ArrowRight size={14} weight="bold" />
           </Link>
         ) : (
-          <button
-            type="button"
-            disabled
-            className="inline-flex shrink-0 cursor-not-allowed items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold"
+          <span
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium"
             style={{
-              backgroundColor: "var(--color-warm-gray-100)",
+              borderColor: "var(--color-warm-gray-200)",
               color: "var(--color-text-tertiary)",
+              backgroundColor: "var(--color-warm-gray-50)",
             }}
           >
             Coming soon
-          </button>
+          </span>
         )}
       </footer>
     </article>

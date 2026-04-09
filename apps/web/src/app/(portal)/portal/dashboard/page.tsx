@@ -226,7 +226,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Link
-            href="/portal/onboarding/property"
+            href="/portal/setup/basics"
             className="inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ backgroundColor: "var(--color-brand)" }}
           >

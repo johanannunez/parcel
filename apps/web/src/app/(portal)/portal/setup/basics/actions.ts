@@ -1,0 +1,101 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+
+const schema = z.object({
+  property_id: z.string().uuid().optional().or(z.literal("")),
+  name: z.string().trim().max(120).optional().or(z.literal("")),
+  property_type: z.enum(["str", "ltr", "arbitrage", "mtr", "co-hosting"], {
+    message: "Pick the type that fits best.",
+  }),
+  address_line1: z.string().trim().min(1, "Street address is required."),
+  address_line2: z.string().trim().max(120).optional().or(z.literal("")),
+  city: z.string().trim().min(1, "City is required."),
+  state: z.string().trim().min(2, "State is required."),
+  postal_code: z.string().trim().min(3, "Postal code is required."),
+  country: z.string().trim().min(2).max(2).default("US"),
+  bedrooms: z.coerce.number().int().min(0).max(30),
+  bathrooms: z.coerce.number().min(0).max(30),
+  square_feet: z
+    .union([z.coerce.number().int().min(0).max(100000), z.literal("")])
+    .optional(),
+  guest_capacity: z.coerce.number().int().min(1).max(60),
+});
+
+export type SaveBasicsState = {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  savedAt?: number;
+};
+
+export async function saveBasics(
+  _prev: SaveBasicsState,
+  formData: FormData,
+): Promise<SaveBasicsState> {
+  const raw = Object.fromEntries(formData.entries());
+  const parsed = schema.safeParse(raw);
+
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0]?.toString();
+      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+    }
+    return {
+      error: "A few fields need your attention.",
+      fieldErrors,
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in to save this step." };
+  }
+
+  const v = parsed.data;
+  const sqftValue =
+    v.square_feet === "" || v.square_feet === undefined
+      ? null
+      : v.square_feet;
+
+  const payload = {
+    owner_id: user.id,
+    name: v.name || null,
+    property_type: v.property_type,
+    address_line1: v.address_line1,
+    address_line2: v.address_line2 || null,
+    city: v.city,
+    state: v.state.toUpperCase(),
+    postal_code: v.postal_code,
+    country: v.country.toUpperCase(),
+    bedrooms: v.bedrooms,
+    bathrooms: v.bathrooms,
+    square_feet: sqftValue,
+    guest_capacity: v.guest_capacity,
+    active: true,
+  };
+
+  if (v.property_id) {
+    const { error } = await supabase
+      .from("properties")
+      .update(payload)
+      .eq("id", v.property_id)
+      .eq("owner_id", user.id);
+
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase.from("properties").insert(payload);
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath("/portal/setup");
+  revalidatePath("/portal/dashboard");
+  revalidatePath("/portal/properties");
+  redirect("/portal/setup?just=basics");
+}
