@@ -98,6 +98,34 @@ export function PeriodSwitcher({
         )}
       </nav>
 
+      {/* Row 2: Month selector when viewing a year */}
+      {isYear && (
+        <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
+          <Link
+            href={`${BASE}?period=year&y=${params.year}`}
+            className="shrink-0 rounded-full px-3 py-1 text-[12px] font-semibold transition-colors duration-200"
+            style={pill(params.month === null)}
+          >
+            All months
+          </Link>
+          {MONTH_LABELS.map((label, i) => {
+            const m = i + 1;
+            const isActiveMonth = params.month === m;
+            return (
+              <Link
+                key={m}
+                href={`${BASE}?period=year&y=${params.year}&month=${m}`}
+                className="shrink-0 rounded-full px-3 py-1 text-[12px] font-semibold transition-colors duration-200"
+                style={pill(isActiveMonth)}
+                aria-current={isActiveMonth ? "true" : undefined}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       {/* Row 2: Comparison controls (only in compare mode) */}
       {isCompare && (
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-4">

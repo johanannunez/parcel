@@ -86,10 +86,19 @@ export default async function DashboardPage({
     periodEnd = range.end;
     periodLabel = range.label;
   } else if (params.mode === "year") {
-    const range = periodRange("year", today, { year: params.year });
-    periodStart = range.start;
-    periodEnd = range.end;
-    periodLabel = range.label;
+    if (params.month !== null) {
+      // Specific month within a year
+      const m = params.month;
+      periodStart = `${params.year}-${String(m).padStart(2, "0")}-01`;
+      const lastDay = new Date(params.year, m, 0).getDate();
+      periodEnd = `${params.year}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+      periodLabel = `${MONTH_LABELS[m - 1]} ${params.year}`;
+    } else {
+      const range = periodRange("year", today, { year: params.year });
+      periodStart = range.start;
+      periodEnd = range.end;
+      periodLabel = range.label;
+    }
   }
   // compare mode builds per-year queries below
 
@@ -167,8 +176,8 @@ export default async function DashboardPage({
       .neq("status", "cancelled");
     periodBookings = data ?? [];
 
-    // For year mode, build monthly chart data
-    if (params.mode === "year") {
+    // For year mode (all months), build monthly chart data
+    if (params.mode === "year" && params.month === null) {
       const monthly = groupByMonth(periodBookings);
       chartData = { mode: "single", data: monthly };
     }
@@ -338,7 +347,9 @@ export default async function DashboardPage({
     params.mode === "standard"
       ? PERIOD_LABELS[params.period]
       : params.mode === "year"
-        ? String(params.year)
+        ? params.month !== null
+          ? `${MONTH_LABELS[params.month - 1]} ${params.year}`
+          : String(params.year)
         : `${MONTH_LABELS[params.month - 1]} ${params.years[params.years.length - 1]}`;
 
   // Chart title

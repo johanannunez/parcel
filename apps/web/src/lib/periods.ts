@@ -88,7 +88,7 @@ export function periodRange(
 
 export type DashboardParams =
   | { mode: "standard"; period: "month" | "last" | "90d" | "ytd" }
-  | { mode: "year"; year: number }
+  | { mode: "year"; year: number; month: number | null }
   | { mode: "compare"; month: number; years: number[] };
 
 /**
@@ -104,7 +104,9 @@ export function parseDashboardParams(
   if (period === "year") {
     const y = Number(typeof raw.y === "string" ? raw.y : "");
     if (y >= 2020 && y <= 2099) {
-      return { mode: "year", year: y };
+      const monthRaw = typeof raw.month === "string" ? Number(raw.month) : NaN;
+      const month = monthRaw >= 1 && monthRaw <= 12 ? monthRaw : null;
+      return { mode: "year", year: y, month };
     }
     return { mode: "standard", period: "ytd" };
   }
