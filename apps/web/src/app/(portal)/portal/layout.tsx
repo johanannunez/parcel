@@ -5,6 +5,7 @@ import {
   PortalSidebar,
   PortalTopBar,
 } from "@/components/portal/PortalSidebar";
+import { CommandPalette } from "@/components/portal/CommandPalette";
 import { SignOutButton } from "./SignOutButton";
 
 /**
@@ -62,6 +63,7 @@ export default async function PortalLayout({
             {children}
           </div>
         </main>
+        <CommandPalette />
       </div>
     </div>
   );

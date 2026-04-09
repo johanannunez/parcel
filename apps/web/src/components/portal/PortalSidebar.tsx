@@ -11,6 +11,10 @@ import {
   LifebuoyIcon as Lifebuoy,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
+import {
+  CommandPalette,
+  CommandPaletteTrigger,
+} from "@/components/portal/CommandPalette";
 
 type NavItem = {
   href: string;
@@ -97,6 +101,9 @@ export function PortalSidebar({
       </div>
 
       <nav className="flex-1 px-3">
+        <div className="mb-2">
+          <CommandPaletteTrigger />
+        </div>
         <div
           className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em]"
           style={{ color: "var(--color-text-tertiary)" }}
