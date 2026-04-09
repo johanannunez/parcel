@@ -9,6 +9,7 @@ import {
   ClipboardText,
   Wallet,
   LifebuoyIcon as Lifebuoy,
+  ShieldCheck,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import {
@@ -59,12 +60,14 @@ export function PortalSidebar({
   userEmail,
   initials,
   timezone,
+  isAdmin = false,
   signOutSlot,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
   timezone: string | null;
+  isAdmin?: boolean;
   signOutSlot: ReactNode;
 }) {
   const pathname = usePathname();
@@ -179,6 +182,24 @@ export function PortalSidebar({
           </li>
         </ul>
       </nav>
+
+      {isAdmin ? (
+        <div className="mx-3 mb-3">
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)]"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            <span
+              className="inline-flex h-5 w-5 items-center justify-center"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              <ShieldCheck size={18} weight="duotone" />
+            </span>
+            Switch to Admin
+          </Link>
+        </div>
+      ) : null}
 
       <div
         className="mx-3 mb-4 rounded-xl border p-3"

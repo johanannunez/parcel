@@ -10,6 +10,7 @@ import {
   Wallet,
   EnvelopeSimple,
   ClipboardText,
+  UserCircle,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
@@ -132,6 +133,26 @@ export function AdminSidebar({
           ))}
         </ul>
       </nav>
+
+      {/* Switch to portal */}
+      <div className="mx-3 mb-3">
+        <Link
+          href="/portal/dashboard"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+          style={{ color: "rgba(255,255,255,0.5)" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+        >
+          <span className="inline-flex h-5 w-5 items-center justify-center">
+            <UserCircle size={18} weight="duotone" />
+          </span>
+          Switch to Portal
+        </Link>
+      </div>
 
       {/* User card */}
       <div
