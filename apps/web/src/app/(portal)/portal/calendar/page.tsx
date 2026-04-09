@@ -41,7 +41,7 @@ export default async function CalendarPage({
   ] = await Promise.all([
     supabase
       .from("properties")
-      .select("id, name, address_line1, ical_url")
+      .select("id, name, address_line1, city, state, postal_code, bedrooms, ical_url")
       .order("created_at", { ascending: true }),
     supabase
       .from("bookings")
@@ -68,9 +68,22 @@ export default async function CalendarPage({
       .limit(5),
   ]);
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .single();
+
+  const fullName =
+    profile?.full_name?.trim() || user.email?.split("@")[0] || "Owner";
+
   const propertyList = (properties ?? []).map((p) => ({
     id: p.id,
     name: p.name?.trim() || p.address_line1 || "Property",
+    address: [p.address_line1, p.city, p.state, p.postal_code]
+      .filter(Boolean)
+      .join(", "),
+    bedrooms: (p as { bedrooms?: number | null }).bedrooms ?? null,
     ical_url: (p as { ical_url?: string | null }).ical_url ?? null,
   }));
 
@@ -122,11 +135,18 @@ export default async function CalendarPage({
         <CalendarShell
           year={curYear}
           month={curMonth}
-          properties={propertyList.map((p) => ({ id: p.id, name: p.name }))}
+          properties={propertyList.map((p) => ({
+            id: p.id,
+            name: p.name,
+            address: p.address,
+            bedrooms: p.bedrooms,
+          }))}
           bookings={mappedBookings}
           blockRequests={mappedBlocks}
           pastRequests={mappedPastRequests}
           icalUrl={primaryIcalUrl}
+          ownerName={fullName}
+          ownerEmail={user.email ?? ""}
         />
       )}
     </div>

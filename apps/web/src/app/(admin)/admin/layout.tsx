@@ -72,6 +72,13 @@ export default async function AdminLayout({
                 Overview
               </Link>
               <Link
+                href="/admin/properties"
+                className="transition-colors hover:text-white"
+                style={{ color: "rgba(255,255,255,0.7)" }}
+              >
+                Properties
+              </Link>
+              <Link
                 href="/admin/block-requests"
                 className="inline-flex items-center gap-2 transition-colors hover:text-white"
                 style={{ color: "rgba(255,255,255,0.7)" }}
