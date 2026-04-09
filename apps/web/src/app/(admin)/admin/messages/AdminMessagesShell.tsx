@@ -17,7 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { RichTextEditor } from "@/components/messages/RichTextEditor";
 import { SafeHtml } from "@/components/messages/SafeHtml";
-import { sendMessage, getConversationMessages } from "./actions";
+import { sendMessage, sendBroadcast, getConversationMessages, getOwnerCount } from "./actions";
 import { createClient } from "@/lib/supabase/client";
 
 type Conversation = {
@@ -103,10 +103,18 @@ export function AdminMessagesShell({
   const [conversationDetail, setConversationDetail] =
     useState<ConversationDetail | null>(null);
   const [composeBody, setComposeBody] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<"portal" | "email">("portal");
+  const [emailSubject, setEmailSubject] = useState("");
   const [sending, setSending] = useState(false);
   const [showOwnerPicker, setShowOwnerPicker] = useState(false);
   const [ownerSearch, setOwnerSearch] = useState("");
   const [expandedReads, setExpandedReads] = useState<Set<string>>(new Set());
+  const [showBroadcast, setShowBroadcast] = useState(false);
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastBody, setBroadcastBody] = useState("");
+  const [broadcastDelivery, setBroadcastDelivery] = useState<"portal" | "portal_email">("portal");
+  const [broadcastSending, setBroadcastSending] = useState(false);
+  const [ownerCount, setOwnerCount] = useState(0);
 
   // Filter conversations
   const filtered = initialConversations.filter((c) => {
@@ -168,15 +176,43 @@ export function AdminMessagesShell({
 
   const handleSend = async () => {
     if (!composeBody.trim() || !conversationDetail?.owner_id) return;
+    if (deliveryMethod === "email" && !emailSubject.trim()) return;
     setSending(true);
     const result = await sendMessage({
       ownerId: conversationDetail.owner_id,
       body: composeBody,
+      deliveryMethod,
+      subject: deliveryMethod === "email" ? emailSubject : undefined,
     });
     setSending(false);
     if (result.error) return;
     setComposeBody("");
+    setEmailSubject("");
+    setDeliveryMethod("portal");
     if (result.conversationId) loadConversation(result.conversationId);
+  };
+
+  const handleBroadcast = async () => {
+    if (!broadcastSubject.trim() || !broadcastBody.trim()) return;
+    setBroadcastSending(true);
+    const result = await sendBroadcast({
+      subject: broadcastSubject,
+      body: broadcastBody,
+      deliveryMethod: broadcastDelivery,
+    });
+    setBroadcastSending(false);
+    if (result.error) return;
+    setBroadcastSubject("");
+    setBroadcastBody("");
+    setBroadcastDelivery("portal");
+    setShowBroadcast(false);
+    startTransition(() => router.refresh());
+  };
+
+  const openBroadcast = async () => {
+    const count = await getOwnerCount();
+    setOwnerCount(count);
+    setShowBroadcast(true);
   };
 
   const handleNewMessage = async (ownerId: string) => {
@@ -288,6 +324,21 @@ export function AdminMessagesShell({
           >
             <PlusCircle size={16} weight="bold" />
             New message
+          </button>
+          <button
+            type="button"
+            onClick={openBroadcast}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+            style={{ color: "#f59e0b" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <Megaphone size={16} weight="bold" />
+            New announcement
           </button>
         </div>
       </div>
@@ -522,16 +573,62 @@ export function AdminMessagesShell({
             {conversationDetail.type === "direct" ? (
               <div className="border-t p-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                 <RichTextEditor dark content="" onChange={setComposeBody} placeholder="Write a message..." />
-                <div className="mt-3 flex items-center justify-end gap-3">
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* Delivery Toggle */}
+                    <div
+                      className="flex overflow-hidden rounded-lg border"
+                      style={{ borderColor: "rgba(255,255,255,0.1)" }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setDeliveryMethod("portal")}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
+                        style={{
+                          backgroundColor: deliveryMethod === "portal" ? "rgba(255,255,255,0.1)" : "transparent",
+                          color: deliveryMethod === "portal" ? "white" : "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        <ChatCircle size={12} weight="bold" />
+                        Portal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeliveryMethod("email")}
+                        className="flex items-center gap-1.5 border-l px-3 py-1.5 text-xs font-medium transition-colors"
+                        style={{
+                          borderColor: "rgba(255,255,255,0.1)",
+                          backgroundColor: deliveryMethod === "email" ? "rgba(255,255,255,0.1)" : "transparent",
+                          color: deliveryMethod === "email" ? "white" : "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        <EnvelopeSimple size={12} weight="bold" />
+                        Email
+                      </button>
+                    </div>
+
+                    {/* Subject field (email only) */}
+                    {deliveryMethod === "email" ? (
+                      <input
+                        type="text"
+                        placeholder="Email subject..."
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                        className="rounded-lg border bg-transparent px-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
+                        style={{ borderColor: "rgba(255,255,255,0.1)", minWidth: "200px" }}
+                      />
+                    ) : null}
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleSend}
-                    disabled={sending || !composeBody.trim()}
+                    disabled={sending || !composeBody.trim() || (deliveryMethod === "email" && !emailSubject.trim())}
                     className="flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-40"
                     style={{ backgroundColor: "var(--color-brand)" }}
                   >
                     <PaperPlaneTilt size={16} weight="bold" />
-                    {sending ? "Sending..." : "Send"}
+                    {sending ? "Sending..." : deliveryMethod === "email" ? "Send email" : "Send"}
                   </button>
                 </div>
               </div>
@@ -539,6 +636,95 @@ export function AdminMessagesShell({
           </>
         )}
       </div>
+
+      {/* Broadcast Modal */}
+      {showBroadcast ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div
+            className="w-[600px] rounded-xl border p-6"
+            style={{ backgroundColor: "var(--color-charcoal)", borderColor: "rgba(255,255,255,0.08)" }}
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <Megaphone size={18} weight="duotone" style={{ color: "#f59e0b" }} />
+              <h3 className="text-sm font-semibold text-white">New announcement</h3>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Subject line..."
+              value={broadcastSubject}
+              onChange={(e) => setBroadcastSubject(e.target.value)}
+              className="mb-3 w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none"
+              style={{ borderColor: "rgba(255,255,255,0.1)" }}
+              autoFocus
+            />
+
+            <RichTextEditor dark content="" onChange={setBroadcastBody} placeholder="Write your announcement..." />
+
+            {/* Delivery method */}
+            <div className="mt-4 flex items-center gap-4">
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Deliver via:</span>
+              <div className="flex overflow-hidden rounded-lg border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                <button
+                  type="button"
+                  onClick={() => setBroadcastDelivery("portal")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
+                  style={{
+                    backgroundColor: broadcastDelivery === "portal" ? "rgba(255,255,255,0.1)" : "transparent",
+                    color: broadcastDelivery === "portal" ? "white" : "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  Portal only
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBroadcastDelivery("portal_email")}
+                  className="flex items-center gap-1.5 border-l px-3 py-1.5 text-xs font-medium transition-colors"
+                  style={{
+                    borderColor: "rgba(255,255,255,0.1)",
+                    backgroundColor: broadcastDelivery === "portal_email" ? "rgba(255,255,255,0.1)" : "transparent",
+                    color: broadcastDelivery === "portal_email" ? "white" : "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  Portal + Email
+                </button>
+              </div>
+            </div>
+
+            {/* Owner count preview */}
+            <div
+              className="mt-3 rounded-lg px-3 py-2 text-xs"
+              style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.5)" }}
+            >
+              This will be sent to <strong className="text-white">{ownerCount}</strong> owner{ownerCount !== 1 ? "s" : ""}
+              {broadcastDelivery === "portal_email" ? " (portal + email)" : " (portal only)"}.
+            </div>
+
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => { setShowBroadcast(false); setBroadcastSubject(""); setBroadcastBody(""); }}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                style={{ color: "rgba(255,255,255,0.5)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBroadcast}
+                disabled={broadcastSending || !broadcastSubject.trim() || !broadcastBody.trim()}
+                className="flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-40"
+                style={{ backgroundColor: "#f59e0b" }}
+              >
+                <Megaphone size={14} weight="bold" />
+                {broadcastSending ? "Sending..." : "Send announcement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Owner Picker Modal */}
       {showOwnerPicker ? (
