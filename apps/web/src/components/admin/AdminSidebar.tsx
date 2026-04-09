@@ -10,10 +10,10 @@ import {
   Wallet,
   EnvelopeSimple,
   ClipboardText,
-  UserCircle,
   ChatCircle,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
+import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
 
 type NavItem = {
   href: string;
@@ -141,59 +141,12 @@ export function AdminSidebar({
         </ul>
       </nav>
 
-      {/* Switch to portal */}
-      <div className="mx-3 mb-3">
-        <Link
-          href="/portal/dashboard"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-          style={{ color: "rgba(255,255,255,0.5)" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-          }}
-        >
-          <span className="inline-flex h-5 w-5 items-center justify-center">
-            <UserCircle size={18} weight="duotone" />
-          </span>
-          Switch to Portal
-        </Link>
-      </div>
-
-      {/* User card */}
-      <div
-        className="mx-3 mb-4 rounded-xl border p-3"
-        style={{
-          borderColor: "rgba(255,255,255,0.08)",
-          backgroundColor: "var(--color-charcoal)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.08)",
-              color: "white",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            {initials}
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-white">
-              {userName}
-            </div>
-            <div
-              className="truncate text-xs"
-              style={{ color: "rgba(255,255,255,0.5)" }}
-            >
-              {userEmail}
-            </div>
-          </div>
-        </div>
-        <div className="mt-3">{signOutSlot}</div>
-      </div>
+      <AdminSidebarFooter
+        userName={userName}
+        userEmail={userEmail}
+        initials={initials}
+        signOutSlot={signOutSlot}
+      />
     </aside>
   );
 }
