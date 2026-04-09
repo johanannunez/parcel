@@ -203,8 +203,12 @@ const CancelSchema = z.object({
 export async function cancelBlockRequest(
   input: unknown,
 ): Promise<BlockRequestResult> {
+  console.log("[cancelBlockRequest] called with:", JSON.stringify(input));
   const parsed = CancelSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Invalid request." };
+  if (!parsed.success) {
+    console.error("[cancelBlockRequest] validation failed:", parsed.error.message);
+    return { ok: false, error: "Invalid request." };
+  }
 
   const supabase = await createClient();
   const {
@@ -213,14 +217,17 @@ export async function cancelBlockRequest(
   if (!user) return { ok: false, error: "Not signed in." };
 
   // Only allow cancelling own pending requests
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("block_requests")
     .update({ status: "cancelled" as string })
     .eq("id", parsed.data.id)
     .eq("owner_id", user.id)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .select("id");
 
   if (error) return { ok: false, error: error.message };
+  if (!data || data.length === 0)
+    return { ok: false, error: "Request not found or already processed." };
 
   revalidatePath("/portal/calendar");
   return { ok: true };

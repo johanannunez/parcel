@@ -69,13 +69,25 @@ export function BlockDetailModal({
 
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const confirmReady = confirmText.toLowerCase().trim() === "cancel";
 
   const onConfirmCancel = () => {
     if (!confirmReady) return;
+    setCancelError(null);
     startTransition(async () => {
-      const result = await cancelBlockRequest({ id: block.id });
-      if (result.ok) onClose();
+      try {
+        const result = await cancelBlockRequest({ id: block.id });
+        if (result.ok) {
+          onClose();
+        } else {
+          setCancelError(result.error ?? "Something went wrong.");
+        }
+      } catch (err) {
+        setCancelError(
+          err instanceof Error ? err.message : "Unexpected error.",
+        );
+      }
     });
   };
 
@@ -288,9 +300,14 @@ export function BlockDetailModal({
                 {pending ? "Cancelling..." : "Confirm"}
               </button>
             </div>
+            {cancelError && (
+              <p className="mt-2 text-xs font-medium" style={{ color: "#b91c1c" }}>
+                {cancelError}
+              </p>
+            )}
             <button
               type="button"
-              onClick={() => { setConfirmingCancel(false); setConfirmText(""); }}
+              onClick={() => { setConfirmingCancel(false); setConfirmText(""); setCancelError(null); }}
               className="mt-2 text-xs font-medium transition-colors hover:underline"
               style={{ color: "var(--color-text-tertiary)" }}
             >
