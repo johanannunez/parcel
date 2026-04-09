@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState, useCallback } from "react";
 import {
   Camera,
   ChatCircle,
@@ -8,6 +8,7 @@ import {
   Phone,
   Trash,
   WarningCircle,
+  CropIcon as Crop,
 } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { saveAccount, type SaveAccountState } from "./actions";
@@ -18,7 +19,7 @@ type MailingAddress = {
   city?: string;
   state?: string;
   zip?: string;
-  emergency_contact?: { name?: string; phone?: string };
+  emergency_contact?: { name?: string; phone?: string } | null;
 };
 
 export type AccountInitial = {
@@ -49,19 +50,10 @@ const US_TIMEZONES: { value: string; label: string }[] = [
   { value: "Pacific/Honolulu", label: "Hawaii (HT)" },
 ];
 
-const REFERRAL_OPTIONS = [
-  "Referral",
-  "Social media",
-  "Google search",
-  "Airbnb community",
-  "Real estate group",
-  "Other",
-];
-
 const CONTACT_METHODS: { value: string; label: string; icon: React.ReactNode }[] = [
-  { value: "text", label: "Text message", icon: <Phone size={20} weight="duotone" /> },
-  { value: "email", label: "Email", icon: <Envelope size={20} weight="duotone" /> },
-  { value: "portal", label: "Portal message", icon: <ChatCircle size={20} weight="duotone" /> },
+  { value: "text", label: "Text message", icon: <Phone size={18} weight="duotone" /> },
+  { value: "email", label: "Email", icon: <Envelope size={18} weight="duotone" /> },
+  { value: "portal", label: "Portal message", icon: <ChatCircle size={18} weight="duotone" /> },
 ];
 
 const initialState: SaveAccountState = {};
@@ -72,6 +64,43 @@ function detectTimezone(): string {
     if (US_TIMEZONES.some((t) => t.value === tz)) return tz;
   } catch { /* ignore */ }
   return "";
+}
+
+/** Resize an image file to fit within maxSize, returning a new File. */
+async function resizeImage(file: File, maxSize: number): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width <= maxSize && height <= maxSize) {
+        resolve(file);
+        return;
+      }
+      // Scale down to fit
+      const scale = maxSize / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { resolve(file); return; }
+          resolve(new File([blob], file.name, { type: file.type }));
+        },
+        file.type,
+        0.9,
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
 }
 
 export function AccountForm({
@@ -115,35 +144,34 @@ export function AccountForm({
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Referral source
-  const [referralSource, setReferralSource] = useState(initial.referral_source || "");
-  const isOtherReferral = referralSource === "Other" ||
-    (referralSource && !REFERRAL_OPTIONS.slice(0, -1).includes(referralSource));
-  const [referralOther, setReferralOther] = useState(
-    isOtherReferral && referralSource !== "Other" ? referralSource : "",
-  );
-
   // Mailing address defaults
   const addr = initial.mailing_address;
   const emergency = addr?.emergency_contact;
 
+  // Emergency contact opt-out
+  const [hasEmergencyContact, setHasEmergencyContact] = useState(
+    Boolean(emergency?.name || emergency?.phone),
+  );
+
   // Initials for avatar fallback
   const initials = buildInitials(initial.full_name || email);
 
-  async function handleAvatarUpload(file: File) {
+  const handleAvatarUpload = useCallback(async (file: File) => {
     if (!file.type.match(/^image\/(jpeg|png|webp)$/)) return;
     if (file.size > 5 * 1024 * 1024) return;
 
     setUploading(true);
     try {
+      // Resize to 512px max dimension for avatars
+      const resized = await resizeImage(file, 512);
+
       const supabase = createClient();
       const ext = file.name.split(".").pop() ?? "jpg";
       const path = `${userId}/avatar/profile.${ext}`;
 
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("property-photos")
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, resized, { upsert: true, contentType: file.type });
 
       if (uploadError) throw uploadError;
 
@@ -154,7 +182,6 @@ export function AccountForm({
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       setAvatarUrl(publicUrl);
 
-      // Write to profile
       await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
@@ -164,7 +191,7 @@ export function AccountForm({
     } finally {
       setUploading(false);
     }
-  }
+  }, [userId]);
 
   async function handleRemoveAvatar() {
     setAvatarUrl("");
@@ -186,7 +213,7 @@ export function AccountForm({
       {state.error ? (
         <div
           role="alert"
-          className="flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm"
+          className="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
           style={{
             borderColor: "#f1c4c4",
             backgroundColor: "#fdf4f4",
@@ -202,21 +229,17 @@ export function AccountForm({
       <input type="hidden" name="avatar_url" value={avatarUrl} />
       <input type="hidden" name="contact_method" value={Array.from(contactMethods).join(",")} />
       <input type="hidden" name="timezone" value={timezone} />
-      <input
-        type="hidden"
-        name="referral_source"
-        value={isOtherReferral ? referralOther || "Other" : referralSource}
-      />
+      <input type="hidden" name="has_emergency_contact" value={hasEmergencyContact ? "yes" : "no"} />
 
       {/* 1. Profile photo */}
       <FormSection title="Profile photo">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-5">
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            className="group relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed transition-colors hover:border-[var(--color-brand)]"
+            className="group relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed transition-colors hover:border-[var(--color-brand)]"
             style={{
               borderColor: avatarUrl ? "transparent" : "var(--color-warm-gray-200)",
               backgroundColor: avatarUrl ? "transparent" : "var(--color-warm-gray-50)",
@@ -229,15 +252,15 @@ export function AccountForm({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-0.5">
                 <Camera
-                  size={22}
+                  size={20}
                   weight="duotone"
                   className="transition-colors group-hover:text-[var(--color-brand)]"
                   style={{ color: "var(--color-text-tertiary)" }}
                 />
                 <span
-                  className="text-[24px] font-semibold leading-none"
+                  className="text-lg font-semibold leading-none"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
                   {initials}
@@ -263,7 +286,7 @@ export function AccountForm({
               if (f) handleAvatarUpload(f);
             }}
           />
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
@@ -287,16 +310,16 @@ export function AccountForm({
                 className="text-xs"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
-                JPG, PNG, or WebP. Max 5 MB.
+                JPG, PNG, or WebP. Max 5 MB. Auto-resized to 512px.
               </p>
             )}
           </div>
         </div>
       </FormSection>
 
-      {/* 2. Personal details */}
-      <FormSection title="Personal details">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {/* 2. Personal details + mailing address (merged) */}
+      <FormSection title="Your details">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <TextInput
             name="full_name"
             label="Full name"
@@ -313,8 +336,6 @@ export function AccountForm({
             helper="What should we call you? This is what you will see in greetings."
             error={err("preferred_name")}
           />
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextInput
             name="phone"
             label="Phone"
@@ -326,20 +347,28 @@ export function AccountForm({
           />
           <ReadOnlyField label="Email" value={email} />
         </div>
-      </FormSection>
 
-      {/* 3. Mailing address */}
-      <FormSection title="Mailing address">
-        <div className="grid grid-cols-1 gap-4">
+        <div
+          className="my-4 border-t"
+          style={{ borderColor: "var(--color-warm-gray-100)" }}
+        />
+
+        <p
+          className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em]"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          Mailing address
+        </p>
+        <div className="grid grid-cols-1 gap-3">
           <TextInput
             name="street"
             label="Street address"
             defaultValue={addr?.street ?? ""}
-            placeholder="1234 Example Street"
+            placeholder="742 Evergreen Terrace"
             required
             error={err("street")}
           />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_140px_160px]">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px_120px]">
             <TextInput
               name="city"
               label="City"
@@ -383,41 +412,68 @@ export function AccountForm({
         </div>
       </FormSection>
 
-      {/* 4. Emergency contact */}
+      {/* 3. Emergency contact with opt-out */}
       <FormSection title="Emergency contact">
-        <p
-          className="mb-4 text-sm"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          If something happens at the property and we cannot reach you, who should we call?
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TextInput
-            name="emergency_name"
-            label="Contact name"
-            defaultValue={emergency?.name ?? ""}
-            placeholder="Maria Santos"
-          />
-          <TextInput
-            name="emergency_phone"
-            label="Contact phone"
-            defaultValue={emergency?.phone ?? ""}
-            placeholder="+1 (555) 123-4567"
-            type="tel"
-          />
+        <div className="flex items-start justify-between gap-4">
+          <p
+            className="text-sm"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            If something happens at the property and we cannot reach you, who should we call?
+          </p>
+          <button
+            type="button"
+            onClick={() => setHasEmergencyContact(!hasEmergencyContact)}
+            className="flex shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              color: hasEmergencyContact
+                ? "var(--color-text-secondary)"
+                : "var(--color-brand)",
+              backgroundColor: hasEmergencyContact
+                ? "var(--color-white)"
+                : "rgba(2, 170, 235, 0.06)",
+            }}
+          >
+            {hasEmergencyContact ? "Skip this" : "Add a contact"}
+          </button>
         </div>
+        {hasEmergencyContact ? (
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <TextInput
+              name="emergency_name"
+              label="Contact name"
+              defaultValue={emergency?.name ?? ""}
+              placeholder="Maria Santos"
+            />
+            <TextInput
+              name="emergency_phone"
+              label="Contact phone"
+              defaultValue={emergency?.phone ?? ""}
+              placeholder="+1 (555) 123-4567"
+              type="tel"
+            />
+          </div>
+        ) : (
+          <p
+            className="mt-2 text-xs"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            No emergency contact provided. You can add one anytime.
+          </p>
+        )}
       </FormSection>
 
-      {/* 5. Communication preferences */}
+      {/* 4. Communication preferences */}
       <FormSection title="Communication preferences">
-        <div className="mb-5">
+        <div className="mb-4">
           <p
-            className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em]"
+            className="mb-2.5 text-[12px] font-semibold uppercase tracking-[0.08em]"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             How should we reach you for urgent updates?
           </p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {CONTACT_METHODS.map((method) => {
               const selected = contactMethods.has(method.value);
               return (
@@ -425,7 +481,7 @@ export function AccountForm({
                   key={method.value}
                   type="button"
                   onClick={() => toggleContactMethod(method.value)}
-                  className="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors"
+                  className="flex items-center gap-2.5 rounded-lg border-2 px-3.5 py-2.5 text-left transition-colors"
                   style={{
                     borderColor: selected
                       ? "var(--color-brand)"
@@ -455,7 +511,7 @@ export function AccountForm({
                     {method.label}
                   </span>
                   <span
-                    className="ml-auto flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border-2 transition-colors"
+                    className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
                     style={{
                       borderColor: selected
                         ? "var(--color-brand)"
@@ -505,56 +561,6 @@ export function AccountForm({
         </div>
       </FormSection>
 
-      {/* 6. One last thing */}
-      <FormSection title="One last thing">
-        <div className="flex flex-col gap-1.5">
-          <label
-            className="text-[12px] font-semibold uppercase tracking-[0.08em]"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            How did you hear about us?
-          </label>
-          <select
-            value={isOtherReferral ? "Other" : referralSource}
-            onChange={(e) => {
-              setReferralSource(e.target.value);
-              if (e.target.value !== "Other") setReferralOther("");
-            }}
-            className="rounded-lg border bg-white px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: "var(--color-warm-gray-200)",
-              color: "var(--color-text-primary)",
-            }}
-          >
-            <option value="">Select</option>
-            {REFERRAL_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
-          {(referralSource === "Other" || isOtherReferral) && (
-            <input
-              type="text"
-              value={referralOther}
-              onChange={(e) => setReferralOther(e.target.value)}
-              placeholder="Tell us more..."
-              className="mt-2 rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
-              style={{
-                borderColor: "var(--color-warm-gray-200)",
-                backgroundColor: "var(--color-white)",
-                color: "var(--color-text-primary)",
-              }}
-            />
-          )}
-          <p
-            className="text-xs"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            Helps us understand how owners find The Parcel Company.
-          </p>
-        </div>
-      </FormSection>
-
-      {/* 7. Sticky save bar */}
       <StepSaveBar pending={pending} isEditing={isEditing} />
     </form>
   );
@@ -580,7 +586,7 @@ function FormSection({
       }}
     >
       <h2
-        className="mb-4 text-base font-semibold tracking-tight"
+        className="mb-3 text-base font-semibold tracking-tight"
         style={{ color: "var(--color-text-primary)" }}
       >
         {title}

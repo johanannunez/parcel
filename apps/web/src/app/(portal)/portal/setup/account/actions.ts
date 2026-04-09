@@ -17,9 +17,9 @@ const schema = z.object({
   zip: z.string().trim().min(3, "ZIP code is required."),
   emergency_name: z.string().trim().optional().default(""),
   emergency_phone: z.string().trim().optional().default(""),
+  has_emergency_contact: z.string().trim().optional().default("no"),
   contact_method: z.string().trim().optional().default(""),
   timezone: z.string().trim().optional().default(""),
-  referral_source: z.string().trim().optional().default(""),
   avatar_url: z.string().trim().optional().default(""),
 });
 
@@ -60,11 +60,13 @@ export async function saveAccount(
     zip: v.zip,
   };
 
-  if (v.emergency_name || v.emergency_phone) {
+  if (v.has_emergency_contact === "yes" && (v.emergency_name || v.emergency_phone)) {
     mailingAddress.emergency_contact = {
       name: v.emergency_name || null,
       phone: v.emergency_phone || null,
     };
+  } else {
+    mailingAddress.emergency_contact = null;
   }
 
   const { error } = await supabase
@@ -76,7 +78,6 @@ export async function saveAccount(
       preferred_name: v.preferred_name || null,
       contact_method: v.contact_method || null,
       timezone: v.timezone || null,
-      referral_source: v.referral_source || null,
       avatar_url: v.avatar_url || null,
     })
     .eq("id", user.id);
@@ -92,7 +93,6 @@ export async function saveAccount(
       preferred_name: v.preferred_name,
       contact_method: v.contact_method,
       timezone: v.timezone,
-      referral_source: v.referral_source,
       mailing_address: mailingAddress,
     },
   });
