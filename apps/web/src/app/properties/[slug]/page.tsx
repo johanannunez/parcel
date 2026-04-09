@@ -134,7 +134,7 @@ export default async function PropertyPage({ params }: Props) {
               <Suspense fallback={null}>
                 <BookingWidgetParamSync />
               </Suspense>
-              <div className="rounded-[var(--radius-lg)] border border-warm-gray-200 bg-white p-1 shadow-[var(--shadow-xl)]">
+              <div className="rounded-[var(--radius-lg)] border border-warm-gray-200 bg-[var(--color-white)] p-1 shadow-[var(--shadow-xl)]">
                 <HospitableBookingWidget propertyId={slug} />
               </div>
               <p className="mt-3 text-center text-xs text-text-tertiary">

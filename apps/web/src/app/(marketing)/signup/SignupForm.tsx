@@ -23,7 +23,7 @@ export function SignupForm() {
           name="full_name"
           type="text"
           autoComplete="name"
-          className="rounded-lg border border-[var(--color-warm-gray-200)] bg-white px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
+          className="rounded-lg border border-[var(--color-warm-gray-200)] bg-[var(--color-white)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
           style={{ color: "var(--color-text-primary)" }}
         />
       </div>
@@ -42,7 +42,7 @@ export function SignupForm() {
           type="email"
           autoComplete="email"
           required
-          className="rounded-lg border border-[var(--color-warm-gray-200)] bg-white px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
+          className="rounded-lg border border-[var(--color-warm-gray-200)] bg-[var(--color-white)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
           style={{ color: "var(--color-text-primary)" }}
         />
       </div>
@@ -62,7 +62,7 @@ export function SignupForm() {
           autoComplete="new-password"
           required
           minLength={8}
-          className="rounded-lg border border-[var(--color-warm-gray-200)] bg-white px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
+          className="rounded-lg border border-[var(--color-warm-gray-200)] bg-[var(--color-white)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
           style={{ color: "var(--color-text-primary)" }}
         />
         <span
