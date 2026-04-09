@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   Sun,
+  Moon,
   Question,
   GearSix,
   ShieldCheck,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 export function SidebarFooter({
   userName,
@@ -23,12 +24,7 @@ export function SidebarFooter({
   isAdmin?: boolean;
   signOutSlot: ReactNode;
 }) {
-  const [toastVisible, setToastVisible] = useState(false);
-
-  function handleThemeToggle() {
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2000);
-  }
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   return (
     <div
@@ -65,27 +61,18 @@ export function SidebarFooter({
       {/* Action rows */}
       <div className="pt-1 pb-1">
         {/* Theme toggle */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={handleThemeToggle}
-            className="sidebar-footer-row"
-          >
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="sidebar-footer-row"
+        >
+          {resolvedTheme === "dark" ? (
             <Sun size={15} weight="regular" className="shrink-0" />
-            Light mode
-          </button>
-          {toastVisible ? (
-            <span
-              className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium"
-              style={{
-                backgroundColor: "var(--color-text-primary)",
-                color: "var(--color-white)",
-              }}
-            >
-              Coming soon
-            </span>
-          ) : null}
-        </div>
+          ) : (
+            <Moon size={15} weight="regular" className="shrink-0" />
+          )}
+          {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
+        </button>
 
         <Link href="/help" className="sidebar-footer-row">
           <Question size={15} weight="regular" className="shrink-0" />

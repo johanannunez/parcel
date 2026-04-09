@@ -17,7 +17,7 @@ const NAV_LINKS = [
 export default function FrostedNav() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -42,7 +42,7 @@ export default function FrostedNav() {
           {/* Logo */}
           <Link href="/" className="relative z-10 flex items-center gap-2">
             <Image
-              src={scrolled && theme === "light" ? "/brand/logo-mark.png" : "/brand/logo-mark-white.png"}
+              src={scrolled && resolvedTheme === "light" ? "/brand/logo-mark.png" : "/brand/logo-mark-white.png"}
               alt="The Parcel Company"
               width={48}
               height={48}
@@ -71,9 +71,9 @@ export default function FrostedNav() {
                   ? "text-text-primary hover:bg-warm-gray-100"
                   : "text-white hover:bg-white/10"
               }`}
-              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+              aria-label={`Switch to ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             >
-              {theme === "light" ? (
+              {resolvedTheme === "light" ? (
                 <Moon size={20} weight="bold" />
               ) : (
                 <Sun size={20} weight="bold" />
@@ -96,9 +96,9 @@ export default function FrostedNav() {
                   ? "text-text-primary hover:bg-warm-gray-100"
                   : "text-white hover:bg-white/10"
               }`}
-              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+              aria-label={`Switch to ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             >
-              {theme === "light" ? (
+              {resolvedTheme === "light" ? (
                 <Moon size={20} weight="bold" />
               ) : (
                 <Sun size={20} weight="bold" />
