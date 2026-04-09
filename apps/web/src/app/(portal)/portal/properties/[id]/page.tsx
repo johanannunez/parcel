@@ -9,11 +9,13 @@ import {
   Ruler,
   MapPin,
   CalendarBlank,
+  CurrencyDollar,
   Wallet,
   FileText,
   House,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
+import { OccupancyCalendar } from "@/components/portal/OccupancyCalendar";
 import { propertyTypeLongLabels } from "@/lib/labels";
 import { currency0, formatMedium, formatRelative } from "@/lib/format";
 
@@ -34,8 +36,11 @@ export default async function PropertyDetailPage({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const yearStart = `${new Date().getFullYear()}-01-01`;
+  const now = new Date();
+  const todayIso = now.toISOString().slice(0, 10);
+  const yearStart = `${now.getFullYear()}-01-01`;
+  const calMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const calMonthEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
 
   const [
     { data: property },
@@ -43,6 +48,8 @@ export default async function PropertyDetailPage({
     { data: nextStay },
     { data: ytdBookings },
     { data: payouts },
+    { data: calendarBookings },
+    { data: monthBookings },
   ] = await Promise.all([
     supabase.from("properties").select("*").eq("id", id).maybeSingle(),
     supabase
@@ -74,6 +81,20 @@ export default async function PropertyDetailPage({
       .eq("property_id", id)
       .order("period_start", { ascending: false })
       .limit(6),
+    supabase
+      .from("bookings")
+      .select("check_in, check_out")
+      .eq("property_id", id)
+      .gte("check_out", calMonthStart)
+      .lte("check_in", calMonthEnd)
+      .neq("status", "cancelled"),
+    supabase
+      .from("bookings")
+      .select("total_amount")
+      .eq("property_id", id)
+      .gte("check_in", calMonthStart)
+      .lte("check_in", calMonthEnd)
+      .neq("status", "cancelled"),
   ]);
 
   if (!property) notFound();
@@ -83,6 +104,11 @@ export default async function PropertyDetailPage({
     (s, b) => s + Number(b.total_amount ?? 0),
     0,
   );
+  const thisMonthRevenue = (monthBookings ?? []).reduce(
+    (s, b) => s + Number(b.total_amount ?? 0),
+    0,
+  );
+  const ytdBookingsCount = (ytdBookings ?? []).length;
 
   return (
     <div className="flex flex-col gap-10">
@@ -106,7 +132,8 @@ export default async function PropertyDetailPage({
               color: "var(--color-text-secondary)",
             }}
           >
-            {propertyTypeLongLabels[property.property_type] ?? property.property_type}
+            {propertyTypeLongLabels[property.property_type] ??
+              property.property_type}
           </span>
           <h1
             className="mt-3 text-[34px] font-semibold leading-tight tracking-tight"
@@ -120,7 +147,9 @@ export default async function PropertyDetailPage({
           >
             <MapPin size={14} weight="duotone" />
             {property.address_line1}
-            {property.address_line2 ? `, ${property.address_line2}` : ""},{" "}
+            {property.address_line2
+              ? `, ${property.address_line2}`
+              : ""},{" "}
             {property.city}, {property.state} {property.postal_code}
           </div>
         </div>
@@ -147,26 +176,27 @@ export default async function PropertyDetailPage({
         <StatTile
           icon={<Bed size={18} weight="duotone" />}
           label="Bedrooms"
-          value={property.bedrooms?.toString() ?? "—"}
+          value={property.bedrooms?.toString() ?? "\u2014"}
         />
         <StatTile
           icon={<Bathtub size={18} weight="duotone" />}
           label="Bathrooms"
-          value={property.bathrooms?.toString() ?? "—"}
+          value={property.bathrooms?.toString() ?? "\u2014"}
         />
         <StatTile
           icon={<UsersIcon size={18} weight="duotone" />}
           label="Guests"
-          value={property.guest_capacity?.toString() ?? "—"}
+          value={property.guest_capacity?.toString() ?? "\u2014"}
         />
         <StatTile
           icon={<Ruler size={18} weight="duotone" />}
           label="Square feet"
-          value={property.square_feet?.toLocaleString() ?? "—"}
+          value={property.square_feet?.toLocaleString() ?? "\u2014"}
         />
       </section>
 
-      <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+      {/* Revenue summary row */}
+      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <InfoCard
           icon={<House size={18} weight="duotone" />}
           label="Next stay"
@@ -178,15 +208,27 @@ export default async function PropertyDetailPage({
         />
         <InfoCard
           icon={<Wallet size={18} weight="duotone" />}
-          label="Revenue this year"
+          label="Revenue YTD"
           value={currency0.format(ytdRevenue)}
         />
         <InfoCard
+          icon={<CurrencyDollar size={18} weight="duotone" />}
+          label="This month"
+          value={currency0.format(thisMonthRevenue)}
+        />
+        <InfoCard
           icon={<CalendarBlank size={18} weight="duotone" />}
-          label="Listed"
-          value={formatRelative(property.created_at)}
+          label="Bookings YTD"
+          value={String(ytdBookingsCount)}
         />
       </section>
+
+      {/* Occupancy calendar */}
+      <OccupancyCalendar
+        bookings={calendarBookings ?? []}
+        year={now.getFullYear()}
+        month={now.getMonth()}
+      />
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Panel
@@ -223,14 +265,17 @@ export default async function PropertyDetailPage({
                       className="text-xs"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      {formatMedium(b.check_in)} to {formatMedium(b.check_out)}
+                      {formatMedium(b.check_in)} to{" "}
+                      {formatMedium(b.check_out)}
                     </div>
                   </div>
                   <div
                     className="text-sm font-semibold tabular-nums"
                     style={{ color: "var(--color-text-primary)" }}
                   >
-                    {b.total_amount ? currency0.format(Number(b.total_amount)) : "—"}
+                    {b.total_amount
+                      ? currency0.format(Number(b.total_amount))
+                      : "\u2014"}
                   </div>
                 </li>
               ))}
@@ -266,13 +311,16 @@ export default async function PropertyDetailPage({
                       className="text-sm font-semibold"
                       style={{ color: "var(--color-text-primary)" }}
                     >
-                      {formatMedium(p.period_start)} to {formatMedium(p.period_end)}
+                      {formatMedium(p.period_start)} to{" "}
+                      {formatMedium(p.period_end)}
                     </div>
                     <div
                       className="text-xs"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      {p.paid_at ? `Paid ${formatMedium(p.paid_at)}` : "Awaiting transfer"}
+                      {p.paid_at
+                        ? `Paid ${formatMedium(p.paid_at)}`
+                        : "Awaiting transfer"}
                     </div>
                   </div>
                   <div
