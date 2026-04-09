@@ -335,14 +335,14 @@ export async function syncFromHospitable(
         .filter(Boolean)
         .join(" ") || null;
 
-    const totalAmount =
-      res.financials?.host_payout?.amount ??
-      res.financials?.total_price?.amount ??
+    // Hospitable returns financials as host.revenue / guest.total_price
+    // with amounts in cents (integer). Convert to dollars for storage.
+    const rawCents =
+      res.financials?.host?.revenue?.amount ??
+      res.financials?.guest?.total_price?.amount ??
       null;
-    const currency =
-      res.financials?.host_payout?.currency ??
-      res.financials?.total_price?.currency ??
-      "USD";
+    const totalAmount = rawCents !== null ? rawCents / 100 : null;
+    const currency = res.financials?.currency ?? "USD";
 
     const { error } = await supabase.from("bookings").upsert(
       {

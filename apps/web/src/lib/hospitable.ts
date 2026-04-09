@@ -71,12 +71,28 @@ export interface HospitableGuest {
   phone?: string;
 }
 
+export interface HospitableFinancialLine {
+  amount?: number;
+  formatted?: string;
+  label?: string;
+  category?: string;
+}
+
 export interface HospitableFinancials {
-  host_payout?: { amount?: number; currency?: string };
-  guest_fee?: { amount?: number; currency?: string };
-  nightly_price?: { amount?: number; currency?: string };
-  cleaning_fee?: { amount?: number; currency?: string };
-  total_price?: { amount?: number; currency?: string };
+  currency?: string;
+  host?: {
+    accommodation?: HospitableFinancialLine;
+    guest_fees?: HospitableFinancialLine[];
+    host_fees?: HospitableFinancialLine[];
+    revenue?: HospitableFinancialLine;
+  };
+  guest?: {
+    accommodation?: HospitableFinancialLine;
+    average_nightly_rate?: HospitableFinancialLine;
+    fees?: HospitableFinancialLine[];
+    taxes?: HospitableFinancialLine[];
+    total_price?: HospitableFinancialLine;
+  };
 }
 
 export interface HospitableReservation {
