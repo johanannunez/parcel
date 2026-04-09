@@ -52,6 +52,105 @@ export type Database = {
           },
         ]
       }
+      block_requests: {
+        Row: {
+          adults: number
+          check_in_time: string | null
+          check_out_time: string | null
+          children: number
+          cleaning_fee: number | null
+          confirmed_at: string | null
+          created_at: string
+          damage_acknowledged: boolean
+          end_date: string
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          is_owner_staying: boolean
+          needs_lock_code: boolean
+          note: string | null
+          owner_id: string
+          pets: number
+          property_id: string
+          reason: string | null
+          requested_lock_code: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          wants_cleaning: boolean
+        }
+        Insert: {
+          adults?: number
+          check_in_time?: string | null
+          check_out_time?: string | null
+          children?: number
+          cleaning_fee?: number | null
+          confirmed_at?: string | null
+          created_at?: string
+          damage_acknowledged?: boolean
+          end_date: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          id?: string
+          is_owner_staying?: boolean
+          needs_lock_code?: boolean
+          note?: string | null
+          owner_id: string
+          pets?: number
+          property_id: string
+          reason?: string | null
+          requested_lock_code?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+          wants_cleaning?: boolean
+        }
+        Update: {
+          adults?: number
+          check_in_time?: string | null
+          check_out_time?: string | null
+          children?: number
+          cleaning_fee?: number | null
+          confirmed_at?: string | null
+          created_at?: string
+          damage_acknowledged?: boolean
+          end_date?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          id?: string
+          is_owner_staying?: boolean
+          needs_lock_code?: boolean
+          note?: string | null
+          owner_id?: string
+          pets?: number
+          property_id?: string
+          reason?: string | null
+          requested_lock_code?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          wants_cleaning?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "block_requests_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "block_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           check_in: string
@@ -113,90 +212,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      block_requests: {
-        Row: {
-          id: string
-          owner_id: string
-          property_id: string
-          start_date: string
-          end_date: string
-          note: string | null
-          status: string
-          created_at: string
-          updated_at: string
-          check_in_time: string | null
-          check_out_time: string | null
-          reason: string | null
-          is_owner_staying: boolean
-          guest_name: string | null
-          guest_email: string | null
-          guest_phone: string | null
-          adults: number
-          children: number
-          pets: number
-          needs_lock_code: boolean
-          requested_lock_code: string | null
-          wants_cleaning: boolean
-          cleaning_fee: number | null
-          damage_acknowledged: boolean
-          confirmed_at: string | null
-        }
-        Insert: {
-          id?: string
-          owner_id: string
-          property_id: string
-          start_date: string
-          end_date: string
-          note?: string | null
-          status?: string
-          created_at?: string
-          updated_at?: string
-          check_in_time?: string | null
-          check_out_time?: string | null
-          reason?: string | null
-          is_owner_staying?: boolean
-          guest_name?: string | null
-          guest_email?: string | null
-          guest_phone?: string | null
-          adults?: number
-          children?: number
-          pets?: number
-          needs_lock_code?: boolean
-          requested_lock_code?: string | null
-          wants_cleaning?: boolean
-          cleaning_fee?: number | null
-          damage_acknowledged?: boolean
-          confirmed_at?: string | null
-        }
-        Update: {
-          id?: string
-          owner_id?: string
-          property_id?: string
-          start_date?: string
-          end_date?: string
-          note?: string | null
-          status?: string
-          created_at?: string
-          updated_at?: string
-          check_in_time?: string | null
-          check_out_time?: string | null
-          reason?: string | null
-          is_owner_staying?: boolean
-          guest_name?: string | null
-          guest_email?: string | null
-          guest_phone?: string | null
-          adults?: number
-          children?: number
-          pets?: number
-          needs_lock_code?: boolean
-          requested_lock_code?: string | null
-          wants_cleaning?: boolean
-          cleaning_fee?: number | null
-          damage_acknowledged?: boolean
-          confirmed_at?: string | null
-        }
-        Relationships: []
       }
       connections: {
         Row: {
@@ -330,6 +345,85 @@ export type Database = {
           },
         ]
       }
+      owner_kyc: {
+        Row: {
+          back_photo_url: string | null
+          consent_at: string | null
+          consent_given: boolean
+          created_at: string
+          expiration_date: string | null
+          front_photo_url: string | null
+          id: string
+          issuing_state: string | null
+          legal_name: string | null
+          license_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          back_photo_url?: string | null
+          consent_at?: string | null
+          consent_given?: boolean
+          created_at?: string
+          expiration_date?: string | null
+          front_photo_url?: string | null
+          id?: string
+          issuing_state?: string | null
+          legal_name?: string | null
+          license_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          back_photo_url?: string | null
+          consent_at?: string | null
+          consent_given?: boolean
+          created_at?: string
+          expiration_date?: string | null
+          front_photo_url?: string | null
+          id?: string
+          issuing_state?: string | null
+          legal_name?: string | null
+          license_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_kyc_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_setup_drafts: {
+        Row: {
+          data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_setup_drafts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payouts: {
         Row: {
           created_at: string
@@ -388,6 +482,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          mailing_address: Json | null
           onboarding_completed_at: string | null
           phone: string | null
           preferred_name: string | null
@@ -405,6 +500,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          mailing_address?: Json | null
           onboarding_completed_at?: string | null
           phone?: string | null
           preferred_name?: string | null
@@ -422,6 +518,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          mailing_address?: Json | null
           onboarding_completed_at?: string | null
           phone?: string | null
           preferred_name?: string | null
@@ -439,15 +536,25 @@ export type Database = {
           active: boolean
           address_line1: string
           address_line2: string | null
+          agreement_acknowledged_at: string | null
+          agreement_signed_at: string | null
+          amenities: Json | null
           bathrooms: number | null
+          bed_arrangements: Json | null
           bedrooms: number | null
           city: string
+          cleaning_choice: string | null
+          cleaning_team: Json | null
+          compliance_details: Json | null
           country: string
           created_at: string
           currently_rented: boolean | null
+          financial_baseline: Json | null
           guest_capacity: number | null
+          guidebook_spots: Json | null
           half_bathrooms: number | null
           hospitable_property_id: string | null
+          house_rules: Json | null
           ical_url: string | null
           id: string
           latitude: number | null
@@ -459,14 +566,17 @@ export type Database = {
           owner_id: string
           parking_spaces: number | null
           parking_type: string | null
+          photos: Json | null
           postal_code: string
           property_subtype: string | null
           property_type: Database["public"]["Enums"]["property_type"]
+          setup_status: string
           square_feet: number | null
           state: string
           stories: number | null
           timezone: string | null
           updated_at: string
+          wifi_details: Json | null
           year_built: number | null
           year_purchased: number | null
         }
@@ -474,15 +584,25 @@ export type Database = {
           active?: boolean
           address_line1: string
           address_line2?: string | null
+          agreement_acknowledged_at?: string | null
+          agreement_signed_at?: string | null
+          amenities?: Json | null
           bathrooms?: number | null
+          bed_arrangements?: Json | null
           bedrooms?: number | null
           city: string
+          cleaning_choice?: string | null
+          cleaning_team?: Json | null
+          compliance_details?: Json | null
           country?: string
           created_at?: string
           currently_rented?: boolean | null
+          financial_baseline?: Json | null
           guest_capacity?: number | null
+          guidebook_spots?: Json | null
           half_bathrooms?: number | null
           hospitable_property_id?: string | null
+          house_rules?: Json | null
           ical_url?: string | null
           id?: string
           latitude?: number | null
@@ -494,14 +614,17 @@ export type Database = {
           owner_id: string
           parking_spaces?: number | null
           parking_type?: string | null
+          photos?: Json | null
           postal_code: string
           property_subtype?: string | null
           property_type: Database["public"]["Enums"]["property_type"]
+          setup_status?: string
           square_feet?: number | null
           state: string
           stories?: number | null
           timezone?: string | null
           updated_at?: string
+          wifi_details?: Json | null
           year_built?: number | null
           year_purchased?: number | null
         }
@@ -509,15 +632,25 @@ export type Database = {
           active?: boolean
           address_line1?: string
           address_line2?: string | null
+          agreement_acknowledged_at?: string | null
+          agreement_signed_at?: string | null
+          amenities?: Json | null
           bathrooms?: number | null
+          bed_arrangements?: Json | null
           bedrooms?: number | null
           city?: string
+          cleaning_choice?: string | null
+          cleaning_team?: Json | null
+          compliance_details?: Json | null
           country?: string
           created_at?: string
           currently_rented?: boolean | null
+          financial_baseline?: Json | null
           guest_capacity?: number | null
+          guidebook_spots?: Json | null
           half_bathrooms?: number | null
           hospitable_property_id?: string | null
+          house_rules?: Json | null
           ical_url?: string | null
           id?: string
           latitude?: number | null
@@ -529,14 +662,17 @@ export type Database = {
           owner_id?: string
           parking_spaces?: number | null
           parking_type?: string | null
+          photos?: Json | null
           postal_code?: string
           property_subtype?: string | null
           property_type?: Database["public"]["Enums"]["property_type"]
+          setup_status?: string
           square_feet?: number | null
           state?: string
           stories?: number | null
           timezone?: string | null
           updated_at?: string
+          wifi_details?: Json | null
           year_built?: number | null
           year_purchased?: number | null
         }
@@ -718,6 +854,45 @@ export type Database = {
           },
         ]
       }
+      property_setup_drafts: {
+        Row: {
+          data: Json
+          id: string
+          property_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data?: Json
+          id?: string
+          property_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          property_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_setup_drafts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_setup_drafts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_team: {
         Row: {
           created_at: string
@@ -758,6 +933,115 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      setup_field_versions: {
+        Row: {
+          data: Json
+          id: string
+          property_id: string | null
+          saved_at: string
+          saved_by: string
+          step_key: string
+          user_id: string
+          version_number: number
+        }
+        Insert: {
+          data?: Json
+          id?: string
+          property_id?: string | null
+          saved_at?: string
+          saved_by: string
+          step_key: string
+          user_id: string
+          version_number?: number
+        }
+        Update: {
+          data?: Json
+          id?: string
+          property_id?: string | null
+          saved_at?: string
+          saved_by?: string
+          step_key?: string
+          user_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_field_versions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "setup_field_versions_saved_by_fkey"
+            columns: ["saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "setup_field_versions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signed_documents: {
+        Row: {
+          boldsign_document_id: string
+          created_at: string
+          id: string
+          property_id: string | null
+          signed_at: string | null
+          signed_pdf_url: string | null
+          status: string
+          template_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          boldsign_document_id: string
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          signed_at?: string | null
+          signed_pdf_url?: string | null
+          status?: string
+          template_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          boldsign_document_id?: string
+          created_at?: string
+          id?: string
+          property_id?: string | null
+          signed_at?: string | null
+          signed_pdf_url?: string | null
+          status?: string
+          template_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signed_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signed_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
