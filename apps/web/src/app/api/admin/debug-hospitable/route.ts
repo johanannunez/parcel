@@ -81,14 +81,14 @@ export async function GET() {
     );
   }
 
-  const json = await res.json();
-  const first = json?.data?.[0] ?? null;
+  const rawText = await res.text();
 
+  // Return first 3000 chars of the raw response so we can see the actual shape
   return Response.json({
     propertyUsed: propId,
-    topLevelKeys: first ? Object.keys(first) : [],
-    financials: first?.financials ?? "MISSING",
-    financialsKeys: first?.financials ? Object.keys(first.financials) : [],
-    rawReservation: first,
+    propertyCount: allPropIds.length,
+    httpStatus: res.status,
+    rawBodyLength: rawText.length,
+    rawBodyPreview: rawText.slice(0, 3000),
   });
 }
