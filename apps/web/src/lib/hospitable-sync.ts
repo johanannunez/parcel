@@ -238,13 +238,27 @@ export async function syncFromHospitable(
 
   // 5. Upsert reservations into bookings table
   for (const res of reservations) {
+    // The API nests property IDs in several possible places depending on
+    // the include parameter and API version. Try them all.
+    const raw = res as unknown as Record<string, unknown>;
     const hospPropertyId =
-      res.property_id ?? res.properties?.data?.[0]?.id;
+      res.property_id ??
+      res.properties?.data?.[0]?.id ??
+      // Some API responses nest as { property: { data: { id } } }
+      (raw.property as { data?: { id?: string } } | undefined)?.data?.id ??
+      (raw.property as { id?: string } | undefined)?.id ??
+      // relationships.property.data.id (JSON:API style)
+      (raw.relationships as { property?: { data?: { id?: string } } } | undefined)
+        ?.property?.data?.id ??
+      null;
 
     if (!hospPropertyId) {
-      result.errors.push(
-        `Reservation ${res.id} has no property_id, skipping.`,
-      );
+      // Log first 3 for debugging, skip silently after that
+      if (result.errors.filter((e) => e.includes("no property_id")).length < 3) {
+        result.errors.push(
+          `Reservation ${res.id} has no property_id (keys: ${Object.keys(raw).join(", ")}), skipping.`,
+        );
+      }
       continue;
     }
 

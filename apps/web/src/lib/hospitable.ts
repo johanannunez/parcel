@@ -167,7 +167,7 @@ export async function getReservations(
     const params: Record<string, string> = {
       page: String(page),
       per_page: "100",
-      include: "guest,financials",
+      include: "guest,financials,properties",
     };
 
     // The API requires properties[] parameter
