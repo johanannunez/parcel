@@ -12,7 +12,13 @@ export type SyncResult = {
   propertiesMatched: number;
   propertiesCreated: number;
   propertiesUnmatched: string[];
+  reservationsFetched: number;
   reservationsUpserted: number;
+  reservationsSkipped: {
+    noPropertyId: number;
+    unmatchedProperty: number;
+    noDates: number;
+  };
   errors: string[];
 };
 
@@ -95,7 +101,9 @@ export async function syncFromHospitable(
       propertiesMatched: 0,
       propertiesCreated: 0,
       propertiesUnmatched: [],
+      reservationsFetched: 0,
       reservationsUpserted: 0,
+      reservationsSkipped: { noPropertyId: 0, unmatchedProperty: 0, noDates: 0 },
       errors: ["HOSPITABLE_API is not configured."],
     };
   }
@@ -105,7 +113,9 @@ export async function syncFromHospitable(
     propertiesMatched: 0,
     propertiesCreated: 0,
     propertiesUnmatched: [],
+    reservationsFetched: 0,
     reservationsUpserted: 0,
+    reservationsSkipped: { noPropertyId: 0, unmatchedProperty: 0, noDates: 0 },
     errors: [],
   };
 
@@ -236,6 +246,8 @@ export async function syncFromHospitable(
     return result;
   }
 
+  result.reservationsFetched = reservations.length;
+
   // 5. Upsert reservations into bookings table
   for (const res of reservations) {
     // The API nests property IDs in many possible shapes.
@@ -283,15 +295,27 @@ export async function syncFromHospitable(
           `Reservation ${res.id} has no property_id. properties field: ${propsDebug}`,
         );
       }
+      result.reservationsSkipped.noPropertyId++;
       continue;
     }
 
     const supabasePropertyId = hospToSupabase.get(hospPropertyId);
-    if (!supabasePropertyId) continue;
+    if (!supabasePropertyId) {
+      result.reservationsSkipped.unmatchedProperty++;
+      if (result.reservationsSkipped.unmatchedProperty <= 3) {
+        result.errors.push(
+          `Reservation ${res.id}: property ${hospPropertyId} not in linked set (linked: ${matchedHospIds.slice(0, 3).join(", ")}...).`,
+        );
+      }
+      continue;
+    }
 
-    const checkIn = res.dates?.arrival;
-    const checkOut = res.dates?.departure;
-    if (!checkIn || !checkOut) continue;
+    const checkIn = res.dates?.arrival ?? (raw.arrival_date as string | undefined);
+    const checkOut = res.dates?.departure ?? (raw.departure_date as string | undefined);
+    if (!checkIn || !checkOut) {
+      result.reservationsSkipped.noDates++;
+      continue;
+    }
 
     const source = mapPlatformToSource(res.platform);
     const statusCategory = res.status?.category ?? "confirmed";

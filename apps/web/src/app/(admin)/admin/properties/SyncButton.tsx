@@ -79,7 +79,15 @@ export function SyncButton() {
                 ? ` (${result.propertiesUnmatched.length} failed: ${result.propertiesUnmatched.join(", ")})`
                 : ""}
             </li>
-            <li>Reservations synced: {result.reservationsUpserted}</li>
+            <li>
+              Reservations: {result.reservationsFetched} fetched, {result.reservationsUpserted} synced
+              {result.reservationsSkipped.noPropertyId +
+                result.reservationsSkipped.unmatchedProperty +
+                result.reservationsSkipped.noDates >
+              0
+                ? ` (skipped: ${result.reservationsSkipped.noPropertyId} no property, ${result.reservationsSkipped.unmatchedProperty} unmatched, ${result.reservationsSkipped.noDates} no dates)`
+                : ""}
+            </li>
             {result.errors.map((e, i) => (
               <li key={i} style={{ color: "#fca5a5" }}>
                 {e}

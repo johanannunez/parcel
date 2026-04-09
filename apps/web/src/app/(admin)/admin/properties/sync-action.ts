@@ -8,7 +8,9 @@ const EMPTY: SyncResult = {
   propertiesMatched: 0,
   propertiesCreated: 0,
   propertiesUnmatched: [],
+  reservationsFetched: 0,
   reservationsUpserted: 0,
+  reservationsSkipped: { noPropertyId: 0, unmatchedProperty: 0, noDates: 0 },
   errors: [],
 };
 
