@@ -304,89 +304,8 @@ export default async function SetupHubPage({
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Link
-            href="/portal/setup/welcome"
-            className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-[var(--color-warm-gray-50)]"
-            style={{
-              borderColor: "var(--color-warm-gray-200)",
-              backgroundColor: "var(--color-white)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: "linear-gradient(135deg, #02aaeb, #1b77be)",
-                }}
-              >
-                <Sparkle size={14} weight="fill" className="text-white" />
-              </span>
-              <div>
-                <span
-                  className="text-sm font-semibold"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  Welcome
-                </span>
-                <span
-                  className="ml-2 text-sm"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  Meet the team and schedule your kickoff call.
-                </span>
-              </div>
-            </div>
-            <ArrowRight
-              size={14}
-              weight="bold"
-              style={{ color: "var(--color-text-tertiary)" }}
-            />
-          </Link>
-
-          <Link
-            href="/portal/dashboard"
-            className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-[var(--color-warm-gray-50)]"
-            style={{
-              borderColor: "var(--color-warm-gray-200)",
-              backgroundColor: "var(--color-white)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  backgroundColor: "var(--color-warm-gray-50)",
-                  color: "var(--color-brand)",
-                }}
-              >
-                <ClipboardText size={14} weight="duotone" />
-              </span>
-              <div>
-                <span
-                  className="text-sm font-semibold"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  Stuck?
-                </span>
-                <span
-                  className="ml-2 text-sm"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  Message Parcel and we will jump in.
-                </span>
-              </div>
-            </div>
-            <ArrowRight
-              size={14}
-              weight="bold"
-              style={{ color: "var(--color-text-tertiary)" }}
-            />
-          </Link>
-        </div>
-
         {selected && properties && (
-          <div className="mt-2">
+          <div className="mt-3">
             <PropertySelector
               properties={(properties as (PropertyRow & { profiles?: { full_name: string | null } | null })[]).map((p) => ({
                 id: p.id,
@@ -403,6 +322,86 @@ export default async function SetupHubPage({
             />
           </div>
         )}
+
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Link
+            href="/portal/setup/welcome"
+            className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:opacity-95"
+            style={{
+              borderColor: "#02aaeb30",
+              backgroundColor: "rgba(2, 170, 235, 0.06)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                style={{
+                  background: "linear-gradient(135deg, #02aaeb, #1b77be)",
+                }}
+              >
+                <Sparkle size={14} weight="fill" className="text-white" />
+              </span>
+              <div>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "#1b77be" }}
+                >
+                  Welcome
+                </span>
+                <span
+                  className="ml-2 text-sm"
+                  style={{ color: "#1b77beaa" }}
+                >
+                  Meet the team and schedule your kickoff call.
+                </span>
+              </div>
+            </div>
+            <ArrowRight
+              size={14}
+              weight="bold"
+              style={{ color: "#1b77be80" }}
+            />
+          </Link>
+
+          <Link
+            href="/portal/dashboard"
+            className="flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:opacity-95"
+            style={{
+              borderColor: "#e8850030",
+              backgroundColor: "rgba(232, 133, 0, 0.06)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                style={{
+                  background: "linear-gradient(135deg, #e88500, #c06a00)",
+                }}
+              >
+                <ClipboardText size={14} weight="duotone" className="text-white" />
+              </span>
+              <div>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "#b05e00" }}
+                >
+                  Stuck?
+                </span>
+                <span
+                  className="ml-2 text-sm"
+                  style={{ color: "#b05e00aa" }}
+                >
+                  Message Parcel and we will jump in.
+                </span>
+              </div>
+            </div>
+            <ArrowRight
+              size={14}
+              weight="bold"
+              style={{ color: "#b05e0080" }}
+            />
+          </Link>
+        </div>
       </header>
 
       <section className="flex min-h-0 flex-1 flex-col gap-6 px-6 pb-4 pt-6 lg:flex-row lg:px-10">
