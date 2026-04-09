@@ -6,11 +6,20 @@ import { SigningStep } from "@/components/portal/setup/SigningStep";
 
 type PayoutMethod = "ach" | "card";
 
-export function PayoutForm() {
+export function PayoutForm({
+  userEmail,
+  userName,
+  hasBoldSignKey,
+}: {
+  userEmail: string;
+  userName: string;
+  hasBoldSignKey: boolean;
+}) {
   const [method, setMethod] = useState<PayoutMethod>("ach");
 
   // BoldSign signing URLs will be generated server-side once
   // BOLDSIGN_API_KEY and signed_documents table exist.
+  // For now, always show the placeholder.
   const signUrl: string | null = null;
 
   const summaryPoints =

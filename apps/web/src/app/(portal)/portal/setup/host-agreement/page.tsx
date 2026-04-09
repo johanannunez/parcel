@@ -1,12 +1,70 @@
 import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
 import { StepShell } from "@/components/portal/setup/StepShell";
 import { SigningStep } from "@/components/portal/setup/SigningStep";
+import { createDocumentFromTemplate } from "@/lib/signing/boldsign";
 
 export const metadata: Metadata = { title: "Host Agreement Signing" };
+export const dynamic = "force-dynamic";
 
-export default function HostAgreementPage() {
-  // BoldSign URL will be generated server-side when BOLDSIGN_API_KEY is set.
-  const signUrl: string | null = null;
+export default async function HostAgreementPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ property?: string }>;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const params = await searchParams;
+  const propertyId = params?.property ?? null;
+
+  // Fetch user profile for signer details
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", user.id)
+    .single();
+
+  // Attempt to create BoldSign signing session if API key is set
+  let signUrl: string | null = null;
+
+  if (process.env.BOLDSIGN_API_KEY && profile?.email) {
+    // Read template ID
+    let templateId = "";
+    try {
+      const templateIds = await import("@/../../../legal/boldsign-template-ids.json");
+      templateId = templateIds.hostRentalAgreement;
+    } catch {
+      // Template file not found, leave signUrl null
+    }
+
+    if (templateId) {
+      const result = await createDocumentFromTemplate({
+        templateId,
+        signerEmail: profile.email,
+        signerName: profile.full_name ?? profile.email,
+        redirectUrl: propertyId
+          ? `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/portal/setup?just=host-agreement&property=${propertyId}`
+          : undefined,
+      });
+
+      if (result) {
+        signUrl = result.signUrl;
+
+        // Track the document in signed_documents table
+        await supabase.from("signed_documents").insert({
+          user_id: user.id,
+          property_id: propertyId,
+          boldsign_document_id: result.documentId,
+          template_name: "hostRentalAgreement",
+          status: "pending",
+        });
+      }
+    }
+  }
 
   return (
     <StepShell
