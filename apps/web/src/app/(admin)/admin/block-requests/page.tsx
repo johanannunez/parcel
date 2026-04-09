@@ -47,6 +47,7 @@ export default async function AdminBlockRequestsPage() {
   const past = mapped.filter((r) => r.status !== "pending");
 
   return (
+    <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
       <header>
         <p
@@ -104,6 +105,7 @@ export default async function AdminBlockRequestsPage() {
           ))}
         </section>
       ) : null}
+    </div>
     </div>
   );
 }

@@ -34,7 +34,7 @@ export default async function OwnersLayout({
   }));
 
   return (
-    <div className="-mx-6 -my-10 flex min-h-[calc(100vh-0px)] lg:-mx-10 lg:-my-14">
+    <div className="flex min-h-screen">
       <OwnerListPanel owners={ownerList} />
       <div className="min-w-0 flex-1">{children}</div>
     </div>

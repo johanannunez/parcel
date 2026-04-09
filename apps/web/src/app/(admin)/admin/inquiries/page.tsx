@@ -23,6 +23,7 @@ export default async function AdminInquiriesPage() {
   ).length;
 
   return (
+    <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-white">
@@ -117,6 +118,7 @@ export default async function AdminInquiriesPage() {
           </table>
         </div>
       )}
+    </div>
     </div>
   );
 }

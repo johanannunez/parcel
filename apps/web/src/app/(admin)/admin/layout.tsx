@@ -57,13 +57,9 @@ export default async function AdminLayout({
         signOutSlot={<AdminSignOutButton />}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col text-white">
         <AdminTopBar userName={firstName} initials={initials} />
-        <main className="flex-1">
-          <div className="mx-auto w-full max-w-6xl px-6 py-10 text-white lg:px-10 lg:py-14">
-            {children}
-          </div>
-        </main>
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   );
