@@ -203,12 +203,8 @@ const CancelSchema = z.object({
 export async function cancelBlockRequest(
   input: unknown,
 ): Promise<BlockRequestResult> {
-  console.log("[cancelBlockRequest] called with:", JSON.stringify(input));
   const parsed = CancelSchema.safeParse(input);
-  if (!parsed.success) {
-    console.error("[cancelBlockRequest] validation failed:", parsed.error.message);
-    return { ok: false, error: "Invalid request." };
-  }
+  if (!parsed.success) return { ok: false, error: "Invalid request." };
 
   const supabase = await createClient();
   const {
@@ -229,6 +225,46 @@ export async function cancelBlockRequest(
   if (!data || data.length === 0)
     return { ok: false, error: "Request not found or already processed." };
 
+  revalidatePath("/portal/calendar");
+  return { ok: true };
+}
+
+const ReopenSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export async function reopenBlockRequest(
+  input: unknown,
+): Promise<DecisionResult> {
+  const parsed = ReopenSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid request." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "admin")
+    return { ok: false, error: "Admins only." };
+
+  const { data, error } = await supabase
+    .from("block_requests")
+    .update({ status: "pending" })
+    .eq("id", parsed.data.id)
+    .in("status", ["declined", "cancelled"])
+    .select("id");
+
+  if (error) return { ok: false, error: error.message };
+  if (!data || data.length === 0)
+    return { ok: false, error: "Request not found or not in a reopenable state." };
+
+  revalidatePath("/admin/block-requests");
   revalidatePath("/portal/calendar");
   return { ok: true };
 }

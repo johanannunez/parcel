@@ -31,7 +31,7 @@ export default async function AdminBlockRequestsPage() {
     } | null;
     return {
       id: r.id,
-      status: r.status as "pending" | "approved" | "declined",
+      status: r.status as "pending" | "approved" | "declined" | "cancelled",
       startDate: r.start_date,
       endDate: r.end_date,
       note: r.note,

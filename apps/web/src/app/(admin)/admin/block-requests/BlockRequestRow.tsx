@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Check, X, CheckCircle, WarningCircle } from "@phosphor-icons/react";
-import { decideBlockRequest } from "@/app/(portal)/portal/calendar/actions";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import {
+  ArrowCounterClockwise,
+  Check,
+  CheckCircle,
+  Timer,
+  WarningCircle,
+  X,
+} from "@phosphor-icons/react";
+import {
+  decideBlockRequest,
+  reopenBlockRequest,
+} from "@/app/(portal)/portal/calendar/actions";
 
 type Row = {
   id: string;
-  status: "pending" | "approved" | "declined";
+  status: "pending" | "approved" | "declined" | "cancelled";
   startDate: string;
   endDate: string;
   note: string | null;
@@ -39,7 +49,7 @@ function fmtCreated(iso: string) {
 }
 
 const STATUS_STYLES: Record<
-  Row["status"],
+  string,
   { bg: string; fg: string; label: string }
 > = {
   pending: {
@@ -57,26 +67,103 @@ const STATUS_STYLES: Record<
     fg: "#f87171",
     label: "Declined",
   },
+  cancelled: {
+    bg: "rgba(161, 161, 170, 0.16)",
+    fg: "#a1a1aa",
+    label: "Cancelled",
+  },
 };
+
+const UNDO_SECONDS = 15;
 
 export function BlockRequestRow({ row }: { row: Row }) {
   const [status, setStatus] = useState(row.status);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const decide = (decision: "approved" | "declined") => {
+  // Undo timer state
+  const [undoCountdown, setUndoCountdown] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const commitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimers = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (commitRef.current) clearTimeout(commitRef.current);
+    timerRef.current = null;
+    commitRef.current = null;
+  }, []);
+
+  // Clean up on unmount
+  useEffect(() => clearTimers, [clearTimers]);
+
+  const commitDecline = useCallback(() => {
+    clearTimers();
+    setUndoCountdown(null);
+    startTransition(async () => {
+      const result = await decideBlockRequest({
+        id: row.id,
+        decision: "declined",
+      });
+      if (result.ok) {
+        setStatus("declined");
+      } else {
+        setError(result.error);
+      }
+    });
+  }, [row.id, clearTimers, startTransition]);
+
+  const startDeclineTimer = () => {
+    setError(null);
+    setUndoCountdown(UNDO_SECONDS);
+
+    timerRef.current = setInterval(() => {
+      setUndoCountdown((prev) => {
+        if (prev === null || prev <= 1) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+
+    commitRef.current = setTimeout(commitDecline, UNDO_SECONDS * 1000);
+  };
+
+  const undoDecline = () => {
+    clearTimers();
+    setUndoCountdown(null);
+  };
+
+  const approve = () => {
+    // If there's a pending decline timer, cancel it first
+    clearTimers();
+    setUndoCountdown(null);
     setError(null);
     startTransition(async () => {
-      const result = await decideBlockRequest({ id: row.id, decision });
+      const result = await decideBlockRequest({
+        id: row.id,
+        decision: "approved",
+      });
       if (result.ok) {
-        setStatus(decision);
+        setStatus("approved");
       } else {
         setError(result.error);
       }
     });
   };
 
-  const style = STATUS_STYLES[status];
+  const reopen = () => {
+    setError(null);
+    startTransition(async () => {
+      const result = await reopenBlockRequest({ id: row.id });
+      if (result.ok) {
+        setStatus("pending");
+      } else {
+        setError(result.error);
+      }
+    });
+  };
+
+  const style = STATUS_STYLES[status] ?? STATUS_STYLES.pending;
+  const isUndoing = undoCountdown !== null;
+  const canReopen = status === "declined" || status === "cancelled";
 
   return (
     <div
@@ -92,12 +179,14 @@ export function BlockRequestRow({ row }: { row: Row }) {
             <h3 className="text-base font-semibold text-white">
               {fmtRange(row.startDate, row.endDate)}
             </h3>
-            <span
-              className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-              style={{ backgroundColor: style.bg, color: style.fg }}
-            >
-              {style.label}
-            </span>
+            {!isUndoing && (
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                style={{ backgroundColor: style.bg, color: style.fg }}
+              >
+                {style.label}
+              </span>
+            )}
           </div>
           <div
             className="mt-1 text-sm"
@@ -127,12 +216,13 @@ export function BlockRequestRow({ row }: { row: Row }) {
           ) : null}
         </div>
 
-        {status === "pending" ? (
+        {/* Pending: show approve/decline (or undo countdown) */}
+        {status === "pending" && !isUndoing ? (
           <div className="flex items-center gap-2">
             <button
               type="button"
               disabled={pending}
-              onClick={() => decide("declined")}
+              onClick={startDeclineTimer}
               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
               style={{
                 borderColor: "rgba(248, 113, 113, 0.4)",
@@ -145,7 +235,7 @@ export function BlockRequestRow({ row }: { row: Row }) {
             <button
               type="button"
               disabled={pending}
-              onClick={() => decide("approved")}
+              onClick={approve}
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{
                 backgroundColor: "#16a34a",
@@ -155,6 +245,53 @@ export function BlockRequestRow({ row }: { row: Row }) {
               <Check size={14} weight="bold" /> Approve
             </button>
           </div>
+        ) : null}
+
+        {/* Undo countdown */}
+        {status === "pending" && isUndoing ? (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Timer
+                size={14}
+                weight="bold"
+                style={{ color: "#f87171" }}
+              />
+              <span
+                className="text-sm font-semibold tabular-nums"
+                style={{ color: "#f87171" }}
+              >
+                Declining in {undoCountdown}s
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={undoDecline}
+              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{
+                borderColor: "rgba(255,255,255,0.2)",
+                color: "#ffffff",
+                backgroundColor: "transparent",
+              }}
+            >
+              <ArrowCounterClockwise size={14} weight="bold" /> Undo
+            </button>
+          </div>
+        ) : null}
+
+        {/* Reopen button for declined/cancelled */}
+        {canReopen && !pending ? (
+          <button
+            type="button"
+            onClick={reopen}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+            style={{
+              borderColor: "rgba(255,255,255,0.15)",
+              color: "rgba(255,255,255,0.7)",
+              backgroundColor: "transparent",
+            }}
+          >
+            <ArrowCounterClockwise size={14} weight="bold" /> Reopen
+          </button>
         ) : null}
       </div>
 
