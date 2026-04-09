@@ -8,15 +8,14 @@ import {
   CalendarBlank,
   ClipboardText,
   Wallet,
-  LifebuoyIcon as Lifebuoy,
-  ShieldCheck,
+  ChatCircle,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import {
   CommandPalette,
   CommandPaletteTrigger,
 } from "@/components/portal/CommandPalette";
-import { OwnerLocalTime } from "@/components/portal/OwnerLocalTime";
+import { SidebarFooter } from "@/components/portal/SidebarFooter";
 
 type NavItem = {
   href: string;
@@ -53,20 +52,24 @@ const primaryNav: NavItem[] = [
     label: "Payouts",
     icon: <Wallet size={18} weight="duotone" />,
   },
+  {
+    href: "/portal/messages",
+    label: "Messages",
+    icon: <ChatCircle size={18} weight="duotone" />,
+    matchPrefix: "/portal/messages",
+  },
 ];
 
 export function PortalSidebar({
   userName,
   userEmail,
   initials,
-  timezone,
   isAdmin = false,
   signOutSlot,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
-  timezone: string | null;
   isAdmin?: boolean;
   signOutSlot: ReactNode;
 }) {
@@ -157,86 +160,15 @@ export function PortalSidebar({
             );
           })}
         </ul>
-
-        <div
-          className="mt-8 px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          Account
-        </div>
-        <ul className="flex flex-col gap-0.5">
-          <li>
-            <Link
-              href="/help"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              <span
-                className="inline-flex h-5 w-5 items-center justify-center"
-                style={{ color: "var(--color-text-tertiary)" }}
-              >
-                <Lifebuoy size={18} weight="duotone" />
-              </span>
-              Help center
-            </Link>
-          </li>
-        </ul>
       </nav>
 
-      {isAdmin ? (
-        <div className="mx-3 mb-3">
-          <Link
-            href="/admin"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)]"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            <span
-              className="inline-flex h-5 w-5 items-center justify-center"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              <ShieldCheck size={18} weight="duotone" />
-            </span>
-            Switch to Admin
-          </Link>
-        </div>
-      ) : null}
-
-      <div
-        className="mx-3 mb-4 rounded-xl border p-3"
-        style={{
-          borderColor: "var(--color-warm-gray-200)",
-          backgroundColor: "var(--color-warm-gray-50)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-            style={{
-              backgroundColor: "var(--color-white)",
-              color: "var(--color-text-primary)",
-              border: "1px solid var(--color-warm-gray-200)",
-            }}
-          >
-            {initials}
-          </span>
-          <div className="min-w-0 flex-1">
-            <div
-              className="truncate text-sm font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              {userName}
-            </div>
-            <div
-              className="truncate text-xs"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {userEmail}
-            </div>
-            <OwnerLocalTime timezone={timezone} />
-          </div>
-        </div>
-        <div className="mt-3">{signOutSlot}</div>
-      </div>
+      <SidebarFooter
+        userName={userName}
+        userEmail={userEmail}
+        initials={initials}
+        isAdmin={isAdmin}
+        signOutSlot={signOutSlot}
+      />
     </aside>
   );
 }
