@@ -5,14 +5,18 @@ import {
   CheckCircle,
   Circle,
   ClipboardText,
-  FileText,
   House,
-  MapPin,
-  Sparkle,
   Lock,
+  PencilSimple,
+  Sparkle,
+  User,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { PropertySwitcher } from "@/components/portal/PropertySwitcher";
+import {
+  setupSearchIndex,
+  groupStepsByGroup,
+} from "@/lib/wizard/search-index";
 
 export const metadata: Metadata = {
   title: "Setup",
@@ -22,48 +26,87 @@ export const dynamic = "force-dynamic";
 
 type StepState = "done" | "active" | "todo" | "locked";
 
-type Step = {
-  key: string;
-  label: string;
-  hint: string;
-  state: StepState;
-  href?: string;
-};
-
-type Track = {
-  id: "property" | "welcome";
-  eyebrow: string;
-  title: string;
-  summary: string;
-  icon: React.ReactNode;
-  tint: string;
-  steps: Step[];
-};
-
 type PropertyRow = {
   id: string;
   name: string | null;
-  address_line1: string | null;
-  city: string | null;
-  state: string | null;
-  postal_code: string | null;
-  property_type: string | null;
+  address_line1: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  property_type: string;
   bedrooms: number | null;
   bathrooms: number | null;
   guest_capacity: number | null;
-  active: boolean | null;
+  active: boolean;
 };
 
-function isBasicsComplete(p: PropertyRow | null | undefined) {
-  if (!p) return false;
-  return Boolean(
-    p.property_type &&
-      p.address_line1 &&
-      p.city &&
-      p.bedrooms !== null &&
-      p.bathrooms !== null &&
-      p.guest_capacity !== null,
+/**
+ * Resolve step state for a property step.
+ * Until the PENDING migration runs, only basics/address/space can be "done".
+ */
+function resolvePropertyStepState(
+  stepKey: string,
+  property: PropertyRow | null,
+  allStepKeys: string[],
+): StepState {
+  if (!property) return "locked";
+
+  const completionChecks: Record<string, boolean> = {
+    "agreement-preview": false,
+    basics: Boolean(property.property_type && property.name !== undefined),
+    address: Boolean(property.address_line1 && property.city && property.state),
+    space:
+      property.bedrooms !== null &&
+      property.bathrooms !== null &&
+      property.guest_capacity !== null,
+    amenities: false,
+    rules: false,
+    wifi: false,
+    financial: false,
+    recommendations: false,
+    cleaning: false,
+    photos: false,
+    compliance: false,
+    "host-agreement": false,
+    review: false,
+  };
+
+  const isDone = completionChecks[stepKey] ?? false;
+  if (isDone) return "done";
+
+  const firstIncompleteIdx = allStepKeys.findIndex(
+    (k) => !(completionChecks[k] ?? false),
   );
+  const myIdx = allStepKeys.indexOf(stepKey);
+
+  if (myIdx === firstIncompleteIdx) return "active";
+  if (myIdx < firstIncompleteIdx) return "done";
+  return "locked";
+}
+
+function resolveOwnerStepState(
+  stepKey: string,
+  profile: { full_name: string | null },
+  allStepKeys: string[],
+): StepState {
+  const completionChecks: Record<string, boolean> = {
+    account: Boolean(profile.full_name),
+    identity: false,
+    w9: false,
+    payout: false,
+  };
+
+  const isDone = completionChecks[stepKey] ?? false;
+  if (isDone) return "done";
+
+  const firstIncompleteIdx = allStepKeys.findIndex(
+    (k) => !(completionChecks[k] ?? false),
+  );
+  const myIdx = allStepKeys.indexOf(stepKey);
+
+  if (myIdx === firstIncompleteIdx) return "active";
+  if (myIdx < firstIncompleteIdx) return "done";
+  return "locked";
 }
 
 export default async function SetupHubPage({
@@ -103,125 +146,77 @@ export default async function SetupHubPage({
     (selectedPropertyId
       ? (properties ?? []).find((p) => p.id === selectedPropertyId)
       : undefined) ??
-    (properties?.[0] as PropertyRow | undefined) ??
-    null;
+    ((properties?.[0] as PropertyRow | undefined) ?? null);
 
   const hasMultipleProperties = (properties?.length ?? 0) > 1;
 
-  const basicsDone = isBasicsComplete(selected);
+  const propertyGroups = groupStepsByGroup("property");
+  const ownerGroups = groupStepsByGroup("owner");
 
-  const propertySteps: Step[] = [
-    {
-      key: "basics",
-      label: "Property basics",
-      hint: "Address, type, bedrooms, bathrooms, guests.",
-      state: basicsDone ? "done" : "active",
-      href: selected?.id
-        ? `/portal/setup/basics?property=${selected.id}`
-        : "/portal/setup/basics",
-    },
-    {
-      key: "amenities",
-      label: "Photos and amenities",
-      hint: "Upload photos and check off what guests get.",
-      state: basicsDone ? "active" : "locked",
-    },
-    {
-      key: "rules",
-      label: "House rules",
-      hint: "Quiet hours, pets, smoking, check-in windows.",
-      state: "locked",
-    },
-    {
-      key: "pricing",
-      label: "Pricing and calendar",
-      hint: "Nightly rate, minimum stay, blocked dates.",
-      state: "locked",
-    },
-    {
-      key: "golive",
-      label: "Go live",
-      hint: "Final review, then we push to every channel.",
-      state: "locked",
-    },
-  ];
+  const propertyStepKeys = setupSearchIndex
+    .filter((s) => s.track === "property")
+    .map((s) => s.stepKey);
+  const ownerStepKeys = setupSearchIndex
+    .filter((s) => s.track === "owner")
+    .map((s) => s.stepKey);
 
-  const welcomeSteps: Step[] = [
-    // scope: property — unique agreement per home
-    {
-      key: "agreement",
-      label: "Management agreement",
-      hint: "The Parcel owner agreement. Signed in the portal.",
-      state: "active",
-    },
-    // scope: owner — completed once, shared across all properties
-    {
-      key: "deposit",
-      label: "Direct deposit",
-      hint: "Where your payouts land each month.",
-      state: "locked",
-    },
-    {
-      key: "w9",
-      label: "Tax form (W-9)",
-      hint: "Required before your first payout.",
-      state: "locked",
-    },
-    {
-      key: "insurance",
-      label: "Insurance certificate",
-      hint: "Upload your policy or let us add you to ours.",
-      state: "locked",
-    },
-    {
-      key: "kickoff",
-      label: "Kickoff call",
-      hint: "Thirty minute walkthrough with Johan.",
-      state: "locked",
-    },
-  ];
+  const propertyStepStates = new Map<string, StepState>();
+  for (const key of propertyStepKeys) {
+    propertyStepStates.set(
+      key,
+      resolvePropertyStepState(
+        key,
+        selected as PropertyRow | null,
+        propertyStepKeys,
+      ),
+    );
+  }
 
-  const tracks: Track[] = [
-    {
-      id: "property",
-      eyebrow: "Track 01",
-      title: "Property setup",
-      summary:
-        "Everything we need to list your home and start taking bookings.",
-      icon: <House size={22} weight="duotone" />,
-      tint: "var(--color-brand)",
-      steps: propertySteps,
-    },
-    {
-      id: "welcome",
-      eyebrow: "Track 02",
-      title: "Welcome packet",
-      summary:
-        "Paperwork that makes it official. Signed once, stored forever.",
-      icon: <FileText size={22} weight="duotone" />,
-      tint: "#0E9F6E",
-      steps: welcomeSteps,
-    },
-  ];
+  const ownerStepStates = new Map<string, StepState>();
+  for (const key of ownerStepKeys) {
+    ownerStepStates.set(
+      key,
+      resolveOwnerStepState(
+        key,
+        { full_name: profile?.full_name ?? null },
+        ownerStepKeys,
+      ),
+    );
+  }
 
-  const progress = (track: Track) => {
-    const done = track.steps.filter((s) => s.state === "done").length;
-    return { done, total: track.steps.length };
-  };
+  const propertyDone = [...propertyStepStates.values()].filter(
+    (s) => s === "done",
+  ).length;
+  const propertyTotal = propertyStepStates.size;
+  const ownerDone = [...ownerStepStates.values()].filter(
+    (s) => s === "done",
+  ).length;
+  const ownerTotal = ownerStepStates.size;
+  const totalDone = propertyDone + ownerDone;
+  const totalSteps = propertyTotal + ownerTotal;
+  const overallPct =
+    totalSteps > 0 ? Math.round((totalDone / totalSteps) * 100) : 0;
 
-  const totalDone = tracks.reduce(
-    (sum, t) => sum + progress(t).done,
-    0,
-  );
-  const totalSteps = tracks.reduce((sum, t) => sum + t.steps.length, 0);
-  const overallPct = Math.round((totalDone / totalSteps) * 100);
+  const nextPropertyStep = setupSearchIndex
+    .filter((s) => s.track === "property")
+    .find((s) => {
+      const state = propertyStepStates.get(s.stepKey);
+      return state === "active" || state === "todo";
+    });
+
+  const nextOwnerStep = setupSearchIndex
+    .filter((s) => s.track === "owner")
+    .find((s) => {
+      const state = ownerStepStates.get(s.stepKey);
+      return state === "active" || state === "todo";
+    });
 
   return (
-    <div className="flex flex-col gap-10">
-      {justCompleted === "basics" ? (
+    <div className="-mx-6 -my-10 flex h-[calc(100vh-var(--topbar-h,0px))] flex-col lg:-mx-10 lg:-my-14">
+      {justCompleted ? (
         <div
           role="status"
-          className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-sm"
+          className="mx-6 mt-4 flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-sm lg:mx-10"
           style={{
             borderColor: "#bfe5cd",
             backgroundColor: "#f2fbf5",
@@ -234,67 +229,109 @@ export default async function SetupHubPage({
             style={{ color: "#15803d" }}
           />
           <span>
-            <span className="font-semibold">Property basics saved.</span>{" "}
-            Photos and amenities is next.
+            <span className="font-semibold">Step saved.</span> Keep going or
+            come back anytime.
           </span>
         </div>
       ) : null}
 
-      <header className="flex flex-col gap-6">
-        <div>
-          <p
-            className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            Onboarding
-          </p>
+      <header className="flex flex-col gap-2 px-6 pt-8 lg:px-10">
+        <p
+          className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          Onboarding
+        </p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <h1
-            className="mt-2 text-[34px] font-semibold leading-tight tracking-tight"
+            className="text-[28px] font-semibold leading-tight tracking-tight sm:text-[34px]"
             style={{ color: "var(--color-text-primary)" }}
           >
             Let us get you set up, {firstName}.
           </h1>
+          <div className="flex items-center gap-3">
+            <div
+              className="h-2 w-24 overflow-hidden rounded-full sm:w-32"
+              style={{ backgroundColor: "var(--color-warm-gray-100)" }}
+            >
+              <div
+                className="h-full rounded-full transition-[width] duration-500"
+                style={{
+                  width: `${overallPct}%`,
+                  background:
+                    "linear-gradient(90deg, #02aaeb 0%, #1b77be 100%)",
+                }}
+              />
+            </div>
+            <span
+              className="whitespace-nowrap text-sm font-medium tabular-nums"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              {totalDone} of {totalSteps}
+              <span
+                className="ml-1.5 text-xs"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                {overallPct}%
+              </span>
+            </span>
+          </div>
         </div>
 
-        {selected && (
-          <div
-            className="flex flex-col gap-4 rounded-2xl border p-5"
-            style={{
-              borderColor: "var(--color-warm-gray-200)",
-              backgroundColor: "var(--color-white)",
-            }}
-          >
-            <div className="flex items-start gap-3.5">
+        <Link
+          href="/portal/setup/welcome"
+          className="mt-3 flex items-center justify-between gap-4 rounded-xl border px-5 py-3.5 transition-colors hover:bg-[var(--color-warm-gray-50)]"
+          style={{
+            borderColor: "var(--color-warm-gray-200)",
+            backgroundColor: "var(--color-white)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+              style={{
+                background: "linear-gradient(135deg, #02aaeb, #1b77be)",
+              }}
+            >
+              <Sparkle size={16} weight="fill" className="text-white" />
+            </span>
+            <div>
               <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                style={{
-                  backgroundColor: "var(--color-brand-light, rgba(2, 170, 235, 0.08))",
-                  color: "var(--color-brand)",
-                }}
+                className="text-sm font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
               >
-                <House size={20} weight="duotone" />
+                Start here
               </span>
-              <div className="min-w-0">
-                <h2
-                  className="text-xl font-semibold leading-tight tracking-tight"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  {selected.address_line1 || selected.name || "Your property"}
-                </h2>
-                {(selected.city || selected.state) && (
-                  <div
-                    className="mt-1 flex items-center gap-1.5 text-sm"
-                    style={{ color: "var(--color-text-secondary)" }}
-                  >
-                    <MapPin size={13} weight="duotone" />
-                    {[selected.city, selected.state, selected.postal_code]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </div>
-                )}
-              </div>
+              <span
+                className="ml-2 text-sm"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                Meet the team, watch the welcome video, and schedule your
+                kickoff call.
+              </span>
             </div>
+          </div>
+          <ArrowRight
+            size={16}
+            weight="bold"
+            style={{ color: "var(--color-text-tertiary)" }}
+          />
+        </Link>
 
+        {selected && (
+          <div className="mt-2 flex items-center gap-3">
+            <span
+              className="text-sm"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Working on:
+            </span>
+            <span
+              className="text-sm font-medium"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              {selected.address_line1 || selected.name || "Your property"}
+            </span>
             {hasMultipleProperties && properties && (
               <PropertySwitcher
                 properties={(properties as PropertyRow[]).map((p) => ({
@@ -309,189 +346,153 @@ export default async function SetupHubPage({
             )}
           </div>
         )}
-
-        <p
-          className="max-w-2xl text-base"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Two short tracks. One gets your listing ready. The other handles
-          the paperwork. Finish both and you are live on Parcel.
-        </p>
-
-        <OverallProgressBar
-          pct={overallPct}
-          done={totalDone}
-          total={totalSteps}
-        />
       </header>
 
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {tracks.map((track) => (
-          <TrackCard
-            key={track.id}
-            track={track}
-            progress={progress(track)}
-          />
-        ))}
+      <section className="flex min-h-0 flex-1 flex-col gap-6 px-6 pb-4 pt-6 lg:flex-row lg:px-10">
+        <TrackCard
+          eyebrow="Track 01"
+          title="Property setup"
+          icon={<House size={20} weight="duotone" />}
+          tintHex="#1b77be"
+          done={propertyDone}
+          total={propertyTotal}
+          groups={propertyGroups}
+          stepStates={propertyStepStates}
+          nextStep={nextPropertyStep}
+          propertyId={selected?.id}
+        />
+        <TrackCard
+          eyebrow="Track 02"
+          title="Owner essentials"
+          icon={<User size={20} weight="duotone" />}
+          tintHex="#1b77be"
+          done={ownerDone}
+          total={ownerTotal}
+          groups={ownerGroups}
+          stepStates={ownerStepStates}
+          nextStep={nextOwnerStep}
+        />
       </section>
 
-      <aside
-        className="flex flex-col gap-4 rounded-2xl border p-6 sm:flex-row sm:items-center sm:justify-between"
+      <footer
+        className="mx-6 mb-4 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between lg:mx-10"
         style={{
           borderColor: "var(--color-warm-gray-200)",
           backgroundColor: "var(--color-white)",
         }}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-center gap-3">
           <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
             style={{
               backgroundColor: "var(--color-warm-gray-50)",
               color: "var(--color-brand)",
             }}
           >
-            <Sparkle size={20} weight="duotone" />
+            <ClipboardText size={18} weight="duotone" />
           </span>
           <div>
-            <h3
-              className="text-base font-semibold tracking-tight"
+            <p
+              className="text-sm font-semibold"
               style={{ color: "var(--color-text-primary)" }}
             >
               Stuck on a step?
-            </h3>
+            </p>
             <p
-              className="mt-1 max-w-md text-sm"
+              className="text-[13px]"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Send a message from the portal and Johan will jump in. Most
-              owners finish setup in under an hour once they start.
+              Send a message and Johan will jump in. Most owners finish in
+              under an hour.
             </p>
           </div>
         </div>
         <Link
           href="/portal/dashboard"
-          className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
           style={{
             borderColor: "var(--color-warm-gray-200)",
             color: "var(--color-text-primary)",
           }}
         >
-          <ClipboardText size={15} weight="duotone" />
           Message Parcel
         </Link>
-      </aside>
+      </footer>
     </div>
   );
 }
 
-function OverallProgressBar({
-  pct,
-  done,
-  total,
-}: {
-  pct: number;
-  done: number;
-  total: number;
-}) {
-  return (
-    <div
-      className="flex flex-col gap-3 rounded-2xl border p-5"
-      style={{
-        borderColor: "var(--color-warm-gray-200)",
-        backgroundColor: "var(--color-white)",
-      }}
-    >
-      <div className="flex items-baseline justify-between gap-4">
-        <div>
-          <p
-            className="text-[11px] font-semibold uppercase tracking-[0.16em]"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            Overall progress
-          </p>
-          <p
-            className="mt-1 text-sm"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            {done} of {total} steps complete
-          </p>
-        </div>
-        <div
-          className="text-2xl font-semibold tabular-nums tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          {pct}%
-        </div>
-      </div>
-      <div
-        className="h-1.5 w-full overflow-hidden rounded-full"
-        style={{ backgroundColor: "var(--color-warm-gray-100)" }}
-      >
-        <div
-          className="h-full rounded-full transition-[width] duration-500"
-          style={{
-            width: `${pct}%`,
-            background:
-              "linear-gradient(90deg, #02aaeb 0%, #1b77be 100%)",
-          }}
-        />
-      </div>
-    </div>
-  );
-}
+type TrackGroup = {
+  group: string;
+  steps: {
+    stepKey: string;
+    label: string;
+    href: string;
+    estimateMinutes: number;
+  }[];
+};
 
 function TrackCard({
-  track,
-  progress,
+  eyebrow,
+  title,
+  icon,
+  tintHex,
+  done,
+  total,
+  groups,
+  stepStates,
+  nextStep,
+  propertyId,
 }: {
-  track: Track;
-  progress: { done: number; total: number };
+  eyebrow: string;
+  title: string;
+  icon: React.ReactNode;
+  tintHex: string;
+  done: number;
+  total: number;
+  groups: TrackGroup[];
+  stepStates: Map<string, StepState>;
+  nextStep?: { stepKey: string; label: string; href: string } | null;
+  propertyId?: string;
 }) {
-  const pct = Math.round((progress.done / progress.total) * 100);
-  const nextStep =
-    track.steps.find((s) => s.state === "active") ??
-    track.steps.find((s) => s.state === "todo");
-  const nextHasHref = Boolean(nextStep?.href);
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  function buildHref(href: string) {
+    if (propertyId) return `${href}?property=${propertyId}`;
+    return href;
+  }
 
   return (
     <article
-      className="relative flex flex-col overflow-hidden rounded-2xl border"
+      className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border"
       style={{
         borderColor: "var(--color-warm-gray-200)",
         backgroundColor: "var(--color-white)",
       }}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-28"
-        style={{
-          background: `radial-gradient(120% 100% at 0% 0%, ${track.tint}14 0%, transparent 70%)`,
-        }}
-      />
-
-      <header className="relative flex items-start justify-between gap-4 px-6 pt-6">
-        <div className="flex items-start gap-4">
+      <header className="flex items-start justify-between gap-4 px-5 pt-5">
+        <div className="flex items-center gap-3">
           <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
             style={{
-              backgroundColor: `${track.tint}14`,
-              color: track.tint,
+              backgroundColor: `${tintHex}14`,
+              color: tintHex,
             }}
           >
-            {track.icon}
+            {icon}
           </span>
           <div>
             <p
-              className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+              className="text-[10px] font-semibold uppercase tracking-[0.16em]"
               style={{ color: "var(--color-text-tertiary)" }}
             >
-              {track.eyebrow}
+              {eyebrow}
             </p>
             <h2
-              className="mt-1 text-xl font-semibold tracking-tight"
+              className="text-lg font-semibold tracking-tight"
               style={{ color: "var(--color-text-primary)" }}
             >
-              {track.title}
+              {title}
             </h2>
           </div>
         </div>
@@ -502,42 +503,59 @@ function TrackCard({
             color: "var(--color-text-secondary)",
           }}
         >
-          {progress.done}/{progress.total}
+          {done}/{total}
         </div>
       </header>
 
-      <p
-        className="relative mt-3 px-6 text-sm"
-        style={{ color: "var(--color-text-secondary)" }}
-      >
-        {track.summary}
-      </p>
-
-      <div className="relative px-6 pt-5">
+      <div className="px-5 pt-3">
         <div
           className="h-1 w-full overflow-hidden rounded-full"
           style={{ backgroundColor: "var(--color-warm-gray-100)" }}
         >
           <div
             className="h-full rounded-full transition-[width] duration-500"
-            style={{
-              width: `${pct}%`,
-              backgroundColor: track.tint,
-            }}
+            style={{ width: `${pct}%`, backgroundColor: tintHex }}
           />
         </div>
       </div>
 
-      <ul className="relative mt-5 flex flex-col px-3 pb-4">
-        {track.steps.map((step, idx) => (
-          <li key={step.key}>
-            <StepRow step={step} index={idx} tint={track.tint} />
-          </li>
+      <div className="mt-3 flex-1 overflow-y-auto px-3 pb-3">
+        {groups.map((g) => (
+          <div key={g.group}>
+            <p
+              className="px-3 pb-1.5 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em]"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              {g.group}
+            </p>
+            <ul>
+              {g.steps.map((step, idx) => {
+                const state = stepStates.get(step.stepKey) ?? "locked";
+                const globalIdx =
+                  groups
+                    .slice(0, groups.indexOf(g))
+                    .reduce((sum, gg) => sum + gg.steps.length, 0) +
+                  idx +
+                  1;
+                return (
+                  <li key={step.stepKey}>
+                    <StepRow
+                      label={step.label}
+                      state={state}
+                      index={globalIdx}
+                      tint={tintHex}
+                      href={buildHref(step.href)}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
 
       <footer
-        className="relative mt-auto flex items-center justify-between gap-4 border-t px-6 py-4"
+        className="mt-auto flex items-center justify-between gap-4 border-t px-5 py-3.5"
         style={{ borderColor: "var(--color-warm-gray-200)" }}
       >
         <div className="min-w-0">
@@ -554,25 +572,25 @@ function TrackCard({
             {nextStep?.label ?? "All done"}
           </p>
         </div>
-        {nextStep && nextHasHref ? (
+        {nextStep ? (
           <Link
-            href={nextStep.href ?? "#"}
+            href={buildHref(nextStep.href)}
             className="inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: track.tint }}
+            style={{ backgroundColor: tintHex }}
           >
             Continue
             <ArrowRight size={14} weight="bold" />
           </Link>
         ) : (
           <span
-            className="inline-flex shrink-0 items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium"
             style={{
               borderColor: "var(--color-warm-gray-200)",
               color: "var(--color-text-tertiary)",
               backgroundColor: "var(--color-warm-gray-50)",
             }}
           >
-            Coming soon
+            Complete
           </span>
         )}
       </footer>
@@ -581,39 +599,38 @@ function TrackCard({
 }
 
 function StepRow({
-  step,
+  label,
+  state,
   index,
   tint,
+  href,
 }: {
-  step: Step;
+  label: string;
+  state: StepState;
   index: number;
   tint: string;
+  href: string;
 }) {
-  const isDone = step.state === "done";
-  const isActive = step.state === "active";
-  const isLocked = step.state === "locked";
+  const isDone = state === "done";
+  const isActive = state === "active";
+  const isLocked = state === "locked";
 
   const icon = isDone ? (
-    <CheckCircle size={18} weight="fill" />
+    <CheckCircle size={17} weight="fill" />
   ) : isLocked ? (
-    <Lock size={14} weight="duotone" />
+    <Lock size={13} weight="duotone" />
   ) : (
-    <Circle size={16} weight={isActive ? "bold" : "regular"} />
+    <Circle size={15} weight={isActive ? "bold" : "regular"} />
   );
 
-  const iconColor = isDone
-    ? tint
-    : isActive
-      ? tint
-      : "var(--color-text-tertiary)";
-
+  const iconColor = isDone || isActive ? tint : "var(--color-text-tertiary)";
   const labelColor = isLocked
     ? "var(--color-text-tertiary)"
     : "var(--color-text-primary)";
 
-  return (
+  const inner = (
     <div
-      className="flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors"
+      className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors"
       style={{
         backgroundColor: isActive
           ? "var(--color-warm-gray-50)"
@@ -621,45 +638,50 @@ function StepRow({
       }}
     >
       <span
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-        style={{
-          color: iconColor,
-          backgroundColor: isActive
-            ? "var(--color-white)"
-            : "transparent",
-          border: isActive
-            ? `1px solid ${tint}33`
-            : "1px solid transparent",
-        }}
+        className="flex h-6 w-6 shrink-0 items-center justify-center"
+        style={{ color: iconColor }}
       >
         {icon}
       </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
-          <span
-            className="text-[10px] font-semibold tabular-nums tracking-[0.12em]"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            {String(index + 1).padStart(2, "0")}
-          </span>
-          <span
-            className="text-sm font-medium"
-            style={{
-              color: labelColor,
-              textDecoration: isDone ? "line-through" : "none",
-              textDecorationColor: "var(--color-warm-gray-200)",
-            }}
-          >
-            {step.label}
-          </span>
-        </div>
-        <p
-          className="mt-0.5 text-[13px] leading-snug"
-          style={{ color: "var(--color-text-secondary)" }}
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <span
+          className="text-[10px] font-semibold tabular-nums tracking-[0.12em]"
+          style={{ color: "var(--color-text-tertiary)" }}
         >
-          {step.hint}
-        </p>
+          {String(index).padStart(2, "0")}
+        </span>
+        <span
+          className="truncate text-sm font-medium"
+          style={{
+            color: labelColor,
+            textDecoration: isDone ? "line-through" : "none",
+            textDecorationColor: "var(--color-warm-gray-200)",
+          }}
+        >
+          {label}
+        </span>
       </div>
+      {isDone && (
+        <span
+          className="shrink-0"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          <PencilSimple size={13} weight="duotone" />
+        </span>
+      )}
     </div>
+  );
+
+  if (isLocked) {
+    return <div className="cursor-not-allowed opacity-60">{inner}</div>;
+  }
+
+  return (
+    <Link
+      href={href}
+      className="block rounded-lg transition-colors hover:bg-[var(--color-warm-gray-50)]"
+    >
+      {inner}
+    </Link>
   );
 }
