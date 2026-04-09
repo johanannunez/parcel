@@ -1,18 +1,14 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { SignOutButton } from "../../(portal)/portal/SignOutButton";
+import { AdminSidebar, AdminTopBar } from "@/components/admin/AdminSidebar";
+import { AdminSignOutButton } from "@/components/admin/AdminSignOutButton";
 
 /**
- * Admin layout — wraps every /admin/* page.
+ * Admin layout with dark vertical sidebar.
  *
- * Phase 2 placeholder: dark header to visually distinguish admin
- * from the owner portal. The designed dark sidebar comes in Phase 3.
- *
- * Authorization is enforced by proxy.ts (redirects non-admins to
- * /portal/dashboard), but we double-check here to prevent any
- * direct-render bypass.
+ * Authorization: proxy.ts redirects non-admins to /portal/dashboard.
+ * We double-check here to prevent any direct-render bypass.
  */
 export default async function AdminLayout({
   children,
@@ -30,7 +26,7 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, full_name")
     .eq("id", user.id)
     .single();
 
@@ -43,74 +39,39 @@ export default async function AdminLayout({
     .select("*", { count: "exact", head: true })
     .eq("status", "pending");
 
+  const fullName =
+    profile?.full_name?.trim() || user.email?.split("@")[0] || "Admin";
+  const firstName = fullName.split(" ")[0] ?? fullName;
+  const initials = buildInitials(fullName);
+
   return (
     <div
-      className="min-h-screen"
+      className="flex min-h-screen"
       style={{ backgroundColor: "var(--color-navy)" }}
     >
-      <header
-        className="border-b"
-        style={{
-          backgroundColor: "var(--color-charcoal)",
-          borderColor: "rgba(255,255,255,0.1)",
-        }}
-      >
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-4">
-          <div className="flex items-center gap-6">
-            <Link
-              href="/admin"
-              className="text-lg font-semibold tracking-tight text-white"
-            >
-              Parcel Admin
-            </Link>
-            <nav className="flex items-center gap-4 text-sm">
-              <Link
-                href="/admin"
-                className="transition-colors hover:text-white"
-                style={{ color: "rgba(255,255,255,0.7)" }}
-              >
-                Overview
-              </Link>
-              <Link
-                href="/admin/properties"
-                className="transition-colors hover:text-white"
-                style={{ color: "rgba(255,255,255,0.7)" }}
-              >
-                Properties
-              </Link>
-              <Link
-                href="/admin/block-requests"
-                className="inline-flex items-center gap-2 transition-colors hover:text-white"
-                style={{ color: "rgba(255,255,255,0.7)" }}
-              >
-                Block requests
-                {pendingBlockCount && pendingBlockCount > 0 ? (
-                  <span
-                    className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold"
-                    style={{
-                      backgroundColor: "#f59e0b",
-                      color: "#1a1a1a",
-                    }}
-                  >
-                    {pendingBlockCount}
-                  </span>
-                ) : null}
-              </Link>
-            </nav>
-          </div>
+      <AdminSidebar
+        userName={fullName}
+        userEmail={user.email ?? ""}
+        initials={initials}
+        pendingBlockCount={pendingBlockCount ?? 0}
+        signOutSlot={<AdminSignOutButton />}
+      />
 
-          <div className="flex items-center gap-4">
-            <span className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
-              {user.email}
-            </span>
-            <SignOutButton />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AdminTopBar userName={firstName} initials={initials} />
+        <main className="flex-1">
+          <div className="mx-auto w-full max-w-6xl px-6 py-10 text-white lg:px-10 lg:py-14">
+            {children}
           </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-6 py-12 text-white">
-        {children}
-      </main>
+        </main>
+      </div>
     </div>
   );
+}
+
+function buildInitials(name: string) {
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "A";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
