@@ -8,7 +8,8 @@ import { recordVersion } from "@/lib/wizard/version-history";
 import type { Json } from "@/types/supabase";
 
 const schema = z.object({
-  full_name: z.string().trim().min(1, "Full name is required."),
+  first_name: z.string().trim().min(1, "First name is required."),
+  last_name: z.string().trim().min(1, "Last name is required."),
   phone: z.string().trim().min(7, "Phone number is required."),
   preferred_name: z.string().trim().optional().default(""),
   street: z.string().trim().min(1, "Street address is required."),
@@ -69,10 +70,12 @@ export async function saveAccount(
     mailingAddress.emergency_contact = null;
   }
 
+  const fullName = `${v.first_name} ${v.last_name}`;
+
   const { error } = await supabase
     .from("profiles")
     .update({
-      full_name: v.full_name,
+      full_name: fullName,
       phone: v.phone,
       mailing_address: mailingAddress,
       preferred_name: v.preferred_name || null,
@@ -88,7 +91,9 @@ export async function saveAccount(
     userId: user.id,
     stepKey: "account",
     data: {
-      full_name: v.full_name,
+      first_name: v.first_name,
+      last_name: v.last_name,
+      full_name: fullName,
       phone: v.phone,
       preferred_name: v.preferred_name,
       contact_method: v.contact_method,

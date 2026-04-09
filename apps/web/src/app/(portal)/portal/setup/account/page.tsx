@@ -43,13 +43,14 @@ export default async function AccountPage() {
     >
       <AccountForm
         initial={{
-          full_name: profile?.full_name ?? "",
+          first_name: profile?.full_name?.split(" ")[0] ?? "",
+          last_name: profile?.full_name?.split(" ").slice(1).join(" ") ?? "",
           preferred_name: profile?.preferred_name ?? "",
           phone: profile?.phone ?? "",
           avatar_url: profile?.avatar_url ?? "",
           contact_method: profile?.contact_method ?? "",
           timezone: profile?.timezone ?? "",
-          referral_source: profile?.referral_source ?? "",
+          referral_source: "",
           mailing_address: addr ?? null,
         }}
         email={user.email ?? ""}

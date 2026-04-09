@@ -23,7 +23,8 @@ type MailingAddress = {
 };
 
 export type AccountInitial = {
-  full_name: string;
+  first_name: string;
+  last_name: string;
   preferred_name: string;
   phone: string;
   avatar_url: string;
@@ -154,7 +155,8 @@ export function AccountForm({
   );
 
   // Initials for avatar fallback
-  const initials = buildInitials(initial.full_name || email);
+  const fullName = [initial.first_name, initial.last_name].filter(Boolean).join(" ");
+  const initials = buildInitials(fullName || email);
 
   const handleAvatarUpload = useCallback(async (file: File) => {
     if (!file.type.match(/^image\/(jpeg|png|webp)$/)) return;
@@ -321,18 +323,26 @@ export function AccountForm({
       <FormSection title="Your details">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <TextInput
-            name="full_name"
-            label="Full name"
-            defaultValue={initial.full_name}
-            placeholder="Barbara Corcoran"
+            name="first_name"
+            label="First name"
+            defaultValue={initial.first_name}
+            placeholder="Robert"
             required
-            error={err("full_name")}
+            error={err("first_name")}
+          />
+          <TextInput
+            name="last_name"
+            label="Last name"
+            defaultValue={initial.last_name}
+            placeholder="Kiyosaki"
+            required
+            error={err("last_name")}
           />
           <TextInput
             name="preferred_name"
             label="Preferred name"
             defaultValue={initial.preferred_name}
-            placeholder="Barbara"
+            placeholder="Robert"
             helper="What should we call you? This is what you will see in greetings."
             error={err("preferred_name")}
           />
@@ -340,7 +350,7 @@ export function AccountForm({
             name="phone"
             label="Phone"
             defaultValue={initial.phone}
-            placeholder="+1 (212) 555-0147"
+            placeholder="+1 (808) 555-0147"
             type="tel"
             required
             error={err("phone")}
@@ -444,7 +454,7 @@ export function AccountForm({
               name="emergency_name"
               label="Contact name"
               defaultValue={emergency?.name ?? ""}
-              placeholder="Robert Kiyosaki"
+              placeholder="Conrad Hilton"
             />
             <TextInput
               name="emergency_phone"
