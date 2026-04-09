@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   Broom,
   CalendarBlank,
@@ -67,8 +67,12 @@ export function BlockDetailModal({
     ? "Owner staying"
     : block.guest_name || "Guest";
 
-  const onCancel = () => {
-    if (!confirm("Cancel this block request? This cannot be undone.")) return;
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const confirmReady = confirmText.toLowerCase().trim() === "cancel";
+
+  const onConfirmCancel = () => {
+    if (!confirmReady) return;
     startTransition(async () => {
       const result = await cancelBlockRequest({ id: block.id });
       if (result.ok) onClose();
@@ -208,7 +212,7 @@ export function BlockDetailModal({
         </div>
 
         {/* Actions */}
-        {isPending && (
+        {isPending && !confirmingCancel && (
           <div className="mt-5 flex items-center gap-2">
             <button
               type="button"
@@ -224,8 +228,7 @@ export function BlockDetailModal({
             </button>
             <button
               type="button"
-              onClick={onCancel}
-              disabled={pending}
+              onClick={() => setConfirmingCancel(true)}
               className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50"
               style={{
                 borderColor: "rgba(220, 38, 38, 0.3)",
@@ -233,7 +236,65 @@ export function BlockDetailModal({
               }}
             >
               <Trash size={14} weight="bold" />
-              {pending ? "Cancelling..." : "Cancel"}
+              Cancel request
+            </button>
+          </div>
+        )}
+
+        {isPending && confirmingCancel && (
+          <div
+            className="mt-5 rounded-xl border p-4"
+            style={{
+              borderColor: "rgba(220, 38, 38, 0.25)",
+              backgroundColor: "rgba(220, 38, 38, 0.03)",
+            }}
+          >
+            <p
+              className="text-sm font-semibold"
+              style={{ color: "#b91c1c" }}
+            >
+              Are you sure? This cannot be undone.
+            </p>
+            <p
+              className="mt-1 text-xs"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Type <span className="font-semibold" style={{ color: "var(--color-text-primary)" }}>cancel</span> below to confirm.
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="Type cancel"
+                autoFocus
+                className="h-9 flex-1 rounded-lg border px-3 text-sm outline-none focus:ring-2"
+                style={{
+                  borderColor: confirmReady
+                    ? "rgba(220, 38, 38, 0.5)"
+                    : "var(--color-warm-gray-200)",
+                  color: "var(--color-text-primary)",
+                  backgroundColor: "var(--color-white)",
+                }}
+              />
+              <button
+                type="button"
+                onClick={onConfirmCancel}
+                disabled={!confirmReady || pending}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                style={{ backgroundColor: "#b91c1c" }}
+              >
+                <Trash size={13} weight="bold" />
+                {pending ? "Cancelling..." : "Confirm"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setConfirmingCancel(false); setConfirmText(""); }}
+              className="mt-2 text-xs font-medium transition-colors hover:underline"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              Never mind, go back
             </button>
           </div>
         )}
