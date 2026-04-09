@@ -93,8 +93,18 @@ export function AccountForm({
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Contact method
-  const [contactMethod, setContactMethod] = useState(initial.contact_method || "");
+  // Contact methods (multi-select, stored as comma-separated)
+  const [contactMethods, setContactMethods] = useState<Set<string>>(
+    () => new Set(initial.contact_method ? initial.contact_method.split(",").filter(Boolean) : []),
+  );
+  const toggleContactMethod = (value: string) => {
+    setContactMethods((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  };
 
   // Timezone: auto-detect if not already set
   const [timezone, setTimezone] = useState(initial.timezone || "");
@@ -172,7 +182,7 @@ export function AccountForm({
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-8">
+    <form action={formAction} className="flex flex-col gap-5">
       {state.error ? (
         <div
           role="alert"
@@ -190,7 +200,7 @@ export function AccountForm({
 
       {/* Hidden fields for non-input state */}
       <input type="hidden" name="avatar_url" value={avatarUrl} />
-      <input type="hidden" name="contact_method" value={contactMethod} />
+      <input type="hidden" name="contact_method" value={Array.from(contactMethods).join(",")} />
       <input type="hidden" name="timezone" value={timezone} />
       <input
         type="hidden"
@@ -291,7 +301,7 @@ export function AccountForm({
             name="full_name"
             label="Full name"
             defaultValue={initial.full_name}
-            placeholder="Johanan Nunez"
+            placeholder="Alex Rivera"
             required
             error={err("full_name")}
           />
@@ -299,7 +309,7 @@ export function AccountForm({
             name="preferred_name"
             label="Preferred name"
             defaultValue={initial.preferred_name}
-            placeholder="Jo"
+            placeholder="Alex"
             helper="What should we call you? This is what you will see in greetings."
             error={err("preferred_name")}
           />
@@ -309,7 +319,7 @@ export function AccountForm({
             name="phone"
             label="Phone"
             defaultValue={initial.phone}
-            placeholder="+1 (605) 800-7033"
+            placeholder="+1 (555) 234-5678"
             type="tel"
             required
             error={err("phone")}
@@ -386,7 +396,7 @@ export function AccountForm({
             name="emergency_name"
             label="Contact name"
             defaultValue={emergency?.name ?? ""}
-            placeholder="Jane Doe"
+            placeholder="Maria Santos"
           />
           <TextInput
             name="emergency_phone"
@@ -409,19 +419,19 @@ export function AccountForm({
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {CONTACT_METHODS.map((method) => {
-              const selected = contactMethod === method.value;
+              const selected = contactMethods.has(method.value);
               return (
                 <button
                   key={method.value}
                   type="button"
-                  onClick={() => setContactMethod(selected ? "" : method.value)}
-                  className="flex items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left transition-colors"
+                  onClick={() => toggleContactMethod(method.value)}
+                  className="flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors"
                   style={{
                     borderColor: selected
                       ? "var(--color-brand)"
                       : "var(--color-warm-gray-200)",
                     backgroundColor: selected
-                      ? "var(--color-brand-light)0a"
+                      ? "rgba(2, 170, 235, 0.04)"
                       : "var(--color-white)",
                   }}
                 >
@@ -445,7 +455,7 @@ export function AccountForm({
                     {method.label}
                   </span>
                   <span
-                    className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                    className="ml-auto flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border-2 transition-colors"
                     style={{
                       borderColor: selected
                         ? "var(--color-brand)"
@@ -454,7 +464,9 @@ export function AccountForm({
                     }}
                   >
                     {selected && (
-                      <span className="block h-2 w-2 rounded-full bg-white" />
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
                     )}
                   </span>
                 </button>
@@ -561,7 +573,7 @@ function FormSection({
 }) {
   return (
     <section
-      className="rounded-2xl border p-6"
+      className="rounded-2xl border p-5"
       style={{
         borderColor: "var(--color-warm-gray-200)",
         backgroundColor: "var(--color-white)",
