@@ -14,6 +14,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { MetricCard } from "@/components/portal/MetricCard";
 import { PeriodSwitcher } from "@/components/portal/PeriodSwitcher";
+import { RevenueChart } from "@/components/portal/RevenueChart";
 import {
   PropertyBreakdown,
   type PropertyRow,
@@ -23,7 +24,19 @@ import {
   type UpcomingBookingRow,
 } from "@/components/portal/UpcomingBookings";
 import { currency0 } from "@/lib/format";
-import { parsePeriod, periodRange, PERIOD_LABELS } from "@/lib/periods";
+import {
+  parseDashboardParams,
+  periodRange,
+  PERIOD_LABELS,
+  MONTH_LABELS,
+  type DashboardParams,
+} from "@/lib/periods";
+import {
+  groupByMonth,
+  buildComparisonData,
+  type MonthlyRevenue,
+  type ComparisonRevenue,
+} from "@/lib/chart-utils";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -50,9 +63,7 @@ export default async function DashboardPage({
   searchParams: SearchParams;
 }) {
   const resolved = await searchParams;
-  const periodKey = parsePeriod(
-    typeof resolved.period === "string" ? resolved.period : undefined,
-  );
+  const params = parseDashboardParams(resolved);
   const supabase = await createClient();
 
   const {
@@ -62,22 +73,33 @@ export default async function DashboardPage({
 
   const today = new Date();
   const todayIso = isoDate(today);
-  const {
-    start: periodStart,
-    end: periodEnd,
-    label: periodLabel,
-  } = periodRange(periodKey, today);
-  const thirtyDaysAhead = isoDate(
-    new Date(today.getTime() + 30 * 86400000),
-  );
+  const thirtyDaysAhead = isoDate(new Date(today.getTime() + 30 * 86400000));
 
-  // ------ Parallel queries ------
+  // ------ Compute period range for standard/year modes ------
+  let periodStart = "";
+  let periodEnd = "";
+  let periodLabel = "";
+
+  if (params.mode === "standard") {
+    const range = periodRange(params.period, today);
+    periodStart = range.start;
+    periodEnd = range.end;
+    periodLabel = range.label;
+  } else if (params.mode === "year") {
+    const range = periodRange("year", today, { year: params.year });
+    periodStart = range.start;
+    periodEnd = range.end;
+    periodLabel = range.label;
+  }
+  // compare mode builds per-year queries below
+
+  // ------ Parallel queries (shared across all modes) ------
   const [
     profileResult,
     propertiesResult,
-    periodBookingsResult,
     upcomingBookingsResult,
     pendingPayoutsResult,
+    yearsResult,
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -89,12 +111,6 @@ export default async function DashboardPage({
       .select("id, name, address_line1, city, active"),
     supabase
       .from("bookings")
-      .select("property_id, check_in, check_out, total_amount, nights")
-      .gte("check_in", periodStart)
-      .lte("check_in", periodEnd)
-      .neq("status", "cancelled"),
-    supabase
-      .from("bookings")
       .select(
         "id, guest_name, check_in, check_out, source, status, property_id",
       )
@@ -103,10 +119,12 @@ export default async function DashboardPage({
       .neq("status", "cancelled")
       .order("check_in", { ascending: true })
       .limit(5),
+    supabase.from("payouts").select("net_payout").is("paid_at", null),
+    // Get distinct years from bookings for the year pills
     supabase
-      .from("payouts")
-      .select("net_payout")
-      .is("paid_at", null),
+      .from("bookings")
+      .select("check_in")
+      .neq("status", "cancelled"),
   ]);
 
   const properties = propertiesResult.data ?? [];
@@ -119,12 +137,97 @@ export default async function DashboardPage({
   const totalProperties = properties.length;
   const activeListings = properties.filter((p) => p.active).length;
 
-  const periodBookings = periodBookingsResult.data ?? [];
+  // Derive available years from bookings
+  const allBookingYears = new Set<number>();
+  for (const b of yearsResult.data ?? []) {
+    allBookingYears.add(new Date(b.check_in).getFullYear());
+  }
+  const availableYears = Array.from(allBookingYears).sort((a, b) => a - b);
 
-  // ------ Aggregate metrics ------
+  // ------ Mode-specific data fetching ------
+  type BookingRow = {
+    property_id: string;
+    check_in: string;
+    check_out: string;
+    total_amount: number | null;
+    nights: number | null;
+  };
+
+  let periodBookings: BookingRow[] = [];
+  let chartData: { mode: "single"; data: MonthlyRevenue[] } | { mode: "compare"; data: ComparisonRevenue; years: number[] } | null = null;
+  let compareDelta: { pct: number; label: string } | null = null;
+
+  if (params.mode === "standard" || params.mode === "year") {
+    // Single period query
+    const { data } = await supabase
+      .from("bookings")
+      .select("property_id, check_in, check_out, total_amount, nights")
+      .gte("check_in", periodStart)
+      .lte("check_in", periodEnd)
+      .neq("status", "cancelled");
+    periodBookings = data ?? [];
+
+    // For year mode, build monthly chart data
+    if (params.mode === "year") {
+      const monthly = groupByMonth(periodBookings);
+      chartData = { mode: "single", data: monthly };
+    }
+  } else if (params.mode === "compare") {
+    // Query each year's bookings for the target month
+    const m = params.month;
+    const bookingsByYear: Record<number, BookingRow[]> = {};
+
+    const yearQueries = params.years.map(async (y) => {
+      const mStart = `${y}-${String(m).padStart(2, "0")}-01`;
+      const mEnd =
+        m === 12
+          ? `${y}-12-31`
+          : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+      const { data } = await supabase
+        .from("bookings")
+        .select("property_id, check_in, check_out, total_amount, nights")
+        .gte("check_in", mStart)
+        .lt("check_in", mEnd)
+        .neq("status", "cancelled");
+      bookingsByYear[y] = data ?? [];
+    });
+    await Promise.all(yearQueries);
+
+    // Use the most recent year as the "primary" for metric cards
+    const newestYear = params.years[params.years.length - 1];
+    periodBookings = bookingsByYear[newestYear] ?? [];
+    periodLabel = `${MONTH_LABELS[m - 1]} ${newestYear}`;
+
+    // Build comparison chart data
+    const comparison = buildComparisonData(
+      Object.fromEntries(
+        Object.entries(bookingsByYear).map(([y, bs]) => [
+          y,
+          bs.map((b) => ({
+            check_in: b.check_in,
+            total_amount: b.total_amount,
+          })),
+        ]),
+      ),
+      m,
+    );
+    chartData = { mode: "compare", data: comparison, years: params.years };
+
+    // Compute delta between newest and second-newest year
+    if (params.years.length >= 2) {
+      const prevYear = params.years[params.years.length - 2];
+      const newestRev = comparison.byYear[newestYear] ?? 0;
+      const prevRev = comparison.byYear[prevYear] ?? 0;
+      if (prevRev > 0) {
+        const pct = Math.round(((newestRev - prevRev) / prevRev) * 100);
+        compareDelta = { pct, label: `vs ${prevYear}` };
+      }
+    }
+  }
+
+  // ------ Aggregate metrics from periodBookings ------
   let totalRevenue = 0;
   let totalNights = 0;
-
   const propRevenue = new Map<string, number>();
   const propNights = new Map<string, number>();
 
@@ -158,13 +261,24 @@ export default async function DashboardPage({
   const avgNightly =
     totalNights > 0 ? Math.round(totalRevenue / totalNights) : null;
 
-  const daysInPeriod = Math.max(
-    1,
-    Math.round(
-      (new Date(periodEnd).getTime() - new Date(periodStart).getTime()) /
-        86400000,
-    ) + 1,
-  );
+  const daysInPeriod =
+    periodStart && periodEnd
+      ? Math.max(
+          1,
+          Math.round(
+            (new Date(periodEnd).getTime() -
+              new Date(periodStart).getTime()) /
+              86400000,
+          ) + 1,
+        )
+      : params.mode === "compare"
+        ? new Date(
+            params.years[params.years.length - 1],
+            params.month,
+            0,
+          ).getDate()
+        : 30;
+
   const occupancyDenom = activeListings * daysInPeriod;
   const occupancyRate =
     occupancyDenom > 0
@@ -211,6 +325,29 @@ export default async function DashboardPage({
     profileResult.data?.full_name?.split(" ")[0] ??
     user.email?.split("@")[0] ??
     "there";
+
+  // Build the period label for display
+  const displayLabel =
+    params.mode === "standard"
+      ? periodLabel
+      : params.mode === "year"
+        ? String(params.year)
+        : periodLabel;
+
+  const breakdownLabel =
+    params.mode === "standard"
+      ? PERIOD_LABELS[params.period]
+      : params.mode === "year"
+        ? String(params.year)
+        : `${MONTH_LABELS[params.month - 1]} ${params.years[params.years.length - 1]}`;
+
+  // Chart title
+  const chartTitle =
+    chartData?.mode === "compare"
+      ? `${MONTH_LABELS[params.mode === "compare" ? params.month - 1 : 0]} revenue by year`
+      : params.mode === "year"
+        ? `${params.year} monthly revenue`
+        : "";
 
   return (
     <div className="flex flex-col gap-10">
@@ -280,16 +417,17 @@ export default async function DashboardPage({
       ) : null}
 
       {/* Period switcher */}
-      <PeriodSwitcher active={periodKey} />
+      <PeriodSwitcher params={params} availableYears={availableYears} />
 
       {/* Primary metric cards */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Total revenue"
           value={currency0.format(totalRevenue)}
-          hint={periodLabel}
+          hint={displayLabel}
           icon={<CurrencyDollar size={20} weight="duotone" />}
           tone="success"
+          delta={compareDelta}
         />
         <MetricCard
           label="Occupancy rate"
@@ -339,11 +477,25 @@ export default async function DashboardPage({
         />
       </section>
 
+      {/* Revenue chart (year and compare modes) */}
+      {chartData?.mode === "single" && (
+        <RevenueChart
+          mode="single"
+          data={chartData.data}
+          title={chartTitle}
+        />
+      )}
+      {chartData?.mode === "compare" && (
+        <RevenueChart
+          mode="compare"
+          data={chartData.data}
+          years={chartData.years}
+          title={chartTitle}
+        />
+      )}
+
       {/* Property breakdown */}
-      <PropertyBreakdown
-        rows={propertyRows}
-        periodLabel={PERIOD_LABELS[periodKey]}
-      />
+      <PropertyBreakdown rows={propertyRows} periodLabel={breakdownLabel} />
 
       {/* Upcoming bookings */}
       <UpcomingBookings rows={upcomingRows} />

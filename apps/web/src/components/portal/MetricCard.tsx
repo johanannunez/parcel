@@ -15,12 +15,15 @@ export function MetricCard({
   hint,
   icon,
   tone = "brand",
+  delta,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon: ReactNode;
   tone?: Tone;
+  /** Year-over-year change percentage for comparison mode. */
+  delta?: { pct: number; label: string } | null;
 }) {
   const t = toneStyles[tone];
   return (
@@ -52,7 +55,25 @@ export function MetricCard({
         >
           {value}
         </div>
-        {hint ? (
+        {delta != null ? (
+          <div className="mt-2 flex items-center gap-1.5">
+            <span
+              className="text-sm font-semibold"
+              style={{
+                color: delta.pct >= 0 ? "var(--color-success)" : "var(--color-error)",
+              }}
+            >
+              {delta.pct >= 0 ? "\u2191" : "\u2193"}
+              {Math.abs(delta.pct)}%
+            </span>
+            <span
+              className="text-xs"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              {delta.label}
+            </span>
+          </div>
+        ) : hint ? (
           <div
             className="mt-2 text-sm"
             style={{ color: "var(--color-text-secondary)" }}
