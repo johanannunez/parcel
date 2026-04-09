@@ -72,8 +72,11 @@ export function SyncButton() {
           >
             <li>
               Properties matched: {result.propertiesMatched}
+              {result.propertiesCreated > 0
+                ? `, created: ${result.propertiesCreated}`
+                : ""}
               {result.propertiesUnmatched.length > 0
-                ? ` (${result.propertiesUnmatched.length} unmatched: ${result.propertiesUnmatched.join(", ")})`
+                ? ` (${result.propertiesUnmatched.length} failed: ${result.propertiesUnmatched.join(", ")})`
                 : ""}
             </li>
             <li>Reservations synced: {result.reservationsUpserted}</li>
