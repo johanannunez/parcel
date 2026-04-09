@@ -128,16 +128,26 @@ export default async function SetupHubPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, timezone")
+    .select("full_name, timezone, role")
     .eq("id", user.id)
     .single();
 
-  const { data: properties } = await supabase
-    .from("properties")
-    .select(
-      "id, name, address_line1, city, state, postal_code, property_type, bedrooms, bathrooms, guest_capacity, active",
-    )
-    .order("created_at", { ascending: true });
+  const isAdmin = profile?.role === "admin";
+
+  // Admin sees all properties with owner names; owners see only their own
+  const { data: properties } = isAdmin
+    ? await supabase
+        .from("properties")
+        .select(
+          "id, name, address_line1, city, state, postal_code, property_type, bedrooms, bathrooms, guest_capacity, active, owner_id, profiles!properties_owner_id_fkey(full_name)",
+        )
+        .order("created_at", { ascending: true })
+    : await supabase
+        .from("properties")
+        .select(
+          "id, name, address_line1, city, state, postal_code, property_type, bedrooms, bathrooms, guest_capacity, active",
+        )
+        .order("created_at", { ascending: true });
 
   const firstName =
     profile?.full_name?.split(" ")[0] ??
@@ -337,16 +347,18 @@ export default async function SetupHubPage({
         {selected && properties && (
           <div className="mt-2">
             <PropertySelector
-              properties={(properties as PropertyRow[]).map((p) => ({
+              properties={(properties as (PropertyRow & { profiles?: { full_name: string | null } | null })[]).map((p) => ({
                 id: p.id,
                 name: p.name,
                 address_line1: p.address_line1,
                 city: p.city,
                 state: p.state,
+                ownerName: isAdmin && "profiles" in p ? (p as { profiles?: { full_name: string | null } | null }).profiles?.full_name ?? null : null,
               }))}
               activeId={selected.id}
               hrefTemplate="/portal/setup?property={id}"
               variant="inline"
+              showOwner={isAdmin}
             />
           </div>
         )}

@@ -15,6 +15,7 @@ export type PropertyOption = {
   address_line1: string | null;
   city: string | null;
   state: string | null;
+  ownerName?: string | null;
 };
 
 type PropertySelectorProps = {
@@ -23,6 +24,8 @@ type PropertySelectorProps = {
   onChange?: (id: string) => void;
   hrefTemplate?: string;
   variant?: "inline" | "bar";
+  /** Admin-only: show owner names in the trigger and group by owner in the dropdown */
+  showOwner?: boolean;
 };
 
 function displayName(p: PropertyOption): string {
@@ -34,12 +37,25 @@ function displaySub(p: PropertyOption): string {
   return p.city || p.state || "";
 }
 
+/** Group properties by owner name, preserving order */
+function groupByOwner(props: PropertyOption[]): { owner: string; items: PropertyOption[] }[] {
+  const map = new Map<string, PropertyOption[]>();
+  for (const p of props) {
+    const key = p.ownerName || "Unknown owner";
+    const group = map.get(key) ?? [];
+    group.push(p);
+    map.set(key, group);
+  }
+  return Array.from(map.entries()).map(([owner, items]) => ({ owner, items }));
+}
+
 export function PropertySelector({
   properties,
   activeId,
   onChange,
   hrefTemplate,
   variant = "inline",
+  showOwner = false,
 }: PropertySelectorProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -223,6 +239,17 @@ export function PropertySelector({
               {displaySub(active)}
             </span>
           )}
+          {showOwner && active?.ownerName && (
+            <span
+              className="hidden shrink-0 truncate rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline"
+              style={{
+                backgroundColor: "var(--color-warm-gray-100)",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              {active.ownerName}
+            </span>
+          )}
         </div>
         <CaretDown
           size={14}
@@ -292,11 +319,47 @@ export function PropertySelector({
               >
                 No properties found
               </li>
+            ) : showOwner ? (
+              /* Grouped by owner */
+              (() => {
+                const groups = groupByOwner(filtered);
+                let globalIdx = 0;
+                return groups.map((group) => (
+                  <li key={group.owner}>
+                    <p
+                      className="px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.14em]"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      {group.owner}
+                    </p>
+                    <ul>
+                      {group.items.map((p) => {
+                        const idx = globalIdx++;
+                        const isActive = p.id === activeId;
+                        const isFocused = idx === focusIdx;
+                        return (
+                          <li
+                            key={p.id}
+                            data-option
+                            role="option"
+                            aria-selected={isActive}
+                            className="cursor-pointer px-1.5"
+                            onClick={() => select(p.id)}
+                            onMouseEnter={() => setFocusIdx(idx)}
+                          >
+                            <OptionRow p={p} isActive={isActive} isFocused={isFocused} />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </li>
+                ));
+              })()
             ) : (
+              /* Flat list */
               filtered.map((p, idx) => {
                 const isActive = p.id === activeId;
                 const isFocused = idx === focusIdx;
-
                 return (
                   <li
                     key={p.id}
@@ -307,61 +370,71 @@ export function PropertySelector({
                     onClick={() => select(p.id)}
                     onMouseEnter={() => setFocusIdx(idx)}
                   >
-                    <div
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors duration-100"
-                      style={{
-                        backgroundColor: isFocused
-                          ? "var(--color-warm-gray-50)"
-                          : isActive
-                            ? "#02aaeb0a"
-                            : "transparent",
-                      }}
-                    >
-                      <MapPin
-                        size={15}
-                        weight="duotone"
-                        style={{
-                          color: isActive
-                            ? "#02AAEB"
-                            : "var(--color-text-tertiary)",
-                          flexShrink: 0,
-                        }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className="truncate text-sm"
-                          style={{
-                            color: isActive
-                              ? "#1B77BE"
-                              : "var(--color-text-primary)",
-                            fontWeight: isActive ? 600 : 500,
-                          }}
-                        >
-                          {displayName(p)}
-                        </p>
-                        {displaySub(p) && (
-                          <p
-                            className="truncate text-[11px]"
-                            style={{ color: "var(--color-text-tertiary)" }}
-                          >
-                            {displaySub(p)}
-                          </p>
-                        )}
-                      </div>
-                      {isActive && (
-                        <Check
-                          size={14}
-                          weight="bold"
-                          style={{ color: "#02AAEB", flexShrink: 0 }}
-                        />
-                      )}
-                    </div>
+                    <OptionRow p={p} isActive={isActive} isFocused={isFocused} />
                   </li>
                 );
               })
             )}
           </ul>
         </div>
+      )}
+    </div>
+  );
+}
+
+function OptionRow({
+  p,
+  isActive,
+  isFocused,
+}: {
+  p: PropertyOption;
+  isActive: boolean;
+  isFocused: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors duration-100"
+      style={{
+        backgroundColor: isFocused
+          ? "var(--color-warm-gray-50)"
+          : isActive
+            ? "#02aaeb0a"
+            : "transparent",
+      }}
+    >
+      <MapPin
+        size={15}
+        weight="duotone"
+        style={{
+          color: isActive ? "#02AAEB" : "var(--color-text-tertiary)",
+          flexShrink: 0,
+        }}
+      />
+      <div className="min-w-0 flex-1">
+        <p
+          className="truncate text-sm"
+          style={{
+            color: isActive ? "#1B77BE" : "var(--color-text-primary)",
+            fontWeight: isActive ? 600 : 500,
+          }}
+        >
+          {displayName(p)}
+        </p>
+        {displaySub(p) && (
+          <p
+            className="truncate text-[11px]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {displaySub(p)}
+          </p>
+        )}
+      </div>
+      {isActive && (
+        <Check
+          size={14}
+          weight="bold"
+          style={{ color: "#02AAEB", flexShrink: 0 }}
+        />
       )}
     </div>
   );
