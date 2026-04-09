@@ -324,7 +324,7 @@ export function AccountForm({
             name="full_name"
             label="Full name"
             defaultValue={initial.full_name}
-            placeholder="Alex Rivera"
+            placeholder="Barbara Corcoran"
             required
             error={err("full_name")}
           />
@@ -332,7 +332,7 @@ export function AccountForm({
             name="preferred_name"
             label="Preferred name"
             defaultValue={initial.preferred_name}
-            placeholder="Alex"
+            placeholder="Barbara"
             helper="What should we call you? This is what you will see in greetings."
             error={err("preferred_name")}
           />
@@ -340,7 +340,7 @@ export function AccountForm({
             name="phone"
             label="Phone"
             defaultValue={initial.phone}
-            placeholder="+1 (555) 234-5678"
+            placeholder="+1 (212) 555-0147"
             type="tel"
             required
             error={err("phone")}
@@ -364,7 +364,7 @@ export function AccountForm({
             name="street"
             label="Street address"
             defaultValue={addr?.street ?? ""}
-            placeholder="742 Evergreen Terrace"
+            placeholder="110 E 87th Street"
             required
             error={err("street")}
           />
@@ -444,13 +444,13 @@ export function AccountForm({
               name="emergency_name"
               label="Contact name"
               defaultValue={emergency?.name ?? ""}
-              placeholder="Maria Santos"
+              placeholder="Robert Kiyosaki"
             />
             <TextInput
               name="emergency_phone"
               label="Contact phone"
               defaultValue={emergency?.phone ?? ""}
-              placeholder="+1 (555) 123-4567"
+              placeholder="+1 (808) 555-0199"
               type="tel"
             />
           </div>
