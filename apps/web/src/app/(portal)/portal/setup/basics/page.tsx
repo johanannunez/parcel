@@ -27,7 +27,7 @@ export default async function SetupBasicsPage({
   let query = supabase
     .from("properties")
     .select(
-      "id, name, property_type, address_line1, address_line2, city, state, postal_code, country, bedrooms, bathrooms, square_feet, guest_capacity",
+      "id, name, property_type, address_line1, address_line2, city, state, postal_code, country, bedrooms, bathrooms, square_feet, guest_capacity, updated_at",
     );
 
   if (propertyId) {
@@ -85,26 +85,51 @@ export default async function SetupBasicsPage({
           Back to setup
         </Link>
         <div>
-          <p
-            className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            Track 01 · Step 01
-          </p>
+          <div className="flex items-center gap-3">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              Track 01 · Step 02
+            </p>
+            <span
+              className="text-[11px]"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              About 3 min
+            </span>
+          </div>
           <h1
-            className="mt-2 text-[34px] font-semibold leading-tight tracking-tight"
+            className="mt-2 text-[28px] font-semibold leading-tight tracking-tight sm:text-[34px]"
             style={{ color: "var(--color-text-primary)" }}
           >
-            Property basics
+            The basics
           </h1>
           <p
-            className="mt-2 max-w-2xl text-base"
+            className="mt-2 max-w-2xl text-sm"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            {isEditing
-              ? "Update any detail that has changed. Changes save to your property record instantly."
-              : "Tell us about the home. Nothing fancy, just the facts guests need and that we use to list it."}
+            We use this to create your property record and start building your listing. Nickname, type, and specs.
           </p>
+          {isEditing && property?.updated_at && (
+            <p
+              className="mt-1.5 text-xs"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              Last updated{" "}
+              {new Date(property.updated_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}{" "}
+              at{" "}
+              {new Date(property.updated_at).toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </p>
+          )}
         </div>
       </header>
 
