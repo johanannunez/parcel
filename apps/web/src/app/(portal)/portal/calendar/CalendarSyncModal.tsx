@@ -6,17 +6,49 @@ import { Copy, Check, X } from "@phosphor-icons/react";
 type CalendarOption = {
   id: "google" | "apple" | "outlook";
   label: string;
-  iconSlug: string;
-  brand: string;
+  icon: React.ReactNode;
   steps: string[];
 };
+
+function GoogleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M18.316 5.684H24v12.632h-5.684V5.684z" fill="#1a73e8" />
+      <path d="M5.684 18.316H0V5.684h5.684v12.632z" fill="#ea4335" />
+      <path d="M18.316 24H5.684v-5.684h12.632V24z" fill="#34a853" />
+      <path d="M18.316 5.684V0H5.684v5.684h12.632z" fill="#fbbc04" />
+      <path d="M18.316 18.316H24V24h-5.684v-5.684z" fill="#188038" />
+      <path d="M0 5.684h5.684V0H0v5.684z" fill="#d93025" />
+    </svg>
+  );
+}
+
+function AppleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#000">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+    </svg>
+  );
+}
+
+function OutlookIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M24 7.387v10.478c0 .23-.08.424-.238.583a.795.795 0 01-.583.238h-8.322V6.566h8.322c.23 0 .424.08.583.238.159.16.238.353.238.583z" fill="#0364b8" />
+      <path d="M16.566 6.566v12.12H8.476l-1.025-.153-1.178-.18V5.87l1.178-.178L8.476 5.5h8.09v1.066z" fill="#0a2767" />
+      <path d="M8.476 5.5v13.186l-2.203.342L0 17.643V6.566l.847-.178L8.476 5.5z" fill="#1490df" />
+      <path d="M8.476 5.5v6.566H0V5.5h8.476z" fill="#28a8ea" />
+      <rect x="1.5" y="8.5" width="5.5" height="7" rx=".6" fill="#0078d4" />
+      <path d="M4.238 10.5c-.9 0-1.588.72-1.588 1.6 0 .88.688 1.6 1.588 1.6.9 0 1.587-.72 1.587-1.6 0-.88-.688-1.6-1.587-1.6z" fill="#fff" />
+    </svg>
+  );
+}
 
 const OPTIONS: CalendarOption[] = [
   {
     id: "google",
     label: "Google Calendar",
-    iconSlug: "googlecalendar",
-    brand: "#1a73e8",
+    icon: <GoogleIcon />,
     steps: [
       "Open Google Calendar on a computer.",
       'In the left sidebar, click the "+" next to "Other calendars" and choose "From URL".',
@@ -26,8 +58,7 @@ const OPTIONS: CalendarOption[] = [
   {
     id: "apple",
     label: "Apple Calendar",
-    iconSlug: "apple",
-    brand: "#000000",
+    icon: <AppleIcon />,
     steps: [
       "Open the Calendar app on iPhone, iPad, or Mac.",
       "iPhone/iPad: tap Calendars at the bottom, then Add Calendar, then Add Subscription Calendar. Mac: File menu, New Calendar Subscription.",
@@ -37,8 +68,7 @@ const OPTIONS: CalendarOption[] = [
   {
     id: "outlook",
     label: "Outlook",
-    iconSlug: "microsoftoutlook",
-    brand: "#0078d4",
+    icon: <OutlookIcon />,
     steps: [
       "Open Outlook on the web at outlook.live.com.",
       'In the left sidebar, click Add calendar, then Subscribe from web.',
@@ -155,12 +185,7 @@ export function CalendarSyncModal({
                   }}
                   aria-hidden
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://cdn.simpleicons.org/${opt.iconSlug}/${opt.brand.replace("#", "")}`}
-                    alt=""
-                    className="h-4 w-4"
-                  />
+                  {opt.icon}
                 </span>
                 <span className="flex flex-col">
                   <span
