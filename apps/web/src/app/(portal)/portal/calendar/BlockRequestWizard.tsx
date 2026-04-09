@@ -19,6 +19,7 @@ import {
   Users,
   PawPrint,
   Broom,
+  FileArrowDown,
   Lock,
   ShieldCheck,
   X,
@@ -545,7 +546,7 @@ function StepCleaning({ data, update, bedrooms, fee }: { data: WizardData; updat
 
       <div className="flex flex-col gap-3">
         <Label>Should we schedule a cleaning after your stay?</Label>
-        {[{ val: false, label: "No, they'll clean it themselves", icon: <Broom size={16} weight="duotone" /> }, { val: true, label: "Yes, schedule a cleaning", icon: <CheckCircle size={16} weight="duotone" /> }].map((opt) => (
+        {[{ val: true, label: "Yes, schedule a cleaning", icon: <CheckCircle size={16} weight="duotone" /> }, { val: false, label: "No, they'll clean it themselves", icon: <Broom size={16} weight="duotone" /> }].map((opt) => (
           <button key={String(opt.val)} type="button" onClick={() => update({ wantsCleaning: opt.val })} className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors" style={{ backgroundColor: data.wantsCleaning === opt.val ? "rgba(2, 170, 235, 0.04)" : "var(--color-white)", borderColor: data.wantsCleaning === opt.val ? "var(--color-brand)" : "var(--color-warm-gray-200)" }}>
             <span style={{ color: data.wantsCleaning === opt.val ? "var(--color-brand)" : "var(--color-text-tertiary)" }}>{opt.icon}</span>
             <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>{opt.label}</span>
@@ -555,6 +556,31 @@ function StepCleaning({ data, update, bedrooms, fee }: { data: WizardData; updat
           <div className="flex items-center justify-between rounded-lg border px-4 py-3" style={{ backgroundColor: "var(--color-warm-gray-50)", borderColor: "var(--color-warm-gray-200)" }}>
             <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Cleaning fee ({bedrooms ?? 1}-bedroom)</span>
             <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>${fee}</span>
+          </div>
+        )}
+        {!data.wantsCleaning && (
+          <div
+            className="flex items-start gap-3 rounded-lg border px-4 py-3"
+            style={{ backgroundColor: "rgba(245, 158, 11, 0.04)", borderColor: "rgba(245, 158, 11, 0.25)" }}
+          >
+            <FileArrowDown size={16} weight="duotone" className="mt-0.5 shrink-0" style={{ color: "#b45309" }} />
+            <div>
+              <p className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+                Cleaning checklist required
+              </p>
+              <p className="mt-0.5 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                If you choose to clean yourself, you must follow our cleaning standards.{" "}
+                <a
+                  href="/cleaning-checklist.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold underline"
+                  style={{ color: "#b45309" }}
+                >
+                  Download the checklist
+                </a>
+              </p>
+            </div>
           </div>
         )}
       </div>

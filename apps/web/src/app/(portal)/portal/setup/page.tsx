@@ -6,7 +6,6 @@ import {
   Circle,
   ClipboardText,
   House,
-  Lock,
   PencilSimple,
   Sparkle,
   User,
@@ -25,7 +24,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-type StepState = "done" | "active" | "todo" | "locked";
+type StepState = "done" | "active" | "todo";
 
 type PropertyRow = {
   id: string;
@@ -50,7 +49,7 @@ function resolvePropertyStepState(
   property: PropertyRow | null,
   allStepKeys: string[],
 ): StepState {
-  if (!property) return "locked";
+  if (!property) return "todo";
 
   const completionChecks: Record<string, boolean> = {
     "agreement-preview": false,
@@ -81,8 +80,7 @@ function resolvePropertyStepState(
   const myIdx = allStepKeys.indexOf(stepKey);
 
   if (myIdx === firstIncompleteIdx) return "active";
-  if (myIdx < firstIncompleteIdx) return "done";
-  return "locked";
+  return "todo";
 }
 
 function resolveOwnerStepState(
@@ -106,8 +104,7 @@ function resolveOwnerStepState(
   const myIdx = allStepKeys.indexOf(stepKey);
 
   if (myIdx === firstIncompleteIdx) return "active";
-  if (myIdx < firstIncompleteIdx) return "done";
-  return "locked";
+  return "todo";
 }
 
 export default async function SetupHubPage({
@@ -542,7 +539,7 @@ function TrackCard({
             </p>
             <ul>
               {g.steps.map((step, idx) => {
-                const state = stepStates.get(step.stepKey) ?? "locked";
+                const state = stepStates.get(step.stepKey) ?? "todo";
                 const globalIdx =
                   groups
                     .slice(0, groups.indexOf(g))
@@ -625,75 +622,63 @@ function StepRow({
 }) {
   const isDone = state === "done";
   const isActive = state === "active";
-  const isLocked = state === "locked";
 
   const icon = isDone ? (
     <CheckCircle size={17} weight="fill" />
-  ) : isLocked ? (
-    <Lock size={13} weight="duotone" />
   ) : (
     <Circle size={15} weight={isActive ? "bold" : "regular"} />
   );
 
   const iconColor = isDone || isActive ? tint : "var(--color-text-tertiary)";
-  const labelColor = isLocked
-    ? "var(--color-text-tertiary)"
-    : "var(--color-text-primary)";
-
-  const inner = (
-    <div
-      className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors"
-      style={{
-        backgroundColor: isActive
-          ? "var(--color-warm-gray-50)"
-          : "transparent",
-      }}
-    >
-      <span
-        className="flex h-6 w-6 shrink-0 items-center justify-center"
-        style={{ color: iconColor }}
-      >
-        {icon}
-      </span>
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span
-          className="text-[10px] font-semibold tabular-nums tracking-[0.12em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          {String(index).padStart(2, "0")}
-        </span>
-        <span
-          className="truncate text-sm font-medium"
-          style={{
-            color: labelColor,
-            textDecoration: isDone ? "line-through" : "none",
-            textDecorationColor: "var(--color-warm-gray-200)",
-          }}
-        >
-          {label}
-        </span>
-      </div>
-      {isDone && (
-        <span
-          className="shrink-0"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          <PencilSimple size={13} weight="duotone" />
-        </span>
-      )}
-    </div>
-  );
-
-  if (isLocked) {
-    return <div className="cursor-not-allowed opacity-60">{inner}</div>;
-  }
+  const labelColor =
+    state === "todo" ? "var(--color-text-secondary)" : "var(--color-text-primary)";
 
   return (
     <Link
       href={href}
       className="block rounded-lg transition-colors hover:bg-[var(--color-warm-gray-50)]"
     >
-      {inner}
+      <div
+        className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors"
+        style={{
+          backgroundColor: isActive
+            ? "var(--color-warm-gray-50)"
+            : "transparent",
+        }}
+      >
+        <span
+          className="flex h-6 w-6 shrink-0 items-center justify-center"
+          style={{ color: iconColor }}
+        >
+          {icon}
+        </span>
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span
+            className="text-[10px] font-semibold tabular-nums tracking-[0.12em]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {String(index).padStart(2, "0")}
+          </span>
+          <span
+            className="truncate text-sm font-medium"
+            style={{
+              color: labelColor,
+              textDecoration: isDone ? "line-through" : "none",
+              textDecorationColor: "var(--color-warm-gray-200)",
+            }}
+          >
+            {label}
+          </span>
+        </div>
+        {isDone && (
+          <span
+            className="shrink-0"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            <PencilSimple size={13} weight="duotone" />
+          </span>
+        )}
+      </div>
     </Link>
   );
 }

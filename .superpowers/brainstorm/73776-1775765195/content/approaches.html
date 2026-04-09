@@ -1,0 +1,82 @@
+<h2>Metrics & Financials: Architecture Approach</h2>
+<p class="subtitle">How should the dashboard, payouts, and property detail pages get their data?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)" style="border-left: 3px solid #16a34a;">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Server Components + Parallel Queries (Recommended)</h3>
+      <p>All three pages stay as <strong>async Server Components</strong>. Each page fans out its Supabase queries with <code>Promise.all</code> and renders server-side. The time period switcher uses URL search params (<code>?period=ytd</code>) so the selected period is shareable and bookmarkable.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Matches every existing portal page pattern</li>
+            <li>Zero client-side JS for data fetching</li>
+            <li>Period selection works with browser back/forward</li>
+            <li>SEO-friendly (not relevant here, but free)</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Full page reload on period switch (mitigated by Next.js streaming)</li>
+            <li>No animated transitions between periods</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Hybrid: Server Component Shell + Client Period Switcher</h3>
+      <p>The page shell and initial data load are Server Components. The period switcher is a <code>'use client'</code> component that calls a Server Action to re-fetch metrics for the selected period, updating the cards without a full navigation.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Instant period switching with no page flash</li>
+            <li>Can animate metric value changes</li>
+            <li>Still server-rendered on first load</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>More complex: client state + server actions + loading states</li>
+            <li>Breaks from every other portal page's pattern</li>
+            <li>Period selection not in URL (loses shareability)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Client-Side Fetching with Route Handlers</h3>
+      <p>Build API route handlers (<code>/api/metrics</code>, <code>/api/payouts</code>) and fetch from client components using <code>useEffect</code> or SWR. Full client-side rendering for the data sections.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Maximum interactivity</li>
+            <li>Can poll for real-time updates</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Completely breaks existing codebase patterns</li>
+            <li>Loading spinners everywhere on first visit</li>
+            <li>More API surface to maintain and secure</li>
+            <li>Unnecessary complexity for what is essentially a report page</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

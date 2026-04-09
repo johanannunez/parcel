@@ -1,0 +1,132 @@
+<h2>Dashboard Layout</h2>
+<p class="subtitle">Enhanced metrics with time period switcher and per-property breakdown</p>
+
+<div class="mockup">
+  <div class="mockup-header">Owner Dashboard — /portal/dashboard?period=month</div>
+  <div class="mockup-body" style="background: #fafafa; padding: 32px; font-family: system-ui, sans-serif;">
+
+    <!-- Header -->
+    <div style="margin-bottom: 8px;">
+      <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.18em; color: #767170;">Owner dashboard</div>
+      <div style="font-size: 28px; font-weight: 600; letter-spacing: -0.02em; color: #1a1a1a; margin-top: 6px;">Good morning, Johan.</div>
+      <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Here is how your portfolio is performing right now.</div>
+    </div>
+
+    <!-- Period Switcher -->
+    <div style="display: flex; gap: 6px; margin: 24px 0 20px; flex-wrap: wrap;">
+      <div style="padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; background: #1b77be; color: white;">This month</div>
+      <div style="padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; background: #f0eeec; color: #4b4948;">Last month</div>
+      <div style="padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; background: #f0eeec; color: #4b4948;">Last 90 days</div>
+      <div style="padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; background: #f0eeec; color: #4b4948;">Year to date</div>
+    </div>
+
+    <!-- Primary Metric Cards -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px;">
+      <div style="background: white; border: 1px solid #e2dfdc; border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(22,163,74,0.1); display: flex; align-items: center; justify-content: center; color: #15803d; font-size: 16px;">$</div>
+          <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: #767170;">Total revenue</div>
+        </div>
+        <div style="font-size: 28px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;">$12,480</div>
+        <div style="font-size: 13px; color: #6b7280; margin-top: 6px;">April 2026</div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e2dfdc; border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(2,170,235,0.1); display: flex; align-items: center; justify-content: center; color: #0c6fae; font-size: 14px;">%</div>
+          <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: #767170;">Occupancy rate</div>
+        </div>
+        <div style="font-size: 28px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.02em;">78%</div>
+        <div style="font-size: 13px; color: #6b7280; margin-top: 6px;">Across 13 properties</div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e2dfdc; border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(22,163,74,0.1); display: flex; align-items: center; justify-content: center; color: #15803d; font-size: 14px;">&#x1f4c5;</div>
+          <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: #767170;">Upcoming bookings</div>
+        </div>
+        <div style="font-size: 28px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.02em;">8</div>
+        <div style="font-size: 13px; color: #6b7280; margin-top: 6px;">Next 30 days</div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e2dfdc; border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(2,170,235,0.1); display: flex; align-items: center; justify-content: center; color: #0c6fae; font-size: 14px;">&#9790;</div>
+          <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: #767170;">Avg nightly rate</div>
+        </div>
+        <div style="font-size: 28px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.02em;">$142</div>
+        <div style="font-size: 13px; color: #6b7280; margin-top: 6px;">Per booked night</div>
+      </div>
+    </div>
+
+    <!-- Secondary Stats (smaller) -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px;">
+      <div style="background: white; border: 1px solid #e2dfdc; border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(118,113,112,0.1); display: flex; align-items: center; justify-content: center; color: #4b4948; font-size: 13px;">&#9878;</div>
+        <div>
+          <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #767170;">Active listings</div>
+          <div style="font-size: 18px; font-weight: 600; color: #1a1a1a;">13 <span style="font-size: 12px; font-weight: 400; color: #6b7280;">of 13</span></div>
+        </div>
+      </div>
+      <div style="background: white; border: 1px solid #e2dfdc; border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245,158,11,0.12); display: flex; align-items: center; justify-content: center; color: #b45309; font-size: 13px;">&#9201;</div>
+        <div>
+          <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #767170;">Pending payouts</div>
+          <div style="font-size: 18px; font-weight: 600; color: #1a1a1a;">$4,200</div>
+        </div>
+      </div>
+      <div style="background: white; border: 1px solid #e2dfdc; border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(22,163,74,0.1); display: flex; align-items: center; justify-content: center; color: #15803d; font-size: 13px;">&#10003;</div>
+        <div>
+          <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #767170;">Total properties</div>
+          <div style="font-size: 18px; font-weight: 600; color: #1a1a1a;">13</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Per-Property Breakdown Table -->
+    <div style="background: white; border: 1px solid #e2dfdc; border-radius: 16px; overflow: hidden; margin-bottom: 28px;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #f0eeec; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 15px; font-weight: 600; color: #1a1a1a;">Property breakdown</div>
+        <div style="font-size: 12px; color: #1b77be; font-weight: 500;">This month</div>
+      </div>
+      <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+        <thead>
+          <tr style="text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #767170;">
+            <th style="padding: 10px 20px;">Property</th>
+            <th style="padding: 10px 20px; text-align: right;">Revenue</th>
+            <th style="padding: 10px 20px; text-align: right;">Occupancy</th>
+            <th style="padding: 10px 20px; text-align: right;">Nights</th>
+            <th style="padding: 10px 20px; text-align: right;">Avg/night</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-top: 1px solid #f0eeec;">
+            <td style="padding: 12px 20px; font-weight: 500; color: #1a1a1a;">34 Downing Drive</td>
+            <td style="padding: 12px 20px; text-align: right; font-variant-numeric: tabular-nums; color: #1a1a1a; font-weight: 600;">$2,840</td>
+            <td style="padding: 12px 20px; text-align: right; color: #6b7280;">92%</td>
+            <td style="padding: 12px 20px; text-align: right; color: #6b7280;">18</td>
+            <td style="padding: 12px 20px; text-align: right; color: #6b7280;">$158</td>
+          </tr>
+          <tr style="border-top: 1px solid #f0eeec;">
+            <td style="padding: 12px 20px; font-weight: 500; color: #1a1a1a;">1431 Jadwin Ave</td>
+            <td style="padding: 12px 20px; text-align: right; font-variant-numeric: tabular-nums; color: #1a1a1a; font-weight: 600;">$1,960</td>
+            <td style="padding: 12px 20px; text-align: right; color: #6b7280;">85%</td>
+            <td style="padding: 12px 20px; text-align: right; color: #6b7280;">14</td>
+            <td style="padding: 12px 20px; text-align: right; color: #6b7280;">$140</td>
+          </tr>
+          <tr style="border-top: 1px solid #f0eeec; color: #9ca3af;">
+            <td style="padding: 12px 20px; font-weight: 500;" colspan="5"><em>+ 11 more properties...</em></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Upcoming Bookings (unchanged) -->
+    <div style="background: white; border: 1px solid #e2dfdc; border-radius: 16px; padding: 20px;">
+      <div style="font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;">Upcoming bookings</div>
+      <div style="font-size: 13px; color: #6b7280; font-style: italic;">Existing table stays as-is — next 5 bookings with guest name, property, dates, source.</div>
+    </div>
+
+  </div>
+</div>
