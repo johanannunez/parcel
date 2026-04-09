@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
   full_name: z.string().trim().min(1, "Full name is required."),
@@ -61,6 +62,12 @@ export async function saveAccount(
     .eq("id", user.id);
 
   if (error) return { error: error.message };
+
+  await recordVersion(supabase, {
+    userId: user.id,
+    stepKey: "account",
+    data: { full_name: v.full_name, phone: v.phone, mailing_address: mailingAddress },
+  });
 
   revalidatePath("/portal/setup");
   redirect("/portal/setup?just=account");

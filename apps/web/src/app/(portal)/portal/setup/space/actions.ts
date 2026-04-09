@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
   property_id: z.string().uuid(),
@@ -54,6 +55,18 @@ export async function saveSpace(
     .eq("owner_id", user.id);
 
   if (error) return { error: error.message };
+
+  await recordVersion(supabase, {
+    userId: user.id,
+    propertyId: v.property_id,
+    stepKey: "space",
+    data: {
+      bedrooms: v.bedrooms,
+      bathrooms: v.bathrooms,
+      guest_capacity: v.guest_capacity,
+      square_feet: sqft,
+    },
+  });
 
   revalidatePath("/portal/setup");
   redirect(`/portal/setup?just=space&property=${v.property_id}`);

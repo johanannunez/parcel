@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
   property_id: z.string().uuid().optional().or(z.literal("")),
@@ -100,6 +101,14 @@ export async function saveBasics(
     if (error) return { error: error.message };
     propertyId = inserted.id;
   }
+
+  // Record version history (no-op until migration runs)
+  await recordVersion(supabase, {
+    userId: user.id,
+    propertyId: propertyId || null,
+    stepKey: "basics",
+    data: payload as Record<string, unknown>,
+  });
 
   revalidatePath("/portal/setup");
   revalidatePath("/portal/dashboard");
