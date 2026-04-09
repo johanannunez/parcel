@@ -31,16 +31,16 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
     <aside
       className="hidden w-[260px] shrink-0 flex-col border-r lg:flex"
       style={{
-        backgroundColor: "rgba(30, 41, 59, 0.5)",
-        borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "var(--color-warm-gray-50)",
+        borderColor: "var(--color-warm-gray-200)",
       }}
     >
       {/* Header */}
-      <div className="border-b px-4 pb-4 pt-6" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-        <h2 className="text-sm font-semibold text-white">Owners</h2>
+      <div className="border-b px-4 pb-4 pt-6" style={{ borderColor: "var(--color-warm-gray-200)" }}>
+        <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>Owners</h2>
         <p
           className="mt-0.5 text-[11px]"
-          style={{ color: "rgba(255,255,255,0.4)" }}
+          style={{ color: "var(--color-text-tertiary)" }}
         >
           {owners.length} total
         </p>
@@ -49,21 +49,22 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
         <div
           className="mt-3 flex items-center gap-2 rounded-lg border px-3 py-2"
           style={{
-            backgroundColor: "rgba(255,255,255,0.04)",
-            borderColor: "rgba(255,255,255,0.08)",
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
           }}
         >
           <MagnifyingGlass
             size={14}
             weight="bold"
-            style={{ color: "rgba(255,255,255,0.3)" }}
+            style={{ color: "var(--color-text-tertiary)" }}
           />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or email"
-            className="w-full bg-transparent text-xs text-white placeholder:text-white/30 focus:outline-none"
+            className="w-full bg-transparent text-xs focus:outline-none"
+            style={{ color: "var(--color-text-primary)" }}
           />
         </div>
       </div>
@@ -73,7 +74,7 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
         {filtered.length === 0 ? (
           <p
             className="px-3 py-6 text-center text-xs"
-            style={{ color: "rgba(255,255,255,0.4)" }}
+            style={{ color: "var(--color-text-tertiary)" }}
           >
             {search ? "No owners match your search." : "No owners yet."}
           </p>
@@ -91,13 +92,13 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
                     className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors"
                     style={{
                       backgroundColor: active
-                        ? "rgba(255,255,255,0.08)"
+                        ? "var(--color-warm-gray-100)"
                         : "transparent",
                     }}
                     onMouseEnter={(e) => {
                       if (!active)
                         e.currentTarget.style.backgroundColor =
-                          "rgba(255,255,255,0.04)";
+                          "var(--color-warm-gray-50)";
                     }}
                     onMouseLeave={(e) => {
                       if (!active)
@@ -109,8 +110,8 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
                       style={{
                         backgroundColor: active
                           ? "var(--color-brand)"
-                          : "rgba(255,255,255,0.08)",
-                        color: active ? "white" : "rgba(255,255,255,0.7)",
+                          : "var(--color-warm-gray-100)",
+                        color: active ? "white" : "var(--color-text-secondary)",
                       }}
                     >
                       {initials}
@@ -119,14 +120,14 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
                       <div
                         className="truncate text-sm font-medium"
                         style={{
-                          color: active ? "white" : "rgba(255,255,255,0.8)",
+                          color: active ? "white" : "var(--color-text-primary)",
                         }}
                       >
                         {owner.fullName || owner.email}
                       </div>
                       <div
                         className="truncate text-[11px]"
-                        style={{ color: "rgba(255,255,255,0.4)" }}
+                        style={{ color: "var(--color-text-tertiary)" }}
                       >
                         {owner.propertyCount === 0
                           ? "No properties"

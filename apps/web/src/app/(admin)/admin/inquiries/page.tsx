@@ -26,12 +26,12 @@ export default async function AdminInquiriesPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Inquiries
         </h1>
         <p
           className="mt-2 text-sm"
-          style={{ color: "rgba(255,255,255,0.6)" }}
+          style={{ color: "var(--color-text-secondary)" }}
         >
           Property management leads from the website.
         </p>
@@ -49,8 +49,8 @@ export default async function AdminInquiriesPage() {
         <div
           className="rounded-xl border p-8 text-center text-sm"
           style={{
-            borderColor: "rgba(255,255,255,0.06)",
-            color: "rgba(255,255,255,0.4)",
+            borderColor: "var(--color-warm-gray-200)",
+            color: "var(--color-text-tertiary)",
           }}
         >
           No inquiries yet.
@@ -58,11 +58,11 @@ export default async function AdminInquiriesPage() {
       ) : (
         <div
           className="overflow-hidden rounded-xl border"
-          style={{ borderColor: "rgba(255,255,255,0.06)" }}
+          style={{ borderColor: "var(--color-warm-gray-200)" }}
         >
           <table className="w-full text-left text-sm">
             <thead>
-              <tr style={{ backgroundColor: "var(--color-charcoal)" }}>
+              <tr style={{ backgroundColor: "var(--color-warm-gray-50)" }}>
                 <Th>Name</Th>
                 <Th>Email</Th>
                 <Th>Property type</Th>
@@ -75,16 +75,16 @@ export default async function AdminInquiriesPage() {
                 <tr
                   key={inq.id}
                   className="border-t"
-                  style={{ borderColor: "rgba(255,255,255,0.04)" }}
+                  style={{ borderColor: "var(--color-warm-gray-100)" }}
                 >
                   <Td>
-                    <div className="font-medium text-white">
+                    <div className="font-medium" style={{ color: "var(--color-text-primary)" }}>
                       {inq.full_name}
                     </div>
                     {inq.phone ? (
                       <div
                         className="mt-0.5 text-xs"
-                        style={{ color: "rgba(255,255,255,0.4)" }}
+                        style={{ color: "var(--color-text-tertiary)" }}
                       >
                         {inq.phone}
                       </div>
@@ -97,7 +97,7 @@ export default async function AdminInquiriesPage() {
                         {inq.property_type}
                       </span>
                     ) : (
-                      <span style={{ color: "rgba(255,255,255,0.3)" }}>
+                      <span style={{ color: "var(--color-text-tertiary)" }}>
                         Not specified
                       </span>
                     )}
@@ -128,17 +128,17 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <div
       className="rounded-xl border p-5"
       style={{
-        backgroundColor: "var(--color-charcoal)",
-        borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
       }}
     >
       <div
         className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-        style={{ color: "rgba(255,255,255,0.5)" }}
+        style={{ color: "var(--color-text-tertiary)" }}
       >
         {label}
       </div>
-      <div className="mt-2 text-xl font-semibold text-white">{value}</div>
+      <div className="mt-2 text-xl font-semibold" style={{ color: "var(--color-text-primary)" }}>{value}</div>
     </div>
   );
 }
@@ -147,7 +147,7 @@ function Th({ children }: { children: React.ReactNode }) {
   return (
     <th
       className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.1em]"
-      style={{ color: "rgba(255,255,255,0.5)" }}
+      style={{ color: "var(--color-text-tertiary)" }}
     >
       {children}
     </th>
@@ -158,7 +158,7 @@ function Td({ children }: { children: React.ReactNode }) {
   return (
     <td
       className="px-4 py-3 text-sm"
-      style={{ color: "rgba(255,255,255,0.7)" }}
+      style={{ color: "var(--color-text-secondary)" }}
     >
       {children}
     </td>
@@ -175,8 +175,8 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   const c = colors[status] ?? {
-    bg: "rgba(255,255,255,0.06)",
-    text: "rgba(255,255,255,0.5)",
+    bg: "var(--color-warm-gray-100)",
+    text: "var(--color-text-tertiary)",
   };
 
   return (

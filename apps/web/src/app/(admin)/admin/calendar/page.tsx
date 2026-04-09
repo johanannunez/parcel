@@ -63,12 +63,12 @@ export default async function AdminCalendarPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Calendar
         </h1>
         <p
           className="mt-2 text-sm"
-          style={{ color: "rgba(255,255,255,0.6)" }}
+          style={{ color: "var(--color-text-secondary)" }}
         >
           All bookings and blocks across every property.
         </p>
@@ -87,7 +87,7 @@ export default async function AdminCalendarPage() {
         <section>
           <h2
             className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em]"
-            style={{ color: "rgba(255,255,255,0.4)" }}
+            style={{ color: "var(--color-text-tertiary)" }}
           >
             Next check-ins
           </h2>
@@ -97,17 +97,17 @@ export default async function AdminCalendarPage() {
                 key={b.id}
                 className="flex items-center justify-between rounded-lg border px-4 py-3"
                 style={{
-                  backgroundColor: "var(--color-charcoal)",
-                  borderColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--color-white)",
+                  borderColor: "var(--color-warm-gray-200)",
                 }}
               >
                 <div>
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
                     {b.guest_name || "Guest"}
                   </div>
                   <div
                     className="mt-0.5 text-xs"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
+                    style={{ color: "var(--color-text-tertiary)" }}
                   >
                     {propMap.get(b.property_id) ?? "Property"} ·{" "}
                     {new Date(b.check_in).toLocaleDateString("en-US", {
@@ -124,8 +124,8 @@ export default async function AdminCalendarPage() {
                 <span
                   className="rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize"
                   style={{
-                    backgroundColor: "rgba(255,255,255,0.06)",
-                    color: "rgba(255,255,255,0.5)",
+                    backgroundColor: "var(--color-warm-gray-100)",
+                    color: "var(--color-text-tertiary)",
                   }}
                 >
                   {b.source.replace(/_/g, " ")}
@@ -145,17 +145,17 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <div
       className="rounded-xl border p-5"
       style={{
-        backgroundColor: "var(--color-charcoal)",
-        borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
       }}
     >
       <div
         className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-        style={{ color: "rgba(255,255,255,0.5)" }}
+        style={{ color: "var(--color-text-tertiary)" }}
       >
         {label}
       </div>
-      <div className="mt-2 text-xl font-semibold text-white">{value}</div>
+      <div className="mt-2 text-xl font-semibold" style={{ color: "var(--color-text-primary)" }}>{value}</div>
     </div>
   );
 }

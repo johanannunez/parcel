@@ -59,16 +59,16 @@ export function SyncButton() {
               <CheckCircle
                 size={16}
                 weight="fill"
-                style={{ color: "#4ade80" }}
+                style={{ color: "#16a34a" }}
               />
             )}
-            <span className="font-semibold text-white">
+            <span className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
               Sync {hasErrors ? "completed with issues" : "complete"}
             </span>
           </div>
           <ul
             className="mt-2 flex flex-col gap-1 text-xs"
-            style={{ color: "rgba(255,255,255,0.7)" }}
+            style={{ color: "var(--color-text-secondary)" }}
           >
             <li>
               Properties matched: {result.propertiesMatched}

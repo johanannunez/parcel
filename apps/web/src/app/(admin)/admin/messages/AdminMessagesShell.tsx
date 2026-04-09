@@ -53,6 +53,7 @@ type Message = {
   created_at: string;
   senderName: string;
   senderRole: string;
+  senderAvatarUrl: string | null;
   reads: Array<{
     readerId: string;
     firstReadAt: string;
@@ -254,12 +255,12 @@ export function AdminMessagesShell({
       <div
         className="flex w-[220px] shrink-0 flex-col border-r"
         style={{
-          borderColor: "rgba(255,255,255,0.06)",
-          backgroundColor: "rgba(15, 23, 42, 0.5)",
+          borderColor: "var(--color-warm-gray-200)",
+          backgroundColor: "var(--color-warm-gray-50)",
         }}
       >
         <div className="px-4 pb-3 pt-6">
-          <h2 className="text-sm font-semibold text-white">Messages</h2>
+          <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>Messages</h2>
         </div>
 
         <nav className="flex-1 px-2">
@@ -280,13 +281,13 @@ export function AdminMessagesShell({
                     onClick={() => setFilter(f.key)}
                     className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors"
                     style={{
-                      color: filter === f.key ? "white" : "rgba(255,255,255,0.6)",
+                      color: filter === f.key ? "var(--color-text-primary)" : "var(--color-text-secondary)",
                       backgroundColor:
-                        filter === f.key ? "rgba(255,255,255,0.08)" : "transparent",
+                        filter === f.key ? "var(--color-warm-gray-100)" : "transparent",
                     }}
                     onMouseEnter={(e) => {
                       if (filter !== f.key)
-                        e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
+                        e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)";
                     }}
                     onMouseLeave={(e) => {
                       if (filter !== f.key)
@@ -298,7 +299,7 @@ export function AdminMessagesShell({
                       {f.label}
                     </span>
                     {count > 0 ? (
-                      <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+                      <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
                         {count}
                       </span>
                     ) : null}
@@ -309,14 +310,14 @@ export function AdminMessagesShell({
           </ul>
         </nav>
 
-        <div className="flex flex-col gap-2 border-t p-3" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <div className="flex flex-col gap-2 border-t p-3" style={{ borderColor: "var(--color-warm-gray-200)" }}>
           <button
             type="button"
             onClick={() => setShowOwnerPicker(true)}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
             style={{ color: "var(--color-brand-light)" }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
+              e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
@@ -331,7 +332,7 @@ export function AdminMessagesShell({
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
             style={{ color: "#f59e0b" }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
+              e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
@@ -346,27 +347,28 @@ export function AdminMessagesShell({
       {/* Middle Panel: Conversation List */}
       <div
         className="flex w-[320px] shrink-0 flex-col border-r"
-        style={{ borderColor: "rgba(255,255,255,0.06)" }}
+        style={{ borderColor: "var(--color-warm-gray-200)" }}
       >
-        <div className="border-b px-3 py-3" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <div className="border-b px-3 py-3" style={{ borderColor: "var(--color-warm-gray-200)" }}>
           <div
             className="flex items-center gap-2 rounded-lg px-3 py-2"
-            style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
+            style={{ backgroundColor: "var(--color-warm-gray-100)" }}
           >
-            <MagnifyingGlass size={14} style={{ color: "rgba(255,255,255,0.4)" }} />
+            <MagnifyingGlass size={14} style={{ color: "var(--color-text-tertiary)" }} />
             <input
               type="text"
               placeholder="Search conversations..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
+              className="flex-1 bg-transparent text-sm focus:outline-none"
+              style={{ color: "var(--color-text-primary)" }}
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <div className="px-4 py-8 text-center text-sm" style={{ color: "var(--color-text-tertiary)" }}>
               No conversations found.
             </div>
           ) : (
@@ -378,12 +380,12 @@ export function AdminMessagesShell({
                     onClick={() => loadConversation(c.id)}
                     className="flex w-full gap-3 border-b px-4 py-3 text-left transition-colors"
                     style={{
-                      borderColor: "rgba(255,255,255,0.04)",
-                      backgroundColor: selectedConvId === c.id ? "rgba(255,255,255,0.06)" : "transparent",
+                      borderColor: "var(--color-warm-gray-100)",
+                      backgroundColor: selectedConvId === c.id ? "var(--color-warm-gray-100)" : "transparent",
                     }}
                     onMouseEnter={(e) => {
                       if (selectedConvId !== c.id)
-                        e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.03)";
+                        e.currentTarget.style.backgroundColor = "var(--color-warm-gray-50)";
                     }}
                     onMouseLeave={(e) => {
                       if (selectedConvId !== c.id)
@@ -394,21 +396,21 @@ export function AdminMessagesShell({
                       {c.type === "announcement" ? (
                         <span
                           className="flex h-9 w-9 items-center justify-center rounded-full"
-                          style={{ backgroundColor: "rgba(2, 170, 235, 0.12)", color: "var(--color-brand-light)" }}
+                          style={{ backgroundColor: "rgba(2, 170, 235, 0.12)", color: "var(--color-brand)" }}
                         >
                           <Megaphone size={16} weight="duotone" />
                         </span>
                       ) : c.type === "email_log" ? (
                         <span
                           className="flex h-9 w-9 items-center justify-center rounded-full"
-                          style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}
+                          style={{ backgroundColor: "var(--color-warm-gray-100)", color: "var(--color-text-tertiary)" }}
                         >
                           <EnvelopeSimple size={16} weight="duotone" />
                         </span>
                       ) : (
                         <span
                           className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold"
-                          style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "white" }}
+                          style={{ backgroundColor: "var(--color-warm-gray-100)", color: "var(--color-text-secondary)" }}
                         >
                           {buildInitials(c.ownerName ?? "")}
                         </span>
@@ -416,18 +418,18 @@ export function AdminMessagesShell({
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="truncate text-sm font-medium text-white">
+                        <span className="truncate text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
                           {c.type === "announcement" ? (c.subject ?? "Announcement") : (c.ownerName ?? "Unknown")}
                         </span>
-                        <span className="shrink-0 text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                        <span className="shrink-0 text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
                           {formatRelative(c.lastMessageAt)}
                         </span>
                       </div>
-                      <div className="mt-0.5 truncate text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      <div className="mt-0.5 truncate text-xs" style={{ color: "var(--color-text-secondary)" }}>
                         {c.lastMessage ? stripHtml(c.lastMessage.body).slice(0, 80) : "No messages yet"}
                       </div>
                       {c.lastMessage?.deliveryMethod === "email" ? (
-                        <span className="mt-1 inline-flex items-center gap-1 text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                        <span className="mt-1 inline-flex items-center gap-1 text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
                           <EnvelopeSimple size={10} />
                           Email
                         </span>
@@ -446,8 +448,8 @@ export function AdminMessagesShell({
         {!selectedConvId || !conversationDetail ? (
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
-              <ChatCircle size={48} weight="duotone" style={{ color: "rgba(255,255,255,0.15)" }} className="mx-auto" />
-              <p className="mt-3 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <ChatCircle size={48} weight="duotone" style={{ color: "var(--color-warm-gray-200)" }} className="mx-auto" />
+              <p className="mt-3 text-sm" style={{ color: "var(--color-text-tertiary)" }}>
                 Select a conversation to view messages.
               </p>
             </div>
@@ -455,9 +457,9 @@ export function AdminMessagesShell({
         ) : (
           <>
             {/* Thread Header */}
-            <div className="flex items-center gap-3 border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            <div className="flex items-center gap-3 border-b px-6 py-4" style={{ borderColor: "var(--color-warm-gray-200)" }}>
               <div>
-                <div className="text-sm font-semibold text-white">
+                <div className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                   {conversationDetail.type === "announcement"
                     ? (conversationDetail.subject ?? "Announcement")
                     : (conversationDetail.ownerProfile?.full_name?.trim() ??
@@ -465,7 +467,7 @@ export function AdminMessagesShell({
                       "Unknown")}
                 </div>
                 {conversationDetail.ownerProfile?.email ? (
-                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <div className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
                     {conversationDetail.ownerProfile.email}
                   </div>
                 ) : null}
@@ -480,15 +482,41 @@ export function AdminMessagesShell({
                   const isSystem = m.is_system;
                   return (
                     <div key={m.id}>
-                      <div className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}>
+                      <div className={`flex items-end gap-2 ${isAdmin ? "flex-row-reverse" : "flex-row"}`}>
+                        {/* Sender Avatar */}
+                        {isSystem ? (
+                          <span
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: "rgba(2, 170, 235, 0.12)", color: "var(--color-brand-light)" }}
+                          >
+                            <Megaphone size={12} weight="bold" />
+                          </span>
+                        ) : m.senderAvatarUrl ? (
+                          <img
+                            src={m.senderAvatarUrl}
+                            alt={m.senderName}
+                            className="h-7 w-7 shrink-0 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold"
+                            style={{
+                              backgroundColor: isAdmin ? "var(--color-brand)" : "var(--color-warm-gray-200)",
+                              color: isAdmin ? "white" : "var(--color-text-primary)",
+                            }}
+                          >
+                            {buildInitials(m.senderName)}
+                          </span>
+                        )}
+
                         <div
-                          className="max-w-[75%] rounded-xl px-4 py-3"
+                          className="max-w-[70%] rounded-xl px-4 py-3"
                           style={{
                             backgroundColor: isSystem
                               ? "rgba(2, 170, 235, 0.08)"
                               : isAdmin
                                 ? "var(--color-brand)"
-                                : "rgba(255,255,255,0.06)",
+                                : "var(--color-warm-gray-100)",
                           }}
                         >
                           {isSystem ? (
@@ -500,7 +528,7 @@ export function AdminMessagesShell({
                           {m.delivery_method === "email" ? (
                             <div
                               className="mb-1 flex items-center gap-1 text-[10px]"
-                              style={{ color: isAdmin ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)" }}
+                              style={{ color: isAdmin ? "rgba(255,255,255,0.8)" : "var(--color-text-tertiary)" }}
                             >
                               <EnvelopeSimple size={10} />
                               Sent via email
@@ -509,11 +537,11 @@ export function AdminMessagesShell({
                           <SafeHtml
                             html={m.body}
                             className="prose prose-sm max-w-none text-sm [&_a]:underline [&_img]:rounded-lg"
-                            style={{ color: isAdmin ? "white" : "rgba(255,255,255,0.85)" }}
+                            style={{ color: isAdmin ? "white" : "var(--color-text-primary)" }}
                           />
                           <div
                             className="mt-2 text-[10px]"
-                            style={{ color: isAdmin ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.3)" }}
+                            style={{ color: isAdmin ? "rgba(255,255,255,0.7)" : "var(--color-text-tertiary)" }}
                           >
                             {new Date(m.created_at).toLocaleString("en-US", {
                               month: "short",
@@ -532,7 +560,7 @@ export function AdminMessagesShell({
                             type="button"
                             onClick={() => toggleReads(m.id)}
                             className="flex items-center gap-1 text-[10px] transition-colors"
-                            style={{ color: "rgba(255,255,255,0.4)" }}
+                            style={{ color: "var(--color-text-tertiary)" }}
                           >
                             <Eye size={10} />
                             Read by {m.reads.length} {m.reads.length === 1 ? "person" : "people"}
@@ -543,7 +571,7 @@ export function AdminMessagesShell({
                         <div className={`mt-1 flex ${isAdmin ? "justify-end" : "justify-start"}`}>
                           <div
                             className="rounded-lg p-3 text-[10px]"
-                            style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.5)" }}
+                            style={{ backgroundColor: "var(--color-warm-gray-50)", color: "var(--color-text-secondary)" }}
                           >
                             {m.reads.map((r) => (
                               <div key={r.readerId} className="flex items-center gap-3 py-1">
@@ -571,22 +599,22 @@ export function AdminMessagesShell({
 
             {/* Compose */}
             {conversationDetail.type === "direct" ? (
-              <div className="border-t p-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                <RichTextEditor dark content="" onChange={setComposeBody} placeholder="Write a message..." />
+              <div className="border-t p-4" style={{ borderColor: "var(--color-warm-gray-200)" }}>
+                <RichTextEditor dark={false} content="" onChange={setComposeBody} placeholder="Write a message..." />
                 <div className="mt-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {/* Delivery Toggle */}
                     <div
                       className="flex overflow-hidden rounded-lg border"
-                      style={{ borderColor: "rgba(255,255,255,0.1)" }}
+                      style={{ borderColor: "var(--color-warm-gray-200)" }}
                     >
                       <button
                         type="button"
                         onClick={() => setDeliveryMethod("portal")}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
                         style={{
-                          backgroundColor: deliveryMethod === "portal" ? "rgba(255,255,255,0.1)" : "transparent",
-                          color: deliveryMethod === "portal" ? "white" : "rgba(255,255,255,0.5)",
+                          backgroundColor: deliveryMethod === "portal" ? "var(--color-warm-gray-100)" : "transparent",
+                          color: deliveryMethod === "portal" ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
                         }}
                       >
                         <ChatCircle size={12} weight="bold" />
@@ -597,9 +625,9 @@ export function AdminMessagesShell({
                         onClick={() => setDeliveryMethod("email")}
                         className="flex items-center gap-1.5 border-l px-3 py-1.5 text-xs font-medium transition-colors"
                         style={{
-                          borderColor: "rgba(255,255,255,0.1)",
-                          backgroundColor: deliveryMethod === "email" ? "rgba(255,255,255,0.1)" : "transparent",
-                          color: deliveryMethod === "email" ? "white" : "rgba(255,255,255,0.5)",
+                          borderColor: "var(--color-warm-gray-200)",
+                          backgroundColor: deliveryMethod === "email" ? "var(--color-warm-gray-100)" : "transparent",
+                          color: deliveryMethod === "email" ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
                         }}
                       >
                         <EnvelopeSimple size={12} weight="bold" />
@@ -614,8 +642,8 @@ export function AdminMessagesShell({
                         placeholder="Email subject..."
                         value={emailSubject}
                         onChange={(e) => setEmailSubject(e.target.value)}
-                        className="rounded-lg border bg-transparent px-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
-                        style={{ borderColor: "rgba(255,255,255,0.1)", minWidth: "200px" }}
+                        className="rounded-lg border bg-transparent px-3 py-1.5 text-xs focus:outline-none"
+                        style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)", minWidth: "200px" }}
                       />
                     ) : null}
                   </div>
@@ -642,11 +670,11 @@ export function AdminMessagesShell({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div
             className="w-[600px] rounded-xl border p-6"
-            style={{ backgroundColor: "var(--color-charcoal)", borderColor: "rgba(255,255,255,0.08)" }}
+            style={{ backgroundColor: "var(--color-white)", borderColor: "var(--color-warm-gray-200)" }}
           >
             <div className="mb-4 flex items-center gap-2">
-              <Megaphone size={18} weight="duotone" style={{ color: "#f59e0b" }} />
-              <h3 className="text-sm font-semibold text-white">New announcement</h3>
+              <Megaphone size={18} weight="duotone" style={{ color: "#d97706" }} />
+              <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>New announcement</h3>
             </div>
 
             <input
@@ -654,24 +682,24 @@ export function AdminMessagesShell({
               placeholder="Subject line..."
               value={broadcastSubject}
               onChange={(e) => setBroadcastSubject(e.target.value)}
-              className="mb-3 w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none"
-              style={{ borderColor: "rgba(255,255,255,0.1)" }}
+              className="mb-3 w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm focus:outline-none"
+              style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}
               autoFocus
             />
 
-            <RichTextEditor dark content="" onChange={setBroadcastBody} placeholder="Write your announcement..." />
+            <RichTextEditor dark={false} content="" onChange={setBroadcastBody} placeholder="Write your announcement..." />
 
             {/* Delivery method */}
             <div className="mt-4 flex items-center gap-4">
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Deliver via:</span>
-              <div className="flex overflow-hidden rounded-lg border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+              <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Deliver via:</span>
+              <div className="flex overflow-hidden rounded-lg border" style={{ borderColor: "var(--color-warm-gray-200)" }}>
                 <button
                   type="button"
                   onClick={() => setBroadcastDelivery("portal")}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
                   style={{
-                    backgroundColor: broadcastDelivery === "portal" ? "rgba(255,255,255,0.1)" : "transparent",
-                    color: broadcastDelivery === "portal" ? "white" : "rgba(255,255,255,0.5)",
+                    backgroundColor: broadcastDelivery === "portal" ? "var(--color-warm-gray-100)" : "transparent",
+                    color: broadcastDelivery === "portal" ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
                   }}
                 >
                   Portal only
@@ -681,9 +709,9 @@ export function AdminMessagesShell({
                   onClick={() => setBroadcastDelivery("portal_email")}
                   className="flex items-center gap-1.5 border-l px-3 py-1.5 text-xs font-medium transition-colors"
                   style={{
-                    borderColor: "rgba(255,255,255,0.1)",
-                    backgroundColor: broadcastDelivery === "portal_email" ? "rgba(255,255,255,0.1)" : "transparent",
-                    color: broadcastDelivery === "portal_email" ? "white" : "rgba(255,255,255,0.5)",
+                    borderColor: "var(--color-warm-gray-200)",
+                    backgroundColor: broadcastDelivery === "portal_email" ? "var(--color-warm-gray-100)" : "transparent",
+                    color: broadcastDelivery === "portal_email" ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
                   }}
                 >
                   Portal + Email
@@ -694,9 +722,9 @@ export function AdminMessagesShell({
             {/* Owner count preview */}
             <div
               className="mt-3 rounded-lg px-3 py-2 text-xs"
-              style={{ backgroundColor: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.5)" }}
+              style={{ backgroundColor: "var(--color-warm-gray-50)", color: "var(--color-text-secondary)" }}
             >
-              This will be sent to <strong className="text-white">{ownerCount}</strong> owner{ownerCount !== 1 ? "s" : ""}
+              This will be sent to <strong style={{ color: "var(--color-text-primary)" }}>{ownerCount}</strong> owner{ownerCount !== 1 ? "s" : ""}
               {broadcastDelivery === "portal_email" ? " (portal + email)" : " (portal only)"}.
             </div>
 
@@ -705,8 +733,8 @@ export function AdminMessagesShell({
                 type="button"
                 onClick={() => { setShowBroadcast(false); setBroadcastSubject(""); setBroadcastBody(""); }}
                 className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                style={{ color: "rgba(255,255,255,0.5)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)"; }}
+                style={{ color: "var(--color-text-secondary)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
                 Cancel
@@ -731,17 +759,18 @@ export function AdminMessagesShell({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div
             className="w-[400px] rounded-xl border p-6"
-            style={{ backgroundColor: "var(--color-charcoal)", borderColor: "rgba(255,255,255,0.08)" }}
+            style={{ backgroundColor: "var(--color-white)", borderColor: "var(--color-warm-gray-200)" }}
           >
-            <h3 className="mb-4 text-sm font-semibold text-white">New message</h3>
-            <div className="mb-3 flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
-              <MagnifyingGlass size={14} style={{ color: "rgba(255,255,255,0.4)" }} />
+            <h3 className="mb-4 text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>New message</h3>
+            <div className="mb-3 flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: "var(--color-warm-gray-100)" }}>
+              <MagnifyingGlass size={14} style={{ color: "var(--color-text-tertiary)" }} />
               <input
                 type="text"
                 placeholder="Search owners..."
                 value={ownerSearch}
                 onChange={(e) => setOwnerSearch(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
+                className="flex-1 bg-transparent text-sm focus:outline-none"
+                style={{ color: "var(--color-text-primary)" }}
                 autoFocus
               />
             </div>
@@ -752,18 +781,18 @@ export function AdminMessagesShell({
                     type="button"
                     onClick={() => handleNewMessage(o.id)}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors"
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)"; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                   >
                     <span
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-                      style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "white" }}
+                      style={{ backgroundColor: "var(--color-warm-gray-100)", color: "var(--color-text-secondary)" }}
                     >
                       {buildInitials(o.name)}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-white">{o.name}</div>
-                      <div className="truncate text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{o.email}</div>
+                      <div className="truncate text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>{o.name}</div>
+                      <div className="truncate text-xs" style={{ color: "var(--color-text-tertiary)" }}>{o.email}</div>
                     </div>
                   </button>
                 </li>
@@ -773,8 +802,8 @@ export function AdminMessagesShell({
               type="button"
               onClick={() => { setShowOwnerPicker(false); setOwnerSearch(""); }}
               className="mt-4 w-full rounded-lg py-2 text-sm font-medium transition-colors"
-              style={{ color: "rgba(255,255,255,0.5)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)"; }}
+              style={{ color: "var(--color-text-secondary)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
             >
               Cancel

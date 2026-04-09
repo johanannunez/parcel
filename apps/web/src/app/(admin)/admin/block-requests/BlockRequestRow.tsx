@@ -169,14 +169,14 @@ export function BlockRequestRow({ row }: { row: Row }) {
     <div
       className="rounded-xl border p-5"
       style={{
-        backgroundColor: "var(--color-charcoal)",
-        borderColor: "rgba(255,255,255,0.1)",
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
       }}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-3">
-            <h3 className="text-base font-semibold text-white">
+            <h3 className="text-base font-semibold" style={{ color: "var(--color-text-primary)" }}>
               {fmtRange(row.startDate, row.endDate)}
             </h3>
             {!isUndoing && (
@@ -190,13 +190,13 @@ export function BlockRequestRow({ row }: { row: Row }) {
           </div>
           <div
             className="mt-1 text-sm"
-            style={{ color: "rgba(255,255,255,0.75)" }}
+            style={{ color: "var(--color-text-secondary)" }}
           >
             {row.propertyLabel}
           </div>
           <div
             className="mt-0.5 text-xs"
-            style={{ color: "rgba(255,255,255,0.5)" }}
+            style={{ color: "var(--color-text-tertiary)" }}
           >
             {row.ownerName ?? row.ownerEmail}
             {row.ownerName ? ` • ${row.ownerEmail}` : null} • submitted{" "}
@@ -206,9 +206,9 @@ export function BlockRequestRow({ row }: { row: Row }) {
             <p
               className="mt-3 rounded-lg border px-3 py-2 text-sm"
               style={{
-                backgroundColor: "rgba(255,255,255,0.03)",
-                borderColor: "rgba(255,255,255,0.08)",
-                color: "rgba(255,255,255,0.85)",
+                backgroundColor: "var(--color-warm-gray-50)",
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
               }}
             >
               {row.note}
@@ -268,8 +268,8 @@ export function BlockRequestRow({ row }: { row: Row }) {
               onClick={undoDecline}
               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
               style={{
-                borderColor: "rgba(255,255,255,0.2)",
-                color: "#ffffff",
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
                 backgroundColor: "transparent",
               }}
             >
@@ -285,8 +285,8 @@ export function BlockRequestRow({ row }: { row: Row }) {
             onClick={reopen}
             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
             style={{
-              borderColor: "rgba(255,255,255,0.15)",
-              color: "rgba(255,255,255,0.7)",
+              borderColor: "var(--color-warm-gray-200)",
+              color: "var(--color-text-secondary)",
               backgroundColor: "transparent",
             }}
           >
@@ -310,7 +310,7 @@ export function BlockRequestRow({ row }: { row: Row }) {
       {status !== "pending" && status !== row.status ? (
         <div
           className="mt-3 flex items-center gap-2 text-xs"
-          style={{ color: "rgba(255,255,255,0.55)" }}
+          style={{ color: "var(--color-text-tertiary)" }}
         >
           <CheckCircle size={12} weight="fill" /> Updated. Remember to{" "}
           {status === "approved" ? "block these dates" : "let the owner know"}{" "}

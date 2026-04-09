@@ -90,7 +90,7 @@ export function OwnerHubTabs({
       {/* Tab bar */}
       <nav
         className="-mx-8 -mt-8 mb-8 flex gap-0 overflow-x-auto border-b px-8"
-        style={{ borderColor: "rgba(255,255,255,0.06)" }}
+        style={{ borderColor: "var(--color-warm-gray-200)" }}
       >
         {TABS.map((t) => {
           const active = tab === t.key;
@@ -101,7 +101,7 @@ export function OwnerHubTabs({
               scroll={false}
               className="relative shrink-0 px-4 pb-3 pt-4 text-sm font-medium transition-colors"
               style={{
-                color: active ? "white" : "rgba(255,255,255,0.5)",
+                color: active ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
               }}
             >
               {t.label}
@@ -194,7 +194,7 @@ function DashboardTab({
             borderColor: "rgba(245, 158, 11, 0.15)",
           }}
         >
-          <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>
+          <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
             {pendingBlocks} pending block {pendingBlocks === 1 ? "request" : "requests"}
           </span>
         </div>
@@ -210,17 +210,17 @@ function DashboardTab({
                 key={b.id}
                 className="flex items-center justify-between rounded-lg border px-4 py-3"
                 style={{
-                  backgroundColor: "var(--color-charcoal)",
-                  borderColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--color-white)",
+                  borderColor: "var(--color-warm-gray-200)",
                 }}
               >
                 <div>
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
                     {b.guest_name || "Guest"}
                   </div>
                   <div
                     className="mt-0.5 text-xs"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
+                    style={{ color: "var(--color-text-tertiary)" }}
                   >
                     {b.propertyLabel} · {formatDateRange(b.check_in, b.check_out)}
                   </div>
@@ -230,7 +230,7 @@ function DashboardTab({
                   {b.total_amount ? (
                     <div
                       className="mt-1 text-xs"
-                      style={{ color: "rgba(255,255,255,0.5)" }}
+                      style={{ color: "var(--color-text-tertiary)" }}
                     >
                       ${b.total_amount.toLocaleString()}
                     </div>
@@ -260,17 +260,17 @@ function PropertiesTab({ properties }: { properties: Property[] }) {
           key={p.id}
           className="flex items-center justify-between rounded-lg border px-5 py-4"
           style={{
-            backgroundColor: "var(--color-charcoal)",
-            borderColor: "rgba(255,255,255,0.06)",
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
           }}
         >
           <div>
-            <div className="text-sm font-medium text-white">
+            <div className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
               {p.name?.trim() || p.address_line1}
             </div>
             <div
               className="mt-0.5 text-xs"
-              style={{ color: "rgba(255,255,255,0.5)" }}
+              style={{ color: "var(--color-text-tertiary)" }}
             >
               {p.city}, {p.state} {p.postal_code}
             </div>
@@ -282,7 +282,7 @@ function PropertiesTab({ properties }: { properties: Property[] }) {
                 className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                 style={{
                   backgroundColor: "rgba(2, 170, 235, 0.12)",
-                  color: "#7dd3fc",
+                  color: "#0ea5e9",
                 }}
               >
                 Connected
@@ -291,8 +291,8 @@ function PropertiesTab({ properties }: { properties: Property[] }) {
             <span
               className="rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize"
               style={{
-                backgroundColor: "rgba(255,255,255,0.06)",
-                color: "rgba(255,255,255,0.5)",
+                backgroundColor: "var(--color-warm-gray-100)",
+                color: "var(--color-text-tertiary)",
               }}
             >
               {p.setup_status.replace(/_/g, " ")}
@@ -331,17 +331,17 @@ function CalendarTab({
                 key={b.id}
                 className="flex items-center justify-between rounded-lg border px-4 py-3"
                 style={{
-                  backgroundColor: "var(--color-charcoal)",
-                  borderColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--color-white)",
+                  borderColor: "var(--color-warm-gray-200)",
                 }}
               >
                 <div>
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
                     {b.guest_name || "Guest"}
                   </div>
                   <div
                     className="mt-0.5 text-xs"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
+                    style={{ color: "var(--color-text-tertiary)" }}
                   >
                     {b.propertyLabel} · {formatDateRange(b.check_in, b.check_out)}
                   </div>
@@ -350,8 +350,8 @@ function CalendarTab({
                   <span
                     className="rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize"
                     style={{
-                      backgroundColor: "rgba(255,255,255,0.06)",
-                      color: "rgba(255,255,255,0.5)",
+                      backgroundColor: "var(--color-warm-gray-100)",
+                      color: "var(--color-text-tertiary)",
                     }}
                   >
                     {b.source.replace(/_/g, " ")}
@@ -376,17 +376,17 @@ function CalendarTab({
                 key={br.id}
                 className="flex items-center justify-between rounded-lg border px-4 py-3"
                 style={{
-                  backgroundColor: "var(--color-charcoal)",
-                  borderColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--color-white)",
+                  borderColor: "var(--color-warm-gray-200)",
                 }}
               >
                 <div>
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
                     {br.propertyLabel}
                   </div>
                   <div
                     className="mt-0.5 text-xs"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
+                    style={{ color: "var(--color-text-tertiary)" }}
                   >
                     {formatDateRange(br.start_date, br.end_date)}
                     {br.note ? ` · ${br.note}` : ""}
@@ -424,11 +424,11 @@ function PayoutsTab({ payouts }: { payouts: Payout[] }) {
       {/* Table */}
       <div
         className="overflow-hidden rounded-xl border"
-        style={{ borderColor: "rgba(255,255,255,0.06)" }}
+        style={{ borderColor: "var(--color-warm-gray-200)" }}
       >
         <table className="w-full text-left text-sm">
           <thead>
-            <tr style={{ backgroundColor: "var(--color-charcoal)" }}>
+            <tr style={{ backgroundColor: "var(--color-warm-gray-50)" }}>
               <Th>Period</Th>
               <Th>Property</Th>
               <Th align="right">Gross</Th>
@@ -442,7 +442,7 @@ function PayoutsTab({ payouts }: { payouts: Payout[] }) {
               <tr
                 key={p.id}
                 className="border-t"
-                style={{ borderColor: "rgba(255,255,255,0.04)" }}
+                style={{ borderColor: "var(--color-warm-gray-100)" }}
               >
                 <Td>
                   {formatDate(p.period_start)} - {formatDate(p.period_end)}
@@ -450,16 +450,16 @@ function PayoutsTab({ payouts }: { payouts: Payout[] }) {
                 <Td>{p.propertyLabel}</Td>
                 <Td align="right">${p.gross_revenue.toLocaleString()}</Td>
                 <Td align="right">${p.fees.toLocaleString()}</Td>
-                <Td align="right" className="font-medium text-white">
+                <Td align="right" className="font-medium text-[var(--color-text-primary)]">
                   ${p.net_payout.toLocaleString()}
                 </Td>
                 <Td align="right">
                   {p.paid_at ? (
-                    <span style={{ color: "#4ade80" }}>
+                    <span style={{ color: "#16a34a" }}>
                       {formatDate(p.paid_at)}
                     </span>
                   ) : (
-                    <span style={{ color: "rgba(255,255,255,0.3)" }}>
+                    <span style={{ color: "var(--color-text-tertiary)" }}>
                       Pending
                     </span>
                   )}
@@ -520,16 +520,16 @@ function SetupTab({
                   style={{
                     backgroundColor: hasData
                       ? "rgba(22, 163, 74, 0.08)"
-                      : "var(--color-charcoal)",
+                      : "var(--color-warm-gray-50)",
                     borderColor: hasData
                       ? "rgba(22, 163, 74, 0.2)"
-                      : "rgba(255,255,255,0.06)",
+                      : "var(--color-warm-gray-200)",
                   }}
                 >
                   <div
                     className="text-[10px] font-semibold capitalize"
                     style={{
-                      color: hasData ? "#4ade80" : "rgba(255,255,255,0.4)",
+                      color: hasData ? "#16a34a" : "var(--color-text-tertiary)",
                     }}
                   >
                     {step.replace(/-/g, " ")}
@@ -555,11 +555,11 @@ function SetupTab({
                 key={p.id}
                 className="flex items-center justify-between rounded-lg border px-4 py-3"
                 style={{
-                  backgroundColor: "var(--color-charcoal)",
-                  borderColor: "rgba(255,255,255,0.06)",
+                  backgroundColor: "var(--color-white)",
+                  borderColor: "var(--color-warm-gray-200)",
                 }}
               >
-                <div className="text-sm font-medium text-white">
+                <div className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
                   {p.name?.trim() || p.address_line1}
                 </div>
                 <span
@@ -568,11 +568,11 @@ function SetupTab({
                     backgroundColor:
                       p.setup_status === "complete"
                         ? "rgba(22, 163, 74, 0.12)"
-                        : "rgba(255,255,255,0.06)",
+                        : "var(--color-warm-gray-100)",
                     color:
                       p.setup_status === "complete"
-                        ? "#4ade80"
-                        : "rgba(255,255,255,0.5)",
+                        ? "#16a34a"
+                        : "var(--color-text-tertiary)",
                   }}
                 >
                   {p.setup_status.replace(/_/g, " ")}
@@ -596,10 +596,10 @@ function PlaceholderTab({
 }) {
   return (
     <div className="flex min-h-[30vh] flex-col items-center justify-center text-center">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>{title}</h3>
       <p
         className="mt-2 max-w-sm text-sm"
-        style={{ color: "rgba(255,255,255,0.5)" }}
+        style={{ color: "var(--color-text-secondary)" }}
       >
         {description}
       </p>
@@ -614,17 +614,17 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <div
       className="rounded-xl border p-4"
       style={{
-        backgroundColor: "var(--color-charcoal)",
-        borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
       }}
     >
       <div
         className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-        style={{ color: "rgba(255,255,255,0.5)" }}
+        style={{ color: "var(--color-text-tertiary)" }}
       >
         {label}
       </div>
-      <div className="mt-1.5 text-lg font-semibold text-white">{value}</div>
+      <div className="mt-1.5 text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>{value}</div>
     </div>
   );
 }
@@ -633,7 +633,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <h3
       className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-      style={{ color: "rgba(255,255,255,0.4)" }}
+      style={{ color: "var(--color-text-tertiary)" }}
     >
       {children}
     </h3>
@@ -642,19 +642,19 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, { bg: string; text: string }> = {
-    confirmed: { bg: "rgba(22, 163, 74, 0.12)", text: "#4ade80" },
-    active: { bg: "rgba(22, 163, 74, 0.12)", text: "#4ade80" },
-    approved: { bg: "rgba(22, 163, 74, 0.12)", text: "#4ade80" },
-    completed: { bg: "rgba(22, 163, 74, 0.12)", text: "#4ade80" },
-    pending: { bg: "rgba(245, 158, 11, 0.12)", text: "#fbbf24" },
-    cancelled: { bg: "rgba(220, 38, 38, 0.12)", text: "#f87171" },
-    declined: { bg: "rgba(220, 38, 38, 0.12)", text: "#f87171" },
-    inactive: { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.4)" },
+    confirmed: { bg: "rgba(22, 163, 74, 0.12)", text: "#15803d" },
+    active: { bg: "rgba(22, 163, 74, 0.12)", text: "#15803d" },
+    approved: { bg: "rgba(22, 163, 74, 0.12)", text: "#15803d" },
+    completed: { bg: "rgba(22, 163, 74, 0.12)", text: "#15803d" },
+    pending: { bg: "rgba(245, 158, 11, 0.12)", text: "#b45309" },
+    cancelled: { bg: "rgba(220, 38, 38, 0.12)", text: "#dc2626" },
+    declined: { bg: "rgba(220, 38, 38, 0.12)", text: "#dc2626" },
+    inactive: { bg: "var(--color-warm-gray-100)", text: "var(--color-text-tertiary)" },
   };
 
   const c = colors[status] ?? {
-    bg: "rgba(255,255,255,0.06)",
-    text: "rgba(255,255,255,0.5)",
+    bg: "var(--color-warm-gray-100)",
+    text: "var(--color-text-tertiary)",
   };
 
   return (
@@ -672,8 +672,8 @@ function EmptyState({ message }: { message: string }) {
     <div
       className="mt-3 rounded-xl border p-8 text-center text-sm"
       style={{
-        borderColor: "rgba(255,255,255,0.06)",
-        color: "rgba(255,255,255,0.4)",
+        borderColor: "var(--color-warm-gray-200)",
+        color: "var(--color-text-tertiary)",
       }}
     >
       {message}
@@ -692,7 +692,7 @@ function Th({
     <th
       className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.1em]"
       style={{
-        color: "rgba(255,255,255,0.5)",
+        color: "var(--color-text-tertiary)",
         textAlign: align,
       }}
     >
@@ -705,17 +705,20 @@ function Td({
   children,
   align = "left",
   className = "",
+  style: overrideStyle,
 }: {
   children: React.ReactNode;
   align?: "left" | "right";
   className?: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <td
       className={`px-4 py-3 text-sm ${className}`}
       style={{
-        color: "rgba(255,255,255,0.7)",
+        color: "var(--color-text-secondary)",
         textAlign: align,
+        ...overrideStyle,
       }}
     >
       {children}

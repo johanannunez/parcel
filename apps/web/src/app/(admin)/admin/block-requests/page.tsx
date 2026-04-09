@@ -52,16 +52,16 @@ export default async function AdminBlockRequestsPage() {
       <header>
         <p
           className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-          style={{ color: "rgba(255,255,255,0.5)" }}
+          style={{ color: "var(--color-text-tertiary)" }}
         >
           Admin
         </p>
-        <h1 className="mt-2 text-[32px] font-semibold leading-tight tracking-tight text-white">
+        <h1 className="mt-2 text-[32px] font-semibold leading-tight tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Block requests
         </h1>
         <p
           className="mt-2 max-w-2xl text-base"
-          style={{ color: "rgba(255,255,255,0.7)" }}
+          style={{ color: "var(--color-text-secondary)" }}
         >
           Owners ask to reserve dates for personal use. Approve or decline
           here, then update Hospitable.
@@ -72,7 +72,7 @@ export default async function AdminBlockRequestsPage() {
         <section className="flex flex-col gap-3">
           <h2
             className="text-xs font-semibold uppercase tracking-[0.1em]"
-            style={{ color: "rgba(255,255,255,0.5)" }}
+            style={{ color: "var(--color-text-tertiary)" }}
           >
             Pending ({pending.length})
           </h2>
@@ -84,8 +84,8 @@ export default async function AdminBlockRequestsPage() {
         <div
           className="rounded-xl border p-6 text-center text-sm"
           style={{
-            borderColor: "rgba(255,255,255,0.08)",
-            color: "rgba(255,255,255,0.5)",
+            borderColor: "var(--color-warm-gray-200)",
+            color: "var(--color-text-tertiary)",
           }}
         >
           No pending block requests.
@@ -96,7 +96,7 @@ export default async function AdminBlockRequestsPage() {
         <section className="flex flex-col gap-3">
           <h2
             className="text-xs font-semibold uppercase tracking-[0.1em]"
-            style={{ color: "rgba(255,255,255,0.5)" }}
+            style={{ color: "var(--color-text-tertiary)" }}
           >
             Past requests
           </h2>

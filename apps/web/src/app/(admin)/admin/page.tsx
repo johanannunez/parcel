@@ -58,12 +58,12 @@ export default async function AdminOverviewPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Overview
         </h1>
         <p
           className="mt-2 text-sm"
-          style={{ color: "rgba(255,255,255,0.6)" }}
+          style={{ color: "var(--color-text-secondary)" }}
         >
           A snapshot of your portfolio.
         </p>
@@ -79,11 +79,11 @@ export default async function AdminOverviewPage() {
           >
             <div
               className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-              style={{ color: "rgba(255,255,255,0.5)" }}
+              style={{ color: "var(--color-text-tertiary)" }}
             >
               {s.label}
             </div>
-            <div className="mt-2 text-2xl font-semibold text-white">
+            <div className="mt-2 text-2xl font-semibold" style={{ color: "var(--color-text-primary)" }}>
               {s.value}
             </div>
           </Link>
@@ -95,7 +95,7 @@ export default async function AdminOverviewPage() {
         <section>
           <h2
             className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em]"
-            style={{ color: "rgba(255,255,255,0.4)" }}
+            style={{ color: "var(--color-text-tertiary)" }}
           >
             Needs attention
           </h2>
@@ -123,7 +123,7 @@ export default async function AdminOverviewPage() {
                   </span>
                   <span
                     className="text-sm font-medium"
-                    style={{ color: "rgba(255,255,255,0.8)" }}
+                    style={{ color: "var(--color-text-primary)" }}
                   >
                     {a.label}
                   </span>

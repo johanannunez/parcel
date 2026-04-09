@@ -68,12 +68,12 @@ export default async function AdminPropertiesPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Properties
         </h1>
         <p
           className="mt-2 max-w-2xl text-sm"
-          style={{ color: "rgba(255,255,255,0.7)" }}
+          style={{ color: "var(--color-text-secondary)" }}
         >
           Connect each property to Hospitable by pasting its Hospitable
           property ID and iCal feed URL. Once connected, hit Sync to pull
@@ -127,14 +127,14 @@ function Section({
   return (
     <section>
       <div className="mb-3 flex items-center gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--color-text-primary)" }}>
           {title}
         </h2>
         <span
           className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
           style={{
-            backgroundColor: "rgba(255,255,255,0.08)",
-            color: "rgba(255,255,255,0.7)",
+            backgroundColor: "var(--color-warm-gray-100)",
+            color: "var(--color-text-secondary)",
           }}
         >
           {count}

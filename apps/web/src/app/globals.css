@@ -225,12 +225,12 @@ html {
 
 /* ─── Admin Stat Cards ─── */
 .admin-stat-card {
-  background-color: var(--color-charcoal);
-  border-color: rgba(255, 255, 255, 0.06);
+  background-color: var(--color-white);
+  border-color: var(--color-warm-gray-200);
 }
 
 .admin-stat-card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--color-warm-gray-400);
 }
 
 /* ------------------------------------------------

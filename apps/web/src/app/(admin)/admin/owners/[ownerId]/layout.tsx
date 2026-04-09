@@ -39,23 +39,22 @@ export default async function OwnerHubLayout({
       {/* Owner header */}
       <div
         className="border-b px-8 pb-0 pt-8"
-        style={{ borderColor: "rgba(255,255,255,0.06)" }}
+        style={{ borderColor: "var(--color-warm-gray-200)" }}
       >
         <div className="flex items-start gap-4">
           <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
             style={{
               backgroundColor: "var(--color-brand)",
-              color: "white",
             }}
           >
             {buildInitials(displayName)}
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-semibold tracking-tight text-white">
+            <h1 className="text-xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
               {displayName}
             </h1>
-            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
               <span>{owner.email}</span>
               {owner.phone ? <span>{owner.phone}</span> : null}
               <span>Joined {memberSince}</span>

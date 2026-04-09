@@ -74,8 +74,8 @@ export function PropertyRow({ row }: { row: Row }) {
     <div
       className="rounded-xl border"
       style={{
-        backgroundColor: "var(--color-charcoal)",
-        borderColor: "rgba(255,255,255,0.1)",
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
       }}
     >
       <button
@@ -100,15 +100,15 @@ export function PropertyRow({ row }: { row: Row }) {
           </span>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="truncate text-sm font-semibold text-white">
+              <span className="truncate text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                 {row.address}
               </span>
               {!row.active ? (
                 <span
                   className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
                   style={{
-                    backgroundColor: "rgba(255,255,255,0.06)",
-                    color: "rgba(255,255,255,0.45)",
+                    backgroundColor: "var(--color-warm-gray-100)",
+                    color: "var(--color-text-tertiary)",
                   }}
                 >
                   Inactive
@@ -128,7 +128,7 @@ export function PropertyRow({ row }: { row: Row }) {
             </div>
             <div
               className="truncate text-xs"
-              style={{ color: "rgba(255,255,255,0.55)" }}
+              style={{ color: "var(--color-text-tertiary)" }}
             >
               {row.location}
               {row.name ? ` · ${row.name}` : ""}
@@ -141,7 +141,7 @@ export function PropertyRow({ row }: { row: Row }) {
           {isConnected ? (
             <span
               className="hidden text-xs sm:block"
-              style={{ color: "rgba(255,255,255,0.45)" }}
+              style={{ color: "var(--color-text-tertiary)" }}
             >
               Connected
             </span>
@@ -157,13 +157,13 @@ export function PropertyRow({ row }: { row: Row }) {
             <CaretUp
               size={14}
               weight="bold"
-              style={{ color: "rgba(255,255,255,0.5)" }}
+              style={{ color: "var(--color-text-tertiary)" }}
             />
           ) : (
             <CaretDown
               size={14}
               weight="bold"
-              style={{ color: "rgba(255,255,255,0.5)" }}
+              style={{ color: "var(--color-text-tertiary)" }}
             />
           )}
         </div>
@@ -172,7 +172,7 @@ export function PropertyRow({ row }: { row: Row }) {
       {open ? (
         <div
           className="border-t px-5 pb-5 pt-4"
-          style={{ borderColor: "rgba(255,255,255,0.08)" }}
+          style={{ borderColor: "var(--color-warm-gray-100)" }}
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Hospitable property ID">
@@ -181,8 +181,8 @@ export function PropertyRow({ row }: { row: Row }) {
                 value={hospId}
                 onChange={(e) => setHospId(e.target.value)}
                 placeholder="e.g. prop_abc123"
-                className="h-10 w-full rounded-lg border bg-transparent px-3 text-sm text-white outline-none transition-colors placeholder:text-[rgba(255,255,255,0.3)] focus:border-[#f59e0b]"
-                style={{ borderColor: "rgba(255,255,255,0.15)" }}
+                className="h-10 w-full rounded-lg border bg-transparent px-3 text-sm outline-none transition-colors focus:border-[#f59e0b]"
+                style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}
               />
             </Field>
             <Field label="iCal feed URL">
@@ -191,15 +191,15 @@ export function PropertyRow({ row }: { row: Row }) {
                 value={icalUrl}
                 onChange={(e) => setIcalUrl(e.target.value)}
                 placeholder="https://ical.hospitable.com/..."
-                className="h-10 w-full rounded-lg border bg-transparent px-3 text-sm text-white outline-none transition-colors placeholder:text-[rgba(255,255,255,0.3)] focus:border-[#f59e0b]"
-                style={{ borderColor: "rgba(255,255,255,0.15)" }}
+                className="h-10 w-full rounded-lg border bg-transparent px-3 text-sm outline-none transition-colors focus:border-[#f59e0b]"
+                style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}
               />
             </Field>
           </div>
 
           <p
             className="mt-3 text-xs leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.45)" }}
+            style={{ color: "var(--color-text-tertiary)" }}
           >
             Find these in Hospitable under the property settings. The iCal URL
             is what owners see in the calendar sync section of their portal.
@@ -270,7 +270,7 @@ function Field({
     <label className="flex flex-col gap-1.5">
       <span
         className="text-[11px] font-semibold uppercase tracking-[0.08em]"
-        style={{ color: "rgba(255,255,255,0.55)" }}
+        style={{ color: "var(--color-text-tertiary)" }}
       >
         {label}
       </span>

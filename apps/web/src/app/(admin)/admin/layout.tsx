@@ -57,7 +57,7 @@ export default async function AdminLayout({
         signOutSlot={<AdminSignOutButton />}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col text-white">
+      <div className="flex min-w-0 flex-1 flex-col" style={{ backgroundColor: "var(--color-off-white)", color: "var(--color-text-primary)" }}>
         <AdminTopBar userName={firstName} initials={initials} />
         <main className="flex-1">{children}</main>
       </div>

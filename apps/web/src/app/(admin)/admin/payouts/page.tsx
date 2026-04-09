@@ -57,12 +57,12 @@ export default async function AdminPayoutsPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Payouts
         </h1>
         <p
           className="mt-2 text-sm"
-          style={{ color: "rgba(255,255,255,0.6)" }}
+          style={{ color: "var(--color-text-secondary)" }}
         >
           All payout records across every owner and property.
         </p>
@@ -80,8 +80,8 @@ export default async function AdminPayoutsPage() {
         <div
           className="rounded-xl border p-8 text-center text-sm"
           style={{
-            borderColor: "rgba(255,255,255,0.06)",
-            color: "rgba(255,255,255,0.4)",
+            borderColor: "var(--color-warm-gray-200)",
+            color: "var(--color-text-tertiary)",
           }}
         >
           No payouts recorded yet.
@@ -89,11 +89,11 @@ export default async function AdminPayoutsPage() {
       ) : (
         <div
           className="overflow-hidden rounded-xl border"
-          style={{ borderColor: "rgba(255,255,255,0.06)" }}
+          style={{ borderColor: "var(--color-warm-gray-200)" }}
         >
           <table className="w-full text-left text-sm">
             <thead>
-              <tr style={{ backgroundColor: "var(--color-charcoal)" }}>
+              <tr style={{ backgroundColor: "var(--color-warm-gray-50)" }}>
                 <Th>Owner</Th>
                 <Th>Property</Th>
                 <Th>Period</Th>
@@ -110,7 +110,7 @@ export default async function AdminPayoutsPage() {
                   <tr
                     key={p.id}
                     className="border-t"
-                    style={{ borderColor: "rgba(255,255,255,0.04)" }}
+                    style={{ borderColor: "var(--color-warm-gray-100)" }}
                   >
                     <Td>{prop?.ownerName ?? "Unknown"}</Td>
                     <Td>{prop?.label ?? "Property"}</Td>
@@ -126,11 +126,11 @@ export default async function AdminPayoutsPage() {
                     </Td>
                     <Td align="right">
                       {p.paid_at ? (
-                        <span style={{ color: "#4ade80" }}>
+                        <span style={{ color: "#16a34a" }}>
                           {formatDate(p.paid_at)}
                         </span>
                       ) : (
-                        <span style={{ color: "rgba(255,255,255,0.3)" }}>
+                        <span style={{ color: "var(--color-text-tertiary)" }}>
                           Pending
                         </span>
                       )}
@@ -152,17 +152,17 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <div
       className="rounded-xl border p-5"
       style={{
-        backgroundColor: "var(--color-charcoal)",
-        borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
       }}
     >
       <div
         className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-        style={{ color: "rgba(255,255,255,0.5)" }}
+        style={{ color: "var(--color-text-tertiary)" }}
       >
         {label}
       </div>
-      <div className="mt-2 text-xl font-semibold text-white">{value}</div>
+      <div className="mt-2 text-xl font-semibold" style={{ color: "var(--color-text-primary)" }}>{value}</div>
     </div>
   );
 }
@@ -177,7 +177,7 @@ function Th({
   return (
     <th
       className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.1em]"
-      style={{ color: "rgba(255,255,255,0.5)", textAlign: align }}
+      style={{ color: "var(--color-text-tertiary)", textAlign: align }}
     >
       {children}
     </th>
@@ -195,9 +195,9 @@ function Td({
 }) {
   return (
     <td
-      className={`px-4 py-3 text-sm ${bold ? "font-medium text-white" : ""}`}
+      className={`px-4 py-3 text-sm ${bold ? "font-medium" : ""}`}
       style={{
-        color: bold ? undefined : "rgba(255,255,255,0.7)",
+        color: bold ? "var(--color-text-primary)" : "var(--color-text-secondary)",
         textAlign: align,
       }}
     >
