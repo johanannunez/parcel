@@ -48,11 +48,26 @@ export async function GET() {
     return Response.json({ error: "No properties found" }, { status: 404 });
   }
 
-  // Step 2: Get one reservation for that property with financials
+  // Step 1b: Get ALL property IDs
+  const allPropsRes = await fetch(
+    "https://public.api.hospitable.com/v2/properties?per_page=100",
+    {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      cache: "no-store",
+    },
+  );
+  const allPropsJson = await allPropsRes.json();
+  const allPropIds: string[] = (allPropsJson?.data ?? []).map((p: { id: string }) => p.id);
+
+  // Step 2: Get reservations across all properties with financials
   const url = new URL("https://public.api.hospitable.com/v2/reservations");
-  url.searchParams.set("per_page", "1");
+  url.searchParams.set("per_page", "2");
   url.searchParams.set("include", "guest,financials,properties");
-  url.searchParams.set("properties[0]", propId);
+  url.searchParams.set("start_date", "2025-10-01");
+  url.searchParams.set("end_date", "2026-12-31");
+  allPropIds.forEach((id, i) => {
+    url.searchParams.set(`properties[${i}]`, id);
+  });
 
   const res = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
