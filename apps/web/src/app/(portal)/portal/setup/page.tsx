@@ -112,7 +112,7 @@ function resolveOwnerStepState(
 export default async function SetupHubPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ just?: string; property?: string }>;
+  searchParams?: Promise<{ just?: string; property?: string; gate?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -123,6 +123,7 @@ export default async function SetupHubPage({
   const params = await searchParams;
   const justCompleted = params?.just ?? null;
   const selectedPropertyId = params?.property ?? null;
+  const gateRedirect = params?.gate ?? null;
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -213,7 +214,20 @@ export default async function SetupHubPage({
 
   return (
     <div className="-mx-6 -my-10 flex h-[calc(100vh-var(--topbar-h,0px))] flex-col lg:-mx-10 lg:-my-14">
-      {justCompleted ? (
+      {gateRedirect === "account" ? (
+        <div
+          role="alert"
+          className="mx-6 mt-4 flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-sm lg:mx-10"
+          style={{
+            borderColor: "#fcd6a4",
+            backgroundColor: "#fffbf0",
+            color: "#92400e",
+          }}
+        >
+          <span className="font-semibold">Complete your account details first.</span>
+          {" "}Fill in your name, phone, and mailing address before starting property setup.
+        </div>
+      ) : justCompleted ? (
         <div
           role="status"
           className="mx-6 mt-4 flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-sm lg:mx-10"
