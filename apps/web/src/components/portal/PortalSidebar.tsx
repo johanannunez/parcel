@@ -6,9 +6,8 @@ import {
   House,
   Buildings,
   CalendarBlank,
-  Wallet,
-  PlugsConnected,
   ClipboardText,
+  Wallet,
   LifebuoyIcon as Lifebuoy,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
@@ -47,11 +46,6 @@ const primaryNav: NavItem[] = [
     href: "/portal/payouts",
     label: "Payouts",
     icon: <Wallet size={18} weight="duotone" />,
-  },
-  {
-    href: "/portal/connections",
-    label: "Connections",
-    icon: <PlugsConnected size={18} weight="duotone" />,
   },
 ];
 
