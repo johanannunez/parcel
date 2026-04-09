@@ -10,23 +10,30 @@ export const dynamic = "force-dynamic";
 export default async function AdminPropertiesPage() {
   const supabase = await createClient();
 
-  const { data: properties } = await supabase
-    .from("properties")
-    .select(
-      "id, name, address_line1, city, state, owner_id, hospitable_property_id, ical_url, active, created_at",
-    )
-    .order("created_at", { ascending: true });
+  const [{ data: properties }, { data: bookings }] = await Promise.all([
+    supabase
+      .from("properties")
+      .select(
+        "id, name, address_line1, city, state, postal_code, owner_id, hospitable_property_id, ical_url, active, created_at",
+      )
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("bookings")
+      .select("property_id"),
+  ]);
 
   const ownerIds = Array.from(
     new Set((properties ?? []).map((p) => p.owner_id)),
   );
 
-  const { data: owners } = ownerIds.length
-    ? await supabase
-        .from("profiles")
-        .select("id, full_name, email")
-        .in("id", ownerIds)
-    : { data: [] };
+  const [{ data: owners }] = await Promise.all([
+    ownerIds.length
+      ? supabase
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", ownerIds)
+      : Promise.resolve({ data: [] as { id: string; full_name: string | null; email: string }[] }),
+  ]);
 
   const ownerMap = new Map(
     (owners ?? []).map((o) => [
@@ -35,15 +42,23 @@ export default async function AdminPropertiesPage() {
     ]),
   );
 
+  // Booking count map: property_id -> count
+  const bookingCountMap = new Map<string, number>();
+  for (const b of bookings ?? []) {
+    bookingCountMap.set(b.property_id, (bookingCountMap.get(b.property_id) ?? 0) + 1);
+  }
+
   const rows = (properties ?? []).map((p) => ({
     id: p.id,
-    label: p.name?.trim() || p.address_line1,
-    location: `${p.city}, ${p.state}`,
+    name: p.name?.trim() || null,
+    address: p.address_line1,
+    location: `${p.city}, ${p.state} ${p.postal_code ?? ""}`.trim(),
     ownerName: ownerMap.get(p.owner_id)?.name ?? null,
     ownerEmail: ownerMap.get(p.owner_id)?.email ?? "Unknown",
     hospitableId: p.hospitable_property_id,
     icalUrl: p.ical_url,
     active: p.active,
+    bookingCount: bookingCountMap.get(p.id) ?? 0,
   }));
 
   const connected = rows.filter((r) => r.hospitableId);

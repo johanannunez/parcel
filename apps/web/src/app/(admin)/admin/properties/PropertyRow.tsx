@@ -13,13 +13,15 @@ import { saveHospitableConnection } from "./actions";
 
 type Row = {
   id: string;
-  label: string;
+  name: string | null;
+  address: string;
   location: string;
   ownerName: string | null;
   ownerEmail: string;
   hospitableId: string | null;
   icalUrl: string | null;
   active: boolean;
+  bookingCount: number;
 };
 
 export function PropertyRow({ row }: { row: Row }) {
@@ -99,7 +101,7 @@ export function PropertyRow({ row }: { row: Row }) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-semibold text-white">
-                {row.label}
+                {row.address}
               </span>
               {!row.active ? (
                 <span
@@ -112,12 +114,26 @@ export function PropertyRow({ row }: { row: Row }) {
                   Inactive
                 </span>
               ) : null}
+              {row.bookingCount > 0 ? (
+                <span
+                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                  style={{
+                    backgroundColor: "rgba(22, 163, 74, 0.16)",
+                    color: "#4ade80",
+                  }}
+                >
+                  {row.bookingCount} booking{row.bookingCount !== 1 ? "s" : ""}
+                </span>
+              ) : null}
             </div>
             <div
               className="truncate text-xs"
               style={{ color: "rgba(255,255,255,0.55)" }}
             >
-              {row.location} · {row.ownerName ?? row.ownerEmail}
+              {row.location}
+              {row.name ? ` · ${row.name}` : ""}
+              {" · "}
+              {row.ownerName ?? row.ownerEmail}
             </div>
           </div>
         </div>
