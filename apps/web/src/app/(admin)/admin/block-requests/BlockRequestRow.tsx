@@ -74,7 +74,7 @@ const STATUS_STYLES: Record<
   },
 };
 
-const UNDO_SECONDS = 15;
+const UNDO_SECONDS = 7;
 
 export function BlockRequestRow({ row }: { row: Row }) {
   const [status, setStatus] = useState(row.status);
