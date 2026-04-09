@@ -28,7 +28,7 @@ async function notifyAdminOfBlockRequest(args: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "portal@theparcelco.com",
+        from: "Parcel <hello@theparcelco.com>",
         to,
         subject: `New block request: ${args.propertyLabel} (${range})`,
         text: [
