@@ -10,23 +10,33 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function SetupBasicsPage() {
+export default async function SetupBasicsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ property?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Work on the first (or only) property for now. Multi property setup
-  // gets a picker in a later slice.
-  const { data: property } = await supabase
+  const params = await searchParams;
+  const propertyId = params?.property ?? null;
+
+  let query = supabase
     .from("properties")
     .select(
       "id, name, property_type, address_line1, address_line2, city, state, postal_code, country, bedrooms, bathrooms, square_feet, guest_capacity",
-    )
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    );
+
+  if (propertyId) {
+    query = query.eq("id", propertyId);
+  } else {
+    query = query.order("created_at", { ascending: true }).limit(1);
+  }
+
+  const { data: property } = await query.maybeSingle();
 
   const initial: BasicsInitial = {
     property_id: property?.id ?? "",
@@ -63,7 +73,11 @@ export default async function SetupBasicsPage() {
     <div className="flex flex-col gap-10">
       <header className="flex flex-col gap-4">
         <Link
-          href="/portal/setup"
+          href={
+            propertyId
+              ? `/portal/setup?property=${propertyId}`
+              : "/portal/setup"
+          }
           className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium transition-colors"
           style={{ color: "var(--color-text-secondary)" }}
         >

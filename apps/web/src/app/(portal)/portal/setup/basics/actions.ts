@@ -81,6 +81,8 @@ export async function saveBasics(
     active: true,
   };
 
+  let propertyId = v.property_id || "";
+
   if (v.property_id) {
     const { error } = await supabase
       .from("properties")
@@ -90,12 +92,21 @@ export async function saveBasics(
 
     if (error) return { error: error.message };
   } else {
-    const { error } = await supabase.from("properties").insert(payload);
+    const { data: inserted, error } = await supabase
+      .from("properties")
+      .insert(payload)
+      .select("id")
+      .single();
     if (error) return { error: error.message };
+    propertyId = inserted.id;
   }
 
   revalidatePath("/portal/setup");
   revalidatePath("/portal/dashboard");
   revalidatePath("/portal/properties");
-  redirect("/portal/setup?just=basics");
+
+  const redirectUrl = propertyId
+    ? `/portal/setup?just=basics&property=${propertyId}`
+    : "/portal/setup?just=basics";
+  redirect(redirectUrl);
 }

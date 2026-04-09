@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { CalendarToolbar } from "./CalendarToolbar";
+import { CalendarToolbar, type CalendarView } from "./CalendarToolbar";
 import { AvailabilityGrid } from "./AvailabilityGrid";
+import { MonthGrid } from "./MonthGrid";
 import { BookingDetailModal, type Booking } from "./BookingDetailModal";
 import { CalendarSyncModal } from "./CalendarSyncModal";
 import { BlockRequestModal } from "./BlockRequestModal";
@@ -36,9 +37,11 @@ export function CalendarShell({
   pastRequests: PastRequest[];
   icalUrl: string | null;
 }) {
+  const [view, setView] = useState<CalendarView>("timeline");
   const [hiddenProperties, setHiddenProperties] = useState<Set<string>>(
     new Set(),
   );
+  const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [syncModalOpen, setSyncModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
@@ -85,17 +88,37 @@ export function CalendarShell({
           onToggleProperty={onToggleProperty}
           onOpenSync={() => setSyncModalOpen(true)}
           onOpenBlock={() => setBlockModalOpen(true)}
+          view={view}
+          onChangeView={setView}
+          activePropertyId={activePropertyId}
+          onChangeActiveProperty={setActivePropertyId}
         />
 
         <div className="flex-1 min-h-0">
-          <AvailabilityGrid
-            year={year}
-            month={month}
-            properties={visibleProperties}
-            bookings={filteredBookings}
-            blockRequests={filteredBlocks}
-            onSelectBooking={setSelectedBooking}
-          />
+          {view === "timeline" ? (
+            <AvailabilityGrid
+              year={year}
+              month={month}
+              properties={visibleProperties}
+              bookings={filteredBookings}
+              blockRequests={filteredBlocks}
+              onSelectBooking={setSelectedBooking}
+            />
+          ) : (
+            <MonthGrid
+              year={year}
+              month={month}
+              properties={properties}
+              bookings={filteredBookings}
+              blockRequests={filteredBlocks}
+              activePropertyId={
+                properties.length > 1
+                  ? activePropertyId ?? properties[0]?.id ?? null
+                  : null
+              }
+              onSelectBooking={setSelectedBooking}
+            />
+          )}
         </div>
       </div>
 

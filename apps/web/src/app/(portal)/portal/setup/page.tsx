@@ -7,10 +7,12 @@ import {
   ClipboardText,
   FileText,
   House,
+  MapPin,
   Sparkle,
   Lock,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
+import { PropertySwitcher } from "@/components/portal/PropertySwitcher";
 
 export const metadata: Metadata = {
   title: "Setup",
@@ -43,6 +45,8 @@ type PropertyRow = {
   name: string | null;
   address_line1: string | null;
   city: string | null;
+  state: string | null;
+  postal_code: string | null;
   property_type: string | null;
   bedrooms: number | null;
   bathrooms: number | null;
@@ -65,7 +69,7 @@ function isBasicsComplete(p: PropertyRow | null | undefined) {
 export default async function SetupHubPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ just?: string }>;
+  searchParams?: Promise<{ just?: string; property?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -75,6 +79,7 @@ export default async function SetupHubPage({
 
   const params = await searchParams;
   const justCompleted = params?.just ?? null;
+  const selectedPropertyId = params?.property ?? null;
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -85,7 +90,7 @@ export default async function SetupHubPage({
   const { data: properties } = await supabase
     .from("properties")
     .select(
-      "id, name, address_line1, city, property_type, bedrooms, bathrooms, guest_capacity, active",
+      "id, name, address_line1, city, state, postal_code, property_type, bedrooms, bathrooms, guest_capacity, active",
     )
     .order("created_at", { ascending: true });
 
@@ -94,14 +99,16 @@ export default async function SetupHubPage({
     user.email?.split("@")[0] ??
     "there";
 
-  const firstProperty = (properties?.[0] as PropertyRow | undefined) ?? null;
-  const propertyLabel =
-    firstProperty?.name ||
-    firstProperty?.address_line1 ||
-    firstProperty?.city ||
-    "your property";
+  const selected =
+    (selectedPropertyId
+      ? (properties ?? []).find((p) => p.id === selectedPropertyId)
+      : undefined) ??
+    (properties?.[0] as PropertyRow | undefined) ??
+    null;
 
-  const basicsDone = isBasicsComplete(firstProperty);
+  const hasMultipleProperties = (properties?.length ?? 0) > 1;
+
+  const basicsDone = isBasicsComplete(selected);
 
   const propertySteps: Step[] = [
     {
@@ -109,7 +116,9 @@ export default async function SetupHubPage({
       label: "Property basics",
       hint: "Address, type, bedrooms, bathrooms, guests.",
       state: basicsDone ? "done" : "active",
-      href: "/portal/setup/basics",
+      href: selected?.id
+        ? `/portal/setup/basics?property=${selected.id}`
+        : "/portal/setup/basics",
     },
     {
       key: "amenities",
@@ -138,12 +147,14 @@ export default async function SetupHubPage({
   ];
 
   const welcomeSteps: Step[] = [
+    // scope: property — unique agreement per home
     {
       key: "agreement",
       label: "Management agreement",
       hint: "The Parcel owner agreement. Signed in the portal.",
       state: "active",
     },
+    // scope: owner — completed once, shared across all properties
     {
       key: "deposit",
       label: "Direct deposit",
@@ -243,21 +254,69 @@ export default async function SetupHubPage({
           >
             Let us get you set up, {firstName}.
           </h1>
-          <p
-            className="mt-2 max-w-2xl text-base"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            Two short tracks. One gets{" "}
-            <span
-              className="font-medium"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              {propertyLabel}
-            </span>{" "}
-            listing ready. The other handles the paperwork. Finish both
-            and you are live on Parcel.
-          </p>
         </div>
+
+        {selected && (
+          <div
+            className="flex flex-col gap-4 rounded-2xl border p-5"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-white)",
+            }}
+          >
+            <div className="flex items-start gap-3.5">
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                style={{
+                  backgroundColor: "var(--color-brand-light, rgba(2, 170, 235, 0.08))",
+                  color: "var(--color-brand)",
+                }}
+              >
+                <House size={20} weight="duotone" />
+              </span>
+              <div className="min-w-0">
+                <h2
+                  className="text-xl font-semibold leading-tight tracking-tight"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  {selected.address_line1 || selected.name || "Your property"}
+                </h2>
+                {(selected.city || selected.state) && (
+                  <div
+                    className="mt-1 flex items-center gap-1.5 text-sm"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    <MapPin size={13} weight="duotone" />
+                    {[selected.city, selected.state, selected.postal_code]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {hasMultipleProperties && properties && (
+              <PropertySwitcher
+                properties={(properties as PropertyRow[]).map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  address_line1: p.address_line1,
+                  city: p.city,
+                  state: p.state,
+                }))}
+                activeId={selected.id}
+              />
+            )}
+          </div>
+        )}
+
+        <p
+          className="max-w-2xl text-base"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Two short tracks. One gets your listing ready. The other handles
+          the paperwork. Finish both and you are live on Parcel.
+        </p>
 
         <OverallProgressBar
           pct={overallPct}
