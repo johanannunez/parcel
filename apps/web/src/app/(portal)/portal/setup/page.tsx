@@ -12,7 +12,7 @@ import {
   User,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
-import { PropertySwitcher } from "@/components/portal/PropertySwitcher";
+import { PropertySelector } from "@/components/portal/PropertySelector";
 import { OwnerLocalTime } from "@/components/portal/OwnerLocalTime";
 import {
   setupSearchIndex,
@@ -149,8 +149,6 @@ export default async function SetupHubPage({
       ? (properties ?? []).find((p) => p.id === selectedPropertyId)
       : undefined) ??
     ((properties?.[0] as PropertyRow | undefined) ?? null);
-
-  const hasMultipleProperties = (properties?.length ?? 0) > 1;
 
   const propertyGroups = groupStepsByGroup("property");
   const ownerGroups = groupStepsByGroup("owner");
@@ -336,32 +334,20 @@ export default async function SetupHubPage({
           />
         </Link>
 
-        {selected && (
-          <div className="mt-2 flex items-center gap-3">
-            <span
-              className="text-sm"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Working on:
-            </span>
-            <span
-              className="text-sm font-medium"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              {selected.address_line1 || selected.name || "Your property"}
-            </span>
-            {hasMultipleProperties && properties && (
-              <PropertySwitcher
-                properties={(properties as PropertyRow[]).map((p) => ({
-                  id: p.id,
-                  name: p.name,
-                  address_line1: p.address_line1,
-                  city: p.city,
-                  state: p.state,
-                }))}
-                activeId={selected.id}
-              />
-            )}
+        {selected && properties && (
+          <div className="mt-2">
+            <PropertySelector
+              properties={(properties as PropertyRow[]).map((p) => ({
+                id: p.id,
+                name: p.name,
+                address_line1: p.address_line1,
+                city: p.city,
+                state: p.state,
+              }))}
+              activeId={selected.id}
+              hrefTemplate="/portal/setup?property={id}"
+              variant="inline"
+            />
           </div>
         )}
       </header>

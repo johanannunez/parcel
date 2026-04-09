@@ -3,6 +3,7 @@ import { CalendarBlank } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/portal/PageHeader";
 import { EmptyState } from "@/components/portal/EmptyState";
+import { PropertySelector } from "@/components/portal/PropertySelector";
 import { CalendarShell } from "./CalendarShell";
 
 export const metadata: Metadata = { title: "Calendar" };
