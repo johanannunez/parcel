@@ -522,11 +522,11 @@ function StepWhoStaying({ data, update, ownerName, ownerEmail }: { data: WizardD
               <button key={String(val)} type="button" onClick={() => update({ needsLockCode: val })} className="rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-colors" style={{ backgroundColor: data.needsLockCode === val ? "rgba(2, 170, 235, 0.08)" : "var(--color-white)", borderColor: data.needsLockCode === val ? "var(--color-brand)" : "var(--color-warm-gray-200)", color: data.needsLockCode === val ? "var(--color-brand)" : "var(--color-text-primary)" }}>{val ? "Yes" : "No"}</button>
             ))}
           </div>
-          {data.needsLockCode && (
-            <div className="flex items-center gap-1">
-              <PinDigits value={data.requestedLockCode} onChange={(v) => update({ requestedLockCode: v })} />
-            </div>
-          )}
+          <PinField
+            value={data.requestedLockCode}
+            onChange={(v) => update({ requestedLockCode: v })}
+            disabled={!data.needsLockCode}
+          />
         </div>
       </div>
     </div>
@@ -683,54 +683,53 @@ function PillGroup({ options, value, onChange }: { options: string[]; value: str
   );
 }
 
-function PinDigits({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const digits = value.padEnd(4, "").slice(0, 4).split("");
-  const refs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
-
-  const handleChange = (idx: number, char: string) => {
-    if (char && !/^\d$/.test(char)) return;
-    const next = [...digits];
-    next[idx] = char;
-    onChange(next.join(""));
-    if (char && idx < 3) refs[idx + 1].current?.focus();
-  };
-
-  const handleKeyDown = (idx: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !digits[idx] && idx > 0) {
-      refs[idx - 1].current?.focus();
-    }
-  };
+function PinField({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled: boolean }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const display = value.padEnd(4, "–").slice(0, 4).split("").join(" ");
 
   return (
-    <div className="flex items-center gap-1">
-      {[0, 1, 2, 3].map((idx) => (
-        <input
-          key={idx}
-          ref={refs[idx]}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={digits[idx] || ""}
-          onChange={(e) => handleChange(idx, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(idx, e)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border text-center text-sm font-semibold tabular-nums outline-none focus:ring-2"
-          style={{
-            backgroundColor: digits[idx]
-              ? "var(--color-white)"
-              : "var(--color-warm-gray-50)",
-            borderColor: digits[idx]
-              ? "var(--color-brand)"
-              : "var(--color-warm-gray-200)",
-            color: "var(--color-text-primary)",
-          }}
-          placeholder="–"
-        />
-      ))}
+    <div
+      className="relative flex items-center rounded-lg border px-3 transition-all duration-150"
+      style={{
+        height: 36,
+        width: 100,
+        backgroundColor: disabled ? "var(--color-warm-gray-50)" : "var(--color-white)",
+        borderColor: disabled
+          ? "var(--color-warm-gray-200)"
+          : value.length === 4
+            ? "var(--color-brand)"
+            : "rgba(2, 170, 235, 0.4)",
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? "default" : "text",
+      }}
+      onClick={() => !disabled && inputRef.current?.focus()}
+    >
+      <span
+        className="text-sm font-semibold tabular-nums tracking-[0.25em]"
+        style={{
+          color: disabled
+            ? "var(--color-text-tertiary)"
+            : value
+              ? "var(--color-text-primary)"
+              : "var(--color-text-tertiary)",
+        }}
+      >
+        {display}
+      </span>
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        maxLength={4}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => {
+          const filtered = e.target.value.replace(/\D/g, "").slice(0, 4);
+          onChange(filtered);
+        }}
+        className="absolute inset-0 h-full w-full cursor-text rounded-lg opacity-0"
+        aria-label="4-digit lock code"
+      />
     </div>
   );
 }
