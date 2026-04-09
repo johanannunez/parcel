@@ -38,6 +38,11 @@ export default async function AdminLayout({
     redirect("/portal/dashboard");
   }
 
+  const { count: pendingBlockCount } = await supabase
+    .from("block_requests")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
+
   return (
     <div
       className="min-h-screen"
@@ -50,13 +55,42 @@ export default async function AdminLayout({
           borderColor: "rgba(255,255,255,0.1)",
         }}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link
-            href="/admin"
-            className="text-lg font-semibold tracking-tight text-white"
-          >
-            Parcel Admin
-          </Link>
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-4">
+          <div className="flex items-center gap-6">
+            <Link
+              href="/admin"
+              className="text-lg font-semibold tracking-tight text-white"
+            >
+              Parcel Admin
+            </Link>
+            <nav className="flex items-center gap-4 text-sm">
+              <Link
+                href="/admin"
+                className="transition-colors hover:text-white"
+                style={{ color: "rgba(255,255,255,0.7)" }}
+              >
+                Overview
+              </Link>
+              <Link
+                href="/admin/block-requests"
+                className="inline-flex items-center gap-2 transition-colors hover:text-white"
+                style={{ color: "rgba(255,255,255,0.7)" }}
+              >
+                Block requests
+                {pendingBlockCount && pendingBlockCount > 0 ? (
+                  <span
+                    className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold"
+                    style={{
+                      backgroundColor: "#f59e0b",
+                      color: "#1a1a1a",
+                    }}
+                  >
+                    {pendingBlockCount}
+                  </span>
+                ) : null}
+              </Link>
+            </nav>
+          </div>
 
           <div className="flex items-center gap-4">
             <span className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>

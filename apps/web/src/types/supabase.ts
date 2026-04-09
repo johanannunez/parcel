@@ -114,6 +114,42 @@ export type Database = {
           },
         ]
       }
+      block_requests: {
+        Row: {
+          id: string
+          owner_id: string
+          property_id: string
+          start_date: string
+          end_date: string
+          note: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          property_id: string
+          start_date: string
+          end_date: string
+          note?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          property_id?: string
+          start_date?: string
+          end_date?: string
+          note?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connections: {
         Row: {
           connected_at: string
@@ -364,6 +400,7 @@ export type Database = {
           guest_capacity: number | null
           half_bathrooms: number | null
           hospitable_property_id: string | null
+          ical_url: string | null
           id: string
           latitude: number | null
           listed_elsewhere: boolean | null
@@ -398,6 +435,7 @@ export type Database = {
           guest_capacity?: number | null
           half_bathrooms?: number | null
           hospitable_property_id?: string | null
+          ical_url?: string | null
           id?: string
           latitude?: number | null
           listed_elsewhere?: boolean | null
@@ -432,6 +470,7 @@ export type Database = {
           guest_capacity?: number | null
           half_bathrooms?: number | null
           hospitable_property_id?: string | null
+          ical_url?: string | null
           id?: string
           latitude?: number | null
           listed_elsewhere?: boolean | null

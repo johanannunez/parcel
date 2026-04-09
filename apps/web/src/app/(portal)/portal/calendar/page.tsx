@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/portal/PageHeader";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { CalendarView } from "./CalendarView";
+import { CalendarSync } from "./CalendarSync";
+import { BlockRequestForm } from "./BlockRequestForm";
 
 export const metadata: Metadata = { title: "Calendar" };
 export const dynamic = "force-dynamic";
@@ -17,14 +19,12 @@ export default async function CalendarPage({
 }) {
   const { month, year } = await searchParams;
   const now = new Date();
-  const curMonth =
-    month !== undefined ? Number(month) : now.getMonth();
+  const curMonth = month !== undefined ? Number(month) : now.getMonth();
   const curYear = year !== undefined ? Number(year) : now.getFullYear();
 
   const first = new Date(curYear, curMonth, 1);
   const last = new Date(curYear, curMonth + 1, 0);
 
-  // Fetch properties and any booking that overlaps the visible month.
   const supabase = await createClient();
   const {
     data: { user },
@@ -35,20 +35,35 @@ export default async function CalendarPage({
   const viewStart = iso(first);
   const viewEnd = iso(last);
 
-  const [{ data: properties }, { data: bookings }] = await Promise.all([
-    supabase
-      .from("properties")
-      .select("id, name, address_line1")
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("bookings")
-      .select(
-        "id, property_id, guest_name, check_in, check_out, source, status, total_amount",
-      )
-      .lte("check_in", viewEnd)
-      .gte("check_out", viewStart)
-      .neq("status", "cancelled"),
-  ]);
+  const [{ data: properties }, { data: bookings }, { data: requests }] =
+    await Promise.all([
+      supabase
+        .from("properties")
+        .select("id, name, address_line1, ical_url")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("bookings")
+        .select(
+          "id, property_id, guest_name, check_in, check_out, source, status, total_amount",
+        )
+        .lte("check_in", viewEnd)
+        .gte("check_out", viewStart)
+        .neq("status", "cancelled"),
+      supabase
+        .from("block_requests")
+        .select("id, property_id, start_date, end_date, status, note, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
+
+  const propertyList = (properties ?? []).map((p) => ({
+    id: p.id,
+    name: p.name?.trim() || p.address_line1,
+    ical_url: (p as { ical_url?: string | null }).ical_url ?? null,
+  }));
+
+  const hasProperties = propertyList.length > 0;
+  const primaryIcalUrl = propertyList[0]?.ical_url ?? null;
 
   return (
     <div className="flex flex-col gap-10">
@@ -58,31 +73,45 @@ export default async function CalendarPage({
         description="Every reservation across your portfolio, color-coded by property. Click a booking for details."
       />
 
-      {(properties ?? []).length === 0 ? (
+      {!hasProperties ? (
         <EmptyState
           icon={<CalendarBlank size={26} weight="duotone" />}
           title="Calendar unlocks with your first property"
           body="Add a home and we will pull in its reservations automatically."
         />
       ) : (
-        <CalendarView
-          year={curYear}
-          month={curMonth}
-          properties={(properties ?? []).map((p) => ({
-            id: p.id,
-            name: p.name?.trim() || p.address_line1,
-          }))}
-          bookings={(bookings ?? []).map((b) => ({
-            id: b.id,
-            property_id: b.property_id,
-            guest_name: b.guest_name,
-            check_in: b.check_in,
-            check_out: b.check_out,
-            source: b.source,
-            status: b.status,
-            total_amount: b.total_amount ? Number(b.total_amount) : null,
-          }))}
-        />
+        <>
+          <CalendarView
+            year={curYear}
+            month={curMonth}
+            properties={propertyList.map((p) => ({ id: p.id, name: p.name }))}
+            bookings={(bookings ?? []).map((b) => ({
+              id: b.id,
+              property_id: b.property_id,
+              guest_name: b.guest_name,
+              check_in: b.check_in,
+              check_out: b.check_out,
+              source: b.source,
+              status: b.status,
+              total_amount: b.total_amount ? Number(b.total_amount) : null,
+            }))}
+          />
+
+          <CalendarSync icalUrl={primaryIcalUrl} />
+
+          <BlockRequestForm
+            properties={propertyList.map((p) => ({ id: p.id, name: p.name }))}
+            pastRequests={(requests ?? []).map((r) => ({
+              id: r.id,
+              property_id: r.property_id,
+              start_date: r.start_date,
+              end_date: r.end_date,
+              status: r.status as "pending" | "approved" | "declined",
+              note: r.note,
+              created_at: r.created_at,
+            }))}
+          />
+        </>
       )}
     </div>
   );
