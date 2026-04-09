@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { Power } from "@phosphor-icons/react";
 import { signOut } from "./actions";
 
 export function SignOutButton() {
@@ -11,13 +12,9 @@ export function SignOutButton() {
       type="button"
       disabled={pending}
       onClick={() => startTransition(() => signOut())}
-      className="rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
-      style={{
-        color: "var(--color-text-primary)",
-        borderColor: "var(--color-warm-gray-200)",
-        backgroundColor: "var(--color-white)",
-      }}
+      className="sidebar-footer-row sidebar-footer-signout"
     >
+      <Power size={15} weight="regular" className="shrink-0" />
       {pending ? "Signing out..." : "Sign out"}
     </button>
   );
