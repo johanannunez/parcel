@@ -114,9 +114,25 @@ export async function getConversationMessagesForOwner(conversationId: string) {
 
   if (convRes.error || !convRes.data) return { error: "Conversation not found", conversation: null, messages: [] };
 
+  // Enrich messages with sender profile (name + avatar)
+  const senderIds = [...new Set((msgsRes.data ?? []).map((m) => m.sender_id))];
+  const { data: senders } = senderIds.length
+    ? await supabase.from("profiles").select("id, full_name, email, role, avatar_url").in("id", senderIds)
+    : { data: [] };
+  const senderMap = new Map(
+    (senders ?? []).map((s) => [s.id, { name: s.full_name?.trim() || s.email, role: s.role, avatarUrl: s.avatar_url }]),
+  );
+
+  const messages = (msgsRes.data ?? []).map((m) => ({
+    ...m,
+    senderName: senderMap.get(m.sender_id)?.name ?? "The Parcel Company",
+    senderRole: senderMap.get(m.sender_id)?.role ?? "admin",
+    senderAvatarUrl: senderMap.get(m.sender_id)?.avatarUrl ?? null,
+  }));
+
   return {
     conversation: convRes.data,
-    messages: msgsRes.data ?? [],
+    messages,
     error: null,
   };
 }

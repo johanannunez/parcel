@@ -330,14 +330,15 @@ export async function getConversationMessages(conversationId: string) {
 
   const senderIds = [...new Set((msgsRes.data ?? []).map((m) => m.sender_id))];
   const { data: senders } = senderIds.length
-    ? await svc.from("profiles").select("id, full_name, email, role").in("id", senderIds)
+    ? await svc.from("profiles").select("id, full_name, email, role, avatar_url").in("id", senderIds)
     : { data: [] };
-  const senderMap = new Map((senders ?? []).map((s) => [s.id, { name: s.full_name?.trim() || s.email, role: s.role }]));
+  const senderMap = new Map((senders ?? []).map((s) => [s.id, { name: s.full_name?.trim() || s.email, role: s.role, avatarUrl: s.avatar_url }]));
 
   const messages = (msgsRes.data ?? []).map((m) => ({
     ...m,
     senderName: senderMap.get(m.sender_id)?.name ?? "Unknown",
     senderRole: senderMap.get(m.sender_id)?.role ?? "owner",
+    senderAvatarUrl: senderMap.get(m.sender_id)?.avatarUrl ?? null,
     reads: readMap.get(m.id) ?? [],
   }));
 

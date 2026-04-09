@@ -70,6 +70,9 @@ type Message = {
   delivery_method: string;
   metadata: Record<string, unknown>;
   created_at: string;
+  senderName?: string;
+  senderRole?: string;
+  senderAvatarUrl?: string | null;
 };
 
 /* ─── Component ─── */
@@ -459,8 +462,35 @@ export function PortalMessagesShell({
                   {messages.map((m) => {
                     const isOwner = m.sender_id === currentUserId;
                     return (
-                      <div key={m.id} className={`flex ${isOwner ? "justify-end" : "justify-start"}`}>
-                        <div className="flex max-w-[75%] flex-col">
+                      <div key={m.id} className={`flex items-end gap-2 ${isOwner ? "flex-row-reverse" : "flex-row"}`}>
+                        {/* Sender Avatar */}
+                        {!isOwner ? (
+                          m.senderAvatarUrl ? (
+                            <img
+                              src={m.senderAvatarUrl}
+                              alt={m.senderName ?? "The Parcel Company"}
+                              className="h-7 w-7 shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                              style={{ backgroundColor: "var(--color-brand)", color: "var(--color-white)" }}
+                            >
+                              PC
+                            </span>
+                          )
+                        ) : null}
+
+                        <div className="flex max-w-[70%] flex-col">
+                          {/* Sender name for non-owner messages */}
+                          {!isOwner && m.senderName ? (
+                            <span
+                              className={`mb-1 text-[10px] font-medium ${isOwner ? "text-right" : "text-left"}`}
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              {m.senderName}
+                            </span>
+                          ) : null}
                           <div
                             className="rounded-2xl px-4 py-2.5"
                             style={{
