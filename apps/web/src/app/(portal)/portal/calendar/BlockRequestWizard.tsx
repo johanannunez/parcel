@@ -210,10 +210,10 @@ export function BlockRequestWizard({
         style={{
           backgroundColor: "var(--color-white)",
           borderColor: "var(--color-warm-gray-200)",
-          maxHeight: "calc(100dvh - 48px)",
+          height: "min(720px, calc(100dvh - 48px))",
         }}
       >
-        {/* Header + progress */}
+        {/* Header + step labels */}
         <div className="shrink-0">
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
@@ -229,15 +229,76 @@ export function BlockRequestWizard({
               <X size={14} weight="bold" />
             </button>
           </div>
-          <div className="h-1 w-full" style={{ backgroundColor: "var(--color-warm-gray-100)" }}>
-            <div
-              className="h-full transition-[width] duration-300"
-              style={{
-                width: submitted ? "100%" : `${pct}%`,
-                background: "linear-gradient(90deg, #02aaeb 0%, #1b77be 100%)",
-              }}
-            />
-          </div>
+
+          {/* Step progress with labels */}
+          {!submitted && (
+            <div className="flex items-center gap-0 px-6 pb-4">
+              {STEPS.map((label, i) => {
+                const isDone = i < step;
+                const isCurrent = i === step;
+                const isFuture = i > step;
+                return (
+                  <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
+                    <div className="flex w-full items-center">
+                      {i > 0 && (
+                        <div
+                          className="h-[2px] flex-1 transition-colors duration-200"
+                          style={{
+                            backgroundColor: isDone || isCurrent
+                              ? "var(--color-brand)"
+                              : "var(--color-warm-gray-200)",
+                          }}
+                        />
+                      )}
+                      <span
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-200"
+                        style={{
+                          backgroundColor: isDone
+                            ? "var(--color-brand)"
+                            : isCurrent
+                              ? "var(--color-brand)"
+                              : "var(--color-warm-gray-100)",
+                          color: isDone || isCurrent
+                            ? "#ffffff"
+                            : "var(--color-text-tertiary)",
+                        }}
+                      >
+                        {isDone ? "✓" : i + 1}
+                      </span>
+                      {i < STEPS.length - 1 && (
+                        <div
+                          className="h-[2px] flex-1 transition-colors duration-200"
+                          style={{
+                            backgroundColor: isDone
+                              ? "var(--color-brand)"
+                              : "var(--color-warm-gray-200)",
+                          }}
+                        />
+                      )}
+                    </div>
+                    <span
+                      className="text-[10px] font-medium leading-tight text-center"
+                      style={{
+                        color: isCurrent
+                          ? "var(--color-brand)"
+                          : isFuture
+                            ? "var(--color-text-tertiary)"
+                            : "var(--color-text-secondary)",
+                      }}
+                    >
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Divider */}
+          <div
+            className="h-px w-full"
+            style={{ backgroundColor: "var(--color-warm-gray-100)" }}
+          />
         </div>
 
         {/* Body */}
@@ -276,19 +337,6 @@ export function BlockRequestWizard({
             >
               {step === 0 ? "Cancel" : "Back"}
             </button>
-
-            <div className="flex items-center gap-1.5">
-              {STEPS.map((_, i) => (
-                <span
-                  key={i}
-                  className="h-1.5 rounded-full transition-all duration-200"
-                  style={{
-                    width: i === step ? 16 : 6,
-                    backgroundColor: i <= step ? "var(--color-brand)" : "var(--color-warm-gray-200)",
-                  }}
-                />
-              ))}
-            </div>
 
             {step < 4 ? (
               <button
