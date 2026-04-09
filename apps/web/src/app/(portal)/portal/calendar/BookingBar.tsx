@@ -1,11 +1,11 @@
 "use client";
 
-import type { PaletteEntry } from "./palette";
+import { platformColor, type PaletteEntry } from "./palette";
+import { PlatformIcon } from "./PlatformIcon";
 import type { Booking } from "./BookingDetailModal";
 
 export function BookingBar({
   booking,
-  color,
   startDay,
   endDay,
   daysInMonth,
@@ -14,7 +14,6 @@ export function BookingBar({
   onClick,
 }: {
   booking: Booking;
-  color: PaletteEntry;
   startDay: number;
   endDay: number;
   daysInMonth: number;
@@ -22,6 +21,7 @@ export function BookingBar({
   rowHeight: number;
   onClick: () => void;
 }) {
+  const color = platformColor(booking.source);
   const clampedStart = Math.max(0, startDay);
   const clampedEnd = Math.min(daysInMonth, endDay);
   if (clampedStart >= clampedEnd) return null;
@@ -34,7 +34,10 @@ export function BookingBar({
 
   const startsBeforeMonth = startDay < 0;
   const endsAfterMonth = endDay > daysInMonth;
-  const showLabel = span >= 2 && width > 50;
+
+  // Show icon when bar is at least 1 col wide, show label when >= 3 cols
+  const showIcon = width >= 20;
+  const showLabel = span >= 3 && width > 60;
 
   return (
     <button
@@ -59,7 +62,8 @@ export function BookingBar({
           : `2px solid ${color.solid}`,
         display: "flex",
         alignItems: "center",
-        paddingLeft: showLabel ? 8 : 0,
+        gap: 4,
+        paddingLeft: showIcon ? 5 : 0,
         paddingRight: showLabel ? 4 : 0,
         cursor: "pointer",
         fontSize: 10,
@@ -68,6 +72,15 @@ export function BookingBar({
         overflow: "hidden",
       }}
     >
+      {showIcon && (
+        <span style={{ flexShrink: 0, display: "flex" }}>
+          <PlatformIcon
+            source={booking.source}
+            size={barHeight > 20 ? 12 : 10}
+            color={color.solid}
+          />
+        </span>
+      )}
       {showLabel ? (booking.guest_name ?? "Booked") : null}
     </button>
   );

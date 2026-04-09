@@ -1,17 +1,19 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   CalendarDots,
   CalendarPlus,
+  CaretDown,
   CaretLeft,
   CaretRight,
   Check,
+  House,
   Link as LinkIcon,
   Rows,
 } from "@phosphor-icons/react";
-import { colorFor } from "./palette";
 
 export type CalendarView = "timeline" | "month";
 
@@ -66,6 +68,9 @@ export function CalendarToolbar({
   );
   const todayHref = navHref(new Date().getMonth(), new Date().getFullYear());
 
+  const allVisible = hiddenProperties.size === 0;
+  const visibleCount = properties.length - hiddenProperties.size;
+
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       {/* Left: month nav */}
@@ -115,81 +120,21 @@ export function CalendarToolbar({
         </Link>
       </div>
 
-      {/* Right: filter chips + actions */}
+      {/* Right: property dropdown + view toggle + actions */}
       <div className="flex flex-wrap items-center gap-2">
-        {properties.length > 1 && view === "timeline"
-          ? properties.map((p, i) => {
-              const c = colorFor(i);
-              const hidden = hiddenProperties.has(p.id);
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => onToggleProperty(p.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors"
-                  style={{
-                    backgroundColor: hidden
-                      ? "var(--color-warm-gray-50)"
-                      : "var(--color-white)",
-                    borderColor: "var(--color-warm-gray-200)",
-                    color: hidden
-                      ? "var(--color-text-tertiary)"
-                      : "var(--color-text-primary)",
-                    opacity: hidden ? 0.55 : 1,
-                  }}
-                  aria-pressed={!hidden}
-                >
-                  {!hidden ? (
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: c.solid }}
-                      aria-hidden
-                    />
-                  ) : (
-                    <Check size={10} weight="bold" aria-hidden />
-                  )}
-                  <span className="max-w-[120px] truncate">{p.name}</span>
-                </button>
-              );
-            })
-          : null}
-
-        {properties.length > 1 && view === "month"
-          ? properties.map((p, i) => {
-              const c = colorFor(i);
-              const isActive =
-                activePropertyId === p.id ||
-                (!activePropertyId && i === 0);
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => onChangeActiveProperty(p.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors"
-                  style={{
-                    backgroundColor: isActive
-                      ? "var(--color-white)"
-                      : "var(--color-warm-gray-50)",
-                    borderColor: isActive
-                      ? c.solid
-                      : "var(--color-warm-gray-200)",
-                    color: isActive
-                      ? "var(--color-text-primary)"
-                      : "var(--color-text-tertiary)",
-                    opacity: isActive ? 1 : 0.65,
-                  }}
-                  aria-pressed={isActive}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: c.solid }}
-                    aria-hidden
-                  />
-                  <span className="max-w-[120px] truncate">{p.name}</span>
-                </button>
-              );
-            })
-          : null}
+        {/* Property filter dropdown */}
+        {properties.length > 1 && (
+          <PropertyDropdown
+            properties={properties}
+            hiddenProperties={hiddenProperties}
+            onToggleProperty={onToggleProperty}
+            allVisible={allVisible}
+            visibleCount={visibleCount}
+            view={view}
+            activePropertyId={activePropertyId}
+            onChangeActiveProperty={onChangeActiveProperty}
+          />
+        )}
 
         {/* View toggle */}
         <div
@@ -254,6 +199,213 @@ export function CalendarToolbar({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Property dropdown (replaces individual property pills)
+// ---------------------------------------------------------------------------
+
+function PropertyDropdown({
+  properties,
+  hiddenProperties,
+  onToggleProperty,
+  allVisible,
+  visibleCount,
+  view,
+  activePropertyId,
+  onChangeActiveProperty,
+}: {
+  properties: { id: string; name: string }[];
+  hiddenProperties: Set<string>;
+  onToggleProperty: (id: string) => void;
+  allVisible: boolean;
+  visibleCount: number;
+  view: CalendarView;
+  activePropertyId: string | null;
+  onChangeActiveProperty: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const label =
+    view === "month"
+      ? properties.find((p) => p.id === (activePropertyId ?? properties[0]?.id))?.name ?? "All Homes"
+      : allVisible
+        ? "All Homes"
+        : visibleCount === 1
+          ? properties.find((p) => !hiddenProperties.has(p.id))?.name ?? "1 Home"
+          : `${visibleCount} Homes`;
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
+        style={{
+          backgroundColor: "var(--color-white)",
+          borderColor: "var(--color-warm-gray-200)",
+          color: "var(--color-text-primary)",
+        }}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <House size={14} weight="duotone" />
+        {label}
+        <CaretDown
+          size={12}
+          weight="bold"
+          style={{
+            color: "var(--color-text-tertiary)",
+            transform: open ? "rotate(180deg)" : "none",
+            transition: "transform 0.15s ease",
+          }}
+        />
+      </button>
+
+      {open && (
+        <>
+          {/* Backdrop to close */}
+          <div
+            className="fixed inset-0 z-20"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="absolute right-0 z-30 mt-1.5 w-64 overflow-hidden rounded-xl border shadow-lg"
+            style={{
+              backgroundColor: "var(--color-white)",
+              borderColor: "var(--color-warm-gray-200)",
+            }}
+          >
+            <div className="max-h-72 overflow-y-auto py-1.5">
+              {view === "timeline" ? (
+                <>
+                  {/* Show All option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Toggle all visible
+                      if (allVisible) return;
+                      for (const p of properties) {
+                        if (hiddenProperties.has(p.id)) {
+                          onToggleProperty(p.id);
+                        }
+                      }
+                    }}
+                    className="flex w-full items-center gap-3 px-3.5 py-2 text-left text-[12px] font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
+                    style={{
+                      color: allVisible
+                        ? "var(--color-brand)"
+                        : "var(--color-text-primary)",
+                    }}
+                  >
+                    <span
+                      className="flex h-4 w-4 items-center justify-center rounded border"
+                      style={{
+                        backgroundColor: allVisible
+                          ? "var(--color-brand)"
+                          : "transparent",
+                        borderColor: allVisible
+                          ? "var(--color-brand)"
+                          : "var(--color-warm-gray-200)",
+                      }}
+                    >
+                      {allVisible && (
+                        <Check size={10} weight="bold" color="#fff" />
+                      )}
+                    </span>
+                    All Homes
+                  </button>
+
+                  <div
+                    className="mx-3 my-1 border-t"
+                    style={{ borderColor: "var(--color-warm-gray-100)" }}
+                  />
+
+                  {properties.map((p) => {
+                    const visible = !hiddenProperties.has(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => onToggleProperty(p.id)}
+                        className="flex w-full items-center gap-3 px-3.5 py-2 text-left text-[12px] transition-colors hover:bg-[var(--color-warm-gray-50)]"
+                        style={{
+                          color: visible
+                            ? "var(--color-text-primary)"
+                            : "var(--color-text-tertiary)",
+                        }}
+                      >
+                        <span
+                          className="flex h-4 w-4 items-center justify-center rounded border"
+                          style={{
+                            backgroundColor: visible
+                              ? "var(--color-brand)"
+                              : "transparent",
+                            borderColor: visible
+                              ? "var(--color-brand)"
+                              : "var(--color-warm-gray-200)",
+                          }}
+                        >
+                          {visible && (
+                            <Check size={10} weight="bold" color="#fff" />
+                          )}
+                        </span>
+                        <span className="truncate font-medium">{p.name}</span>
+                      </button>
+                    );
+                  })}
+                </>
+              ) : (
+                /* Month view: single-select (radio-like) */
+                properties.map((p) => {
+                  const isActive =
+                    activePropertyId === p.id ||
+                    (!activePropertyId && p.id === properties[0]?.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        onChangeActiveProperty(p.id);
+                        setOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 px-3.5 py-2 text-left text-[12px] transition-colors hover:bg-[var(--color-warm-gray-50)]"
+                      style={{
+                        color: isActive
+                          ? "var(--color-brand)"
+                          : "var(--color-text-primary)",
+                      }}
+                    >
+                      <span
+                        className="flex h-4 w-4 items-center justify-center rounded-full border"
+                        style={{
+                          backgroundColor: isActive
+                            ? "var(--color-brand)"
+                            : "transparent",
+                          borderColor: isActive
+                            ? "var(--color-brand)"
+                            : "var(--color-warm-gray-200)",
+                        }}
+                      >
+                        {isActive && (
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: "#fff" }}
+                          />
+                        )}
+                      </span>
+                      <span className="truncate font-medium">{p.name}</span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

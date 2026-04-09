@@ -6,6 +6,19 @@ import { BookingBar } from "./BookingBar";
 import { BlockBar, type BlockRequest } from "./BlockBar";
 import type { Booking } from "./BookingDetailModal";
 
+/**
+ * Sort bookings so that same-day check-in/check-out pairs render correctly.
+ * The departing booking (check_out on this day) comes first so the arriving
+ * booking (check_in on this day) renders on top.
+ */
+function sortBookingsForRow(bookings: Booking[], year: number, month: number): Booking[] {
+  return [...bookings].sort((a, b) => {
+    const aStart = new Date(`${a.check_in}T00:00:00`).getTime();
+    const bStart = new Date(`${b.check_in}T00:00:00`).getTime();
+    return aStart - bStart;
+  });
+}
+
 type Property = { id: string; name: string };
 
 const WEEKDAY_ABBR = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -287,10 +300,25 @@ export function AvailabilityGrid({
 
           {/* Grid body */}
           {properties.map((p) => {
-            const propBookings = bookingsByProp.get(p.id) ?? [];
+            const propBookings = sortBookingsForRow(
+              bookingsByProp.get(p.id) ?? [],
+              year,
+              month,
+            );
             const propBlocks = blocksByProp.get(p.id) ?? [];
-            const pIdx = propIndex.get(p.id) ?? 0;
-            const c = colorFor(pIdx);
+
+            // Detect same-day overlaps: where one booking's check_out
+            // equals another's check_in. For those, we split the day
+            // visually so the departing guest gets the first half and
+            // the arriving guest gets the second half.
+            const checkOutDays = new Set(
+              propBookings.map((b) => b.check_out),
+            );
+            const overlapDays = new Set(
+              propBookings
+                .filter((b) => checkOutDays.has(b.check_in))
+                .map((b) => b.check_in),
+            );
 
             return (
               <div
@@ -342,14 +370,25 @@ export function AvailabilityGrid({
 
                 {/* Booking bars */}
                 {propBookings.map((b) => {
-                  const { startDay, endDay } = bookingDays(b);
+                  let { startDay, endDay } = bookingDays(b);
+
+                  // If this booking's check_in is a same-day turnover,
+                  // shift the start forward by half a column so it does
+                  // not fully overlap the departing booking.
+                  const checkInIsOverlap = overlapDays.has(b.check_in);
+                  // If this booking's check_out is a same-day turnover,
+                  // end it half a column early.
+                  const checkOutIsOverlap = overlapDays.has(b.check_out);
+
+                  const startOffset = checkInIsOverlap ? 0.5 : 0;
+                  const endOffset = checkOutIsOverlap ? -0.5 : 0;
+
                   return (
                     <BookingBar
                       key={b.id}
                       booking={b}
-                      color={c}
-                      startDay={startDay}
-                      endDay={endDay}
+                      startDay={startDay + startOffset}
+                      endDay={endDay + endOffset}
                       daysInMonth={daysInMonth}
                       colWidth={colWidth}
                       rowHeight={rowHeight}

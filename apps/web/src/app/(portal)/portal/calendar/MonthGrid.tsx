@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { colorFor, type PaletteEntry } from "./palette";
+import { colorFor, platformColor, type PaletteEntry } from "./palette";
+import { PlatformIcon } from "./PlatformIcon";
 import type { Booking } from "./BookingDetailModal";
 import type { BlockRequest } from "./BlockBar";
 
@@ -21,6 +22,7 @@ type BarSegment = {
   type: "booking" | "block";
   label: string;
   color: PaletteEntry;
+  source?: string;
   status?: string;
   startCol: number;
   span: number;
@@ -135,12 +137,12 @@ export function MonthGrid({
         const startCol = clampedStart - weekStartDay;
         const span = clampedEnd - clampedStart;
 
-        const pIdx = propIndex.get(b.property_id) ?? 0;
         bars.push({
           id: `booking-${b.id}-w${weekIdx}`,
           type: "booking",
           label: b.guest_name ?? "Booked",
-          color: colorFor(pIdx),
+          color: platformColor(b.source),
+          source: b.source,
           startCol,
           span,
           continues: bEnd > weekEndDay,
@@ -265,7 +267,7 @@ export function MonthGrid({
                     <button
                       type="button"
                       onClick={() => bar.booking && onSelectBooking(bar.booking)}
-                      className="flex w-full items-center truncate transition-opacity hover:opacity-80"
+                      className="flex w-full items-center gap-1 truncate transition-opacity hover:opacity-80"
                       style={{
                         height: 22,
                         backgroundColor: bar.color.bg,
@@ -280,7 +282,7 @@ export function MonthGrid({
                         borderLeft: bar.continued
                           ? "none"
                           : `2px solid ${bar.color.solid}`,
-                        paddingLeft: 6,
+                        paddingLeft: 4,
                         paddingRight: 4,
                         fontSize: 10,
                         fontWeight: 600,
@@ -289,6 +291,11 @@ export function MonthGrid({
                         cursor: "pointer",
                       }}
                     >
+                      {!bar.continued && bar.source && (
+                        <span style={{ flexShrink: 0, display: "flex" }}>
+                          <PlatformIcon source={bar.source} size={10} color={bar.color.solid} />
+                        </span>
+                      )}
                       {bar.span >= 2 ? bar.label : ""}
                     </button>
                   ) : (
