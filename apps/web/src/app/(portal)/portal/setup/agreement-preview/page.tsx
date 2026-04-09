@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
-  ArrowRight,
   CheckCircle,
-  FileText,
-  Handshake,
   CurrencyDollar,
+  Handshake,
   SignOut,
 } from "@phosphor-icons/react/dist/ssr";
+import { createClient } from "@/lib/supabase/server";
 import { StepShell } from "@/components/portal/setup/StepShell";
+import { AgreementPreviewClient } from "./AgreementPreviewClient";
 
 export const metadata: Metadata = { title: "Agreement Preview" };
+export const dynamic = "force-dynamic";
 
 const points = [
   {
@@ -56,7 +56,30 @@ const points = [
   },
 ];
 
-export default function AgreementPreviewPage() {
+export default async function AgreementPreviewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ property?: string }>;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const params = await searchParams;
+  const propertyId = params?.property ?? null;
+
+  let acknowledgedAt: string | null = null;
+  if (propertyId) {
+    const { data } = await supabase
+      .from("properties")
+      .select("agreement_acknowledged_at")
+      .eq("id", propertyId)
+      .single();
+    acknowledgedAt = data?.agreement_acknowledged_at ?? null;
+  }
+
   return (
     <StepShell
       track="property"
@@ -64,6 +87,7 @@ export default function AgreementPreviewPage() {
       title="Agreement preview"
       whyWeAsk="Before we get into the details, here is a plain-language summary of what the host agreement covers. No legal jargon."
       estimateMinutes={3}
+      lastUpdated={acknowledgedAt}
     >
       <div className="flex flex-col gap-6">
         {points.map((section) => (
@@ -104,33 +128,10 @@ export default function AgreementPreviewPage() {
           </div>
         ))}
 
-        <div
-          className="sticky bottom-4 z-10 flex items-center justify-between gap-4 rounded-2xl border px-5 py-4"
-          style={{
-            borderColor: "var(--color-warm-gray-200)",
-            backgroundColor: "var(--color-white)",
-            boxShadow: "0 14px 40px -18px rgba(15, 40, 75, 0.28)",
-          }}
-        >
-          <a
-            href="/legal/host-rental-agreement-v3.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-medium transition-colors"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            <FileText size={16} weight="duotone" />
-            Read the full agreement
-          </a>
-          <Link
-            href="/portal/setup/basics"
-            className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "var(--color-brand)" }}
-          >
-            This looks good, keep going
-            <ArrowRight size={14} weight="bold" />
-          </Link>
-        </div>
+        <AgreementPreviewClient
+          propertyId={propertyId ?? ""}
+          acknowledgedAt={acknowledgedAt}
+        />
       </div>
     </StepShell>
   );

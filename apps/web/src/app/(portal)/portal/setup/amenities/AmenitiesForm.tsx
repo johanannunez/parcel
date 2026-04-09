@@ -1,18 +1,33 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useActionState, useState, useMemo } from "react";
 import {
   CaretDown,
   CaretUp,
   CheckSquare,
   Square,
   MagnifyingGlass,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import { amenityCategories, type AmenityCategory } from "@/lib/wizard/amenities";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
+import { saveAmenities, type SaveAmenitiesState } from "./actions";
 
-export function AmenitiesForm() {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+const initialState: SaveAmenitiesState = {};
+
+export function AmenitiesForm({
+  propertyId,
+  savedAmenities,
+  isEditing,
+}: {
+  propertyId: string;
+  savedAmenities: string[];
+  isEditing: boolean;
+}) {
+  const [state, formAction, pending] = useActionState(saveAmenities, initialState);
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(savedAmenities),
+  );
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["essentials"]));
   const [search, setSearch] = useState("");
 
@@ -60,12 +75,28 @@ export function AmenitiesForm() {
   }, [search]);
 
   return (
-    <form
-      action="/portal/setup"
-      method="get"
-      className="flex flex-col gap-6"
-    >
-      <input type="hidden" name="just" value="amenities" />
+    <form action={formAction} className="flex flex-col gap-6">
+      <input type="hidden" name="property_id" value={propertyId} />
+      <input
+        type="hidden"
+        name="amenities"
+        value={JSON.stringify(Array.from(selected))}
+      />
+
+      {state.error ? (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm"
+          style={{
+            borderColor: "#f1c4c4",
+            backgroundColor: "#fdf4f4",
+            color: "#8a1f1f",
+          }}
+        >
+          <WarningCircle size={18} weight="fill" style={{ color: "#c0372a" }} />
+          <span>{state.error}</span>
+        </div>
+      ) : null}
 
       {/* Search */}
       <div
@@ -204,7 +235,7 @@ export function AmenitiesForm() {
         })}
       </div>
 
-      <StepSaveBar pending={false} />
+      <StepSaveBar pending={pending} isEditing={isEditing} />
     </form>
   );
 }

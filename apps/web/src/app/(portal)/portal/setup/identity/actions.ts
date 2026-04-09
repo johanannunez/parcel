@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
   legal_name: z.string().trim().min(1, "Full legal name is required."),
@@ -42,26 +43,88 @@ export async function saveIdentity(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You must be signed in." };
 
-  // TODO: Upload front_photo and back_photo to Supabase Storage
-  // once the PENDING migration creates the owner_kyc table and
-  // the property-photos bucket. For now, store the text fields only.
-  // The file uploads will be wired after migration runs.
-
-  // Store in profiles metadata for now (owner_kyc table pending)
   const v = parsed.data;
-  const kycData = {
+  const now = new Date().toISOString();
+
+  // Upload front and back photos if provided
+  let frontPhotoUrl: string | null = null;
+  let backPhotoUrl: string | null = null;
+
+  const frontPhoto = formData.get("front_photo") as File | null;
+  const backPhoto = formData.get("back_photo") as File | null;
+
+  if (frontPhoto && frontPhoto.size > 0) {
+    const ext = frontPhoto.name.split(".").pop() ?? "jpg";
+    const path = `${user.id}/kyc/front.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("property-photos")
+      .upload(path, frontPhoto, { upsert: true, contentType: frontPhoto.type });
+    if (!uploadErr) {
+      const { data: urlData } = supabase.storage
+        .from("property-photos")
+        .getPublicUrl(path);
+      frontPhotoUrl = urlData.publicUrl;
+    }
+  }
+
+  if (backPhoto && backPhoto.size > 0) {
+    const ext = backPhoto.name.split(".").pop() ?? "jpg";
+    const path = `${user.id}/kyc/back.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("property-photos")
+      .upload(path, backPhoto, { upsert: true, contentType: backPhoto.type });
+    if (!uploadErr) {
+      const { data: urlData } = supabase.storage
+        .from("property-photos")
+        .getPublicUrl(path);
+      backPhotoUrl = urlData.publicUrl;
+    }
+  }
+
+  // Upsert into owner_kyc table
+  const kycPayload = {
+    user_id: user.id,
     legal_name: v.legal_name,
     license_number: v.license_number,
-    issuing_state: v.issuing_state,
+    issuing_state: v.issuing_state.toUpperCase(),
     expiration_date: v.expiration_date,
     consent_given: true,
-    consent_at: new Date().toISOString(),
+    consent_at: now,
+    ...(frontPhotoUrl ? { front_photo_url: frontPhotoUrl } : {}),
+    ...(backPhotoUrl ? { back_photo_url: backPhotoUrl } : {}),
   };
 
-  // Once the PENDING migration creates owner_kyc, insert here.
-  // For now, log the data and proceed. The identity step will
-  // be fully functional after migration + types regen.
-  console.log("[identity] KYC data collected:", kycData);
+  // Try upsert (insert or update on conflict)
+  const { data: existing } = await supabase
+    .from("owner_kyc")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("owner_kyc")
+      .update(kycPayload)
+      .eq("user_id", user.id);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase
+      .from("owner_kyc")
+      .insert(kycPayload);
+    if (error) return { error: error.message };
+  }
+
+  await recordVersion(supabase, {
+    userId: user.id,
+    stepKey: "identity",
+    data: {
+      legal_name: v.legal_name,
+      license_number: v.license_number,
+      issuing_state: v.issuing_state,
+      expiration_date: v.expiration_date,
+      consent_given: true,
+    },
+  });
 
   revalidatePath("/portal/setup");
   redirect("/portal/setup?just=identity");

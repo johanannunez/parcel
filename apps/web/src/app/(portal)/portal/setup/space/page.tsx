@@ -22,7 +22,7 @@ export default async function SpacePage({
   if (propertyId) {
     const { data } = await supabase
       .from("properties")
-      .select("id, bedrooms, bathrooms, half_bathrooms, guest_capacity, square_feet, updated_at")
+      .select("id, bedrooms, bathrooms, half_bathrooms, guest_capacity, square_feet, bed_arrangements, updated_at")
       .eq("id", propertyId)
       .single();
     property = data;
@@ -44,6 +44,7 @@ export default async function SpacePage({
           bathrooms: property?.bathrooms?.toString() ?? "",
           guest_capacity: property?.guest_capacity?.toString() ?? "",
           square_feet: property?.square_feet?.toString() ?? "",
+          bed_arrangements: property?.bed_arrangements ?? null,
         }}
         isEditing={property?.bedrooms !== null && property?.bedrooms !== undefined}
       />

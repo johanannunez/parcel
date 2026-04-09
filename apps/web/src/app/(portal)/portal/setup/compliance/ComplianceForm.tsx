@@ -1,16 +1,48 @@
 "use client";
 
-import { useState, useId } from "react";
-import { UploadSimple } from "@phosphor-icons/react";
+import { useActionState, useState, useId } from "react";
+import { WarningCircle } from "@phosphor-icons/react";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
+import { saveCompliance, type SaveComplianceState } from "./actions";
 
-export function ComplianceForm() {
-  const [needsPermit, setNeedsPermit] = useState<"yes" | "no" | "unsure" | "">("");
-  const [hasHoa, setHasHoa] = useState<"yes" | "no" | "">("");
+type ComplianceInitial = {
+  needs_permit?: string;
+  permit_number?: string;
+  has_hoa?: string;
+  hoa_approval?: string;
+};
+
+const initialState: SaveComplianceState = {};
+
+export function ComplianceForm({
+  propertyId,
+  initial,
+  isEditing,
+}: {
+  propertyId: string;
+  initial: ComplianceInitial;
+  isEditing: boolean;
+}) {
+  const [state, formAction, pending] = useActionState(saveCompliance, initialState);
+  const [needsPermit, setNeedsPermit] = useState(initial.needs_permit ?? "");
+  const [hasHoa, setHasHoa] = useState(initial.has_hoa ?? "");
+
+  const err = (key: string) => state.fieldErrors?.[key];
 
   return (
-    <form action="/portal/setup" method="get" className="flex flex-col gap-8">
-      <input type="hidden" name="just" value="compliance" />
+    <form action={formAction} className="flex flex-col gap-8">
+      <input type="hidden" name="property_id" value={propertyId} />
+
+      {state.error ? (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm"
+          style={{ borderColor: "#f1c4c4", backgroundColor: "#fdf4f4", color: "#8a1f1f" }}
+        >
+          <WarningCircle size={18} weight="fill" style={{ color: "#c0372a" }} />
+          <span>{state.error}</span>
+        </div>
+      ) : null}
 
       <Section title="STR permit">
         <fieldset className="mb-3">
@@ -29,7 +61,7 @@ export function ComplianceForm() {
           </div>
         </fieldset>
         {needsPermit === "yes" && (
-          <TextInput name="permit_number" label="STR permit number" placeholder="e.g. STR-2024-001234" />
+          <TextInput name="permit_number" label="STR permit number" defaultValue={initial.permit_number} placeholder="e.g. STR-2024-001234" error={err("permit_number")} />
         )}
       </Section>
 
@@ -50,28 +82,24 @@ export function ComplianceForm() {
           </div>
         </fieldset>
         {hasHoa === "yes" && (
-          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            Please confirm that your HOA allows short-term rentals. We may ask for written approval later.
-          </p>
+          <div className="flex flex-col gap-3">
+            <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              Does your HOA allow short-term rentals?
+            </p>
+            <div className="flex gap-3">
+              {(["yes", "no", "pending"] as const).map((opt) => (
+                <label key={opt} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer hover:bg-[var(--color-warm-gray-50)]"
+                  style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}>
+                  <input type="radio" name="hoa_approval" value={opt} defaultChecked={initial.hoa_approval === opt} className="accent-[var(--color-brand)]" />
+                  {opt === "yes" ? "Yes, approved" : opt === "no" ? "No" : "Pending"}
+                </label>
+              ))}
+            </div>
+          </div>
         )}
       </Section>
 
-      <Section title="Insurance certificate">
-        <p className="mb-3 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Upload your homeowner insurance certificate that covers short-term rental activity. If you do not have one, we can help you get added to ours.
-        </p>
-        <label
-          className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 transition-colors hover:bg-[var(--color-warm-gray-50)]"
-          style={{ borderColor: "var(--color-warm-gray-200)" }}
-        >
-          <UploadSimple size={24} weight="duotone" style={{ color: "var(--color-text-tertiary)" }} />
-          <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>Upload certificate</span>
-          <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>PDF, JPG, or PNG</span>
-          <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" name="insurance_cert" />
-        </label>
-      </Section>
-
-      <StepSaveBar pending={false} />
+      <StepSaveBar pending={pending} isEditing={isEditing} />
     </form>
   );
 }
@@ -85,15 +113,21 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function TextInput({ name, label, placeholder }: { name: string; label: string; placeholder?: string }) {
+function TextInput({ name, label, placeholder, defaultValue, error }: { name: string; label: string; placeholder?: string; defaultValue?: string; error?: string }) {
   const id = useId();
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-[12px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>{label}</label>
-      <input id={id} name={name} placeholder={placeholder}
+      <input id={id} name={name} defaultValue={defaultValue} placeholder={placeholder}
+        aria-invalid={Boolean(error)}
         className="rounded-lg border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2"
-        style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)", color: "var(--color-text-primary)" }}
+        style={{ borderColor: error ? "#e3867a" : "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)", color: "var(--color-text-primary)" }}
       />
+      {error ? (
+        <p className="flex items-center gap-1 text-[12px] font-medium" style={{ color: "#c0372a" }}>
+          <WarningCircle size={12} weight="fill" />{error}
+        </p>
+      ) : null}
     </div>
   );
 }

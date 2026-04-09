@@ -11,6 +11,7 @@ type SpaceInitial = {
   bathrooms: string;
   guest_capacity: string;
   square_feet: string;
+  bed_arrangements: unknown;
 };
 
 type BedArrangement = {
@@ -31,6 +32,11 @@ export function SpaceForm({
   const [state, formAction, pending] = useActionState(saveSpace, initialState);
   const [bedrooms, setBedrooms] = useState(parseInt(initial.bedrooms) || 1);
   const [arrangements, setArrangements] = useState<BedArrangement[]>(() => {
+    // Hydrate from saved data if it exists
+    if (initial.bed_arrangements && Array.isArray(initial.bed_arrangements)) {
+      const saved = initial.bed_arrangements as BedArrangement[];
+      if (saved.length > 0 && saved[0].beds) return saved;
+    }
     const count = parseInt(initial.bedrooms) || 1;
     return Array.from({ length: count }, (_, i) => ({
       bedroom: i + 1,

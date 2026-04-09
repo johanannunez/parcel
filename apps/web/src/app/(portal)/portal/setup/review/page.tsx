@@ -4,27 +4,69 @@ import {
   CheckCircle,
   Circle,
   PencilSimple,
-  Rocket,
 } from "@phosphor-icons/react/dist/ssr";
+import { createClient } from "@/lib/supabase/server";
 import { StepShell } from "@/components/portal/setup/StepShell";
 import { setupSearchIndex } from "@/lib/wizard/search-index";
+import { ReviewSubmitBar } from "./ReviewClient";
 
 export const metadata: Metadata = { title: "Review and Submit" };
+export const dynamic = "force-dynamic";
 
-// Summary sections for the review page
-const sections = setupSearchIndex
-  .filter((s) => s.track === "property")
-  .map((s) => ({
-    key: s.stepKey,
-    label: s.label,
-    href: s.href,
-    // All are incomplete until migration + wiring
-    complete: false,
-  }));
+export default async function ReviewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ property?: string }>;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
 
-export default function ReviewPage() {
+  const params = await searchParams;
+  const propertyId = params?.property ?? null;
+
+  let property: Record<string, unknown> | null = null;
+  if (propertyId) {
+    const { data } = await supabase
+      .from("properties")
+      .select("id, name, property_type, address_line1, bedrooms, amenities, house_rules, wifi_details, financial_baseline, guidebook_spots, cleaning_choice, photos, compliance_details, agreement_acknowledged_at, setup_status, updated_at")
+      .eq("id", propertyId)
+      .single();
+    property = data as Record<string, unknown> | null;
+  }
+
+  // Check which property sections are complete
+  const completionMap: Record<string, boolean> = {
+    "agreement-preview": Boolean(property?.agreement_acknowledged_at),
+    "basics": Boolean(property?.property_type && property?.address_line1),
+    "address": Boolean(property?.address_line1),
+    "space": Boolean(property?.bedrooms),
+    "amenities": Boolean(property?.amenities && Array.isArray(property.amenities) && (property.amenities as unknown[]).length > 0),
+    "rules": Boolean(property?.house_rules),
+    "wifi": Boolean(property?.wifi_details),
+    "financial": Boolean(property?.financial_baseline),
+    "recommendations": Boolean(property?.guidebook_spots && Array.isArray(property.guidebook_spots) && (property.guidebook_spots as unknown[]).length > 0),
+    "cleaning": Boolean(property?.cleaning_choice),
+    "photos": Boolean(property?.photos && Array.isArray(property.photos) && (property.photos as unknown[]).length > 0),
+    "compliance": Boolean(property?.compliance_details),
+    "host-agreement": false, // BoldSign not wired yet
+    "review": false, // This is the current step
+  };
+
+  const sections = setupSearchIndex
+    .filter((s) => s.track === "property" && s.stepKey !== "review")
+    .map((s) => ({
+      key: s.stepKey,
+      label: s.label,
+      href: propertyId ? `${s.href}?property=${propertyId}` : s.href,
+      complete: completionMap[s.stepKey] ?? false,
+    }));
+
   const completedCount = sections.filter((s) => s.complete).length;
   const allComplete = completedCount === sections.length;
+  const isSubmitted = property?.setup_status === "pending_review";
 
   return (
     <StepShell
@@ -33,6 +75,7 @@ export default function ReviewPage() {
       title="Review and submit"
       whyWeAsk="One last look before we start preparing your listing. Make sure everything is accurate."
       estimateMinutes={3}
+      lastUpdated={property?.updated_at as string | null | undefined}
     >
       <div className="flex flex-col gap-6">
         {/* Section checklist */}
@@ -98,33 +141,13 @@ export default function ReviewPage() {
           </ul>
         </div>
 
-        {/* Submit button */}
-        <div
-          className="sticky bottom-4 z-10 flex items-center justify-between gap-4 rounded-2xl border px-5 py-4"
-          style={{
-            borderColor: "var(--color-warm-gray-200)",
-            backgroundColor: "var(--color-white)",
-            boxShadow: "0 14px 40px -18px rgba(15, 40, 75, 0.28)",
-          }}
-        >
-          <p
-            className="text-sm"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            {allComplete
-              ? "Everything looks good. Ready to submit!"
-              : "Complete all sections before submitting."}
-          </p>
-          <button
-            type="button"
-            disabled={!allComplete}
-            className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ backgroundColor: "var(--color-brand)" }}
-          >
-            <Rocket size={16} weight="fill" />
-            Submit for review
-          </button>
-        </div>
+        <ReviewSubmitBar
+          propertyId={propertyId ?? ""}
+          allComplete={allComplete}
+          completedCount={completedCount}
+          totalCount={sections.length}
+          isSubmitted={isSubmitted}
+        />
       </div>
     </StepShell>
   );

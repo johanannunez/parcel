@@ -43,6 +43,15 @@ export async function saveSpace(
   const v = parsed.data;
   const sqft = v.square_feet === "" || v.square_feet === undefined ? null : v.square_feet;
 
+  let bedArrangements = null;
+  if (v.bed_arrangements) {
+    try {
+      bedArrangements = JSON.parse(v.bed_arrangements);
+    } catch {
+      // Invalid JSON, ignore
+    }
+  }
+
   const { error } = await supabase
     .from("properties")
     .update({
@@ -50,6 +59,7 @@ export async function saveSpace(
       bathrooms: v.bathrooms,
       guest_capacity: v.guest_capacity,
       square_feet: sqft,
+      bed_arrangements: bedArrangements,
     })
     .eq("id", v.property_id)
     .eq("owner_id", user.id);
@@ -65,6 +75,7 @@ export async function saveSpace(
       bathrooms: v.bathrooms,
       guest_capacity: v.guest_capacity,
       square_feet: sqft,
+      bed_arrangements: bedArrangements,
     },
   });
 

@@ -5,6 +5,16 @@ import { WarningCircle, UploadSimple } from "@phosphor-icons/react";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
 import { saveIdentity, type SaveIdentityState } from "./actions";
 
+type IdentityInitial = {
+  legal_name: string;
+  license_number: string;
+  issuing_state: string;
+  expiration_date: string;
+  front_photo_url: string;
+  back_photo_url: string;
+  consent_given: boolean;
+};
+
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID",
   "IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS",
@@ -15,12 +25,18 @@ const US_STATES = [
 
 const initialState: SaveIdentityState = {};
 
-export function IdentityForm() {
+export function IdentityForm({
+  initial,
+  isEditing,
+}: {
+  initial: IdentityInitial;
+  isEditing: boolean;
+}) {
   const [state, formAction, pending] = useActionState(
     saveIdentity,
     initialState,
   );
-  const [consent, setConsent] = useState(false);
+  const [consent, setConsent] = useState(initial.consent_given);
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
 
@@ -48,6 +64,7 @@ export function IdentityForm() {
           <TextInput
             name="legal_name"
             label="Full legal name"
+            defaultValue={initial.legal_name}
             placeholder="As it appears on your license"
             required
             error={err("legal_name")}
@@ -55,6 +72,7 @@ export function IdentityForm() {
           <TextInput
             name="license_number"
             label="License number"
+            defaultValue={initial.license_number}
             required
             error={err("license_number")}
           />
@@ -69,6 +87,7 @@ export function IdentityForm() {
             </label>
             <select
               name="issuing_state"
+              defaultValue={initial.issuing_state}
               required
               className="rounded-lg border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
               style={{
@@ -85,6 +104,7 @@ export function IdentityForm() {
           <TextInput
             name="expiration_date"
             label="Expiration date"
+            defaultValue={initial.expiration_date}
             type="date"
             required
             error={err("expiration_date")}
@@ -99,12 +119,14 @@ export function IdentityForm() {
             label="Front of license"
             file={frontFile}
             onFileChange={setFrontFile}
+            existingUrl={initial.front_photo_url}
           />
           <FileUploadBox
             name="back_photo"
             label="Back of license"
             file={backFile}
             onFileChange={setBackFile}
+            existingUrl={initial.back_photo_url}
           />
         </div>
       </Section>
@@ -141,7 +163,7 @@ export function IdentityForm() {
         ) : null}
       </Section>
 
-      <StepSaveBar pending={pending} />
+      <StepSaveBar pending={pending} isEditing={isEditing} />
     </form>
   );
 }
@@ -232,37 +254,52 @@ function FileUploadBox({
   label,
   file,
   onFileChange,
+  existingUrl,
 }: {
   name: string;
   label: string;
   file: File | null;
   onFileChange: (f: File | null) => void;
+  existingUrl?: string;
 }) {
   const id = useId();
+  const hasExisting = existingUrl && !file;
+
   return (
     <div>
       <label
         htmlFor={id}
         className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 transition-colors hover:bg-[var(--color-warm-gray-50)]"
-        style={{ borderColor: "var(--color-warm-gray-200)" }}
+        style={{ borderColor: hasExisting ? "var(--color-brand)" : "var(--color-warm-gray-200)" }}
       >
-        <UploadSimple
-          size={24}
-          weight="duotone"
-          style={{ color: "var(--color-text-tertiary)" }}
-        />
-        <span
-          className="text-sm font-medium"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          {file ? file.name : label}
-        </span>
-        <span
-          className="text-xs"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          {file ? `${(file.size / 1024).toFixed(0)} KB` : "Click or drag to upload"}
-        </span>
+        {hasExisting ? (
+          <>
+            <img src={existingUrl} alt={label} className="h-16 w-auto rounded object-contain" />
+            <span className="text-xs font-medium" style={{ color: "var(--color-brand)" }}>
+              Uploaded. Click to replace.
+            </span>
+          </>
+        ) : (
+          <>
+            <UploadSimple
+              size={24}
+              weight="duotone"
+              style={{ color: "var(--color-text-tertiary)" }}
+            />
+            <span
+              className="text-sm font-medium"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              {file ? file.name : label}
+            </span>
+            <span
+              className="text-xs"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              {file ? `${(file.size / 1024).toFixed(0)} KB` : "Click or drag to upload"}
+            </span>
+          </>
+        )}
       </label>
       <input
         id={id}

@@ -1,15 +1,27 @@
 "use client";
 
-import { useState, useId } from "react";
-import { Plus, Trash } from "@phosphor-icons/react";
+import { useActionState, useState, useId } from "react";
+import { Plus, Trash, WarningCircle } from "@phosphor-icons/react";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
+import { saveRecommendations, type SaveRecommendationsState } from "./actions";
 
 type Spot = { name: string; why: string; address: string };
 
-export function RecommendationsForm() {
-  const [spots, setSpots] = useState<Spot[]>([
-    { name: "", why: "", address: "" },
-  ]);
+const initialState: SaveRecommendationsState = {};
+
+export function RecommendationsForm({
+  propertyId,
+  savedSpots,
+  isEditing,
+}: {
+  propertyId: string;
+  savedSpots: Spot[];
+  isEditing: boolean;
+}) {
+  const [state, formAction, pending] = useActionState(saveRecommendations, initialState);
+  const [spots, setSpots] = useState<Spot[]>(
+    savedSpots.length > 0 ? savedSpots : [{ name: "", why: "", address: "" }],
+  );
 
   function addSpot() {
     if (spots.length >= 5) return;
@@ -27,8 +39,20 @@ export function RecommendationsForm() {
   }
 
   return (
-    <form action="/portal/setup" method="get" className="flex flex-col gap-6">
-      <input type="hidden" name="just" value="recommendations" />
+    <form action={formAction} className="flex flex-col gap-6">
+      <input type="hidden" name="property_id" value={propertyId} />
+      <input type="hidden" name="spots" value={JSON.stringify(spots)} />
+
+      {state.error ? (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm"
+          style={{ borderColor: "#f1c4c4", backgroundColor: "#fdf4f4", color: "#8a1f1f" }}
+        >
+          <WarningCircle size={18} weight="fill" style={{ color: "#c0372a" }} />
+          <span>{state.error}</span>
+        </div>
+      ) : null}
 
       <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
         Add 3 to 5 of your favorite nearby spots. Restaurants, coffee shops,
@@ -50,7 +74,7 @@ export function RecommendationsForm() {
                 type="button"
                 onClick={() => removeSpot(idx)}
                 className="flex items-center gap-1 text-xs font-medium transition-colors"
-                style={{ color: "var(--color-error)" }}
+                style={{ color: "#c0372a" }}
               >
                 <Trash size={12} weight="bold" />
                 Remove
@@ -99,7 +123,7 @@ export function RecommendationsForm() {
         </button>
       )}
 
-      <StepSaveBar pending={false} />
+      <StepSaveBar pending={pending} isEditing={isEditing} />
     </form>
   );
 }

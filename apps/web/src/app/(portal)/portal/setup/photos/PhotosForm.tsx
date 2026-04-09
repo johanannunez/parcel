@@ -1,31 +1,100 @@
 "use client";
 
-import { useState } from "react";
-import { UploadSimple, Star, Trash, Images } from "@phosphor-icons/react";
+import { useActionState, useState, useCallback } from "react";
+import { UploadSimple, Star, Trash, Images, WarningCircle, Spinner } from "@phosphor-icons/react";
+import { createClient } from "@/lib/supabase/client";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
+import { savePhotos, type SavePhotosState } from "./actions";
 
-type PhotoItem = {
-  id: string;
-  file: File;
-  preview: string;
+type PhotoEntry = {
+  url: string;
   isPrimary: boolean;
 };
 
-export function PhotosForm() {
-  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+type LocalPhoto = PhotoEntry & {
+  id: string;
+  uploading?: boolean;
+  progress?: number;
+};
 
-  function handleFiles(files: FileList | null) {
+const initialState: SavePhotosState = {};
+
+export function PhotosForm({
+  propertyId,
+  userId,
+  savedPhotos,
+  isEditing,
+}: {
+  propertyId: string;
+  userId: string;
+  savedPhotos: PhotoEntry[];
+  isEditing: boolean;
+}) {
+  const [state, formAction, pending] = useActionState(savePhotos, initialState);
+  const [photos, setPhotos] = useState<LocalPhoto[]>(
+    savedPhotos.map((p, i) => ({
+      ...p,
+      id: `saved-${i}`,
+    })),
+  );
+
+  const uploadFile = useCallback(async (file: File): Promise<string | null> => {
+    if (!file.type.match(/^image\/(jpeg|png|webp)$/)) return null;
+    if (file.size > 10 * 1024 * 1024) return null;
+
+    const supabase = createClient();
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${userId}/${propertyId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("property-photos")
+      .upload(path, file, { contentType: file.type });
+
+    if (error) {
+      console.error("[photos] Upload failed:", error.message);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("property-photos")
+      .getPublicUrl(path);
+
+    return urlData.publicUrl;
+  }, [userId, propertyId]);
+
+  async function handleFiles(files: FileList | null) {
     if (!files) return;
     const remaining = 10 - photos.length;
-    const newPhotos: PhotoItem[] = Array.from(files)
-      .slice(0, remaining)
-      .map((file) => ({
-        id: crypto.randomUUID(),
-        file,
-        preview: URL.createObjectURL(file),
-        isPrimary: photos.length === 0,
-      }));
-    setPhotos((prev) => [...prev, ...newPhotos]);
+    const batch = Array.from(files).slice(0, remaining);
+
+    // Add placeholder entries
+    const placeholders: LocalPhoto[] = batch.map((file) => ({
+      id: crypto.randomUUID(),
+      url: URL.createObjectURL(file),
+      isPrimary: photos.length === 0 && batch.indexOf(file) === 0,
+      uploading: true,
+    }));
+
+    setPhotos((prev) => [...prev, ...placeholders]);
+
+    // Upload each file
+    for (let i = 0; i < batch.length; i++) {
+      const url = await uploadFile(batch[i]);
+      const placeholderId = placeholders[i].id;
+
+      if (url) {
+        setPhotos((prev) =>
+          prev.map((p) =>
+            p.id === placeholderId
+              ? { ...p, url, uploading: false }
+              : p,
+          ),
+        );
+      } else {
+        // Remove failed upload
+        setPhotos((prev) => prev.filter((p) => p.id !== placeholderId));
+      }
+    }
   }
 
   function removePhoto(id: string) {
@@ -44,25 +113,49 @@ export function PhotosForm() {
     );
   }
 
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    handleFiles(e.dataTransfer.files);
+  }
+
+  // Serialize for server action (only uploaded photos)
+  const serializedPhotos = photos
+    .filter((p) => !p.uploading)
+    .map((p) => ({ url: p.url, isPrimary: p.isPrimary }));
+
   return (
-    <form action="/portal/setup" method="get" className="flex flex-col gap-6">
-      <input type="hidden" name="just" value="photos" />
+    <form action={formAction} className="flex flex-col gap-6">
+      <input type="hidden" name="property_id" value={propertyId} />
+      <input type="hidden" name="photos" value={JSON.stringify(serializedPhotos)} />
+
+      {state.error ? (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm"
+          style={{ borderColor: "#f1c4c4", backgroundColor: "#fdf4f4", color: "#8a1f1f" }}
+        >
+          <WarningCircle size={18} weight="fill" style={{ color: "#c0372a" }} />
+          <span>{state.error}</span>
+        </div>
+      ) : null}
 
       {/* Drop zone */}
       <label
         className="flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-2 border-dashed p-10 transition-colors hover:bg-[var(--color-warm-gray-50)]"
         style={{ borderColor: "var(--color-warm-gray-200)" }}
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
       >
         <UploadSimple size={32} weight="duotone" style={{ color: "var(--color-text-tertiary)" }} />
         <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
           Drag and drop photos here, or click to browse
         </span>
         <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-          Up to 10 photos. JPG or PNG. {photos.length}/10 uploaded.
+          Up to 10 photos. JPG, PNG, or WebP. {photos.length}/10 uploaded.
         </span>
         <input
           type="file"
-          accept="image/jpeg,image/png"
+          accept="image/jpeg,image/png,image/webp"
           multiple
           className="hidden"
           onChange={(e) => handleFiles(e.target.files)}
@@ -82,33 +175,40 @@ export function PhotosForm() {
               }}
             >
               <img
-                src={photo.preview}
+                src={photo.url}
                 alt=""
                 className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-black/40 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                <button
-                  type="button"
-                  onClick={() => setPrimary(photo.id)}
-                  title="Set as primary"
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90"
-                >
-                  <Star
-                    size={14}
-                    weight={photo.isPrimary ? "fill" : "regular"}
-                    style={{ color: photo.isPrimary ? "#f59e0b" : "#666" }}
-                  />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removePhoto(photo.id)}
-                  title="Remove"
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90"
-                >
-                  <Trash size={14} style={{ color: "#dc2626" }} />
-                </button>
-              </div>
-              {photo.isPrimary && (
+              {photo.uploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+                  <Spinner size={24} className="animate-spin" style={{ color: "var(--color-brand)" }} />
+                </div>
+              )}
+              {!photo.uploading && (
+                <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-black/40 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => setPrimary(photo.id)}
+                    title="Set as primary"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90"
+                  >
+                    <Star
+                      size={14}
+                      weight={photo.isPrimary ? "fill" : "regular"}
+                      style={{ color: photo.isPrimary ? "#f59e0b" : "#666" }}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(photo.id)}
+                    title="Remove"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90"
+                  >
+                    <Trash size={14} style={{ color: "#dc2626" }} />
+                  </button>
+                </div>
+              )}
+              {photo.isPrimary && !photo.uploading && (
                 <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold"
                   style={{ color: "var(--color-brand)" }}>
                   Primary
@@ -126,7 +226,7 @@ export function PhotosForm() {
         </div>
       )}
 
-      <StepSaveBar pending={false} />
+      <StepSaveBar pending={pending} isEditing={isEditing} />
     </form>
   );
 }
