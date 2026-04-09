@@ -3,6 +3,7 @@
 import {
   useCallback,
   useMemo,
+  useRef,
   useState,
   useTransition,
   type ReactNode,
@@ -71,7 +72,7 @@ const INITIAL_DATA: WizardData = {
   guestPhone: "",
   needsLockCode: false,
   requestedLockCode: "",
-  wantsCleaning: false,
+  wantsCleaning: true,
   damageAcknowledged: false,
 };
 
@@ -507,20 +508,26 @@ function StepWhoStaying({ data, update, ownerName, ownerEmail }: { data: WizardD
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-xl border p-4" style={{ borderColor: "var(--color-warm-gray-200)" }}>
+      <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-warm-gray-200)" }}>
         <div className="flex items-center gap-3">
-          <Lock size={18} weight="duotone" style={{ color: "var(--color-text-secondary)" }} />
-          <div>
+          <Lock size={18} weight="duotone" style={{ color: "var(--color-text-secondary)", flexShrink: 0 }} />
+          <div className="flex-1">
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>Need a new smart lock code?</p>
             <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>If you already have your personal code, select No.</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          {[false, true].map((val) => (
-            <button key={String(val)} type="button" onClick={() => update({ needsLockCode: val })} className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors" style={{ backgroundColor: data.needsLockCode === val ? "rgba(2, 170, 235, 0.08)" : "var(--color-white)", borderColor: data.needsLockCode === val ? "var(--color-brand)" : "var(--color-warm-gray-200)", color: data.needsLockCode === val ? "var(--color-brand)" : "var(--color-text-primary)" }}>{val ? "Yes" : "No"}</button>
-          ))}
+        <div className="mt-3 flex items-center gap-3">
+          <div className="flex gap-1.5">
+            {[false, true].map((val) => (
+              <button key={String(val)} type="button" onClick={() => update({ needsLockCode: val })} className="rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-colors" style={{ backgroundColor: data.needsLockCode === val ? "rgba(2, 170, 235, 0.08)" : "var(--color-white)", borderColor: data.needsLockCode === val ? "var(--color-brand)" : "var(--color-warm-gray-200)", color: data.needsLockCode === val ? "var(--color-brand)" : "var(--color-text-primary)" }}>{val ? "Yes" : "No"}</button>
+            ))}
+          </div>
+          {data.needsLockCode && (
+            <div className="flex items-center gap-1">
+              <PinDigits value={data.requestedLockCode} onChange={(v) => update({ requestedLockCode: v })} />
+            </div>
+          )}
         </div>
-        {data.needsLockCode && <TextInput label="Preferred code" value={data.requestedLockCode} onChange={(v) => update({ requestedLockCode: v })} placeholder="e.g. 1234" />}
       </div>
     </div>
   );
@@ -573,6 +580,12 @@ function StepCleaning({ data, update, bedrooms, fee }: { data: WizardData; updat
 function StepReview({ data, property, ownerName, ownerEmail, nights, fee, error }: { data: WizardData; property: Property | undefined; ownerName: string; ownerEmail: string; nights: number; fee: number; error: string | null }) {
   const stayingName = data.isOwnerStaying ? ownerName : data.guestName;
   const cleaningTotal = data.wantsCleaning ? fee : 0;
+  const guestParts = [
+    data.adults > 0 ? `${data.adults} adult${data.adults !== 1 ? "s" : ""}` : null,
+    data.children > 0 ? `${data.children} child${data.children !== 1 ? "ren" : ""}` : null,
+    data.pets > 0 ? `${data.pets} pet${data.pets !== 1 ? "s" : ""}` : null,
+  ].filter(Boolean);
+  const guestSummary = guestParts.length > 0 ? guestParts.join(", ") : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -584,12 +597,24 @@ function StepReview({ data, property, ownerName, ownerEmail, nights, fee, error 
       <ReviewCard title="Stay details">
         <ReviewRow icon={<House size={14} weight="duotone" />} label={property?.name ?? "Property"} sub={property?.address} />
         <ReviewRow icon={<MapPin size={14} weight="duotone" />} label={`${data.startDate ? fmtDate(data.startDate) : ""} to ${data.endDate ? fmtDate(data.endDate) : ""}`} sub={`${nights} ${nights === 1 ? "night" : "nights"} · Check-in ${data.checkInTime}, Check-out ${data.checkOutTime}`} />
-        <ReviewRow icon={<User size={14} weight="duotone" />} label={`${stayingName}${data.adults > 0 ? ` · ${data.adults} adult${data.adults !== 1 ? "s" : ""}` : ""}`} sub={data.reason} />
+        <ReviewRow icon={<User size={14} weight="duotone" />} label={stayingName} sub={[data.reason, guestSummary].filter(Boolean).join(" · ")} />
+        {!data.isOwnerStaying && data.guestEmail && (
+          <ReviewRow icon={<User size={14} weight="duotone" />} label={data.guestEmail} sub={data.guestPhone || null} />
+        )}
+        {data.notes && (
+          <ReviewRow icon={<House size={14} weight="duotone" />} label="Notes" sub={data.notes} />
+        )}
       </ReviewCard>
 
       {(data.needsLockCode || data.wantsCleaning) && (
         <ReviewCard title="Extras">
-          {data.needsLockCode && <ReviewRow icon={<Lock size={14} weight="duotone" />} label="New lock code requested" sub={data.requestedLockCode || "We will set one for you"} />}
+          {data.needsLockCode && (
+            <ReviewRow
+              icon={<Lock size={14} weight="duotone" />}
+              label="New lock code requested"
+              sub={data.requestedLockCode ? `Code: ${data.requestedLockCode.split("").join(" ")}` : "We will set one for you"}
+            />
+          )}
           {data.wantsCleaning && <ReviewRow icon={<Broom size={14} weight="duotone" />} label="Cleaning scheduled" sub={`${property?.bedrooms ?? 1}-bedroom · $${fee}`} />}
         </ReviewCard>
       )}
@@ -597,7 +622,7 @@ function StepReview({ data, property, ownerName, ownerEmail, nights, fee, error 
       <div className="rounded-xl border p-4" style={{ borderColor: "var(--color-warm-gray-200)" }}>
         <div className="flex items-center justify-between text-sm" style={{ color: "var(--color-text-secondary)" }}>
           <span>Stay total</span>
-          <span className="font-medium" style={{ color: "var(--color-text-primary)" }}>$0</span>
+          <span className="font-medium" style={{ color: "var(--color-text-primary)" }}>Free (no charge)</span>
         </div>
         {data.wantsCleaning && (
           <div className="mt-2 flex items-center justify-between text-sm" style={{ color: "var(--color-text-secondary)" }}>
@@ -653,6 +678,58 @@ function PillGroup({ options, value, onChange }: { options: string[]; value: str
     <div className="flex flex-wrap gap-1.5">
       {options.map((opt) => (
         <button key={opt} type="button" onClick={() => onChange(opt)} className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors" style={{ backgroundColor: value === opt ? "rgba(2, 170, 235, 0.08)" : "var(--color-white)", borderColor: value === opt ? "var(--color-brand)" : "var(--color-warm-gray-200)", color: value === opt ? "var(--color-brand)" : "var(--color-text-primary)" }}>{opt}</button>
+      ))}
+    </div>
+  );
+}
+
+function PinDigits({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const digits = value.padEnd(4, "").slice(0, 4).split("");
+  const refs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
+
+  const handleChange = (idx: number, char: string) => {
+    if (char && !/^\d$/.test(char)) return;
+    const next = [...digits];
+    next[idx] = char;
+    onChange(next.join(""));
+    if (char && idx < 3) refs[idx + 1].current?.focus();
+  };
+
+  const handleKeyDown = (idx: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !digits[idx] && idx > 0) {
+      refs[idx - 1].current?.focus();
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      {[0, 1, 2, 3].map((idx) => (
+        <input
+          key={idx}
+          ref={refs[idx]}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digits[idx] || ""}
+          onChange={(e) => handleChange(idx, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(idx, e)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border text-center text-sm font-semibold tabular-nums outline-none focus:ring-2"
+          style={{
+            backgroundColor: digits[idx]
+              ? "var(--color-white)"
+              : "var(--color-warm-gray-50)",
+            borderColor: digits[idx]
+              ? "var(--color-brand)"
+              : "var(--color-warm-gray-200)",
+            color: "var(--color-text-primary)",
+          }}
+          placeholder="–"
+        />
       ))}
     </div>
   );
