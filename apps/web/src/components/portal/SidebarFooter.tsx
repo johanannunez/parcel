@@ -34,7 +34,10 @@ export function SidebarFooter({
       style={{ borderColor: "var(--color-warm-gray-200)" }}
     >
       {/* Identity row */}
-      <div className="flex items-center gap-2.5 px-3 pb-1.5 pt-2.5">
+      <Link
+        href="/portal/account"
+        className="flex items-center gap-2.5 rounded-lg px-3 pb-1.5 pt-2.5 transition-colors hover:bg-[var(--color-warm-gray-100)]"
+      >
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -66,7 +69,7 @@ export function SidebarFooter({
             {userEmail}
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Action rows */}
       <div className="pt-1 pb-1">

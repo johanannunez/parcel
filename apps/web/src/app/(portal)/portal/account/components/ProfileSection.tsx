@@ -130,7 +130,7 @@ export default function ProfileSection({ profile }: Props) {
         <form action={formAction}>
           {/* Avatar + Member Since */}
           <div className="mb-6 flex items-center gap-4">
-            <div className="group relative">
+            <div className="group relative cursor-pointer">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
