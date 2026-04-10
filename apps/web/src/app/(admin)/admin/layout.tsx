@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminSidebar, AdminIconRail, AdminTopBar } from "@/components/admin/AdminSidebar";
 import { AdminBottomNav } from "@/components/admin/AdminBottomNav";
 import { AdminSignOutButton } from "@/components/admin/AdminSignOutButton";
+import { PullToRefresh } from "@/components/portal/PullToRefresh";
 
 /**
  * Admin layout with dark vertical sidebar.
@@ -61,7 +62,9 @@ export default async function AdminLayout({
 
       <div className="flex min-w-0 flex-1 flex-col" style={{ backgroundColor: "var(--color-off-white)", color: "var(--color-text-primary)" }}>
         <AdminTopBar userName={firstName} initials={initials} pendingBlockCount={pendingBlockCount ?? 0} />
-        <main className="flex-1 pb-20 md:pb-0">{children}</main>
+        <main className="flex-1 pb-20 md:pb-0">
+          <PullToRefresh>{children}</PullToRefresh>
+        </main>
       </div>
 
       <AdminBottomNav

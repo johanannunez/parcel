@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { InviteOwnerButton } from "./InviteOwnerButton";
 
 export default async function OwnerHubLayout({
   children,
@@ -12,22 +13,30 @@ export default async function OwnerHubLayout({
   const { ownerId } = await params;
   const supabase = await createClient();
 
-  const { data: owner } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, phone, created_at, onboarding_completed_at")
-    .eq("id", ownerId)
-    .eq("role", "owner")
-    .single();
+  const [{ data: owner }, { count: primaryCount }, { count: coOwnedCount }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, full_name, email, phone, created_at, onboarding_completed_at")
+        .eq("id", ownerId)
+        .eq("role", "owner")
+        .single(),
+      supabase
+        .from("properties")
+        .select("*", { count: "exact", head: true })
+        .eq("owner_id", ownerId),
+      (supabase as any)
+        .from("property_owners")
+        .select("*", { count: "exact", head: true })
+        .eq("owner_id", ownerId),
+    ]);
 
   if (!owner) {
     notFound();
   }
 
-  const { count: propertyCount } = await supabase
-    .from("properties")
-    .select("*", { count: "exact", head: true })
-    .eq("owner_id", ownerId);
-
+  const propertyCount = Math.max(primaryCount ?? 0, coOwnedCount ?? 0);
+  const isPending = owner.email.endsWith("@pending.theparcelco.com");
   const displayName = owner.full_name?.trim() || owner.email;
   const memberSince = new Date(owner.created_at).toLocaleDateString("en-US", {
     month: "short",
@@ -51,13 +60,22 @@ export default async function OwnerHubLayout({
             {buildInitials(displayName)}
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-              {displayName}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+                {displayName}
+              </h1>
+              {isPending ? (
+                <InviteOwnerButton ownerId={ownerId} ownerName={displayName} />
+              ) : null}
+            </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-              <span>{owner.email}</span>
+              {isPending ? (
+                <span style={{ color: "var(--color-text-tertiary)" }}>No email on file</span>
+              ) : (
+                <span>{owner.email}</span>
+              )}
               {owner.phone ? <span>{owner.phone}</span> : null}
-              <span>Joined {memberSince}</span>
+              <span>Added {memberSince}</span>
               <span>
                 {propertyCount === 0
                   ? "No properties"
@@ -65,7 +83,17 @@ export default async function OwnerHubLayout({
                     ? "1 property"
                     : `${propertyCount} properties`}
               </span>
-              {owner.onboarding_completed_at ? (
+              {isPending ? (
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  style={{
+                    backgroundColor: "rgba(118, 113, 112, 0.15)",
+                    color: "var(--color-text-tertiary)",
+                  }}
+                >
+                  Not invited
+                </span>
+              ) : owner.onboarding_completed_at ? (
                 <span
                   className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
                   style={{

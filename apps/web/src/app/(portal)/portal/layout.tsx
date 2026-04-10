@@ -7,6 +7,7 @@ import {
   PortalTopBar,
 } from "@/components/portal/PortalSidebar";
 import { PortalBottomNav } from "@/components/portal/PortalBottomNav";
+import { PullToRefresh } from "@/components/portal/PullToRefresh";
 import { CommandPalette } from "@/components/portal/CommandPalette";
 import { SignOutButton } from "./SignOutButton";
 
@@ -86,9 +87,11 @@ export default async function PortalLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <PortalTopBar userName={firstName} initials={initials} />
         <main className="flex-1 pb-20 md:pb-0">
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
-            {children}
-          </div>
+          <PullToRefresh>
+            <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
+              {children}
+            </div>
+          </PullToRefresh>
         </main>
         <CommandPalette />
       </div>

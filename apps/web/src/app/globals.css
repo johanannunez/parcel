@@ -315,3 +315,9 @@ input[type="button"] {
   background: rgba(230, 100, 80, 0.10);
   color: #F0836E;
 }
+
+/* ─── Pull-to-Refresh Spinner ─── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

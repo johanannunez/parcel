@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import Script from "next/script";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -19,8 +19,21 @@ const generalSans = localFont({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#1b77be",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://theparcelco.com"),
+  manifest: "/manifest.json",
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+  },
   title: {
     default: "The Parcel Company | Vacation Rentals & Furnished Residences",
     template: "%s | The Parcel Company",
