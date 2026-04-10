@@ -19,12 +19,15 @@ const US_TIMEZONES: { value: string; label: string; short: string }[] = [
   { value: "Pacific/Honolulu", label: "Hawaii", short: "HT" },
 ];
 
-const DATE_FORMATS: { value: string; label: string; example: string }[] = [
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "" },
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "" },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "" },
-  { value: "MMM D, YYYY", label: "Apr 10, 2026", example: "" },
-  { value: "D MMM YYYY", label: "10 Apr 2026", example: "" },
+const DATE_FORMATS: { value: string; label: string }[] = [
+  { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
+  { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
+  { value: "MMM D, YYYY", label: "Apr 10, 2026" },
+  { value: "D MMM YYYY", label: "10 Apr 2026" },
+  { value: "ddd, MMM D, YYYY", label: "Thu, Apr 10, 2026" },
+  { value: "dddd, MMM D, YYYY", label: "Thursday, Apr 10, 2026" },
+  { value: "ddd MM/DD/YYYY", label: "Thu 04/10/2026" },
 ];
 
 function getDefaultTimezone(): string {
@@ -43,6 +46,7 @@ function formatTimeInZone(tz: string): string {
       timeZone: tz,
       hour: "numeric",
       minute: "2-digit",
+      second: "2-digit",
       hour12: true,
     }).format(new Date());
   } catch {
@@ -71,6 +75,8 @@ function formatDateExample(format: string): string {
   const d = String(now.getDate()).padStart(2, "0");
   const y = String(now.getFullYear());
   const monthName = now.toLocaleString("en-US", { month: "short" });
+  const dayShort = now.toLocaleString("en-US", { weekday: "short" });
+  const dayLong = now.toLocaleString("en-US", { weekday: "long" });
 
   switch (format) {
     case "MM/DD/YYYY": return `${m}/${d}/${y}`;
@@ -78,6 +84,9 @@ function formatDateExample(format: string): string {
     case "YYYY-MM-DD": return `${y}-${m}-${d}`;
     case "MMM D, YYYY": return `${monthName} ${now.getDate()}, ${y}`;
     case "D MMM YYYY": return `${now.getDate()} ${monthName} ${y}`;
+    case "ddd, MMM D, YYYY": return `${dayShort}, ${monthName} ${now.getDate()}, ${y}`;
+    case "dddd, MMM D, YYYY": return `${dayLong}, ${monthName} ${now.getDate()}, ${y}`;
+    case "ddd MM/DD/YYYY": return `${dayShort} ${m}/${d}/${y}`;
     default: return `${m}/${d}/${y}`;
   }
 }
@@ -103,12 +112,12 @@ export function RegionSection({ timezone }: { timezone: string }) {
     setLoaded(true);
   }, []);
 
-  // Update the live clock every 30 seconds
+  // Update the live clock every second
   useEffect(() => {
     if (!loaded) return;
     const update = () => setCurrentTime(formatTimeInZone(prefs.timezone));
     update();
-    const interval = setInterval(update, 30000);
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [loaded, prefs.timezone]);
 
