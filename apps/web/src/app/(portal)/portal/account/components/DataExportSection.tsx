@@ -4,8 +4,6 @@ import { useState, useTransition } from "react";
 import {
   DownloadSimple,
   Buildings,
-  CalendarCheck,
-  CurrencyDollar,
   CalendarX,
   CheckCircle,
   Info,
@@ -13,10 +11,8 @@ import {
 import { exportUserData } from "../actions";
 
 const INCLUDED_DATA = [
-  { label: "Properties", icon: Buildings },
-  { label: "Bookings", icon: CalendarCheck },
-  { label: "Payouts", icon: CurrencyDollar },
-  { label: "Calendar blocks", icon: CalendarX },
+  { label: "Properties", description: "Addresses, details, and status", icon: Buildings },
+  { label: "Calendar blocks", description: "Total count and date ranges", icon: CalendarX },
 ] as const;
 
 export function DataExportSection() {
@@ -56,7 +52,7 @@ export function DataExportSection() {
         className="mb-6 text-sm"
         style={{ color: "var(--color-text-secondary)" }}
       >
-        Download a copy of all your data.
+        Download a copy of your property data.
       </p>
 
       <div
@@ -75,26 +71,34 @@ export function DataExportSection() {
           Included in your export
         </p>
 
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
           {INCLUDED_DATA.map((item) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.label}
-                className="flex items-center gap-2.5 rounded-lg px-3 py-2.5"
+                className="flex items-center gap-3 rounded-lg px-4 py-3"
                 style={{ backgroundColor: "var(--color-warm-gray-50)" }}
               >
                 <Icon
-                  size={16}
+                  size={18}
                   weight="duotone"
                   style={{ color: "var(--color-brand)" }}
                 />
-                <span
-                  className="text-sm font-medium"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  {item.label}
-                </span>
+                <div>
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    {item.label}
+                  </span>
+                  <p
+                    className="text-xs"
+                    style={{ color: "var(--color-text-tertiary)" }}
+                  >
+                    {item.description}
+                  </p>
+                </div>
               </div>
             );
           })}

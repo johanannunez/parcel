@@ -36,6 +36,24 @@ function getInitials(name: string | null, email: string): string {
   return email[0]?.toUpperCase() ?? "?"
 }
 
+/**
+ * Parse "First M. Last" or "First Last" into parts.
+ * Handles: "Johan A Nunez", "Johan A. Nunez", "Johan Nunez", "Johan"
+ */
+function parseName(fullName: string | null): { first: string; middle: string; last: string } {
+  if (!fullName) return { first: "", middle: "", last: "" }
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length === 1) return { first: parts[0], middle: "", last: "" }
+  if (parts.length === 2) return { first: parts[0], middle: "", last: parts[1] }
+  // 3+ parts: check if middle is a single letter (with or without period)
+  const middlePart = parts[1].replace(".", "")
+  if (middlePart.length === 1) {
+    return { first: parts[0], middle: middlePart.toUpperCase(), last: parts.slice(2).join(" ") }
+  }
+  // Otherwise treat everything between first and last as middle
+  return { first: parts[0], middle: "", last: parts.slice(1).join(" ") }
+}
+
 function formatMemberSince(dateStr: string): string {
   const date = new Date(dateStr)
   return date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
@@ -304,28 +322,75 @@ export default function ProfileSection({ profile }: Props) {
             />
           ) : null}
 
-          {/* Full Name */}
-          <div className="mb-5">
-            <label
-              htmlFor="full_name"
-              className="mb-1.5 block text-sm font-medium"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              Full name
-            </label>
-            <input
-              id="full_name"
-              name="full_name"
-              type="text"
-              required
-              defaultValue={profile.full_name ?? ""}
-              className="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
-              style={{
-                borderColor: "var(--color-warm-gray-200)",
-                color: "var(--color-text-primary)",
-                backgroundColor: "var(--color-white)",
-              }}
-            />
+          {/* Name Fields: First, Middle Initial, Last */}
+          <div className="mb-5 grid grid-cols-[1fr_80px_1fr] gap-3">
+            <div>
+              <label
+                htmlFor="first_name"
+                className="mb-1.5 block text-sm font-medium"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                First name <span style={{ color: "var(--color-error)" }}>*</span>
+              </label>
+              <input
+                id="first_name"
+                name="first_name"
+                type="text"
+                required
+                defaultValue={parseName(profile.full_name).first}
+                className="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
+                style={{
+                  borderColor: "var(--color-warm-gray-200)",
+                  color: "var(--color-text-primary)",
+                  backgroundColor: "var(--color-white)",
+                }}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="middle_initial"
+                className="mb-1.5 block text-sm font-medium"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                M.I.
+              </label>
+              <input
+                id="middle_initial"
+                name="middle_initial"
+                type="text"
+                maxLength={1}
+                defaultValue={parseName(profile.full_name).middle}
+                placeholder=""
+                className="w-full rounded-lg border px-3.5 py-2.5 text-center text-sm uppercase outline-none transition-colors focus:border-[var(--color-brand)]"
+                style={{
+                  borderColor: "var(--color-warm-gray-200)",
+                  color: "var(--color-text-primary)",
+                  backgroundColor: "var(--color-white)",
+                }}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="last_name"
+                className="mb-1.5 block text-sm font-medium"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                Last name <span style={{ color: "var(--color-error)" }}>*</span>
+              </label>
+              <input
+                id="last_name"
+                name="last_name"
+                type="text"
+                required
+                defaultValue={parseName(profile.full_name).last}
+                className="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
+                style={{
+                  borderColor: "var(--color-warm-gray-200)",
+                  color: "var(--color-text-primary)",
+                  backgroundColor: "var(--color-white)",
+                }}
+              />
+            </div>
           </div>
 
           {/* Preferred Name */}

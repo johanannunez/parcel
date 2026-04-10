@@ -22,14 +22,21 @@ export async function updateProfile(
     return { ok: false, message: "You must be signed in to update your profile." };
   }
 
-  const fullName = formData.get("full_name")?.toString().trim();
+  const firstName = formData.get("first_name")?.toString().trim();
+  const middleInitial = formData.get("middle_initial")?.toString().trim().charAt(0).toUpperCase() || "";
+  const lastName = formData.get("last_name")?.toString().trim();
   const preferredName = formData.get("preferred_name")?.toString().trim() || null;
   const phone = formData.get("phone")?.toString().trim() || null;
   const contactMethod = formData.get("contact_method")?.toString().trim() || null;
 
-  if (!fullName) {
-    return { ok: false, message: "Full name is required." };
+  if (!firstName || !lastName) {
+    return { ok: false, message: "First name and last name are required." };
   }
+
+  // Combine into "First M. Last" or "First Last"
+  const fullName = middleInitial
+    ? `${firstName} ${middleInitial}. ${lastName}`
+    : `${firstName} ${lastName}`;
 
   const { error } = await supabase
     .from("profiles")
@@ -225,29 +232,29 @@ export async function exportUserData(): Promise<{
   }
 
   const [profileResult, propertiesResult, blockRequestsResult] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
-    supabase.from("properties").select("*").eq("owner_id", user.id),
-    supabase.from("block_requests").select("*").eq("owner_id", user.id),
+    supabase.from("profiles").select("full_name, email, phone, preferred_name, contact_method, created_at").eq("id", user.id).single(),
+    supabase.from("properties").select("name, property_type, address_line1, address_line2, city, state, postal_code, bedrooms, bathrooms, guest_capacity, active, created_at").eq("owner_id", user.id),
+    supabase.from("block_requests").select("id, start_date, end_date, status, created_at").eq("owner_id", user.id),
   ]);
 
-  // Fetch bookings and payouts through the user's properties
-  const propertyIds = (propertiesResult.data ?? []).map((p) => p.id);
-
-  const [bookingsResult, payoutsResult] =
-    propertyIds.length > 0
-      ? await Promise.all([
-          supabase.from("bookings").select("*").in("property_id", propertyIds),
-          supabase.from("payouts").select("*").in("property_id", propertyIds),
-        ])
-      : [{ data: [] }, { data: [] }];
+  const blocks = blockRequestsResult.data ?? [];
 
   const exportData = {
     exported_at: new Date().toISOString(),
     profile: profileResult.data,
     properties: propertiesResult.data ?? [],
-    bookings: bookingsResult.data ?? [],
-    payouts: payoutsResult.data ?? [],
-    block_requests: blockRequestsResult.data ?? [],
+    calendar_blocks: {
+      total_count: blocks.length,
+      approved: blocks.filter((b) => b.status === "approved").length,
+      pending: blocks.filter((b) => b.status === "pending").length,
+      denied: blocks.filter((b) => b.status === "denied").length,
+      entries: blocks.map((b) => ({
+        start_date: b.start_date,
+        end_date: b.end_date,
+        status: b.status,
+        created_at: b.created_at,
+      })),
+    },
   };
 
   return { ok: true, data: JSON.stringify(exportData, null, 2) };

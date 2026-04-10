@@ -5,15 +5,15 @@ import { useCallback, useEffect, useState } from "react";
 const STORAGE_KEY = "parcel-notification-prefs";
 
 type Preferences = {
-  emailUpdates: boolean;
-  calendarReminders: boolean;
-  monthlyReports: boolean;
+  portalMessages: boolean;
+  announcements: boolean;
+  accountAlerts: boolean;
 };
 
 const DEFAULT_PREFS: Preferences = {
-  emailUpdates: true,
-  calendarReminders: true,
-  monthlyReports: false,
+  portalMessages: true,
+  announcements: true,
+  accountAlerts: true,
 };
 
 const TOGGLE_ITEMS: {
@@ -22,22 +22,22 @@ const TOGGLE_ITEMS: {
   description: string;
 }[] = [
   {
-    key: "emailUpdates",
-    label: "Email updates",
+    key: "portalMessages",
+    label: "Portal messages",
     description:
-      "Receive booking confirmations and payout notifications.",
+      "Get notified when The Parcel Company sends you a new message.",
   },
   {
-    key: "calendarReminders",
-    label: "Calendar reminders",
+    key: "announcements",
+    label: "Announcements",
     description:
-      "Get notified before guest check-ins and check-outs.",
+      "Receive system-wide updates, policy changes, and important notices.",
   },
   {
-    key: "monthlyReports",
-    label: "Monthly reports",
+    key: "accountAlerts",
+    label: "Account alerts",
     description:
-      "Receive monthly performance summary emails.",
+      "Security notifications like new sign-ins and password changes.",
   },
 ];
 
