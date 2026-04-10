@@ -118,7 +118,7 @@ export function StepSaveBar({
 }) {
   return (
     <div
-      className="sticky bottom-4 z-10 mt-2 flex items-center justify-between gap-4 rounded-2xl border px-5 py-4"
+      className="sticky bottom-20 z-10 mt-2 flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 sm:px-5 sm:py-4 lg:bottom-4"
       style={{
         borderColor: "var(--color-warm-gray-200)",
         backgroundColor: "var(--color-white)",

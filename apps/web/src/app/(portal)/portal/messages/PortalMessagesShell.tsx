@@ -11,6 +11,7 @@ import {
   PaperPlaneTilt,
   Bell,
   ArrowRight,
+  ArrowLeft,
   X,
 } from "@phosphor-icons/react";
 import { SafeHtml } from "@/components/messages/SafeHtml";
@@ -305,13 +306,15 @@ export function PortalMessagesShell({
         className="flex overflow-hidden rounded-xl border"
         style={{
           borderColor: "var(--color-warm-gray-200)",
-          height: visibleAlerts.length > 0 ? "calc(100vh - 340px)" : "calc(100vh - 180px)",
+          height: visibleAlerts.length > 0 ? "calc(100dvh - 340px)" : "calc(100dvh - 180px)",
           minHeight: "400px",
         }}
       >
         {/* Left: Conversation List */}
         <div
-          className="flex w-[300px] shrink-0 flex-col border-r"
+          className={`flex shrink-0 flex-col border-r ${
+            selectedConvId ? "hidden md:flex" : "flex"
+          } w-full md:w-[300px]`}
           style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-warm-gray-50)" }}
         >
           <div className="border-b px-3 py-3" style={{ borderColor: "var(--color-warm-gray-200)" }}>
@@ -417,7 +420,12 @@ export function PortalMessagesShell({
         </div>
 
         {/* Right: Chat Thread */}
-        <div className="flex min-w-0 flex-1 flex-col" style={{ backgroundColor: "var(--color-white)" }}>
+        <div
+          className={`flex min-w-0 flex-1 flex-col ${
+            selectedConvId ? "flex" : "hidden md:flex"
+          }`}
+          style={{ backgroundColor: "var(--color-white)" }}
+        >
           {!selectedConvId ? (
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
@@ -434,9 +442,19 @@ export function PortalMessagesShell({
             <>
               {/* Chat Header */}
               <div
-                className="flex items-center gap-3 border-b px-6 py-3.5"
+                className="flex items-center gap-3 border-b px-4 py-3.5 md:px-6"
                 style={{ borderColor: "var(--color-warm-gray-200)" }}
               >
+                {/* Mobile back button */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedConvId(null)}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg md:hidden"
+                  style={{ color: "var(--color-brand)" }}
+                  aria-label="Back to conversations"
+                >
+                  <ArrowLeft size={18} weight="bold" />
+                </button>
                 <span
                   className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
                   style={{ backgroundColor: "var(--color-brand)", color: "var(--color-white)" }}
@@ -537,7 +555,11 @@ export function PortalMessagesShell({
               {/* Reply Input */}
               <div
                 className="border-t px-4 py-3"
-                style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)" }}
+                style={{
+                  borderColor: "var(--color-warm-gray-200)",
+                  backgroundColor: "var(--color-white)",
+                  paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))",
+                }}
               >
                 <div className="flex items-end gap-2">
                   <div

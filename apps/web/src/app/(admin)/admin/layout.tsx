@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AdminSidebar, AdminTopBar } from "@/components/admin/AdminSidebar";
+import { AdminSidebar, AdminIconRail, AdminTopBar } from "@/components/admin/AdminSidebar";
+import { AdminBottomNav } from "@/components/admin/AdminBottomNav";
 import { AdminSignOutButton } from "@/components/admin/AdminSignOutButton";
 
 /**
@@ -46,9 +47,10 @@ export default async function AdminLayout({
 
   return (
     <div
-      className="flex min-h-screen"
+      className="flex min-h-screen overflow-x-hidden"
       style={{ backgroundColor: "var(--color-navy)" }}
     >
+      <AdminIconRail pendingBlockCount={pendingBlockCount ?? 0} />
       <AdminSidebar
         userName={fullName}
         userEmail={user.email ?? ""}
@@ -58,9 +60,14 @@ export default async function AdminLayout({
       />
 
       <div className="flex min-w-0 flex-1 flex-col" style={{ backgroundColor: "var(--color-off-white)", color: "var(--color-text-primary)" }}>
-        <AdminTopBar userName={firstName} initials={initials} />
-        <main className="flex-1">{children}</main>
+        <AdminTopBar userName={firstName} initials={initials} pendingBlockCount={pendingBlockCount ?? 0} />
+        <main className="flex-1 pb-20 md:pb-0">{children}</main>
       </div>
+
+      <AdminBottomNav
+        pendingBlockCount={pendingBlockCount ?? 0}
+        signOutSlot={<AdminSignOutButton />}
+      />
     </div>
   );
 }

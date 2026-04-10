@@ -7,11 +7,11 @@ export default function PortalLoading() {
           style={{ backgroundColor: "var(--color-warm-gray-100)" }}
         />
         <div
-          className="mt-3 h-9 w-72 rounded animate-pulse"
+          className="mt-3 h-9 w-full max-w-72 rounded animate-pulse"
           style={{ backgroundColor: "var(--color-warm-gray-100)" }}
         />
         <div
-          className="mt-3 h-4 w-96 rounded animate-pulse"
+          className="mt-3 h-4 w-full max-w-96 rounded animate-pulse"
           style={{ backgroundColor: "var(--color-warm-gray-100)" }}
         />
       </header>

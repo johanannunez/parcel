@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   PortalSidebar,
+  PortalIconRail,
   PortalTopBar,
 } from "@/components/portal/PortalSidebar";
+import { PortalBottomNav } from "@/components/portal/PortalBottomNav";
 import { CommandPalette } from "@/components/portal/CommandPalette";
 import { SignOutButton } from "./SignOutButton";
 
@@ -31,11 +33,32 @@ export default async function PortalLayout({
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role, avatar_url")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data: properties }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, role, avatar_url")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("properties")
+      .select("id, property_type, address_line1, city, state, bedrooms, bathrooms, guest_capacity")
+      .limit(50),
+  ]);
+
+  // Setup is incomplete if: no properties, or any property missing key fields
+  const setupIncomplete =
+    !properties ||
+    properties.length === 0 ||
+    properties.some(
+      (p) =>
+        !p.property_type ||
+        !p.address_line1 ||
+        !p.city ||
+        !p.state ||
+        p.bedrooms === null ||
+        p.bathrooms === null ||
+        p.guest_capacity === null,
+    );
 
   const fullName =
     profile?.full_name?.trim() ||
@@ -46,27 +69,34 @@ export default async function PortalLayout({
 
   return (
     <div
-      className="flex min-h-screen"
+      className="flex min-h-screen overflow-x-hidden"
       style={{ backgroundColor: "var(--color-off-white)" }}
     >
+      <PortalIconRail />
       <PortalSidebar
         userName={fullName}
         userEmail={user.email ?? ""}
         initials={initials}
         avatarUrl={profile?.avatar_url ?? null}
         isAdmin={profile?.role === "admin"}
+        setupIncomplete={setupIncomplete}
         signOutSlot={<SignOutButton />}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <PortalTopBar userName={firstName} initials={initials} />
-        <main className="flex-1">
-          <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
+        <main className="flex-1 pb-20 md:pb-0">
+          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
             {children}
           </div>
         </main>
         <CommandPalette />
       </div>
+
+      <PortalBottomNav
+        isAdmin={profile?.role === "admin"}
+        signOutSlot={<SignOutButton />}
+      />
     </div>
   );
 }

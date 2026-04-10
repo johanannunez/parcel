@@ -181,9 +181,34 @@ body {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
-/* ─── Smooth Scrolling ─── */
+/* ─── Smooth Scrolling & Overflow Guards ─── */
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
+body {
+  overscroll-behavior-x: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── Touch Improvements ─── */
+a,
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"] {
+  touch-action: manipulation;
+}
+
+/* ─── Scrollbar Hide Utility ─── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* ─── Focus Indicators ─── */

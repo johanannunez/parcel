@@ -1,42 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  CalendarCheck,
-  ChartLineUp,
-  CurrencyDollar,
-  House,
-  Moon,
-  Wallet,
   Buildings,
-  Plus,
+  CalendarCheck,
+  FileText,
+  ChatCircle,
+  ClipboardText,
   ArrowRight,
+  Plus,
+  ArrowSquareOut,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
-import { MetricCard } from "@/components/portal/MetricCard";
-import { PeriodSwitcher } from "@/components/portal/PeriodSwitcher";
-import { RevenueChart } from "@/components/portal/RevenueChart";
-import {
-  PropertyBreakdown,
-  type PropertyRow,
-} from "@/components/portal/PropertyBreakdown";
 import {
   UpcomingBookings,
   type UpcomingBookingRow,
 } from "@/components/portal/UpcomingBookings";
-import { currency0 } from "@/lib/format";
-import {
-  parseDashboardParams,
-  periodRange,
-  PERIOD_LABELS,
-  MONTH_LABELS,
-  type DashboardParams,
-} from "@/lib/periods";
-import {
-  groupByMonth,
-  buildComparisonData,
-  type MonthlyRevenue,
-  type ComparisonRevenue,
-} from "@/lib/chart-utils";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -55,17 +33,8 @@ function isoDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const resolved = await searchParams;
-  const params = parseDashboardParams(resolved);
+export default async function DashboardPage() {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -75,40 +44,10 @@ export default async function DashboardPage({
   const todayIso = isoDate(today);
   const thirtyDaysAhead = isoDate(new Date(today.getTime() + 30 * 86400000));
 
-  // ------ Compute period range for standard/year modes ------
-  let periodStart = "";
-  let periodEnd = "";
-  let periodLabel = "";
-
-  if (params.mode === "standard") {
-    const range = periodRange(params.period, today);
-    periodStart = range.start;
-    periodEnd = range.end;
-    periodLabel = range.label;
-  } else if (params.mode === "year") {
-    if (params.month !== null) {
-      // Specific month within a year
-      const m = params.month;
-      periodStart = `${params.year}-${String(m).padStart(2, "0")}-01`;
-      const lastDay = new Date(params.year, m, 0).getDate();
-      periodEnd = `${params.year}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-      periodLabel = `${MONTH_LABELS[m - 1]} ${params.year}`;
-    } else {
-      const range = periodRange("year", today, { year: params.year });
-      periodStart = range.start;
-      periodEnd = range.end;
-      periodLabel = range.label;
-    }
-  }
-  // compare mode builds per-year queries below
-
-  // ------ Parallel queries (shared across all modes) ------
   const [
     profileResult,
     propertiesResult,
     upcomingBookingsResult,
-    pendingPayoutsResult,
-    yearsResult,
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -117,7 +56,7 @@ export default async function DashboardPage({
       .single(),
     supabase
       .from("properties")
-      .select("id, name, address_line1, city, active"),
+      .select("id, name, address_line1, city, active, property_type, bedrooms, bathrooms, guest_capacity"),
     supabase
       .from("bookings")
       .select(
@@ -128,13 +67,16 @@ export default async function DashboardPage({
       .neq("status", "cancelled")
       .order("check_in", { ascending: true })
       .limit(5),
-    supabase.from("payouts").select("net_payout").is("paid_at", null),
-    // Get distinct years from bookings for the year pills
-    supabase
-      .from("bookings")
-      .select("check_in")
-      .neq("status", "cancelled"),
   ]);
+
+  // Documents table may not exist yet (pending migration)
+  let pendingDocs = 0;
+  try {
+    const { data } = await (supabase as any).from("documents").select("id").eq("status", "pending");
+    pendingDocs = data?.length ?? 0;
+  } catch {
+    // table doesn't exist yet
+  }
 
   const properties = propertiesResult.data ?? [];
   const propertyNameById = new Map(
@@ -146,158 +88,19 @@ export default async function DashboardPage({
   const totalProperties = properties.length;
   const activeListings = properties.filter((p) => p.active).length;
 
-  // Derive available years from bookings
-  const allBookingYears = new Set<number>();
-  for (const b of yearsResult.data ?? []) {
-    allBookingYears.add(new Date(b.check_in).getFullYear());
-  }
-  const availableYears = Array.from(allBookingYears).sort((a, b) => a - b);
-
-  // ------ Mode-specific data fetching ------
-  type BookingRow = {
-    property_id: string;
-    check_in: string;
-    check_out: string;
-    total_amount: number | null;
-    nights: number | null;
-  };
-
-  let periodBookings: BookingRow[] = [];
-  let chartData: { mode: "single"; data: MonthlyRevenue[] } | { mode: "compare"; data: ComparisonRevenue; years: number[] } | null = null;
-  let compareDelta: { pct: number; label: string } | null = null;
-
-  if (params.mode === "standard" || params.mode === "year") {
-    // Single period query
-    const { data } = await supabase
-      .from("bookings")
-      .select("property_id, check_in, check_out, total_amount, nights")
-      .gte("check_in", periodStart)
-      .lte("check_in", periodEnd)
-      .neq("status", "cancelled");
-    periodBookings = data ?? [];
-
-    // For year mode (all months), build monthly chart data
-    if (params.mode === "year" && params.month === null) {
-      const monthly = groupByMonth(periodBookings);
-      chartData = { mode: "single", data: monthly };
-    }
-  } else if (params.mode === "compare") {
-    // Query each year's bookings for the target month
-    const m = params.month;
-    const bookingsByYear: Record<number, BookingRow[]> = {};
-
-    const yearQueries = params.years.map(async (y) => {
-      const mStart = `${y}-${String(m).padStart(2, "0")}-01`;
-      const mEnd =
-        m === 12
-          ? `${y}-12-31`
-          : `${y}-${String(m + 1).padStart(2, "0")}-01`;
-      const { data } = await supabase
-        .from("bookings")
-        .select("property_id, check_in, check_out, total_amount, nights")
-        .gte("check_in", mStart)
-        .lt("check_in", mEnd)
-        .neq("status", "cancelled");
-      bookingsByYear[y] = data ?? [];
-    });
-    await Promise.all(yearQueries);
-
-    // Use the most recent year as the "primary" for metric cards
-    const newestYear = params.years[params.years.length - 1];
-    periodBookings = bookingsByYear[newestYear] ?? [];
-    periodLabel = `${MONTH_LABELS[m - 1]} ${newestYear}`;
-
-    // Build comparison chart data
-    const comparison = buildComparisonData(
-      Object.fromEntries(
-        Object.entries(bookingsByYear).map(([y, bs]) => [
-          y,
-          bs.map((b) => ({
-            check_in: b.check_in,
-            total_amount: b.total_amount,
-          })),
-        ]),
-      ),
-      m,
+  // Setup completion check
+  const setupIncomplete =
+    totalProperties === 0 ||
+    properties.some(
+      (p) =>
+        !p.property_type ||
+        !p.address_line1 ||
+        !p.city ||
+        p.bedrooms === null ||
+        p.bathrooms === null ||
+        p.guest_capacity === null,
     );
-    chartData = { mode: "compare", data: comparison, years: params.years };
 
-    // Compute delta between newest and second-newest year
-    if (params.years.length >= 2) {
-      const prevYear = params.years[params.years.length - 2];
-      const newestRev = comparison.byYear[newestYear] ?? 0;
-      const prevRev = comparison.byYear[prevYear] ?? 0;
-      if (prevRev > 0) {
-        const pct = Math.round(((newestRev - prevRev) / prevRev) * 100);
-        compareDelta = { pct, label: `vs ${prevYear}` };
-      }
-    }
-  }
-
-  // ------ Aggregate metrics from periodBookings ------
-  let totalRevenue = 0;
-  let totalNights = 0;
-  const propRevenue = new Map<string, number>();
-  const propNights = new Map<string, number>();
-
-  for (const b of periodBookings) {
-    const amt = Number(b.total_amount ?? 0);
-    totalRevenue += amt;
-
-    let n = Number(b.nights ?? 0);
-    if (n <= 0 && b.check_in && b.check_out) {
-      n = Math.max(
-        0,
-        Math.round(
-          (new Date(b.check_out).getTime() -
-            new Date(b.check_in).getTime()) /
-            86400000,
-        ),
-      );
-    }
-    totalNights += n;
-
-    propRevenue.set(
-      b.property_id,
-      (propRevenue.get(b.property_id) ?? 0) + amt,
-    );
-    propNights.set(
-      b.property_id,
-      (propNights.get(b.property_id) ?? 0) + n,
-    );
-  }
-
-  const avgNightly =
-    totalNights > 0 ? Math.round(totalRevenue / totalNights) : null;
-
-  const daysInPeriod =
-    periodStart && periodEnd
-      ? Math.max(
-          1,
-          Math.round(
-            (new Date(periodEnd).getTime() -
-              new Date(periodStart).getTime()) /
-              86400000,
-          ) + 1,
-        )
-      : params.mode === "compare"
-        ? new Date(
-            params.years[params.years.length - 1],
-            params.month,
-            0,
-          ).getDate()
-        : 30;
-
-  const occupancyDenom = activeListings * daysInPeriod;
-  const occupancyRate =
-    occupancyDenom > 0
-      ? Math.round((totalNights / occupancyDenom) * 100)
-      : null;
-
-  const pendingPayouts = (pendingPayoutsResult.data ?? []).reduce(
-    (sum, row) => sum + Number(row.net_payout ?? 0),
-    0,
-  );
 
   const upcomingRows: UpcomingBookingRow[] = (
     upcomingBookingsResult.data ?? []
@@ -311,54 +114,10 @@ export default async function DashboardPage({
     status: b.status,
   }));
 
-  const propertyRows: PropertyRow[] = properties
-    .map((p) => {
-      const rev = propRevenue.get(p.id) ?? 0;
-      const nts = propNights.get(p.id) ?? 0;
-      const propOccDenom = p.active ? daysInPeriod : 0;
-      return {
-        id: p.id,
-        name: p.name ?? p.address_line1 ?? p.city ?? "Property",
-        revenue: rev,
-        occupancyPct:
-          propOccDenom > 0
-            ? Math.round((nts / propOccDenom) * 100)
-            : null,
-        nights: nts,
-        avgNightly: nts > 0 ? Math.round(rev / nts) : null,
-      };
-    })
-    .sort((a, b) => b.revenue - a.revenue);
-
   const firstName =
     profileResult.data?.full_name?.split(" ")[0] ??
     user.email?.split("@")[0] ??
     "there";
-
-  // Build the period label for display
-  const displayLabel =
-    params.mode === "standard"
-      ? periodLabel
-      : params.mode === "year"
-        ? String(params.year)
-        : periodLabel;
-
-  const breakdownLabel =
-    params.mode === "standard"
-      ? PERIOD_LABELS[params.period]
-      : params.mode === "year"
-        ? params.month !== null
-          ? `${MONTH_LABELS[params.month - 1]} ${params.year}`
-          : String(params.year)
-        : `${MONTH_LABELS[params.month - 1]} ${params.years[params.years.length - 1]}`;
-
-  // Chart title
-  const chartTitle =
-    chartData?.mode === "compare"
-      ? `${MONTH_LABELS[params.mode === "compare" ? params.month - 1 : 0]} revenue by year`
-      : params.mode === "year"
-        ? `${params.year} monthly revenue`
-        : "";
 
   return (
     <div className="flex flex-col gap-10">
@@ -371,7 +130,7 @@ export default async function DashboardPage({
           Owner dashboard
         </p>
         <h1
-          className="mt-2 text-[34px] font-semibold leading-tight tracking-tight"
+          className="mt-2 text-[26px] font-semibold leading-tight tracking-tight sm:text-[34px]"
           style={{ color: "var(--color-text-primary)" }}
         >
           {greetingFor(today)}, {firstName}.
@@ -380,8 +139,8 @@ export default async function DashboardPage({
           className="mt-2 max-w-2xl text-base"
           style={{ color: "var(--color-text-secondary)" }}
         >
-          Here is how your portfolio is performing right now. Bookings,
-          revenue, and payouts update the moment a reservation hits Parcel.
+          Here is everything you need at a glance. Your properties, documents,
+          and messages are all managed from here.
         </p>
       </header>
 
@@ -411,8 +170,8 @@ export default async function DashboardPage({
               className="mt-1.5 max-w-md text-sm"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Five quick questions and your portfolio lights up. Bookings,
-              payouts, and connections all flow from here.
+              Five quick questions and your portfolio lights up. Bookings and
+              documents all flow from here.
             </p>
           </div>
           <Link
@@ -427,86 +186,129 @@ export default async function DashboardPage({
         </section>
       ) : null}
 
-      {/* Period switcher */}
-      <PeriodSwitcher params={params} availableYears={availableYears} />
-
-      {/* Primary metric cards */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          label="Total revenue"
-          value={currency0.format(totalRevenue)}
-          hint={displayLabel}
-          icon={<CurrencyDollar size={20} weight="duotone" />}
-          tone="success"
-          delta={compareDelta}
-        />
-        <MetricCard
-          label="Occupancy rate"
-          value={occupancyRate === null ? "\u2014" : `${occupancyRate}%`}
-          hint={`Across ${activeListings} ${activeListings === 1 ? "property" : "properties"}`}
-          icon={<ChartLineUp size={20} weight="duotone" />}
+      {/* Summary cards */}
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <SummaryCard
+          icon={<Buildings size={18} weight="duotone" />}
+          label="Properties"
+          value={String(totalProperties)}
+          hint={`${activeListings} active`}
+          href="/portal/properties"
           tone="brand"
         />
-        <MetricCard
+        <SummaryCard
+          icon={<CalendarCheck size={18} weight="duotone" />}
           label="Upcoming bookings"
           value={String(upcomingRows.length)}
           hint="Next 30 days"
-          icon={<CalendarCheck size={20} weight="duotone" />}
           tone="success"
         />
-        <MetricCard
-          label="Avg nightly rate"
-          value={
-            avgNightly !== null ? currency0.format(avgNightly) : "\u2014"
-          }
-          hint="Per booked night"
-          icon={<Moon size={20} weight="duotone" />}
-          tone="brand"
+        <SummaryCard
+          icon={<FileText size={18} weight="duotone" />}
+          label="Pending documents"
+          value={String(pendingDocs)}
+          hint={pendingDocs === 0 ? "All caught up" : "Action needed"}
+          href="/portal/documents"
+          tone={pendingDocs > 0 ? "amber" : "success"}
         />
-      </section>
-
-      {/* Secondary stat cards */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <CompactStat
-          icon={<House size={16} weight="duotone" />}
-          label="Active listings"
-          value={String(activeListings)}
-          hint={`of ${totalProperties}`}
-          tone="neutral"
-        />
-        <CompactStat
-          icon={<Wallet size={16} weight="duotone" />}
-          label="Pending payouts"
-          value={currency0.format(pendingPayouts)}
-          tone="amber"
-        />
-        <CompactStat
-          icon={<Buildings size={16} weight="duotone" />}
-          label="Total properties"
-          value={String(totalProperties)}
+        <SummaryCard
+          icon={<ChatCircle size={18} weight="duotone" />}
+          label="Messages"
+          hint="Send us a message any time"
+          href="/portal/messages"
           tone="neutral"
         />
       </section>
 
-      {/* Revenue chart (year and compare modes) */}
-      {chartData?.mode === "single" && (
-        <RevenueChart
-          mode="single"
-          data={chartData.data}
-          title={chartTitle}
-        />
-      )}
-      {chartData?.mode === "compare" && (
-        <RevenueChart
-          mode="compare"
-          data={chartData.data}
-          years={chartData.years}
-          title={chartTitle}
-        />
-      )}
+      {/* Setup progress banner */}
+      {setupIncomplete && totalProperties > 0 ? (
+        <Link
+          href="/portal/setup"
+          className="flex items-center justify-between gap-4 rounded-2xl border p-6 transition-colors hover:opacity-95"
+          style={{
+            backgroundColor: "rgba(2, 170, 235, 0.04)",
+            borderColor: "rgba(2, 170, 235, 0.2)",
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+              style={{
+                background: "linear-gradient(135deg, #02aaeb, #1b77be)",
+              }}
+            >
+              <ClipboardText size={18} weight="fill" className="text-white" />
+            </span>
+            <div>
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                Continue setting up your property
+              </h3>
+              <p
+                className="mt-0.5 text-sm"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                Pick up where you left off. Your progress is saved automatically.
+              </p>
+            </div>
+          </div>
+          <ArrowRight
+            size={16}
+            weight="bold"
+            style={{ color: "var(--color-brand)" }}
+          />
+        </Link>
+      ) : null}
 
-      {/* Property breakdown */}
-      <PropertyBreakdown rows={propertyRows} periodLabel={breakdownLabel} />
+      {/* Hospitable card */}
+      <section
+        className="flex flex-col gap-5 rounded-2xl border p-6 sm:flex-row sm:items-center sm:justify-between"
+        style={{
+          backgroundColor: "var(--color-white)",
+          borderColor: "var(--color-warm-gray-200)",
+        }}
+      >
+        <div className="flex items-center gap-4">
+          <span
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+            style={{
+              backgroundColor: "rgba(2, 170, 235, 0.10)",
+              color: "#0c6fae",
+            }}
+          >
+            <ArrowSquareOut size={20} weight="duotone" />
+          </span>
+          <div>
+            <h3
+              className="text-sm font-semibold"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              View your calendar, revenue, and guest messages
+            </h3>
+            <p
+              className="mt-0.5 text-sm"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Your bookings and financials are managed through Hospitable, our
+              channel management partner.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/portal/hospitable"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
+          style={{
+            borderColor: "var(--color-warm-gray-200)",
+            color: "var(--color-text-primary)",
+            backgroundColor: "var(--color-white)",
+          }}
+        >
+          Learn more
+          <ArrowRight size={14} weight="bold" />
+        </Link>
+      </section>
 
       {/* Upcoming bookings */}
       <UpcomingBookings rows={upcomingRows} />
@@ -514,63 +316,78 @@ export default async function DashboardPage({
   );
 }
 
-function CompactStat({
+function SummaryCard({
   icon,
   label,
   value,
   hint,
+  href,
   tone,
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string;
-  hint?: string;
-  tone: "neutral" | "amber";
+  value?: string;
+  hint: string;
+  href?: string;
+  tone: "brand" | "success" | "amber" | "neutral";
 }) {
   const toneMap = {
-    neutral: { bg: "rgba(118, 113, 112, 0.10)", fg: "#4b4948" },
+    brand: { bg: "rgba(2, 170, 235, 0.10)", fg: "#0c6fae" },
+    success: { bg: "rgba(22, 163, 74, 0.10)", fg: "#15803d" },
     amber: { bg: "rgba(245, 158, 11, 0.12)", fg: "#b45309" },
+    neutral: { bg: "rgba(118, 113, 112, 0.10)", fg: "#4b4948" },
   };
   const t = toneMap[tone];
-  return (
+
+  const content = (
     <div
-      className="flex items-center gap-3.5 rounded-2xl border px-5 py-4"
+      className="flex flex-col gap-3 rounded-2xl border p-4 transition-colors sm:gap-4 sm:p-6"
       style={{
         backgroundColor: "var(--color-white)",
         borderColor: "var(--color-warm-gray-200)",
       }}
     >
-      <span
-        className="inline-flex h-9 w-9 items-center justify-center rounded-xl"
-        style={{ backgroundColor: t.bg, color: t.fg }}
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <div
-          className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+      <div className="flex items-center justify-between">
+        <span
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl"
+          style={{ backgroundColor: t.bg, color: t.fg }}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+        <span
+          className="text-[11px] font-semibold uppercase tracking-[0.14em]"
           style={{ color: "var(--color-text-tertiary)" }}
         >
           {label}
-        </div>
-        <div className="flex items-baseline gap-1.5">
-          <span
-            className="text-lg font-semibold tabular-nums"
+        </span>
+      </div>
+      <div>
+        {value !== undefined ? (
+          <div
+            className="text-xl font-semibold leading-none tracking-tight tabular-nums sm:text-[28px]"
             style={{ color: "var(--color-text-primary)" }}
           >
             {value}
-          </span>
-          {hint ? (
-            <span
-              className="text-xs"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {hint}
-            </span>
-          ) : null}
+          </div>
+        ) : null}
+        <div
+          className={`text-sm ${value !== undefined ? "mt-1.5" : ""}`}
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          {hint}
         </div>
       </div>
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="group hover:opacity-95">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }

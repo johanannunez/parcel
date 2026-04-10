@@ -8,7 +8,8 @@ import type { BlockRequest } from "./BlockBar";
 
 type Property = { id: string; name: string };
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
+const WEEKDAYS_LONG = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 type DayCell = {
   date: number | null;
@@ -193,16 +194,17 @@ export function MonthGrid({
         className="grid shrink-0 grid-cols-7 border-b"
         style={{ borderColor: "var(--color-warm-gray-100)" }}
       >
-        {WEEKDAYS.map((day, i) => (
+        {WEEKDAYS_LONG.map((day, i) => (
           <div
             key={day}
-            className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-[0.12em]"
+            className="py-2 text-center text-[10px] font-semibold uppercase tracking-[0.12em] sm:py-2.5"
             style={{
               color: "var(--color-text-tertiary)",
               opacity: i === 0 || i === 6 ? 0.6 : 1,
             }}
           >
-            {day}
+            <span className="hidden sm:inline">{day}</span>
+            <span className="sm:hidden">{WEEKDAYS_SHORT[i]}</span>
           </div>
         ))}
       </div>
@@ -213,14 +215,14 @@ export function MonthGrid({
           <div
             key={weekIdx}
             className="relative flex flex-1 border-b last:border-b-0"
-            style={{ borderColor: "var(--color-warm-gray-100)", minHeight: 80 }}
+            style={{ borderColor: "var(--color-warm-gray-100)", minHeight: "clamp(56px, 12vw, 80px)" }}
           >
             {/* Day cells */}
             <div className="grid flex-1 grid-cols-7">
               {weekRow.map((cell, colIdx) => (
                 <div
                   key={colIdx}
-                  className="border-r p-1.5 last:border-r-0"
+                  className="border-r p-0.5 last:border-r-0 sm:p-1.5"
                   style={{
                     borderColor: "var(--color-warm-gray-100)",
                     backgroundColor: cell.isToday

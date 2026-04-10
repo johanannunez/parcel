@@ -174,28 +174,30 @@ export function CalendarToolbar({
           <button
             type="button"
             onClick={onOpenSync}
-            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)] sm:px-3"
             style={{
               backgroundColor: "var(--color-white)",
               borderColor: "var(--color-warm-gray-200)",
               color: "var(--color-text-secondary)",
             }}
+            aria-label="Subscribe to calendar"
           >
             <LinkIcon size={13} weight="bold" />
-            Subscribe
+            <span className="hidden sm:inline">Subscribe</span>
           </button>
           <button
             type="button"
             onClick={onOpenBlock}
-            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)] sm:px-3"
             style={{
               backgroundColor: "var(--color-white)",
               borderColor: "var(--color-warm-gray-200)",
               color: "var(--color-text-secondary)",
             }}
+            aria-label="Block dates"
           >
             <CalendarPlus size={13} weight="duotone" />
-            Block dates
+            <span className="hidden sm:inline">Block dates</span>
           </button>
         </div>
       </div>

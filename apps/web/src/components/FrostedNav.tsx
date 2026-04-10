@@ -130,7 +130,8 @@ export default function FrostedNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="frosted fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 md:hidden"
+            className="frosted fixed inset-0 z-40 flex flex-col items-center justify-center gap-6 md:hidden"
+            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
             {NAV_LINKS.map((link) => (
               <Link
@@ -142,12 +143,40 @@ export default function FrostedNav() {
                 {link.label}
               </Link>
             ))}
+
+            {/* Real page links */}
+            <div className="flex flex-col items-center gap-4 pt-2">
+              <Link
+                href="/list-with-us"
+                onClick={() => setMobileOpen(false)}
+                className="text-lg font-medium text-text-secondary transition-colors duration-300 hover:text-brand"
+              >
+                List With Us
+              </Link>
+              <Link
+                href="/help"
+                onClick={() => setMobileOpen(false)}
+                className="text-lg font-medium text-text-secondary transition-colors duration-300 hover:text-brand"
+              >
+                Help
+              </Link>
+            </div>
+
             <Link
               href="#properties"
               onClick={() => setMobileOpen(false)}
-              className="mt-4 rounded-[var(--radius-sm)] bg-gradient-to-r from-brand-light to-brand px-8 py-3 text-base font-semibold text-white"
+              className="mt-2 rounded-[var(--radius-sm)] bg-gradient-to-r from-brand-light to-brand px-8 py-3 text-base font-semibold text-white"
             >
               Search Properties
+            </Link>
+
+            <Link
+              href="/login"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-[var(--radius-sm)] border px-6 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:border-brand hover:text-brand"
+              style={{ borderColor: "var(--color-warm-gray-200)" }}
+            >
+              Owner Login
             </Link>
           </motion.div>
         )}

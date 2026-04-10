@@ -14,6 +14,7 @@ import {
   Clock,
   DeviceMobile,
   Desktop,
+  ArrowLeft,
 } from "@phosphor-icons/react";
 import { RichTextEditor } from "@/components/messages/RichTextEditor";
 import { SafeHtml } from "@/components/messages/SafeHtml";
@@ -251,9 +252,9 @@ export function AdminMessagesShell({
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      {/* Left Panel: Filters */}
+      {/* Left Panel: Filters (hidden on mobile) */}
       <div
-        className="flex w-[220px] shrink-0 flex-col border-r"
+        className="hidden w-[220px] shrink-0 flex-col border-r lg:flex"
         style={{
           borderColor: "var(--color-warm-gray-200)",
           backgroundColor: "var(--color-warm-gray-50)",
@@ -346,7 +347,9 @@ export function AdminMessagesShell({
 
       {/* Middle Panel: Conversation List */}
       <div
-        className="flex w-[320px] shrink-0 flex-col border-r"
+        className={`flex shrink-0 flex-col border-r ${
+          selectedConvId ? "hidden md:flex" : "flex"
+        } w-full md:w-[320px]`}
         style={{ borderColor: "var(--color-warm-gray-200)" }}
       >
         <div className="border-b px-3 py-3" style={{ borderColor: "var(--color-warm-gray-200)" }}>
@@ -444,7 +447,11 @@ export function AdminMessagesShell({
       </div>
 
       {/* Right Panel: Thread + Compose */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div
+        className={`flex min-w-0 flex-1 flex-col ${
+          selectedConvId ? "flex" : "hidden md:flex"
+        }`}
+      >
         {!selectedConvId || !conversationDetail ? (
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
@@ -457,7 +464,17 @@ export function AdminMessagesShell({
         ) : (
           <>
             {/* Thread Header */}
-            <div className="flex items-center gap-3 border-b px-6 py-4" style={{ borderColor: "var(--color-warm-gray-200)" }}>
+            <div className="flex items-center gap-3 border-b px-4 py-4 md:px-6" style={{ borderColor: "var(--color-warm-gray-200)" }}>
+              {/* Mobile back button */}
+              <button
+                type="button"
+                onClick={() => { setSelectedConvId(null); setConversationDetail(null); }}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg md:hidden"
+                style={{ color: "var(--color-brand)" }}
+                aria-label="Back to conversations"
+              >
+                <ArrowLeft size={18} weight="bold" />
+              </button>
               <div>
                 <div className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                   {conversationDetail.type === "announcement"

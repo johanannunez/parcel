@@ -38,7 +38,7 @@ export function BookingDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
       style={{ backgroundColor: "rgba(15, 23, 42, 0.36)" }}
       onClick={onClose}
       role="dialog"
@@ -46,7 +46,7 @@ export function BookingDetailModal({
       aria-labelledby="booking-modal-title"
     >
       <div
-        className="w-full max-w-md rounded-2xl border p-6 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.35)]"
+        className="w-full max-w-md rounded-t-2xl border p-5 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.35)] sm:rounded-2xl sm:p-6"
         style={{
           backgroundColor: "var(--color-white)",
           borderColor: "var(--color-warm-gray-200)",

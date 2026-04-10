@@ -222,36 +222,66 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 export function AdminTopBar({
   userName,
   initials,
+  pendingBlockCount = 0,
 }: {
   userName: string;
   initials: string;
+  pendingBlockCount?: number;
 }) {
+  const pathname = usePathname();
+
+  const pageTitle = (() => {
+    if (!pathname) return "";
+    if (pathname === "/admin") return "";
+    if (pathname.startsWith("/admin/owners")) return "Owners";
+    if (pathname.startsWith("/admin/properties")) return "Properties";
+    if (pathname.startsWith("/admin/calendar")) return "Calendar";
+    if (pathname.startsWith("/admin/payouts")) return "Payouts";
+    if (pathname.startsWith("/admin/inquiries")) return "Inquiries";
+    if (pathname.startsWith("/admin/messages")) return "Messages";
+    if (pathname.startsWith("/admin/block-requests")) return "Block Requests";
+    return "";
+  })();
+
   return (
     <header
-      className="flex items-center justify-between border-b px-5 py-3 lg:hidden"
+      className="relative flex items-center justify-between border-b px-4 py-3 md:hidden"
       style={{
         backgroundColor: "var(--color-navy)",
         borderColor: "rgba(255,255,255,0.06)",
       }}
     >
-      <Link href="/admin" className="inline-flex items-baseline gap-2">
-        <span className="text-base font-semibold tracking-tight text-white">
+      <Link href="/admin" className="inline-flex items-baseline gap-1.5">
+        <span className="text-[15px] font-semibold tracking-tight text-white">
           Parcel
         </span>
         <span
-          className="text-[10px] font-medium uppercase tracking-[0.18em]"
+          className="text-[9px] font-medium uppercase tracking-[0.18em]"
           style={{ color: "rgba(255,255,255,0.4)" }}
         >
           Admin
         </span>
       </Link>
-      <div className="flex items-center gap-3">
+
+      {pageTitle ? (
         <span
-          className="text-xs font-medium"
-          style={{ color: "rgba(255,255,255,0.7)" }}
+          className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold text-white"
         >
-          {userName}
+          {pageTitle}
         </span>
+      ) : null}
+
+      <div className="flex items-center gap-2">
+        {pendingBlockCount > 0 ? (
+          <Link
+            href="/admin/block-requests"
+            className="flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-[10px] font-bold"
+            style={{ backgroundColor: "#f59e0b", color: "#1a1a1a" }}
+            aria-label={`${pendingBlockCount} pending block requests`}
+          >
+            {pendingBlockCount}
+          </Link>
+        ) : null}
         <span
           className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold"
           style={{
@@ -263,5 +293,83 @@ export function AdminTopBar({
         </span>
       </div>
     </header>
+  );
+}
+
+/* ─── Admin Tablet Icon Rail (md to lg) ─── */
+
+const adminRailItems = [
+  { href: "/admin", icon: <House size={20} weight="duotone" />, label: "Overview" },
+  { href: "/admin/owners", icon: <UsersThree size={20} weight="duotone" />, label: "Owners", matchPrefix: "/admin/owners" },
+  { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
+  { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
+  { href: "/admin/payouts", icon: <Wallet size={20} weight="duotone" />, label: "Payouts", matchPrefix: "/admin/payouts" },
+  { href: "/admin/messages", icon: <ChatCircle size={20} weight="duotone" />, label: "Messages", matchPrefix: "/admin/messages" },
+  { href: "/admin/block-requests", icon: <ClipboardText size={20} weight="duotone" />, label: "Block Requests", matchPrefix: "/admin/block-requests" },
+];
+
+export function AdminIconRail({ pendingBlockCount = 0 }: { pendingBlockCount?: number }) {
+  const pathname = usePathname();
+
+  return (
+    <aside
+      aria-label="Admin navigation rail"
+      className="sticky top-0 hidden h-screen w-[60px] shrink-0 flex-col items-center border-r py-4 md:flex lg:hidden"
+      style={{
+        backgroundColor: "var(--color-navy)",
+        borderColor: "rgba(255,255,255,0.06)",
+      }}
+    >
+      {/* Logo */}
+      <Link
+        href="/admin"
+        className="mb-6 flex h-8 w-8 items-center justify-center rounded-lg"
+        style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+        aria-label="Parcel Admin Home"
+      >
+        <span className="text-xs font-bold text-white">P</span>
+      </Link>
+
+      {/* Nav */}
+      <nav className="flex flex-1 flex-col items-center gap-1">
+        {adminRailItems.map((item) => {
+          const active = item.matchPrefix
+            ? pathname?.startsWith(item.matchPrefix)
+            : pathname === item.href;
+          const isBlockRequests = item.href === "/admin/block-requests";
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={item.label}
+              aria-label={item.label}
+              aria-current={active ? "page" : undefined}
+              className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors"
+              style={{
+                color: active ? "var(--color-brand-light)" : "rgba(255,255,255,0.5)",
+                backgroundColor: active ? "rgba(255,255,255,0.08)" : "transparent",
+              }}
+            >
+              {active ? (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full"
+                  style={{ backgroundColor: "var(--color-brand-light)" }}
+                />
+              ) : null}
+              {item.icon}
+              {isBlockRequests && pendingBlockCount > 0 ? (
+                <span
+                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[8px] font-bold"
+                  style={{ backgroundColor: "#f59e0b", color: "#1a1a1a" }}
+                >
+                  {pendingBlockCount}
+                </span>
+              ) : null}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarToolbar, type CalendarView } from "./CalendarToolbar";
 import { AvailabilityGrid } from "./AvailabilityGrid";
 import { MonthGrid } from "./MonthGrid";
@@ -47,7 +47,11 @@ export function CalendarShell({
   ownerName: string;
   ownerEmail: string;
 }) {
-  const [view, setView] = useState<CalendarView>("timeline");
+  const [view, setView] = useState<CalendarView>(() =>
+    typeof window !== "undefined" && window.innerWidth < 768
+      ? "month"
+      : "timeline",
+  );
   const [hiddenProperties, setHiddenProperties] = useState<Set<string>>(
     new Set(),
   );
