@@ -211,49 +211,37 @@ export function DataExportSection() {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr style={{ backgroundColor: "var(--color-warm-gray-50)" }}>
-                    <Th>Name</Th>
-                    <Th>Type</Th>
                     <Th>Address</Th>
                     <Th>City</Th>
                     <Th>State</Th>
                     <Th>Beds</Th>
                     <Th>Baths</Th>
-                    <Th>Guests</Th>
-                    <Th>Active</Th>
+                    <Th>Status</Th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-t" style={{ borderColor: "var(--color-warm-gray-100)" }}>
-                    <Td bold>The White House</Td>
-                    <Td>STR</Td>
-                    <Td>1600 Pennsylvania Ave NW</Td>
+                    <Td bold>1600 Pennsylvania Ave NW</Td>
                     <Td>Washington</Td>
                     <Td>DC</Td>
                     <Td>16</Td>
                     <Td>35</Td>
-                    <Td>50</Td>
                     <Td><ActiveBadge active /></Td>
                   </tr>
                   <tr className="border-t" style={{ borderColor: "var(--color-warm-gray-100)" }}>
-                    <Td bold>Camp David</Td>
-                    <Td>MTR</Td>
-                    <Td>14222 Camp David Rd</Td>
+                    <Td bold>14222 Camp David Rd</Td>
                     <Td>Thurmont</Td>
                     <Td>MD</Td>
                     <Td>6</Td>
                     <Td>8</Td>
-                    <Td>20</Td>
                     <Td><ActiveBadge active /></Td>
                   </tr>
                   <tr className="border-t" style={{ borderColor: "var(--color-warm-gray-100)" }}>
-                    <Td bold>Blair House</Td>
-                    <Td>Co-hosting</Td>
-                    <Td>1651 Pennsylvania Ave NW</Td>
+                    <Td bold>1651 Pennsylvania Ave NW</Td>
                     <Td>Washington</Td>
                     <Td>DC</Td>
                     <Td>14</Td>
                     <Td>18</Td>
-                    <Td>30</Td>
                     <Td><ActiveBadge active={false} /></Td>
                   </tr>
                 </tbody>
@@ -265,33 +253,29 @@ export function DataExportSection() {
                 <thead>
                   <tr style={{ backgroundColor: "var(--color-warm-gray-50)" }}>
                     <Th>Start Date</Th>
-                    <Th>End Date</Th>
                     <Th>Duration</Th>
+                    <Th>Reason</Th>
                     <Th>Status</Th>
-                    <Th>Requested On</Th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-t" style={{ borderColor: "var(--color-warm-gray-100)" }}>
                     <Td>Apr 15, 2026</Td>
-                    <Td>Apr 20, 2026</Td>
                     <Td>5 nights</Td>
+                    <Td>Owner stay</Td>
                     <Td><StatusBadge status="approved" /></Td>
-                    <Td>Apr 2, 2026</Td>
                   </tr>
                   <tr className="border-t" style={{ borderColor: "var(--color-warm-gray-100)" }}>
                     <Td>May 1, 2026</Td>
-                    <Td>May 3, 2026</Td>
                     <Td>2 nights</Td>
+                    <Td>Family visiting</Td>
                     <Td><StatusBadge status="pending" /></Td>
-                    <Td>Apr 8, 2026</Td>
                   </tr>
                   <tr className="border-t" style={{ borderColor: "var(--color-warm-gray-100)" }}>
                     <Td>Jun 10, 2026</Td>
-                    <Td>Jun 14, 2026</Td>
                     <Td>4 nights</Td>
+                    <Td>Maintenance</Td>
                     <Td><StatusBadge status="denied" /></Td>
-                    <Td>Mar 28, 2026</Td>
                   </tr>
                 </tbody>
               </table>
