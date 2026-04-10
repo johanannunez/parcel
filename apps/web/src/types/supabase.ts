@@ -1046,6 +1046,53 @@ export type Database = {
           },
         ]
       }
+      session_log: {
+        Row: {
+          id: string
+          user_id: string
+          ip_address: string | null
+          user_agent: string | null
+          browser: string | null
+          os: string | null
+          device_type: string | null
+          country: string | null
+          city: string | null
+          logged_in_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          ip_address?: string | null
+          user_agent?: string | null
+          browser?: string | null
+          os?: string | null
+          device_type?: string | null
+          country?: string | null
+          city?: string | null
+          logged_in_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          browser?: string | null
+          os?: string | null
+          device_type?: string | null
+          country?: string | null
+          city?: string | null
+          logged_in_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           id: string

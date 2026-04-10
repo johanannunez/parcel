@@ -164,6 +164,48 @@ export async function signOutOtherSessions(): Promise<{ ok: boolean; message: st
 }
 
 /* -------------------------------------------------------------------------- */
+/*  getSessionLog                                                             */
+/* -------------------------------------------------------------------------- */
+
+export async function getSessionLog(): Promise<{
+  ok: boolean;
+  sessions: Array<{
+    id: string;
+    ip_address: string | null;
+    browser: string | null;
+    os: string | null;
+    device_type: string | null;
+    country: string | null;
+    city: string | null;
+    logged_in_at: string;
+  }>;
+  message?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { ok: false, sessions: [], message: "You must be signed in." };
+  }
+
+  const { data, error } = await supabase
+    .from("session_log")
+    .select("id, ip_address, browser, os, device_type, country, city, logged_in_at")
+    .eq("user_id", user.id)
+    .order("logged_in_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    return { ok: false, sessions: [], message: error.message };
+  }
+
+  return { ok: true, sessions: data ?? [] };
+}
+
+/* -------------------------------------------------------------------------- */
 /*  exportUserData                                                            */
 /* -------------------------------------------------------------------------- */
 

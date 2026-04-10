@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { recordSessionLogin } from "@/lib/session-log";
 
 /**
  * Supabase Auth callback handler.
@@ -21,6 +22,16 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Record session login
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+          ?? request.headers.get("x-real-ip")
+          ?? null;
+        const ua = request.headers.get("user-agent") ?? null;
+        await recordSessionLogin({ userId: user.id, ipAddress: ip, userAgent: ua });
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

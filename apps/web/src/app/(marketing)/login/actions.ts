@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { recordSessionLogin } from "@/lib/session-log";
 
 export type LoginState = {
   error?: string;
@@ -20,10 +22,18 @@ export async function login(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Record session login
+  if (data.user) {
+    const h = await headers();
+    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? null;
+    const ua = h.get("user-agent") ?? null;
+    await recordSessionLogin({ userId: data.user.id, ipAddress: ip, userAgent: ua });
   }
 
   redirect(redirectTo);
