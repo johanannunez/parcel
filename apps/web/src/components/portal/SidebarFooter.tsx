@@ -15,12 +15,14 @@ export function SidebarFooter({
   userName,
   userEmail,
   initials,
+  avatarUrl = null,
   isAdmin = false,
   signOutSlot,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
+  avatarUrl?: string | null;
   isAdmin?: boolean;
   signOutSlot: ReactNode;
 }) {
@@ -33,15 +35,23 @@ export function SidebarFooter({
     >
       {/* Identity row */}
       <div className="flex items-center gap-2.5 px-3 pb-1.5 pt-2.5">
-        <span
-          className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-wide"
-          style={{
-            backgroundColor: "var(--color-warm-gray-100)",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          {initials}
-        </span>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={userName}
+            className="h-[34px] w-[34px] shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span
+            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-wide"
+            style={{
+              backgroundColor: "var(--color-warm-gray-100)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            {initials}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <div
             className="truncate text-[13.5px] font-semibold leading-tight"

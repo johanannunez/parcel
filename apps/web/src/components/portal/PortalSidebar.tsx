@@ -64,12 +64,14 @@ export function PortalSidebar({
   userName,
   userEmail,
   initials,
+  avatarUrl = null,
   isAdmin = false,
   signOutSlot,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
+  avatarUrl?: string | null;
   isAdmin?: boolean;
   signOutSlot: ReactNode;
 }) {
@@ -166,6 +168,7 @@ export function PortalSidebar({
         userName={userName}
         userEmail={userEmail}
         initials={initials}
+        avatarUrl={avatarUrl}
         isAdmin={isAdmin}
         signOutSlot={signOutSlot}
       />
