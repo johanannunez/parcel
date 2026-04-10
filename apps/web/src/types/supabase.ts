@@ -491,6 +491,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           timezone: string | null
           updated_at: string
+          deleted_at: string | null
           years_investing: string | null
         }
         Insert: {
@@ -509,6 +510,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           timezone?: string | null
           updated_at?: string
+          deleted_at?: string | null
           years_investing?: string | null
         }
         Update: {
@@ -527,6 +529,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           timezone?: string | null
           updated_at?: string
+          deleted_at?: string | null
           years_investing?: string | null
         }
         Relationships: []

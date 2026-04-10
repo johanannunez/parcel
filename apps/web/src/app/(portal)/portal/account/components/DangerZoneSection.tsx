@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useCallback, useState } from "react";
-import { Warning, Trash, X } from "@phosphor-icons/react";
+import { Warning, Trash, X, ArrowCounterClockwise } from "@phosphor-icons/react";
 import { requestAccountDeletion } from "../actions";
 
 export function DangerZoneSection() {
@@ -34,7 +34,7 @@ export function DangerZoneSection() {
         className="mb-6 text-sm"
         style={{ color: "var(--color-text-secondary)" }}
       >
-        Irreversible actions for your account.
+        Account deletion with a 30-day recovery window.
       </p>
 
       <div
@@ -78,9 +78,29 @@ export function DangerZoneSection() {
               className="text-sm"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              This will permanently delete your account, properties, and all
-              associated data. This action cannot be undone.
+              Your account will be deactivated immediately and scheduled for permanent deletion after 30 days.
             </p>
+
+            {/* Recovery info */}
+            <div
+              className="mt-3 flex items-start gap-2.5 rounded-lg px-3.5 py-2.5"
+              style={{ backgroundColor: "rgba(2, 170, 235, 0.05)", border: "1px solid rgba(2, 170, 235, 0.12)" }}
+            >
+              <ArrowCounterClockwise
+                size={16}
+                weight="bold"
+                className="mt-0.5 shrink-0"
+                style={{ color: "var(--color-brand)" }}
+              />
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+                  30-day recovery window
+                </p>
+                <p className="mt-0.5 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                  If you sign back in within 30 days, your account and all data will be fully restored. After 30 days, everything is permanently deleted and cannot be recovered.
+                </p>
+              </div>
+            </div>
 
             <button
               type="button"
@@ -112,7 +132,6 @@ export function DangerZoneSection() {
                 "0 20px 60px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
             }}
           >
-            {/* Close button */}
             <button
               type="button"
               onClick={closeModal}
@@ -123,30 +142,21 @@ export function DangerZoneSection() {
               <X size={18} weight="bold" />
             </button>
 
-            {/* Icon */}
             <div
               className="mb-5 flex h-12 w-12 items-center justify-center rounded-full"
               style={{ backgroundColor: "rgba(220, 38, 38, 0.08)" }}
             >
-              <Warning
-                size={24}
-                weight="duotone"
-                style={{ color: "var(--color-error)" }}
-              />
+              <Warning size={24} weight="duotone" style={{ color: "var(--color-error)" }} />
             </div>
 
-            <h3
-              className="text-lg font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
-            >
+            <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
               Are you sure?
             </h3>
-            <p
-              className="mt-2 text-sm"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              This will permanently delete your account and all associated data
-              including properties, bookings, and payouts. This cannot be undone.
+            <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              Your account will be deactivated and you will be signed out. All your data (properties, calendar blocks, messages) will be preserved for 30 days.
+            </p>
+            <p className="mt-2 text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+              Sign back in within 30 days to restore your account. After that, everything is permanently deleted.
             </p>
 
             <form action={formAction}>
@@ -180,7 +190,6 @@ export function DangerZoneSection() {
                 />
               </div>
 
-              {/* Error feedback */}
               {state && !state.ok && (
                 <div
                   className="mt-3 rounded-lg border px-4 py-3 text-sm font-medium"

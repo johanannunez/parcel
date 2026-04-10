@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Globe, CalendarBlank } from "@phosphor-icons/react";
+import { Globe, CalendarBlank, Clock } from "@phosphor-icons/react";
 
 const STORAGE_KEY = "parcel-region-prefs";
 
@@ -10,19 +10,21 @@ type RegionPrefs = {
   dateFormat: string;
 };
 
-const US_TIMEZONES: { value: string; label: string }[] = [
-  { value: "America/New_York", label: "Eastern" },
-  { value: "America/Chicago", label: "Central" },
-  { value: "America/Denver", label: "Mountain" },
-  { value: "America/Los_Angeles", label: "Pacific" },
-  { value: "America/Anchorage", label: "Alaska" },
-  { value: "Pacific/Honolulu", label: "Hawaii" },
+const US_TIMEZONES: { value: string; label: string; short: string }[] = [
+  { value: "America/New_York", label: "Eastern", short: "ET" },
+  { value: "America/Chicago", label: "Central", short: "CT" },
+  { value: "America/Denver", label: "Mountain", short: "MT" },
+  { value: "America/Los_Angeles", label: "Pacific", short: "PT" },
+  { value: "America/Anchorage", label: "Alaska", short: "AKT" },
+  { value: "Pacific/Honolulu", label: "Hawaii", short: "HT" },
 ];
 
-const DATE_FORMATS: { value: string; label: string }[] = [
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
+const DATE_FORMATS: { value: string; label: string; example: string }[] = [
+  { value: "MM/DD/YYYY", label: "MM/DD/YYYY", example: "" },
+  { value: "DD/MM/YYYY", label: "DD/MM/YYYY", example: "" },
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD", example: "" },
+  { value: "MMM D, YYYY", label: "Apr 10, 2026", example: "" },
+  { value: "D MMM YYYY", label: "10 Apr 2026", example: "" },
 ];
 
 function getDefaultTimezone(): string {
@@ -35,90 +37,49 @@ function getDefaultTimezone(): string {
   }
 }
 
-function SelectRow({
-  icon: Icon,
-  label,
-  description,
-  value,
-  options,
-  onChange,
-  id,
-}: {
-  icon: typeof Globe;
-  label: string;
-  description: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (value: string) => void;
-  id: string;
-}) {
-  return (
-    <div className="flex items-center gap-4">
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-        style={{ backgroundColor: "var(--color-warm-gray-100)" }}
-      >
-        <Icon
-          size={18}
-          weight="duotone"
-          style={{ color: "var(--color-brand)" }}
-        />
-      </div>
+function formatTimeInZone(tz: string): string {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(new Date());
+  } catch {
+    return "";
+  }
+}
 
-      <div className="flex flex-1 flex-col gap-0.5">
-        <label
-          htmlFor={id}
-          className="cursor-pointer text-sm font-semibold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          {label}
-        </label>
-        <span
-          className="text-sm"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          {description}
-        </span>
-      </div>
+function getUtcOffset(tz: string): string {
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "shortOffset",
+    });
+    const parts = formatter.formatToParts(now);
+    const offsetPart = parts.find((p) => p.type === "timeZoneName");
+    return offsetPart?.value ?? "";
+  } catch {
+    return "";
+  }
+}
 
-      <div className="relative">
-        <select
-          id={id}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="appearance-none rounded-lg border py-2 pl-3 pr-8 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
-          style={{
-            borderColor: "var(--color-warm-gray-200)",
-            color: "var(--color-text-primary)",
-            backgroundColor: "var(--color-white)",
-          }}
-        >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        {/* Custom chevron */}
-        <svg
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          <path
-            d="M3 4.5L6 7.5L9 4.5"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-    </div>
-  );
+function formatDateExample(format: string): string {
+  const now = new Date();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const y = String(now.getFullYear());
+  const monthName = now.toLocaleString("en-US", { month: "short" });
+
+  switch (format) {
+    case "MM/DD/YYYY": return `${m}/${d}/${y}`;
+    case "DD/MM/YYYY": return `${d}/${m}/${y}`;
+    case "YYYY-MM-DD": return `${y}-${m}-${d}`;
+    case "MMM D, YYYY": return `${monthName} ${now.getDate()}, ${y}`;
+    case "D MMM YYYY": return `${now.getDate()} ${monthName} ${y}`;
+    default: return `${m}/${d}/${y}`;
+  }
 }
 
 export function RegionSection({ timezone }: { timezone: string }) {
@@ -127,6 +88,7 @@ export function RegionSection({ timezone }: { timezone: string }) {
     dateFormat: "MM/DD/YYYY",
   });
   const [loaded, setLoaded] = useState(false);
+  const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
     try {
@@ -140,6 +102,15 @@ export function RegionSection({ timezone }: { timezone: string }) {
     }
     setLoaded(true);
   }, []);
+
+  // Update the live clock every 30 seconds
+  useEffect(() => {
+    if (!loaded) return;
+    const update = () => setCurrentTime(formatTimeInZone(prefs.timezone));
+    update();
+    const interval = setInterval(update, 30000);
+    return () => clearInterval(interval);
+  }, [loaded, prefs.timezone]);
 
   const updatePref = useCallback(
     (key: keyof RegionPrefs, value: string) => {
@@ -157,6 +128,11 @@ export function RegionSection({ timezone }: { timezone: string }) {
   );
 
   if (!loaded) return null;
+
+  const selectedTz = US_TIMEZONES.find((tz) => tz.value === prefs.timezone);
+  const utcOffset = getUtcOffset(prefs.timezone);
+  const browserTz = getDefaultTimezone();
+  const isSameAsBrowser = prefs.timezone === browserTz;
 
   return (
     <section id="region">
@@ -181,31 +157,150 @@ export function RegionSection({ timezone }: { timezone: string }) {
           boxShadow: "var(--shadow-card)",
         }}
       >
-        <div className="flex flex-col gap-0">
-          <SelectRow
-            id="region-timezone"
-            icon={Globe}
-            label="Timezone"
-            description="Used for calendar events and payout dates."
-            value={prefs.timezone}
-            options={US_TIMEZONES}
-            onChange={(v) => updatePref("timezone", v)}
-          />
-
+        {/* Timezone */}
+        <div className="flex items-start gap-4">
           <div
-            className="my-5 border-t"
-            style={{ borderColor: "var(--color-warm-gray-200)" }}
-          />
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+            style={{ backgroundColor: "var(--color-warm-gray-100)" }}
+          >
+            <Globe size={18} weight="duotone" style={{ color: "var(--color-brand)" }} />
+          </div>
 
-          <SelectRow
-            id="region-date-format"
-            icon={CalendarBlank}
-            label="Date format"
-            description="How dates appear throughout the portal."
-            value={prefs.dateFormat}
-            options={DATE_FORMATS}
-            onChange={(v) => updatePref("dateFormat", v)}
-          />
+          <div className="flex flex-1 flex-col gap-1">
+            <label
+              htmlFor="region-timezone"
+              className="cursor-pointer text-sm font-semibold"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Timezone
+            </label>
+            <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              Used for calendar events and payout dates.
+            </span>
+
+            {/* Live time display */}
+            {currentTime ? (
+              <div
+                className="mt-2 inline-flex w-fit items-center gap-2 rounded-lg px-3 py-1.5"
+                style={{ backgroundColor: "var(--color-warm-gray-50)" }}
+              >
+                <Clock size={14} weight="duotone" style={{ color: "var(--color-brand)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+                  {currentTime}
+                </span>
+                <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                  {selectedTz?.short} ({utcOffset})
+                </span>
+                {isSameAsBrowser ? (
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                    style={{ backgroundColor: "rgba(22, 163, 74, 0.08)", color: "var(--color-success)" }}
+                  >
+                    Your time
+                  </span>
+                ) : (
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                    style={{ backgroundColor: "rgba(245, 158, 11, 0.08)", color: "#d97706" }}
+                  >
+                    Different from your device
+                  </span>
+                )}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="relative shrink-0">
+            <select
+              id="region-timezone"
+              value={prefs.timezone}
+              onChange={(e) => updatePref("timezone", e.target.value)}
+              className="appearance-none rounded-lg border py-2 pl-3 pr-8 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
+              style={{
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+                backgroundColor: "var(--color-white)",
+              }}
+            >
+              {US_TIMEZONES.map((tz) => (
+                <option key={tz.value} value={tz.value}>
+                  {tz.label}
+                </option>
+              ))}
+            </select>
+            <svg
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
+              width="12" height="12" viewBox="0 0 12 12" fill="none"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="my-5 border-t" style={{ borderColor: "var(--color-warm-gray-200)" }} />
+
+        {/* Date Format */}
+        <div className="flex items-start gap-4">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+            style={{ backgroundColor: "var(--color-warm-gray-100)" }}
+          >
+            <CalendarBlank size={18} weight="duotone" style={{ color: "var(--color-brand)" }} />
+          </div>
+
+          <div className="flex flex-1 flex-col gap-1">
+            <label
+              htmlFor="region-date-format"
+              className="cursor-pointer text-sm font-semibold"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Date format
+            </label>
+            <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              How dates appear throughout the portal.
+            </span>
+
+            {/* Live preview */}
+            <div
+              className="mt-2 inline-flex w-fit items-center gap-2 rounded-lg px-3 py-1.5"
+              style={{ backgroundColor: "var(--color-warm-gray-50)" }}
+            >
+              <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                Today:
+              </span>
+              <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+                {formatDateExample(prefs.dateFormat)}
+              </span>
+            </div>
+          </div>
+
+          <div className="relative shrink-0">
+            <select
+              id="region-date-format"
+              value={prefs.dateFormat}
+              onChange={(e) => updatePref("dateFormat", e.target.value)}
+              className="appearance-none rounded-lg border py-2 pl-3 pr-8 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
+              style={{
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+                backgroundColor: "var(--color-white)",
+              }}
+            >
+              {DATE_FORMATS.map((fmt) => (
+                <option key={fmt.value} value={fmt.value}>
+                  {fmt.label}
+                </option>
+              ))}
+            </select>
+            <svg
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
+              width="12" height="12" viewBox="0 0 12 12" fill="none"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
       </div>
     </section>

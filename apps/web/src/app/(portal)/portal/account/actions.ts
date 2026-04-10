@@ -284,10 +284,11 @@ export async function requestAccountDeletion(
     return { ok: false, message: 'Please type "DELETE" to confirm.' };
   }
 
-  // Soft signal: update the profile timestamp as a deletion marker
+  // Soft delete: set deleted_at timestamp. Account enters 30-day grace period.
+  // Data is preserved. If user logs back in within 30 days, deleted_at is cleared.
   const { error } = await supabase
     .from("profiles")
-    .update({ updated_at: new Date().toISOString() })
+    .update({ deleted_at: new Date().toISOString() })
     .eq("id", user.id);
 
   if (error) {
