@@ -79,22 +79,48 @@ export async function uploadAvatar(args: {
 }
 
 /**
- * Get the original (uncropped) avatar URL for re-editing.
- * Tries common extensions since we don't track which was used.
+ * Get the best available avatar image URL for re-editing.
+ * Tries the full-res original first, then falls back to the current
+ * cropped avatar so the crop modal always has something to show.
  */
-export async function getOriginalAvatar(): Promise<{ url: string | null }> {
+export async function getOriginalAvatar(fallbackAvatarUrl?: string | null): Promise<{ url: string | null }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { url: null };
+  if (!user) return { url: fallbackAvatarUrl ?? null };
 
-  // Try each extension
+  // Try the new nested path first (full-res original)
   for (const ext of ["jpg", "png", "webp"]) {
     const path = `${user.id}/original.${ext}`;
-    const { data } = await supabase.storage.from("avatars").createSignedUrl(path, 300);
-    if (data?.signedUrl) return { url: data.signedUrl };
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    if (data?.publicUrl) {
+      // Verify the file actually exists with a HEAD request
+      try {
+        const res = await fetch(data.publicUrl, { method: "HEAD" });
+        if (res.ok) return { url: data.publicUrl };
+      } catch {
+        // File doesn't exist at this path, try next
+      }
+    }
   }
+
+  // Try the old flat path (avatars/{userId}.{ext})
+  for (const ext of ["jpg", "png", "webp"]) {
+    const path = `avatars/${user.id}.${ext}`;
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    if (data?.publicUrl) {
+      try {
+        const res = await fetch(data.publicUrl, { method: "HEAD" });
+        if (res.ok) return { url: data.publicUrl };
+      } catch {
+        // File doesn't exist at this path, try next
+      }
+    }
+  }
+
+  // Fall back to the current avatar URL (may be a cropped version)
+  if (fallbackAvatarUrl) return { url: fallbackAvatarUrl };
 
   return { url: null };
 }

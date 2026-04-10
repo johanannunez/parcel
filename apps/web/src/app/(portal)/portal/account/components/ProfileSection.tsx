@@ -94,35 +94,25 @@ export default function ProfileSection({ profile }: Props) {
     e.target.value = ""
   }
 
-  // Re-edit existing avatar: fetch original from storage
+  // Re-edit existing avatar: fetch best available image and open cropper
   const handleEditExisting = useCallback(async () => {
     if (uploading) return
     setUploading(true)
-    const result = await getOriginalAvatar()
+
+    // Pass current avatar as fallback so we always get a URL back
+    const result = await getOriginalAvatar(avatarUrl)
     setUploading(false)
 
-    if (result.url) {
-      // Fetch the original as a blob so we can convert to base64 for re-upload
-      try {
-        const res = await fetch(result.url)
-        const blob = await res.blob()
-        const dataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
-          reader.readAsDataURL(blob)
-        })
-        pendingOriginalRef.current = dataUrl
-        setCropSrc(dataUrl)
-      } catch {
-        // If fetch fails, open file picker instead
-        fileInputRef.current?.click()
-      }
-    } else {
-      // No original stored (uploaded before this feature existed)
-      // Fall back to file picker
+    if (!result.url) {
       fileInputRef.current?.click()
+      return
     }
-  }, [uploading])
+
+    // Open the crop modal with the URL directly (no base64 conversion needed for display)
+    // The AvatarCropModal accepts any image URL
+    pendingOriginalRef.current = null // Will be fetched as base64 at crop time
+    setCropSrc(result.url)
+  }, [uploading, avatarUrl])
 
   // Click on the avatar circle
   const handleAvatarClick = () => {
