@@ -4,46 +4,65 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Upload a cropped avatar image and update the user's profile.
- * Expects a base64-encoded image (data URL) from the crop modal.
+ * Upload both the original and cropped avatar images.
+ * The original is preserved so the user can re-edit (re-crop, re-zoom) later.
+ *
+ * Storage layout:
+ *   avatars/{userId}/original.{ext}  -- full-size original
+ *   avatars/{userId}/cropped.{ext}   -- 256x256 cropped version (displayed everywhere)
  */
-export async function uploadAvatar(base64Data: string) {
+export async function uploadAvatar(args: {
+  originalBase64: string;
+  croppedBase64: string;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  // Extract the raw bytes from the data URL
-  const match = base64Data.match(/^data:image\/(\w+);base64,(.+)$/);
-  if (!match) return { error: "Invalid image data" };
+  // Parse the cropped image
+  const croppedMatch = args.croppedBase64.match(/^data:image\/(\w+);base64,(.+)$/);
+  if (!croppedMatch) return { error: "Invalid cropped image data" };
 
-  const ext = match[1] === "jpeg" ? "jpg" : match[1];
-  const bytes = Buffer.from(match[2], "base64");
-  const filePath = `avatars/${user.id}.${ext}`;
+  const croppedExt = croppedMatch[1] === "jpeg" ? "jpg" : croppedMatch[1];
+  const croppedBytes = Buffer.from(croppedMatch[2], "base64");
 
-  // Upload to Supabase Storage (upsert to overwrite previous avatar)
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(filePath, bytes, {
-      contentType: `image/${match[1]}`,
-      upsert: true,
-    });
+  // Parse the original image
+  const origMatch = args.originalBase64.match(/^data:image\/(\w+);base64,(.+)$/);
+  if (!origMatch) return { error: "Invalid original image data" };
 
-  if (uploadError) {
-    // If bucket doesn't exist, provide a clear message
-    if (uploadError.message?.includes("not found") || uploadError.message?.includes("Bucket")) {
+  const origExt = origMatch[1] === "jpeg" ? "jpg" : origMatch[1];
+  const origBytes = Buffer.from(origMatch[2], "base64");
+
+  // Upload both in parallel
+  const [croppedResult, origResult] = await Promise.all([
+    supabase.storage
+      .from("avatars")
+      .upload(`${user.id}/cropped.${croppedExt}`, croppedBytes, {
+        contentType: `image/${croppedMatch[1]}`,
+        upsert: true,
+      }),
+    supabase.storage
+      .from("avatars")
+      .upload(`${user.id}/original.${origExt}`, origBytes, {
+        contentType: `image/${origMatch[1]}`,
+        upsert: true,
+      }),
+  ]);
+
+  if (croppedResult.error) {
+    if (croppedResult.error.message?.includes("not found") || croppedResult.error.message?.includes("Bucket")) {
       return { error: "Avatar storage bucket not configured. Create a bucket named 'avatars' in Supabase Storage." };
     }
-    return { error: uploadError.message };
+    return { error: croppedResult.error.message };
   }
 
-  // Get the public URL
+  // Get the public URL for the cropped version
   const { data: urlData } = supabase.storage
     .from("avatars")
-    .getPublicUrl(filePath);
+    .getPublicUrl(`${user.id}/cropped.${croppedExt}`);
 
-  // Add a cache-busting timestamp so browsers pick up the new image
   const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
   // Update profile
@@ -60,7 +79,28 @@ export async function uploadAvatar(base64Data: string) {
 }
 
 /**
- * Remove the user's avatar photo.
+ * Get the original (uncropped) avatar URL for re-editing.
+ * Tries common extensions since we don't track which was used.
+ */
+export async function getOriginalAvatar(): Promise<{ url: string | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { url: null };
+
+  // Try each extension
+  for (const ext of ["jpg", "png", "webp"]) {
+    const path = `${user.id}/original.${ext}`;
+    const { data } = await supabase.storage.from("avatars").createSignedUrl(path, 300);
+    if (data?.signedUrl) return { url: data.signedUrl };
+  }
+
+  return { url: null };
+}
+
+/**
+ * Remove the user's avatar photo (both original and cropped).
  */
 export async function removeAvatar() {
   const supabase = await createClient();
@@ -69,7 +109,6 @@ export async function removeAvatar() {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  // Clear the avatar_url in profile
   const { error } = await supabase
     .from("profiles")
     .update({ avatar_url: null })
@@ -77,8 +116,14 @@ export async function removeAvatar() {
 
   if (error) return { error: error.message };
 
-  // Try to delete the storage file (don't fail if it doesn't exist)
-  await supabase.storage.from("avatars").remove([`avatars/${user.id}.jpg`, `avatars/${user.id}.png`, `avatars/${user.id}.webp`]);
+  // Delete all avatar files for this user
+  const filesToDelete = ["jpg", "png", "webp"].flatMap((ext) => [
+    `${user.id}/cropped.${ext}`,
+    `${user.id}/original.${ext}`,
+    // Clean up old flat path format too
+    `avatars/${user.id}.${ext}`,
+  ]);
+  await supabase.storage.from("avatars").remove(filesToDelete);
 
   revalidatePath("/portal/account");
   revalidatePath("/portal");

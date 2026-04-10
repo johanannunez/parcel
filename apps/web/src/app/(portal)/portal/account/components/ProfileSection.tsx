@@ -3,7 +3,7 @@
 import { useActionState, useState, useRef } from "react"
 import { CalendarBlank, Camera, Trash } from "@phosphor-icons/react"
 import { updateProfile } from "../actions"
-import { uploadAvatar, removeAvatar } from "../avatar-actions"
+import { uploadAvatar, removeAvatar, getOriginalAvatar } from "../avatar-actions"
 import { AvatarCropModal } from "@/components/portal/AvatarCropModal"
 
 type Props = {
@@ -71,6 +71,7 @@ export default function ProfileSection({ profile }: Props) {
   const [phone, setPhone] = useState(profile.phone ? formatPhone(profile.phone) : "")
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url)
   const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [originalSrc, setOriginalSrc] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -80,16 +81,65 @@ export default function ProfileSection({ profile }: Props) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => setCropSrc(reader.result as string)
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      setOriginalSrc(dataUrl)
+      setCropSrc(dataUrl)
+    }
     reader.readAsDataURL(file)
     e.target.value = ""
+  }
+
+  const handleEditExisting = async () => {
+    if (uploading) return
+    setUploading(true)
+    const result = await getOriginalAvatar()
+    setUploading(false)
+    if (result.url) {
+      setCropSrc(result.url)
+      setOriginalSrc(null) // original is the URL itself, not a data URL
+    } else {
+      // No original stored, fall back to file picker
+      fileInputRef.current?.click()
+    }
+  }
+
+  const handleAvatarClick = () => {
+    if (avatarUrl) {
+      handleEditExisting()
+    } else {
+      fileInputRef.current?.click()
+    }
   }
 
   const handleCrop = async (croppedDataUrl: string) => {
     setCropSrc(null)
     setUploading(true)
-    const result = await uploadAvatar(croppedDataUrl)
+
+    // If we have a new original (from file picker), use it. Otherwise fetch the crop source.
+    let origBase64 = originalSrc
+    if (!origBase64 && cropSrc) {
+      // The cropSrc is a signed URL from storage; convert to base64
+      try {
+        const res = await fetch(cropSrc)
+        const blob = await res.blob()
+        origBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(blob)
+        })
+      } catch {
+        // Fall back: just use the cropped as the original
+        origBase64 = croppedDataUrl
+      }
+    }
+
+    const result = await uploadAvatar({
+      originalBase64: origBase64 ?? croppedDataUrl,
+      croppedBase64: croppedDataUrl,
+    })
     setUploading(false)
+    setOriginalSrc(null)
     if (result.success && result.avatarUrl) {
       setAvatarUrl(result.avatarUrl)
     }
@@ -149,7 +199,7 @@ export default function ProfileSection({ profile }: Props) {
               {/* Hover overlay */}
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleAvatarClick}
                 disabled={uploading}
                 className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
               >
@@ -181,14 +231,25 @@ export default function ProfileSection({ profile }: Props) {
                 Member since {formatMemberSince(profile.created_at)}
               </span>
               <div className="flex items-center gap-2">
+                {avatarUrl ? (
+                  <button
+                    type="button"
+                    onClick={handleEditExisting}
+                    disabled={uploading}
+                    className="text-xs font-medium transition-colors hover:underline"
+                    style={{ color: "var(--color-brand)" }}
+                  >
+                    Edit photo
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
                   className="text-xs font-medium transition-colors hover:underline"
-                  style={{ color: "var(--color-brand)" }}
+                  style={{ color: avatarUrl ? "var(--color-text-tertiary)" : "var(--color-brand)" }}
                 >
-                  {avatarUrl ? "Change photo" : "Upload photo"}
+                  {avatarUrl ? "Upload new" : "Upload photo"}
                 </button>
                 {avatarUrl ? (
                   <button
