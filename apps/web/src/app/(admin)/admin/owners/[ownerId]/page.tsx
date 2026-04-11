@@ -54,6 +54,7 @@ export default async function OwnerHubPage({
     { data: notes },
     { data: timeline },
     { data: documents },
+    { data: receipts },
   ] = await Promise.all([
     propertyIds.length > 0
       ? supabase
@@ -119,6 +120,13 @@ export default async function OwnerHubPage({
       .eq("owner_id", ownerId)
       .order("created_at", { ascending: false })
       .limit(100),
+    // Receipts
+    (supabase as any)
+      .from("owner_receipts")
+      .select("id, vendor, amount, currency, category, purchase_date, image_url, notes, visibility, property_id, created_at")
+      .eq("owner_id", ownerId)
+      .order("purchase_date", { ascending: false })
+      .limit(500),
   ]);
 
   // Build property name map for display
@@ -177,6 +185,12 @@ export default async function OwnerHubPage({
       }))}
       documents={(documents ?? []).map((d: any) => ({
         ...d,
+      }))}
+      receipts={(receipts ?? []).map((r: any) => ({
+        ...r,
+        propertyLabel: r.property_id
+          ? propertyMap.get(r.property_id) ?? "Property"
+          : null,
       }))}
     />
   );

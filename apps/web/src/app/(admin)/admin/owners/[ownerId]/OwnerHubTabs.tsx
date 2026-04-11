@@ -1453,70 +1453,938 @@ function DocumentsSection({ documents }: { documents: Document[] }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   BILLING
+   FINANCIALS
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function BillingSection() {
-  const placeholderMetrics = [
-    { label: "Total invoiced", value: "---" },
-    { label: "Outstanding", value: "---" },
-    { label: "Paid", value: "---" },
-  ];
+const RECEIPT_CATEGORIES = [
+  { value: "furniture", label: "Furniture" },
+  { value: "appliance", label: "Appliance" },
+  { value: "decor", label: "Decor" },
+  { value: "supplies", label: "Supplies" },
+  { value: "repair", label: "Repair" },
+  { value: "cleaning", label: "Cleaning" },
+  { value: "utilities", label: "Utilities" },
+  { value: "fees", label: "Fees" },
+  { value: "professional_services", label: "Professional Services" },
+  { value: "other", label: "Other" },
+] as const;
+
+const FINANCIALS_SUBTABS = [
+  { key: "receipts", label: "Receipts", icon: ReceiptIcon },
+  { key: "invoices", label: "Invoices", icon: Invoice },
+  { key: "statements", label: "Statements", icon: ChartLineUp },
+  { key: "tax", label: "Tax Documents", icon: Scales },
+] as const;
+
+type FinancialsSubKey = (typeof FINANCIALS_SUBTABS)[number]["key"];
+
+function FinancialsSection({
+  receipts,
+  properties,
+  ownerId,
+  ownerFirstName,
+}: {
+  receipts: Receipt[];
+  properties: Property[];
+  ownerId: string;
+  ownerFirstName: string;
+}) {
+  const searchParams = useSearchParams();
+  const sub = (searchParams.get("sub") as FinancialsSubKey) || "receipts";
+
+  const currentYear = new Date().getFullYear();
+  const previousYear = currentYear - 1;
+
+  const ytdSpend = receipts
+    .filter((r) => new Date(r.purchase_date).getFullYear() === currentYear)
+    .reduce((sum, r) => sum + Number(r.amount), 0);
+
+  const previousYearSpend = receipts
+    .filter((r) => new Date(r.purchase_date).getFullYear() === previousYear)
+    .reduce((sum, r) => sum + Number(r.amount), 0);
+
+  const yoyChange =
+    previousYearSpend > 0
+      ? Math.round(((ytdSpend - previousYearSpend) / previousYearSpend) * 100)
+      : null;
+
+  const categoryTotals = new Map<string, number>();
+  receipts
+    .filter((r) => new Date(r.purchase_date).getFullYear() === currentYear)
+    .forEach((r) => {
+      categoryTotals.set(
+        r.category,
+        (categoryTotals.get(r.category) ?? 0) + Number(r.amount),
+      );
+    });
+  const topCategories = [...categoryTotals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+  const maxCategoryTotal = topCategories[0]?.[1] ?? 1;
 
   return (
-    <div className="flex flex-col gap-5">
-      <SectionHeading>Billing</SectionHeading>
+    <div className="flex flex-col gap-6">
+      <SectionHeading>Financials</SectionHeading>
 
-      {/* Placeholder metrics */}
-      <div className="grid grid-cols-3 gap-3">
-        {placeholderMetrics.map((m) => (
-          <StatCard key={m.label} label={m.label} value={m.value} />
-        ))}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <StatCard label={`${currentYear} spend`} value={formatCurrency(ytdSpend)} />
+        <StatCard label={`${currentYear} invoiced`} value="$0.00" />
+        <StatCard label="Account balance" value="$0.00" />
       </div>
 
-      {/* Coming soon card */}
-      <Card>
-        <div className="flex flex-col items-center py-8 text-center">
-          <span
-            className="mb-3 flex h-10 w-10 items-center justify-center rounded-full"
-            style={{ backgroundColor: "rgba(27, 119, 190, 0.1)" }}
-          >
-            <CurrencyDollar
-              size={20}
-              weight="fill"
-              style={{ color: "var(--color-brand)" }}
-            />
-          </span>
-          <h3
+      {topCategories.length > 0 && (
+        <Card>
+          <div className="flex items-start justify-between gap-6">
+            <div className="min-w-0 flex-1">
+              <div
+                className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em]"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                Top categories this year
+              </div>
+              <div className="flex flex-col gap-2">
+                {topCategories.map(([category, total]) => {
+                  const label =
+                    RECEIPT_CATEGORIES.find((c) => c.value === category)
+                      ?.label ?? category;
+                  const pct = (total / maxCategoryTotal) * 100;
+                  return (
+                    <div key={category} className="flex items-center gap-3">
+                      <div
+                        className="w-32 shrink-0 text-xs font-medium"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {label}
+                      </div>
+                      <div
+                        className="relative h-2 flex-1 overflow-hidden rounded-full"
+                        style={{ backgroundColor: "var(--color-warm-gray-100)" }}
+                      >
+                        <div
+                          className="absolute left-0 top-0 h-full rounded-full"
+                          style={{
+                            width: `${pct}%`,
+                            background:
+                              "linear-gradient(90deg, #02aaeb, #1b77be)",
+                          }}
+                        />
+                      </div>
+                      <div
+                        className="w-20 shrink-0 text-right text-xs font-semibold tabular-nums"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {formatCurrency(total)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {yoyChange !== null && (
+              <div
+                className="flex flex-col items-end border-l pl-6"
+                style={{ borderColor: "var(--color-warm-gray-200)" }}
+              >
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  vs {previousYear}
+                </div>
+                <div
+                  className="mt-1 text-2xl font-semibold tabular-nums"
+                  style={{
+                    color: yoyChange > 0 ? "#b45309" : "#15803d",
+                  }}
+                >
+                  {yoyChange > 0 ? "+" : ""}
+                  {yoyChange}%
+                </div>
+                <div
+                  className="text-xs"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  {formatCurrency(previousYearSpend)} prev
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      <div
+        className="flex gap-1 rounded-xl border p-1"
+        style={{
+          backgroundColor: "var(--color-white)",
+          borderColor: "var(--color-warm-gray-200)",
+        }}
+      >
+        {FINANCIALS_SUBTABS.map((s) => {
+          const active = sub === s.key;
+          const Icon = s.icon;
+          return (
+            <Link
+              key={s.key}
+              href={`/admin/owners/${ownerId}?tab=financials&sub=${s.key}`}
+              scroll={false}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150"
+              style={{
+                backgroundColor: active
+                  ? "var(--color-brand)"
+                  : "transparent",
+                color: active ? "white" : "var(--color-text-secondary)",
+              }}
+            >
+              <Icon size={14} weight={active ? "fill" : "regular"} />
+              {s.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {sub === "receipts" && (
+        <ReceiptsSubTab
+          receipts={receipts}
+          properties={properties}
+          ownerId={ownerId}
+          currentYear={currentYear}
+        />
+      )}
+      {sub === "invoices" && <InvoicesPlaceholder ownerFirstName={ownerFirstName} />}
+      {sub === "statements" && <StatementsPlaceholder ownerFirstName={ownerFirstName} />}
+      {sub === "tax" && <TaxDocumentsPlaceholder ownerFirstName={ownerFirstName} />}
+    </div>
+  );
+}
+
+function ReceiptsSubTab({
+  receipts,
+  properties,
+  ownerId,
+  currentYear,
+}: {
+  receipts: Receipt[];
+  properties: Property[];
+  ownerId: string;
+  currentYear: number;
+}) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [filterYear, setFilterYear] = useState<number>(currentYear);
+  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterVisibility, setFilterVisibility] = useState<string>("");
+  const [isExporting, startExport] = useTransition();
+
+  const years = [
+    ...new Set(
+      receipts.map((r) => new Date(r.purchase_date).getFullYear()),
+    ),
+  ].sort((a, b) => b - a);
+  if (!years.includes(currentYear)) years.unshift(currentYear);
+
+  const filtered = receipts.filter((r) => {
+    if (new Date(r.purchase_date).getFullYear() !== filterYear) return false;
+    if (filterCategory && r.category !== filterCategory) return false;
+    if (filterVisibility && r.visibility !== filterVisibility) return false;
+    return true;
+  });
+
+  function handleExport() {
+    startExport(async () => {
+      const result = await exportReceiptsCSV(ownerId, filterYear);
+      if (result.ok && result.csv) {
+        const blob = new Blob([result.csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `receipts-${filterYear}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={filterYear}
+          onChange={(e) => setFilterYear(Number(e.target.value))}
+          className="rounded-lg border px-3 py-1.5 text-xs font-medium"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          {years.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="rounded-lg border px-3 py-1.5 text-xs font-medium"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          <option value="">All categories</option>
+          {RECEIPT_CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filterVisibility}
+          onChange={(e) => setFilterVisibility(e.target.value)}
+          className="rounded-lg border px-3 py-1.5 text-xs font-medium"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          <option value="">All visibility</option>
+          <option value="visible">Visible</option>
+          <option value="private">Private</option>
+        </select>
+
+        <div className="flex-1" />
+
+        <button
+          onClick={handleExport}
+          disabled={isExporting || filtered.length === 0}
+          className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors duration-150 disabled:opacity-50"
+          style={{
+            borderColor: "var(--color-warm-gray-200)",
+            color: "var(--color-text-primary)",
+            backgroundColor: "var(--color-white)",
+          }}
+        >
+          <DownloadSimple size={13} weight="bold" />
+          {isExporting ? "Exporting..." : `Download ${filterYear} CSV`}
+        </button>
+
+        <button
+          onClick={() => setShowAddForm((v) => !v)}
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+          style={{
+            background: "linear-gradient(135deg, #02aaeb, #1b77be)",
+          }}
+        >
+          <Plus size={13} weight="bold" />
+          Add receipt
+        </button>
+      </div>
+
+      {showAddForm && (
+        <AddReceiptForm
+          ownerId={ownerId}
+          properties={properties}
+          onClose={() => setShowAddForm(false)}
+        />
+      )}
+
+      {filtered.length === 0 ? (
+        <EmptyState
+          message={
+            receipts.length === 0
+              ? "No receipts yet. Add one to start tracking expenses."
+              : "No receipts match your filters."
+          }
+        />
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((r) => (
+            <ReceiptRow key={r.id} receipt={r} ownerId={ownerId} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddReceiptForm({
+  ownerId,
+  properties,
+  onClose,
+}: {
+  ownerId: string;
+  properties: Property[];
+  onClose: () => void;
+}) {
+  const [vendor, setVendor] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("other");
+  const [purchaseDate, setPurchaseDate] = useState(
+    new Date().toISOString().slice(0, 10),
+  );
+  const [propertyId, setPropertyId] = useState("");
+  const [notes, setNotes] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [visibility, setVisibility] = useState<"visible" | "private">("visible");
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!vendor.trim() || !amount.trim()) {
+      setError("Vendor and amount are required.");
+      return;
+    }
+    const amt = Number(amount);
+    if (Number.isNaN(amt) || amt <= 0) {
+      setError("Amount must be a positive number.");
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await createReceipt(ownerId, {
+        vendor: vendor.trim(),
+        amount: amt,
+        category,
+        purchaseDate,
+        propertyId: propertyId || undefined,
+        notes: notes.trim() || undefined,
+        imageUrl: imageUrl.trim() || undefined,
+        visibility,
+      });
+      if (res.ok) {
+        onClose();
+      } else {
+        setError(res.message);
+      }
+    });
+  }
+
+  return (
+    <Card>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h4
             className="text-sm font-semibold"
             style={{ color: "var(--color-text-primary)" }}
           >
-            Invoicing is coming soon
-          </h3>
-          <p
-            className="mt-1.5 max-w-sm text-sm leading-relaxed"
-            style={{ color: "var(--color-text-secondary)" }}
+            Add receipt
+          </h4>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1 transition-colors hover:bg-[var(--color-warm-gray-100)]"
           >
-            Billing is currently managed through HubFlo. Once invoicing is built
-            into Parcel, all payment history and statements will appear here.
-          </p>
+            <Trash size={14} style={{ color: "var(--color-text-tertiary)" }} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <FormField label="Vendor" required>
+            <input
+              type="text"
+              value={vendor}
+              onChange={(e) => setVendor(e.target.value)}
+              placeholder="Wayfair, Home Depot, etc."
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+              style={{
+                backgroundColor: "var(--color-white)",
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+              }}
+            />
+          </FormField>
+
+          <FormField label="Amount" required>
+            <div className="relative">
+              <span
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                $
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full rounded-lg border py-2 pl-7 pr-3 text-sm"
+                style={{
+                  backgroundColor: "var(--color-white)",
+                  borderColor: "var(--color-warm-gray-200)",
+                  color: "var(--color-text-primary)",
+                }}
+              />
+            </div>
+          </FormField>
+
+          <FormField label="Category">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+              style={{
+                backgroundColor: "var(--color-white)",
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+              }}
+            >
+              {RECEIPT_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField label="Purchase date">
+            <input
+              type="date"
+              value={purchaseDate}
+              onChange={(e) => setPurchaseDate(e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+              style={{
+                backgroundColor: "var(--color-white)",
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+              }}
+            />
+          </FormField>
+
+          <FormField label="Property (optional)">
+            <select
+              value={propertyId}
+              onChange={(e) => setPropertyId(e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+              style={{
+                backgroundColor: "var(--color-white)",
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+              }}
+            >
+              <option value="">All properties / general</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name?.trim() || p.address_line1}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField label="Visibility">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setVisibility("visible")}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold"
+                style={{
+                  backgroundColor:
+                    visibility === "visible"
+                      ? "rgba(22, 163, 74, 0.12)"
+                      : "var(--color-white)",
+                  borderColor:
+                    visibility === "visible"
+                      ? "#16a34a"
+                      : "var(--color-warm-gray-200)",
+                  color:
+                    visibility === "visible"
+                      ? "#15803d"
+                      : "var(--color-text-secondary)",
+                }}
+              >
+                <Eye size={13} weight="fill" />
+                Visible
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisibility("private")}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold"
+                style={{
+                  backgroundColor:
+                    visibility === "private"
+                      ? "rgba(245, 158, 11, 0.14)"
+                      : "var(--color-white)",
+                  borderColor:
+                    visibility === "private"
+                      ? "#f59e0b"
+                      : "var(--color-warm-gray-200)",
+                  color:
+                    visibility === "private"
+                      ? "#b45309"
+                      : "var(--color-text-secondary)",
+                }}
+              >
+                <LockSimple size={13} weight="fill" />
+                Private
+              </button>
+            </div>
+          </FormField>
+        </div>
+
+        <FormField label="Image URL (upload coming soon)">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://..."
+              className="flex-1 rounded-lg border px-3 py-2 text-sm"
+              style={{
+                backgroundColor: "var(--color-white)",
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+              }}
+            />
+            <button
+              type="button"
+              disabled
+              title="AI extraction coming soon"
+              className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold opacity-50"
+              style={{
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-tertiary)",
+                backgroundColor: "var(--color-white)",
+              }}
+            >
+              <Sparkle size={12} weight="fill" />
+              Extract from image
+            </button>
+          </div>
+        </FormField>
+
+        <FormField label="Notes">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            placeholder="Optional notes about this purchase..."
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+            style={{
+              backgroundColor: "var(--color-white)",
+              borderColor: "var(--color-warm-gray-200)",
+              color: "var(--color-text-primary)",
+            }}
+          />
+        </FormField>
+
+        {error && (
+          <div
+            className="rounded-lg border px-3 py-2 text-xs"
+            style={{
+              borderColor: "rgba(220, 38, 38, 0.3)",
+              backgroundColor: "rgba(220, 38, 38, 0.06)",
+              color: "#b91c1c",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border px-4 py-2 text-xs font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              color: "var(--color-text-secondary)",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="rounded-lg px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            style={{
+              background: "linear-gradient(135deg, #02aaeb, #1b77be)",
+            }}
+          >
+            {isPending ? "Saving..." : "Save receipt"}
+          </button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
+function FormField({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label
+        className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em]"
+        style={{ color: "var(--color-text-tertiary)" }}
+      >
+        {label} {required && <span style={{ color: "#dc2626" }}>*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function ReceiptRow({ receipt, ownerId }: { receipt: Receipt; ownerId: string }) {
+  const [isPending, startTransition] = useTransition();
+
+  function handleToggleVisibility() {
+    startTransition(async () => {
+      await toggleReceiptVisibility(receipt.id, ownerId);
+    });
+  }
+
+  function handleDelete() {
+    if (!confirm(`Delete receipt from ${receipt.vendor}?`)) return;
+    startTransition(async () => {
+      await deleteReceipt(receipt.id, ownerId);
+    });
+  }
+
+  const categoryLabel =
+    RECEIPT_CATEGORIES.find((c) => c.value === receipt.category)?.label ??
+    receipt.category;
+
+  return (
+    <div
+      className="group flex items-center gap-4 rounded-xl border p-4 transition-colors duration-150"
+      style={{
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
+      }}
+    >
+      <span
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+        style={{
+          backgroundColor: "rgba(27, 119, 190, 0.08)",
+          color: "var(--color-brand)",
+        }}
+      >
+        {receipt.image_url ? (
+          <ImageIcon size={18} weight="duotone" />
+        ) : (
+          <ReceiptIcon size={18} weight="duotone" />
+        )}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span
+            className="truncate text-sm font-semibold"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {receipt.vendor}
+          </span>
+          <span
+            className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+            style={{
+              backgroundColor: "var(--color-warm-gray-100)",
+              color: "var(--color-text-secondary)",
+            }}
+          >
+            {categoryLabel}
+          </span>
+        </div>
+        <div
+          className="mt-0.5 flex items-center gap-2 text-xs"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          <span>{formatDate(receipt.purchase_date)}</span>
+          {receipt.propertyLabel && (
+            <>
+              <span>•</span>
+              <span className="truncate">{receipt.propertyLabel}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div
+        className="text-right text-base font-semibold tabular-nums"
+        style={{ color: "var(--color-text-primary)" }}
+      >
+        {formatCurrency(Number(receipt.amount))}
+      </div>
+
+      <button
+        onClick={handleToggleVisibility}
+        disabled={isPending}
+        title={
+          receipt.visibility === "visible"
+            ? "Visible to owner. Click to make private."
+            : "Private. Click to make visible to owner."
+        }
+        className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-[var(--color-warm-gray-100)]"
+        style={{
+          color: receipt.visibility === "visible" ? "#15803d" : "#b45309",
+        }}
+      >
+        {receipt.visibility === "visible" ? (
+          <Eye size={15} weight="fill" />
+        ) : (
+          <LockSimple size={15} weight="fill" />
+        )}
+      </button>
+
+      <button
+        onClick={handleDelete}
+        disabled={isPending}
+        className="flex h-8 w-8 items-center justify-center rounded-lg opacity-0 transition-opacity duration-150 hover:bg-[var(--color-warm-gray-100)] group-hover:opacity-100"
+        style={{ color: "var(--color-text-tertiary)" }}
+      >
+        <Trash size={14} />
+      </button>
+    </div>
+  );
+}
+
+function InvoicesPlaceholder({ ownerFirstName }: { ownerFirstName: string }) {
+  return (
+    <PlaceholderCard
+      icon={<Invoice size={22} weight="fill" />}
+      title="Invoicing is coming soon"
+      description={`Send one-off and recurring invoices to ${ownerFirstName}. Track payment status, set up auto-pay, and manage management fees, special services, and repair markups.`}
+      bullets={[
+        "Recurring monthly invoices",
+        "One-off charges",
+        "Payment status tracking",
+        "Auto-pay management",
+      ]}
+      footnote={
+        <>
+          Currently managed in{" "}
           <a
             href="https://app.hubflo.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 rounded-lg border px-4 py-2 text-xs font-semibold transition-colors duration-150"
-            style={{
-              borderColor: "var(--color-warm-gray-200)",
-              color: "var(--color-brand)",
-              backgroundColor: "var(--color-white)",
-            }}
+            style={{ color: "var(--color-brand)" }}
           >
-            Open HubFlo
+            HubFlo
           </a>
-        </div>
-      </Card>
-    </div>
+          .
+        </>
+      }
+    />
   );
+}
+
+function StatementsPlaceholder({ ownerFirstName }: { ownerFirstName: string }) {
+  return (
+    <PlaceholderCard
+      icon={<ChartLineUp size={22} weight="fill" />}
+      title="Monthly statements are coming soon"
+      description={`A single owner-facing financial summary for ${ownerFirstName}, generated monthly and downloadable as PDF. Combines Hospitable revenue with Parcel receipts and invoices.`}
+      bullets={[
+        "Monthly P&L",
+        "Revenue from Hospitable",
+        "Parcel receipts and invoices",
+        "Net to owner",
+      ]}
+    />
+  );
+}
+
+function TaxDocumentsPlaceholder({ ownerFirstName }: { ownerFirstName: string }) {
+  return (
+    <PlaceholderCard
+      icon={<Scales size={22} weight="fill" />}
+      title="Tax documents are coming soon"
+      description={`Year-end tax documents for ${ownerFirstName}'s CPA. 1099-MISC generation, expense category summaries, and depreciation schedules.`}
+      bullets={[
+        "1099-MISC generation",
+        "Year-end expense report",
+        "Depreciation tracking",
+        "CPA-ready exports",
+      ]}
+    />
+  );
+}
+
+function PlaceholderCard({
+  icon,
+  title,
+  description,
+  bullets,
+  footnote,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  bullets: string[];
+  footnote?: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <div className="flex flex-col items-center py-8 text-center">
+        <span
+          className="mb-3 flex h-12 w-12 items-center justify-center rounded-full"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(2, 170, 235, 0.12), rgba(27, 119, 190, 0.08))",
+            color: "var(--color-brand)",
+          }}
+        >
+          {icon}
+        </span>
+        <h3
+          className="text-base font-semibold"
+          style={{ color: "var(--color-text-primary)" }}
+        >
+          {title}
+        </h3>
+        <p
+          className="mt-2 max-w-md text-sm leading-relaxed"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          {description}
+        </p>
+        <ul
+          className="mt-5 flex flex-col gap-1.5 text-left text-xs"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          {bullets.map((b) => (
+            <li key={b} className="flex items-center gap-2">
+              <Check
+                size={12}
+                weight="bold"
+                style={{ color: "var(--color-brand)" }}
+              />
+              {b}
+            </li>
+          ))}
+        </ul>
+        {footnote && (
+          <div
+            className="mt-5 text-xs"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {footnote}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
