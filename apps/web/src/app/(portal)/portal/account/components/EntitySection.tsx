@@ -48,7 +48,7 @@ export function EntitySection({ entity, members, currentUserId }: EntityProps) {
   const isMultiMember = members.length > 1;
 
   return (
-    <section id="entity">
+    <section id="entity" className="scroll-mt-8">
       <h2
         className="text-xl font-semibold tracking-tight"
         style={{ color: "var(--color-text-primary)" }}

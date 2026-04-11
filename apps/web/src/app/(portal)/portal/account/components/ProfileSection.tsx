@@ -175,7 +175,7 @@ export default function ProfileSection({ profile }: Props) {
   }
 
   return (
-    <section id="profile">
+    <section id="profile" className="scroll-mt-8">
       <h2
         className="text-xl font-semibold tracking-tight"
         style={{ color: "var(--color-text-primary)" }}

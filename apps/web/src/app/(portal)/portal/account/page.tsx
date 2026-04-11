@@ -55,7 +55,7 @@ export default async function AccountPage() {
       <div className="flex gap-10">
         <AccountNav />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-12">
+        <div className="flex min-w-0 flex-1 flex-col gap-12 pb-[70vh]">
           <ProfileSection
             profile={{
               full_name: profile?.full_name ?? null,

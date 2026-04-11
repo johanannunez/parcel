@@ -99,7 +99,7 @@ export function SessionsSection() {
   const hasMore = sessions.length > 5;
 
   return (
-    <section id="sessions">
+    <section id="sessions" className="scroll-mt-8">
       <h2
         className="text-xl font-semibold tracking-tight"
         style={{ color: "var(--color-text-primary)" }}

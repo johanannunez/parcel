@@ -83,7 +83,6 @@ export function NotificationsSection({
   contactMethod: string;
 }) {
   const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
@@ -94,7 +93,6 @@ export function NotificationsSection({
     } catch {
       // localStorage unavailable or corrupt, use defaults
     }
-    setLoaded(true);
   }, []);
 
   const updatePref = useCallback(
@@ -112,10 +110,8 @@ export function NotificationsSection({
     [],
   );
 
-  if (!loaded) return null;
-
   return (
-    <section id="notifications">
+    <section id="notifications" className="scroll-mt-8">
       <h2
         className="text-xl font-semibold tracking-tight"
         style={{ color: "var(--color-text-primary)" }}

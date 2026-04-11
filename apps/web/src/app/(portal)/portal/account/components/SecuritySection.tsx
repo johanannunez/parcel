@@ -94,7 +94,7 @@ export default function SecuritySection({ userEmail }: { userEmail: string }) {
   const [passwordState, passwordAction, passwordPending] = useActionState(updatePassword, null);
 
   return (
-    <section id="security">
+    <section id="security" className="scroll-mt-8">
       <h2
         className="text-xl font-semibold tracking-tight"
         style={{ color: 'var(--color-text-primary, #1a1a1a)' }}

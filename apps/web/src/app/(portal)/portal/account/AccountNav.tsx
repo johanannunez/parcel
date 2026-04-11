@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   UserCircle,
   Lock,
@@ -32,39 +32,58 @@ const NAV_ITEMS: NavEntry[] = [
 
 export function AccountNav() {
   const [activeId, setActiveId] = useState<string>("profile");
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     const sectionIds = NAV_ITEMS.map((item) => item.id);
-    const visibleSections = new Map<string, number>();
+    const sections = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            visibleSections.set(entry.target.id, entry.intersectionRatio);
-          } else {
-            visibleSections.delete(entry.target.id);
-          }
+    if (sections.length === 0) return;
+
+    // Find the scroll container. The portal uses <main> for this.
+    const scrollEl = sections[0].closest("main") as HTMLElement | null;
+    if (!scrollEl) return;
+
+    // Active section = the last section whose top has scrolled past a
+    // trigger line 140px below the top of the scroll container. Using
+    // the raw difference between each section's top and the scroll
+    // container's top avoids any quirks with IntersectionObserver bands.
+    const TRIGGER_OFFSET = 140;
+
+    let rafId = 0;
+    const update = () => {
+      rafId = 0;
+      const containerTop = scrollEl.getBoundingClientRect().top;
+      const triggerY = containerTop + TRIGGER_OFFSET;
+
+      let currentId = sections[0].id;
+      for (const section of sections) {
+        const sectionTop = section.getBoundingClientRect().top;
+        if (sectionTop - triggerY <= 0) {
+          currentId = section.id;
+        } else {
+          break;
         }
+      }
+      setActiveId(currentId);
+    };
 
-        // Pick the first visible section in document order
-        for (const id of sectionIds) {
-          if (visibleSections.has(id)) {
-            setActiveId(id);
-            break;
-          }
-        }
-      },
-      { rootMargin: "-80px 0px -60% 0px", threshold: [0, 0.1, 0.5] },
-    );
+    const onScroll = () => {
+      if (rafId !== 0) return;
+      rafId = requestAnimationFrame(update);
+    };
 
-    for (const id of sectionIds) {
-      const el = document.getElementById(id);
-      if (el) observerRef.current.observe(el);
-    }
+    scrollEl.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    // Run once after paint so section rects are stable.
+    rafId = requestAnimationFrame(update);
 
-    return () => observerRef.current?.disconnect();
+    return () => {
+      scrollEl.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (rafId !== 0) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   function scrollTo(id: string) {

@@ -136,15 +136,13 @@ export function RegionSection({ timezone }: { timezone: string }) {
     [],
   );
 
-  if (!loaded) return null;
-
   const selectedTz = US_TIMEZONES.find((tz) => tz.value === prefs.timezone);
   const utcOffset = getUtcOffset(prefs.timezone);
   const browserTz = getDefaultTimezone();
   const isSameAsBrowser = prefs.timezone === browserTz;
 
   return (
-    <section id="region">
+    <section id="region" className="scroll-mt-8">
       <h2
         className="text-xl font-semibold tracking-tight"
         style={{ color: "var(--color-text-primary)" }}
