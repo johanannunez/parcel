@@ -184,9 +184,8 @@ export function PortalAppBar({ firstName }: { firstName: string }) {
           </div>
         ) : null}
 
-        {/* Right: clock + action + search + bell */}
+        {/* Right: action pill (if any) + [clock centered above search] + bell */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <LiveClock />
           {header?.action ? (
             <Link
               href={header.action.href}
@@ -200,7 +199,10 @@ export function PortalAppBar({ firstName }: { firstName: string }) {
               {header.action.label}
             </Link>
           ) : null}
-          <SearchPill />
+          <div className="flex flex-col items-center gap-1.5">
+            <LiveClock />
+            <SearchPill />
+          </div>
           <BellOnBrand />
         </div>
       </div>
@@ -265,16 +267,26 @@ function SearchPill() {
   );
 }
 
+function ordinalSuffix(day: number): string {
+  const rem100 = day % 100;
+  if (rem100 >= 11 && rem100 <= 13) return "th";
+  switch (day % 10) {
+    case 1: return "st";
+    case 2: return "nd";
+    case 3: return "rd";
+    default: return "th";
+  }
+}
+
 /**
  * Live clock for the portal app bar.
  *
- * Two-line stack: date on top, full time (h:mm:ss AM/PM) on bottom.
- * Uniform font size and color throughout — no dimming, no size jumps.
- * Hidden below `md` because the mobile bar only has room for the bell.
+ * Single row: date · divider · time, centered above the search+bell row.
+ * Hidden below `md` — the mobile bar only has room for the bell.
  *
- * Renders at opacity 0 until mounted so the SSR output and client "now"
- * don't diverge (hydration mismatch). Space is still reserved so the
- * neighboring pills don't shift when the clock appears.
+ * Renders at opacity 0 until mounted to avoid a hydration mismatch between
+ * the server's "now" and the client's. The invisible skeleton reserves the
+ * exact horizontal space so nothing shifts when the clock appears.
  *
  * White colors are hardcoded literals — not `text-white` — because
  * globals.css redefines `--color-white` in dark mode.
@@ -288,8 +300,9 @@ function LiveClock() {
     return () => window.clearInterval(id);
   }, []);
 
+  let dateAriaStr = "Sat, Apr 11th, 2026";
   let timeStr = "12:00:00 AM";
-  let dateLabel = "SAT, APR 11";
+  let dateNode: ReactNode = "Sat, Apr 11th, 2026";
 
   if (now) {
     const hours = now.getHours();
@@ -298,37 +311,69 @@ function LiveClock() {
     const period = hours >= 12 ? "PM" : "AM";
     const displayHours = hours % 12 || 12;
     timeStr = `${displayHours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} ${period}`;
-    dateLabel = now
-      .toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      })
-      .toUpperCase();
-  }
 
-  const a11y = `${dateLabel} ${timeStr}`;
+    const day = now.getDate();
+    const suffix = ordinalSuffix(day);
+    const weekday = now.toLocaleDateString("en-US", { weekday: "short" });
+    const month = now.toLocaleDateString("en-US", { month: "short" });
+    const year = now.getFullYear();
+
+    dateAriaStr = `${weekday}, ${month} ${day}${suffix}, ${year}`;
+    dateNode = (
+      <>
+        {weekday}, {month} {day}
+        <span
+          style={{
+            fontSize: "8.5px",
+            verticalAlign: "baseline",
+            fontWeight: 600,
+            opacity: 0.65,
+            letterSpacing: "0.03em",
+          }}
+        >
+          {suffix}
+        </span>
+        , {year}
+      </>
+    );
+  }
 
   return (
     <div
-      className="hidden flex-col items-end leading-snug md:flex"
+      className="hidden items-center gap-2 md:flex"
       style={{ opacity: now ? 1 : 0 }}
-      aria-label={`Current time: ${a11y}`}
-      title={a11y}
+      aria-label={`${dateAriaStr}, ${timeStr}`}
       suppressHydrationWarning
     >
-      <div
-        className="text-[11px] font-semibold uppercase tracking-[0.09em]"
+      <span
+        className="text-[11px] font-semibold"
         style={{ color: "rgba(255, 255, 255, 0.82)" }}
       >
-        {dateLabel}
-      </div>
-      <div
+        {dateNode}
+      </span>
+      {/* Thin vertical divider */}
+      <span
+        className="h-[13px] w-px shrink-0"
+        style={{ backgroundColor: "rgba(255, 255, 255, 0.35)" }}
+        aria-hidden
+      />
+      <span
         className="text-[11px] font-bold tabular-nums"
         style={{ color: "#ffffff" }}
       >
         {timeStr}
-      </div>
+      </span>
+      {/* Pulsing live dot after the time */}
+      <span className="relative flex h-2 w-2 shrink-0">
+        <span
+          className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
+          style={{ backgroundColor: "#4ade80" }}
+        />
+        <span
+          className="relative inline-flex h-2 w-2 rounded-full"
+          style={{ backgroundColor: "#4ade80" }}
+        />
+      </span>
     </div>
   );
 }
