@@ -6,6 +6,7 @@ import ProfileSection from "./components/ProfileSection";
 import SecuritySection from "./components/SecuritySection";
 import { SessionsSection } from "./components/SessionsSection";
 import { NotificationsSection } from "./components/NotificationsSection";
+import { InstallAppSection } from "./components/InstallAppSection";
 import { RegionSection } from "./components/RegionSection";
 import { DataExportSection } from "./components/DataExportSection";
 import { DangerZoneSection } from "./components/DangerZoneSection";
@@ -104,6 +105,8 @@ export default async function AccountPage() {
           <NotificationsSection
             contactMethod={profile?.contact_method ?? "email"}
           />
+
+          <InstallAppSection />
 
           <RegionSection timezone={profile?.timezone ?? ""} />
 

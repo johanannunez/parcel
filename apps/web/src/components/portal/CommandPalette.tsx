@@ -11,8 +11,10 @@ import {
   Wallet,
   ClipboardText,
   Gear,
+  DownloadSimple,
 } from "@phosphor-icons/react";
 import { setupSearchIndex } from "@/lib/wizard/search-index";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
 
 type Result = {
   id: string;
@@ -21,6 +23,7 @@ type Result = {
   href: string;
   category: string;
   icon?: React.ReactNode;
+  onSelect?: () => void | Promise<void>;
 };
 
 const portalPages: Result[] = [
@@ -124,21 +127,49 @@ export function CommandPalette() {
     }
   }, [open]);
 
+  // PWA install action — always offered so users can install or reinstall.
+  const pwa = usePwaInstall();
+  const installResult = useMemo<Result | null>(() => {
+    if (pwa.status === "checking") return null;
+    const base: Result = {
+      id: "action-install-webapp",
+      label: "Install Parcel as a web app on this device",
+      description: "Add a home screen shortcut. Nothing is downloaded.",
+      href: "/portal/account#install",
+      category: "Actions",
+      icon: <DownloadSimple size={16} weight="duotone" />,
+    };
+    if (pwa.status === "available") {
+      return {
+        ...base,
+        onSelect: async () => {
+          await pwa.promptInstall();
+        },
+      };
+    }
+    return base;
+  }, [pwa]);
+
   // Build results
   const allResults = useMemo(
-    () => [...portalPages, ...setupStepResults],
-    [],
+    () => [
+      ...(installResult ? [installResult] : []),
+      ...portalPages,
+      ...setupStepResults,
+    ],
+    [installResult],
   );
 
   const filtered = useMemo(() => {
     if (!query.trim()) {
-      // Show suggested + go-to pages when no query
+      // Show suggested + go-to pages + actions when no query
       return [
         ...portalPages.slice(0, 3).map((r) => ({
           ...r,
           category: "Suggested",
         })),
         ...portalPages,
+        ...(installResult ? [installResult] : []),
       ];
     }
 
@@ -148,7 +179,7 @@ export function CommandPalette() {
       .sort((a, b) => b.score - a.score);
 
     return scored.map((s) => s.result);
-  }, [query, allResults]);
+  }, [query, allResults, installResult]);
 
   // Group by category
   const grouped = useMemo(() => {
@@ -170,10 +201,14 @@ export function CommandPalette() {
     }
   }, [flatResults.length, activeIndex]);
 
-  const navigate = useCallback(
-    (href: string) => {
+  const activate = useCallback(
+    (result: Result) => {
       setOpen(false);
-      router.push(href);
+      if (result.onSelect) {
+        void result.onSelect();
+      } else {
+        router.push(result.href);
+      }
     },
     [router],
   );
@@ -187,7 +222,7 @@ export function CommandPalette() {
       setActiveIndex((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter" && flatResults[activeIndex]) {
       e.preventDefault();
-      navigate(flatResults[activeIndex].href);
+      activate(flatResults[activeIndex]);
     }
   }
 
@@ -288,7 +323,7 @@ export function CommandPalette() {
                         role="option"
                         aria-selected={isActive}
                         data-active={isActive}
-                        onClick={() => navigate(item.href)}
+                        onClick={() => activate(item)}
                         onMouseEnter={() => setActiveIndex(currentIdx)}
                         className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors"
                         style={{
