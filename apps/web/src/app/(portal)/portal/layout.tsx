@@ -10,8 +10,8 @@ import { PortalBottomNav } from "@/components/portal/PortalBottomNav";
 import { PullToRefresh } from "@/components/portal/PullToRefresh";
 import { CommandPalette } from "@/components/portal/CommandPalette";
 import { NotificationsProvider } from "@/components/portal/NotificationsProvider";
+import { ServiceWorkerRegistration } from "@/components/portal/ServiceWorkerRegistration";
 import { SignOutButton } from "./SignOutButton";
-import { InstallBanner } from "@/components/portal/InstallBanner";
 
 /**
  * Portal shell — wraps every /portal/* page.
@@ -90,7 +90,6 @@ export default async function PortalLayout({
           <main className="flex-1 pb-20 md:pb-0">
             <PullToRefresh>
               <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
-                <InstallBanner />
                 {children}
               </div>
             </PullToRefresh>
@@ -102,6 +101,7 @@ export default async function PortalLayout({
           isAdmin={profile?.role === "admin"}
           signOutSlot={<SignOutButton />}
         />
+        <ServiceWorkerRegistration />
       </div>
     </NotificationsProvider>
   );
