@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
 import { NotificationBell } from "@/components/portal/NotificationBell";
+import { usePortalHeaderOverride } from "@/components/portal/PortalHeaderContext";
 import { useTheme } from "@/components/ThemeProvider";
 
 /**
@@ -122,7 +123,20 @@ function getPortalHeader(
 export function PortalAppBar({ firstName }: { firstName: string }) {
   const pathname = usePathname();
   const { resolvedTheme } = useTheme();
-  const header = getPortalHeader(pathname, firstName);
+  const override = usePortalHeaderOverride();
+  const routeHeader = getPortalHeader(pathname, firstName);
+  // Override from a mounted page wins over the pathname-based lookup. This
+  // lets dynamic pages (e.g. /portal/properties/[id]) set the bar title
+  // with data the shell doesn't have. Route-specific actions (like the
+  // "Add property" pill on /portal/properties) are kept from the route
+  // lookup so overrides don't accidentally blow them away.
+  const header: PortalHeader | null = override
+    ? {
+        title: override.title,
+        subtitle: override.subtitle,
+        action: routeHeader?.action,
+      }
+    : routeHeader;
   const isDark = resolvedTheme === "dark";
 
   return (

@@ -7,7 +7,6 @@ import {
   Bathtub,
   Users as UsersIcon,
   Ruler,
-  MapPin,
   CalendarBlank,
   FileText,
   House,
@@ -16,6 +15,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { OccupancyCalendar } from "@/components/portal/OccupancyCalendar";
+import { SetPortalHeader } from "@/components/portal/PortalHeaderContext";
 import { propertyTypeLongLabels } from "@/lib/labels";
 import { currency0, formatMedium, formatRelative } from "@/lib/format";
 
@@ -105,7 +105,32 @@ export default async function PropertyDetailPage({
 
   if (!property) notFound();
 
-  const title = property.name?.trim() || property.address_line1;
+  // App bar owns the page title + subtitle for this route. Title is the
+  // full formatted address; subtitle is a single-line spec row
+  // (type · bed · bath · sqft · sleeps). Null fields drop out cleanly
+  // so half-onboarded properties still render.
+  const headerTitle = [
+    property.address_line1,
+    property.address_line2,
+    `${property.city}, ${property.state} ${property.postal_code}`,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const headerSubtitleParts: string[] = [];
+  const typeLabel =
+    propertyTypeLongLabels[property.property_type] ?? property.property_type;
+  if (typeLabel) headerSubtitleParts.push(typeLabel);
+  if (property.bedrooms != null)
+    headerSubtitleParts.push(`${property.bedrooms} bd`);
+  if (property.bathrooms != null)
+    headerSubtitleParts.push(`${property.bathrooms} ba`);
+  if (property.square_feet != null)
+    headerSubtitleParts.push(`${property.square_feet.toLocaleString()} sqft`);
+  if (property.guest_capacity != null)
+    headerSubtitleParts.push(`Sleeps ${property.guest_capacity}`);
+  const headerSubtitle = headerSubtitleParts.join(" · ");
+
   const ytdRevenue = (ytdBookings ?? []).reduce(
     (s, b) => s + Number(b.total_amount ?? 0),
     0,
@@ -118,7 +143,9 @@ export default async function PropertyDetailPage({
 
   return (
     <div className="flex flex-col gap-10">
-      <div>
+      <SetPortalHeader title={headerTitle} subtitle={headerSubtitle} />
+
+      <div className="flex items-center justify-between gap-4">
         <Link
           href="/portal/properties"
           className="inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-80"
@@ -127,38 +154,6 @@ export default async function PropertyDetailPage({
           <ArrowLeft size={14} weight="bold" />
           Back to properties
         </Link>
-      </div>
-
-      <header className="flex flex-col-reverse gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <span
-            className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
-            style={{
-              backgroundColor: "var(--color-warm-gray-100)",
-              color: "var(--color-text-secondary)",
-            }}
-          >
-            {propertyTypeLongLabels[property.property_type] ??
-              property.property_type}
-          </span>
-          <h1
-            className="mt-3 text-[34px] font-semibold leading-tight tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            {title}
-          </h1>
-          <div
-            className="mt-2 flex items-center gap-1.5 text-sm"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            <MapPin size={14} weight="duotone" />
-            {property.address_line1}
-            {property.address_line2
-              ? `, ${property.address_line2}`
-              : ""},{" "}
-            {property.city}, {property.state} {property.postal_code}
-          </div>
-        </div>
         <span
           className="inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
           style={{
@@ -171,12 +166,14 @@ export default async function PropertyDetailPage({
           <span
             className="h-1.5 w-1.5 rounded-full"
             style={{
-              backgroundColor: property.active ? "#16a34a" : "var(--color-text-tertiary)",
+              backgroundColor: property.active
+                ? "#16a34a"
+                : "var(--color-text-tertiary)",
             }}
           />
           {property.active ? "Active" : "Paused"}
         </span>
-      </header>
+      </div>
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatTile

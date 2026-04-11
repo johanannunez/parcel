@@ -6,6 +6,7 @@ import {
   PortalIconRail,
 } from "@/components/portal/PortalSidebar";
 import { PortalAppBar } from "@/components/portal/PortalAppBar";
+import { PortalHeaderProvider } from "@/components/portal/PortalHeaderContext";
 import { PortalBottomNav } from "@/components/portal/PortalBottomNav";
 import { PullToRefresh } from "@/components/portal/PullToRefresh";
 import { CommandPalette } from "@/components/portal/CommandPalette";
@@ -70,39 +71,41 @@ export default async function PortalLayout({
 
   return (
     <NotificationsProvider userId={user.id}>
-      <div
-        className="flex h-screen overflow-hidden"
-        style={{ backgroundColor: "var(--color-off-white)" }}
-      >
-        <PortalIconRail />
-        <PortalSidebar
-          userName={fullName}
-          userEmail={user.email ?? ""}
-          initials={initials}
-          avatarUrl={profile?.avatar_url ?? null}
-          isAdmin={profile?.role === "admin"}
-          setupIncomplete={setupIncomplete}
-          signOutSlot={<SignOutButton />}
-        />
+      <PortalHeaderProvider>
+        <div
+          className="flex h-screen overflow-hidden"
+          style={{ backgroundColor: "var(--color-off-white)" }}
+        >
+          <PortalIconRail />
+          <PortalSidebar
+            userName={fullName}
+            userEmail={user.email ?? ""}
+            initials={initials}
+            avatarUrl={profile?.avatar_url ?? null}
+            isAdmin={profile?.role === "admin"}
+            setupIncomplete={setupIncomplete}
+            signOutSlot={<SignOutButton />}
+          />
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <PortalAppBar firstName={firstName} />
-          <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
-            <PullToRefresh>
-              <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
-                {children}
-              </div>
-            </PullToRefresh>
-          </main>
-          <CommandPalette />
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <PortalAppBar firstName={firstName} />
+            <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
+              <PullToRefresh>
+                <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
+                  {children}
+                </div>
+              </PullToRefresh>
+            </main>
+            <CommandPalette />
+          </div>
+
+          <PortalBottomNav
+            isAdmin={profile?.role === "admin"}
+            signOutSlot={<SignOutButton />}
+          />
+          <ServiceWorkerRegistration />
         </div>
-
-        <PortalBottomNav
-          isAdmin={profile?.role === "admin"}
-          signOutSlot={<SignOutButton />}
-        />
-        <ServiceWorkerRegistration />
-      </div>
+      </PortalHeaderProvider>
     </NotificationsProvider>
   );
 }
