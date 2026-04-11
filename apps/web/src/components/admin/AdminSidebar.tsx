@@ -131,7 +131,7 @@ export function AdminSidebar({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3">
+      <nav className="flex-1 px-3 pt-3">
         <SectionLabel>Main</SectionLabel>
         <ul className="flex flex-col gap-0.5">
           {mainNav.map((item) => (
