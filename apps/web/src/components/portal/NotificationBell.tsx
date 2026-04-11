@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,82 +14,27 @@ import {
   ClipboardText,
   ArrowRight,
 } from "@phosphor-icons/react";
-import {
-  getNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-  type NotificationItem,
-} from "@/app/(portal)/portal/notifications/actions";
-import { createClient } from "@/lib/supabase/client";
+import type { NotificationItem } from "@/app/(portal)/portal/notifications/actions";
+import { useNotifications } from "@/components/portal/NotificationsProvider";
 
 export function NotificationBell({
-  userId,
   align = "left",
 }: {
-  userId: string;
   align?: "left" | "right";
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { notifications, unreadCount, loading, markOneRead, markAllRead } =
+    useNotifications();
 
-  // Initial load
-  const loadNotifications = useCallback(async () => {
-    setLoading(true);
-    const result = await getNotifications(10);
-    setNotifications(result.notifications);
-    setUnreadCount(result.unreadCount);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
-
-  // Real-time subscription
-  useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`notifications-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `owner_id=eq.${userId}`,
-        },
-        () => {
-          loadNotifications();
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "notifications",
-          filter: `owner_id=eq.${userId}`,
-        },
-        () => {
-          loadNotifications();
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId, loadNotifications]);
-
-  // Close dropdown on outside click
   useEffect(() => {
     if (!open) return;
     const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -99,19 +44,12 @@ export function NotificationBell({
 
   const handleNotificationClick = async (n: NotificationItem) => {
     if (!n.read) {
-      await markNotificationRead(n.id);
-      setUnreadCount((c) => Math.max(0, c - 1));
+      await markOneRead(n.id);
     }
     setOpen(false);
     if (n.link) {
       router.push(n.link);
     }
-  };
-
-  const handleMarkAllRead = async () => {
-    await markAllNotificationsRead();
-    setUnreadCount(0);
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   return (
@@ -151,11 +89,17 @@ export function NotificationBell({
             style={{ borderColor: "var(--color-warm-gray-200)" }}
           >
             <div>
-              <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 Notifications
               </h3>
               {unreadCount > 0 ? (
-                <p className="mt-0.5 text-[11px]" style={{ color: "var(--color-text-tertiary)" }}>
+                <p
+                  className="mt-0.5 text-[11px]"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
                   {unreadCount} unread
                 </p>
               ) : null}
@@ -163,7 +107,7 @@ export function NotificationBell({
             {unreadCount > 0 ? (
               <button
                 type="button"
-                onClick={handleMarkAllRead}
+                onClick={markAllRead}
                 className="text-[11px] font-medium transition-colors hover:underline"
                 style={{ color: "var(--color-brand)" }}
               >
@@ -174,17 +118,31 @@ export function NotificationBell({
 
           {/* List */}
           <div className="max-h-[400px] overflow-y-auto">
-            {loading ? (
-              <div className="px-4 py-6 text-center text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+            {loading && notifications.length === 0 ? (
+              <div
+                className="px-4 py-6 text-center text-xs"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
                 Loading...
               </div>
             ) : notifications.length === 0 ? (
               <div className="px-4 py-10 text-center">
-                <Bell size={28} weight="duotone" className="mx-auto" style={{ color: "var(--color-warm-gray-200)" }} />
-                <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                <Bell
+                  size={28}
+                  weight="duotone"
+                  className="mx-auto"
+                  style={{ color: "var(--color-warm-gray-200)" }}
+                />
+                <p
+                  className="mt-2 text-sm"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   No notifications yet
                 </p>
-                <p className="mt-1 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                <p
+                  className="mt-1 text-xs"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
                   We&apos;ll let you know when something happens.
                 </p>
               </div>
@@ -198,7 +156,9 @@ export function NotificationBell({
                       className="flex w-full gap-3 border-b px-4 py-3 text-left transition-colors hover:bg-[var(--color-warm-gray-50)]"
                       style={{
                         borderColor: "var(--color-warm-gray-100)",
-                        backgroundColor: !n.read ? "rgba(2, 170, 235, 0.03)" : "transparent",
+                        backgroundColor: !n.read
+                          ? "rgba(2, 170, 235, 0.03)"
+                          : "transparent",
                       }}
                     >
                       <NotificationIcon type={n.type} />
@@ -240,7 +200,10 @@ export function NotificationBell({
           {/* Footer */}
           <div
             className="border-t px-4 py-2.5"
-            style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-warm-gray-50)" }}
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-warm-gray-50)",
+            }}
           >
             <Link
               href="/portal/notifications"
@@ -261,7 +224,10 @@ export function NotificationBell({
 /* ─── Helpers ─── */
 
 function NotificationIcon({ type }: { type: string }) {
-  const iconMap: Record<string, { icon: typeof Bell; bg: string; color: string }> = {
+  const iconMap: Record<
+    string,
+    { icon: typeof Bell; bg: string; color: string }
+  > = {
     message_received: {
       icon: ChatCircle,
       bg: "rgba(2, 170, 235, 0.1)",
@@ -327,5 +293,8 @@ function formatRelative(dateStr: string): string {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }

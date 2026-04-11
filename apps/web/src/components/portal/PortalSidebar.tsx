@@ -71,7 +71,6 @@ const secondaryNav: NavItem[] = [
 ];
 
 export function PortalSidebar({
-  userId,
   userName,
   userEmail,
   initials,
@@ -80,7 +79,6 @@ export function PortalSidebar({
   setupIncomplete = false,
   signOutSlot,
 }: {
-  userId: string;
   userName: string;
   userEmail: string;
   initials: string;
@@ -131,7 +129,7 @@ export function PortalSidebar({
             Owner
           </span>
         </Link>
-        <NotificationBell userId={userId} />
+        <NotificationBell />
       </div>
 
       <nav className="flex-1 px-3">
@@ -210,7 +208,7 @@ const railItems = [
   { href: "/portal/account", icon: <GearSix size={20} weight="duotone" />, label: "Account", matchPrefix: "/portal/account" },
 ];
 
-export function PortalIconRail({ userId }: { userId: string }) {
+export function PortalIconRail() {
   const pathname = usePathname();
 
   return (
@@ -233,7 +231,7 @@ export function PortalIconRail({ userId }: { userId: string }) {
 
       {/* Notification bell */}
       <div className="mb-3">
-        <NotificationBell userId={userId} />
+        <NotificationBell />
       </div>
 
       {/* Nav */}
@@ -272,11 +270,9 @@ export function PortalIconRail({ userId }: { userId: string }) {
 }
 
 export function PortalTopBar({
-  userId,
   userName,
   initials,
 }: {
-  userId: string;
   userName: string;
   initials: string;
 }) {
@@ -332,7 +328,7 @@ export function PortalTopBar({
       ) : null}
 
       <div className="flex items-center gap-1">
-        <NotificationBell userId={userId} align="right" />
+        <NotificationBell align="right" />
         <Link
           href="/portal/account"
           className="flex items-center gap-2"
