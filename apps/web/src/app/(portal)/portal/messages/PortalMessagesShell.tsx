@@ -21,6 +21,7 @@ import {
   recordMessageRead,
 } from "./actions";
 import { createClient } from "@/lib/supabase/client";
+import { PushPermissionCard } from "@/components/portal/PushSubscriptionManager";
 
 /* ─── Types ─── */
 
@@ -186,6 +187,9 @@ export function PortalMessagesShell({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* ─── Push Notification Prompt ─── */}
+      <PushPermissionCard />
+
       {/* ─── Alerts Strip ─── */}
       {visibleAlerts.length > 0 ? (
         <div className="flex flex-col gap-3">
