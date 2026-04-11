@@ -16,7 +16,6 @@ import { createClient } from "@/lib/supabase/server";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { OccupancyCalendar } from "@/components/portal/OccupancyCalendar";
 import { SetPortalHeader } from "@/components/portal/PortalHeaderContext";
-import { propertyTypeLongLabels } from "@/lib/labels";
 import { currency0, formatMedium, formatRelative } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Property" };
@@ -106,21 +105,15 @@ export default async function PropertyDetailPage({
   if (!property) notFound();
 
   // App bar owns the page title + subtitle for this route. Title is the
-  // full formatted address; subtitle is a single-line spec row
-  // (type · bed · bath · sqft · sleeps). Null fields drop out cleanly
-  // so half-onboarded properties still render.
-  const headerTitle = [
-    property.address_line1,
-    property.address_line2,
-    `${property.city}, ${property.state} ${property.postal_code}`,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  // full formatted address built defensively (skip empty fragments so
+  // partially filled or malformed rows still render cleanly). Subtitle
+  // is a single-line spec row of bed / bath / sqft / sleeps; null
+  // fields drop out. property_type is intentionally NOT included — it
+  // represents the rental business model (e.g. "co-hosting"), not the
+  // building type, so it reads confusingly as a "home type" here.
+  const headerTitle = buildAddressLine(property) || "Property details";
 
   const headerSubtitleParts: string[] = [];
-  const typeLabel =
-    propertyTypeLongLabels[property.property_type] ?? property.property_type;
-  if (typeLabel) headerSubtitleParts.push(typeLabel);
   if (property.bedrooms != null)
     headerSubtitleParts.push(`${property.bedrooms} bd`);
   if (property.bathrooms != null)
@@ -537,4 +530,43 @@ function DocStatusChip({ status }: { status: string }) {
       {status}
     </span>
   );
+}
+
+/**
+ * Build a human-readable single-line address from a property row. Skips
+ * empty / null fragments so partially filled rows still render cleanly.
+ * Handles the three common shapes:
+ *
+ *   line1, city, state zip
+ *   line1, line2, city, state zip
+ *   line1, city, state           (no zip yet)
+ *
+ * Returns empty string if nothing meaningful is present so callers can
+ * fall back to a default title.
+ */
+function buildAddressLine(p: {
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+}): string {
+  const line1 = p.address_line1?.trim() ?? "";
+  const line2 = p.address_line2?.trim() ?? "";
+  const city = p.city?.trim() ?? "";
+  const state = p.state?.trim() ?? "";
+  const postal = p.postal_code?.trim() ?? "";
+
+  const parts: string[] = [];
+  if (line1) parts.push(line1);
+  if (line2) parts.push(line2);
+
+  // "State Zip" is one visual unit, separated by a space. "City, State Zip"
+  // joins them with a comma. Drop any fragment that's empty so we don't
+  // emit stray whitespace or dangling commas.
+  const stateZip = [state, postal].filter(Boolean).join(" ");
+  const cityStateZip = [city, stateZip].filter(Boolean).join(", ");
+  if (cityStateZip) parts.push(cityStateZip);
+
+  return parts.join(", ");
 }
