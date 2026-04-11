@@ -10,7 +10,6 @@ import { PortalBottomNav } from "@/components/portal/PortalBottomNav";
 import { PullToRefresh } from "@/components/portal/PullToRefresh";
 import { CommandPalette } from "@/components/portal/CommandPalette";
 import { SignOutButton } from "./SignOutButton";
-import { ServiceWorkerRegistration } from "@/components/portal/ServiceWorkerRegistration";
 import { InstallBanner } from "@/components/portal/InstallBanner";
 
 /**
@@ -104,7 +103,6 @@ export default async function PortalLayout({
         isAdmin={profile?.role === "admin"}
         signOutSlot={<SignOutButton />}
       />
-      <ServiceWorkerRegistration />
     </div>
   );
 }
