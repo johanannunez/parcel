@@ -5,9 +5,70 @@ import { Bell, X } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 
 /**
+ * Creates a push subscription tied to the active service worker and
+ * saves it to the push_subscriptions table. Shared between the explicit
+ * "Enable" button click and the silent auto-re-subscribe effect.
+ */
+async function createAndSavePushSubscription(): Promise<boolean> {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  if (!vapidPublicKey) {
+    console.warn("[Push] VAPID public key not set");
+    return false;
+  }
+
+  try {
+    // Wait for the service worker to be ready (installed + activated)
+    const registration = await navigator.serviceWorker.ready;
+
+    // Check if there's already an active subscription on this SW
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      // Create a fresh one
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey).buffer as ArrayBuffer,
+      });
+    }
+
+    // Save to the database
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const subJson = subscription.toJSON();
+    const { error } = await supabase.from("push_subscriptions").upsert(
+      {
+        user_id: user.id,
+        endpoint: subJson.endpoint!,
+        keys: subJson.keys as Record<string, string>,
+        device_info: detectDevice(),
+      },
+      { onConflict: "user_id,endpoint" },
+    );
+
+    if (error) {
+      console.error("[Push] Failed to save subscription:", error);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("[Push] Subscription failed:", err);
+    return false;
+  }
+}
+
+/**
  * Manages push notification subscription.
  * Shows an inline card on the Messages page prompting the owner
  * to enable notifications if they haven't already.
+ *
+ * If permission is already granted but there's no active subscription
+ * (e.g., after the service worker was replaced), this component
+ * silently creates a fresh subscription on mount.
  */
 export function PushPermissionCard() {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
@@ -21,9 +82,17 @@ export function PushPermissionCard() {
     }
     setPermission(Notification.permission);
 
-    // Check if already dismissed
     if (localStorage.getItem("parcel-push-dismissed") === "true") {
       setDismissed(true);
+    }
+
+    // Silent auto-re-subscribe when permission is already granted.
+    // Handles the case where the service worker was replaced and the
+    // existing database row is stale.
+    if (Notification.permission === "granted") {
+      createAndSavePushSubscription().catch((err) => {
+        console.warn("[Push] Silent re-subscribe failed:", err);
+      });
     }
   }, []);
 
@@ -32,51 +101,11 @@ export function PushPermissionCard() {
 
     setSubscribing(true);
 
-    try {
-      const perm = await Notification.requestPermission();
-      setPermission(perm);
+    const perm = await Notification.requestPermission();
+    setPermission(perm);
 
-      if (perm !== "granted") {
-        setSubscribing(false);
-        return;
-      }
-
-      // Get the service worker registration
-      const registration = await navigator.serviceWorker.ready;
-
-      // Subscribe to push
-      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!vapidPublicKey) {
-        console.warn("[Push] VAPID public key not set");
-        setSubscribing(false);
-        return;
-      }
-
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey).buffer as ArrayBuffer,
-      });
-
-      // Save to Supabase
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setSubscribing(false);
-        return;
-      }
-
-      const subJson = subscription.toJSON();
-      await supabase.from("push_subscriptions").upsert(
-        {
-          user_id: user.id,
-          endpoint: subJson.endpoint!,
-          keys: subJson.keys as Record<string, string>,
-          device_info: detectDevice(),
-        },
-        { onConflict: "user_id,endpoint" },
-      );
-    } catch (err) {
-      console.error("[Push] Subscription failed:", err);
+    if (perm === "granted") {
+      await createAndSavePushSubscription();
     }
 
     setSubscribing(false);

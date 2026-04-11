@@ -1,63 +1,70 @@
-// Self-destructing service worker.
+// Parcel push-only service worker.
 //
-// We intentionally DO NOT ship a PWA right now. The previous
-// service worker cached Next.js chunks cache-first, which caused
-// ChunkLoadError on every deploy. This file exists solely to
-// replace the broken SW for clients that still have it installed.
+// INTENTIONAL SCOPE: this SW exists ONLY to handle Web Push notifications
+// and their click events. It does NOT cache any resources and does NOT
+// intercept fetches. A previous version of this file cached Next.js chunks
+// cache-first, which caused ChunkLoadError on every deploy. By avoiding
+// caching entirely, we get push notifications without any risk of serving
+// stale bundles.
 //
-// When the browser checks for SW updates, it byte-compares /sw.js.
-// Finding this new version, it installs, activates, wipes all
-// caches, and unregisters itself. The client is clean on the
-// next navigation.
+// If we ever want offline support back (cached shell, offline page, etc.),
+// do it via a separate cache name that is NOT in /sw-killswitch.js's
+// OLD_CACHES list, and use Stale-While-Revalidate for HTML, Network-First
+// for JS chunks (NEVER Cache-First on _next/static).
 
 self.addEventListener("install", () => {
+  // Activate immediately on install
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
+  // Claim existing clients so the push handler is active without a reload
+  event.waitUntil(self.clients.claim());
+});
+
+// Intentionally NO fetch handler. Letting the browser handle all requests
+// natively means we never cache stale bundles.
+
+// Push notification received from the server
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: "Parcel", body: event.data.text() };
+  }
+
   event.waitUntil(
-    (async () => {
-      try {
-        // Wipe every cache this SW (or any earlier version) ever made
-        const keys = await caches.keys();
-        await Promise.all(keys.map((k) => caches.delete(k)));
-      } catch {
-        // no-op
-      }
-
-      try {
-        // Take control of existing clients so we can redirect them
-        await self.clients.claim();
-      } catch {
-        // no-op
-      }
-
-      try {
-        // Unregister ourselves so no SW remains
-        await self.registration.unregister();
-      } catch {
-        // no-op
-      }
-
-      try {
-        // Force all existing clients to reload onto a clean page
-        const clients = await self.clients.matchAll({ type: "window" });
-        for (const client of clients) {
-          // Use navigate so in-memory state is discarded
-          if ("navigate" in client) {
-            client.navigate(client.url);
-          }
-        }
-      } catch {
-        // no-op
-      }
-    })(),
+    self.registration.showNotification(payload.title || "Parcel", {
+      body: payload.body || "",
+      icon: "/brand/app-icon-light-192.png",
+      badge: "/brand/favicon-32.png",
+      data: payload.data || { url: "/portal/messages" },
+      tag: payload.tag || "parcel-message",
+      renotify: true,
+    }),
   );
 });
 
-// Pass all fetches through to the network without any caching,
-// so the window of time before the new SW activates is still safe.
-self.addEventListener("fetch", () => {
-  // Intentionally do not call event.respondWith() — let the browser
-  // handle the request normally (no SW interception).
+// Notification clicked: focus existing portal tab or open a new one
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || "/portal/messages";
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        for (const client of clients) {
+          if (client.url.includes("/portal") && "focus" in client) {
+            client.navigate(targetUrl);
+            return client.focus();
+          }
+        }
+        return self.clients.openWindow(targetUrl);
+      }),
+  );
 });
