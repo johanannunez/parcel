@@ -8,7 +8,7 @@ import {
   Buildings,
   CalendarCheck,
   ChatCircle,
-  DotsThree,
+  List,
   FileText,
   GearSix,
   Question,
@@ -174,7 +174,7 @@ export function PortalBottomNav({
             aria-label="More options"
             aria-expanded={moreOpen}
           >
-            {moreOpen ? <X size={22} weight="bold" /> : <DotsThree size={22} weight="bold" />}
+            {moreOpen ? <X size={22} weight="bold" /> : <List size={22} weight="bold" />}
             <span
               className="text-[10px] font-semibold leading-none"
               style={{
