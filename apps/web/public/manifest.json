@@ -2,11 +2,14 @@
   "name": "Parcel Owner Portal",
   "short_name": "Parcel",
   "description": "Manage your rental properties with The Parcel Company",
+  "id": "/portal/dashboard",
   "start_url": "/portal/dashboard",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#fafafa",
   "theme_color": "#1b77be",
   "orientation": "portrait-primary",
+  "categories": ["business", "finance"],
   "icons": [
     {
       "src": "/brand/app-icon-light-192.png",
@@ -17,6 +20,12 @@
       "src": "/brand/app-icon-light-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/brand/app-icon-light-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/brand/app-icon-dark-192.png",

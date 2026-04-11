@@ -11,6 +11,7 @@ import { PullToRefresh } from "@/components/portal/PullToRefresh";
 import { CommandPalette } from "@/components/portal/CommandPalette";
 import { SignOutButton } from "./SignOutButton";
 import { ServiceWorkerRegistration } from "@/components/portal/ServiceWorkerRegistration";
+import { InstallBanner } from "@/components/portal/InstallBanner";
 
 /**
  * Portal shell — wraps every /portal/* page.
@@ -90,6 +91,7 @@ export default async function PortalLayout({
         <main className="flex-1 pb-20 md:pb-0">
           <PullToRefresh>
             <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
+              <InstallBanner />
               {children}
             </div>
           </PullToRefresh>

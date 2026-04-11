@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buildMessageEmail, buildBroadcastEmail } from "@/lib/email-template";
+import { sendPushToOwner, sendPushToAllOwners } from "@/lib/push";
 
 /* ─── Helpers ─── */
 
@@ -138,6 +139,14 @@ export async function sendMessage(args: {
 
   if (msgErr || !msg) return { error: msgErr?.message ?? "Failed to send message" };
 
+  // Push notification (fire-and-forget)
+  sendPushToOwner({
+    ownerId: args.ownerId,
+    title: "The Parcel Company",
+    body: args.body,
+    url: "/portal/messages",
+  }).catch(() => {});
+
   revalidatePath("/admin/messages");
   return { success: true, messageId: msg.id, conversationId };
 }
@@ -213,6 +222,13 @@ export async function sendBroadcast(args: {
       await Promise.allSettled(emailPromises);
     }
   }
+
+  // Push notification to all owners (fire-and-forget)
+  sendPushToAllOwners({
+    title: "Parcel Announcement",
+    body: args.body,
+    url: "/portal/messages",
+  }).catch(() => {});
 
   revalidatePath("/admin/messages");
   return { success: true, conversationId: conv.id, ownerCount: 0 };
