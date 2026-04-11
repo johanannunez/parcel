@@ -282,10 +282,10 @@ input[type="button"] {
   background: var(--color-warm-gray-50);
   color: var(--color-text-primary);
 }
-.sidebar-footer-signout {
+.sidebar-footer-row.sidebar-footer-signout {
   color: #dc4f3a;
 }
-.sidebar-footer-signout:hover {
+.sidebar-footer-row.sidebar-footer-signout:hover {
   background: rgba(220, 79, 58, 0.08);
   color: #c43828;
 }
