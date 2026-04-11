@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   House,
   Buildings,
+  CalendarCheck,
   ChatCircle,
   DotsThree,
   FileText,
