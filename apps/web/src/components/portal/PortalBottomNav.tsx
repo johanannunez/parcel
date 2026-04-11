@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   House,
   Buildings,
-  CalendarBlank,
+  CalendarCheck,
   ChatCircle,
   DotsThree,
   FileText,
@@ -14,9 +14,13 @@ import {
   Question,
   Sun,
   Moon,
-  SignOut,
   X,
   ShieldCheck,
+  ListChecks,
+  ClockCounterClockwise,
+  UsersThree,
+  Handshake,
+  CurrencyDollar,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -45,11 +49,11 @@ const navItems: NavItem[] = [
     matchPrefix: "/portal/properties",
   },
   {
-    href: "/portal/calendar",
-    label: "Calendar",
-    icon: <CalendarBlank size={22} weight="regular" />,
-    activeIcon: <CalendarBlank size={22} weight="fill" />,
-    matchPrefix: "/portal/calendar",
+    href: "/portal/reserve",
+    label: "Reserve",
+    icon: <CalendarCheck size={22} weight="regular" />,
+    activeIcon: <CalendarCheck size={22} weight="fill" />,
+    matchPrefix: "/portal/reserve",
   },
   {
     href: "/portal/messages",
@@ -80,7 +84,12 @@ export function PortalBottomNav({
   );
 
   const isMoreActive =
+    pathname?.startsWith("/portal/tasks") ||
+    pathname?.startsWith("/portal/timeline") ||
+    pathname?.startsWith("/portal/members") ||
+    pathname?.startsWith("/portal/meetings") ||
     pathname?.startsWith("/portal/documents") ||
+    pathname?.startsWith("/portal/financials") ||
     pathname?.startsWith("/portal/account") ||
     pathname?.startsWith("/portal/hospitable");
 
@@ -133,9 +142,10 @@ export function PortalBottomNav({
             onClick={() => setMoreOpen(!moreOpen)}
             className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
             style={{
-              color: moreOpen || isMoreActive
-                ? "var(--color-brand)"
-                : "var(--color-text-tertiary)",
+              color:
+                moreOpen || isMoreActive
+                  ? "var(--color-brand)"
+                  : "var(--color-text-tertiary)",
             }}
             aria-label="More options"
             aria-expanded={moreOpen}
@@ -148,9 +158,10 @@ export function PortalBottomNav({
             <span
               className="text-[10px] font-semibold leading-none"
               style={{
-                color: moreOpen || isMoreActive
-                  ? "var(--color-brand)"
-                  : "var(--color-text-tertiary)",
+                color:
+                  moreOpen || isMoreActive
+                    ? "var(--color-brand)"
+                    : "var(--color-text-tertiary)",
               }}
             >
               More
@@ -198,10 +209,45 @@ export function PortalBottomNav({
 
               <div className="px-4 pb-4">
                 <MoreLink
+                  href="/portal/tasks"
+                  icon={<ListChecks size={20} weight="duotone" />}
+                  label="Tasks"
+                  active={pathname?.startsWith("/portal/tasks")}
+                  onClick={closeMore}
+                />
+                <MoreLink
+                  href="/portal/timeline"
+                  icon={<ClockCounterClockwise size={20} weight="duotone" />}
+                  label="Timeline"
+                  active={pathname?.startsWith("/portal/timeline")}
+                  onClick={closeMore}
+                />
+                <MoreLink
+                  href="/portal/members"
+                  icon={<UsersThree size={20} weight="duotone" />}
+                  label="Members"
+                  active={pathname?.startsWith("/portal/members")}
+                  onClick={closeMore}
+                />
+                <MoreLink
+                  href="/portal/meetings"
+                  icon={<Handshake size={20} weight="duotone" />}
+                  label="Meetings"
+                  active={pathname?.startsWith("/portal/meetings")}
+                  onClick={closeMore}
+                />
+                <MoreLink
                   href="/portal/documents"
                   icon={<FileText size={20} weight="duotone" />}
                   label="Documents"
                   active={pathname?.startsWith("/portal/documents")}
+                  onClick={closeMore}
+                />
+                <MoreLink
+                  href="/portal/financials"
+                  icon={<CurrencyDollar size={20} weight="duotone" />}
+                  label="Financials"
+                  active={pathname?.startsWith("/portal/financials")}
                   onClick={closeMore}
                 />
                 <MoreLink
@@ -282,19 +328,13 @@ function MoreLink({
       onClick={onClick}
       className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors"
       style={{
-        color: active
-          ? "var(--color-brand)"
-          : "var(--color-text-secondary)",
-        backgroundColor: active
-          ? "rgba(2, 170, 235, 0.06)"
-          : "transparent",
+        color: active ? "var(--color-brand)" : "var(--color-text-secondary)",
+        backgroundColor: active ? "rgba(2, 170, 235, 0.06)" : "transparent",
       }}
     >
       <span
         style={{
-          color: active
-            ? "var(--color-brand)"
-            : "var(--color-text-tertiary)",
+          color: active ? "var(--color-brand)" : "var(--color-text-tertiary)",
         }}
       >
         {icon}

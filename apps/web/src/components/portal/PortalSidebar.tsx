@@ -8,7 +8,12 @@ import {
   ClipboardText,
   FileText,
   ChatCircle,
-  CalendarBlank,
+  CalendarCheck,
+  UsersThree,
+  ListChecks,
+  ClockCounterClockwise,
+  Handshake,
+  CurrencyDollar,
   GearSix,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
@@ -23,7 +28,7 @@ type NavItem = {
   matchPrefix?: string;
 };
 
-const primaryNav: NavItem[] = [
+const portfolioNav: NavItem[] = [
   {
     href: "/portal/dashboard",
     label: "Dashboard",
@@ -35,6 +40,18 @@ const primaryNav: NavItem[] = [
     icon: <Buildings size={18} weight="duotone" />,
     matchPrefix: "/portal/properties",
   },
+  {
+    href: "/portal/reserve",
+    label: "Reserve",
+    icon: <CalendarCheck size={18} weight="duotone" />,
+    matchPrefix: "/portal/reserve",
+  },
+  {
+    href: "/portal/members",
+    label: "Members",
+    icon: <UsersThree size={18} weight="duotone" />,
+    matchPrefix: "/portal/members",
+  },
 ];
 
 const setupNav: NavItem = {
@@ -44,7 +61,28 @@ const setupNav: NavItem = {
   matchPrefix: "/portal/setup",
 };
 
-const secondaryNav: NavItem[] = [
+const activityNav: NavItem[] = [
+  {
+    href: "/portal/tasks",
+    label: "Tasks",
+    icon: <ListChecks size={18} weight="duotone" />,
+    matchPrefix: "/portal/tasks",
+  },
+  {
+    href: "/portal/timeline",
+    label: "Timeline",
+    icon: <ClockCounterClockwise size={18} weight="duotone" />,
+    matchPrefix: "/portal/timeline",
+  },
+  {
+    href: "/portal/meetings",
+    label: "Meetings",
+    icon: <Handshake size={18} weight="duotone" />,
+    matchPrefix: "/portal/meetings",
+  },
+];
+
+const resourcesNav: NavItem[] = [
   {
     href: "/portal/documents",
     label: "Documents",
@@ -52,25 +90,80 @@ const secondaryNav: NavItem[] = [
     matchPrefix: "/portal/documents",
   },
   {
+    href: "/portal/financials",
+    label: "Financials",
+    icon: <CurrencyDollar size={18} weight="duotone" />,
+    matchPrefix: "/portal/financials",
+  },
+  {
     href: "/portal/messages",
     label: "Messages",
     icon: <ChatCircle size={18} weight="duotone" />,
     matchPrefix: "/portal/messages",
   },
-  {
-    href: "/portal/hospitable",
-    label: "Hospitable",
-    icon: (
-      <Image
-        src="/brand/hospitable-logo.png"
-        alt=""
-        width={18}
-        height={18}
-        className="shrink-0"
-      />
-    ),
-  },
 ];
+
+function NavSection({
+  label,
+  items,
+  isActive,
+}: {
+  label: string;
+  items: NavItem[];
+  isActive: (item: NavItem) => boolean | undefined;
+}) {
+  return (
+    <div className="mb-4">
+      <div
+        className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em]"
+        style={{ color: "var(--color-text-tertiary)" }}
+      >
+        {label}
+      </div>
+      <ul className="flex flex-col gap-0.5">
+        {items.map((item) => {
+          const active = isActive(item);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{
+                  color: active
+                    ? "var(--color-text-primary)"
+                    : "var(--color-text-secondary)",
+                  backgroundColor: active
+                    ? "var(--color-warm-gray-100)"
+                    : "transparent",
+                }}
+              >
+                {active ? (
+                  <span
+                    aria-hidden
+                    className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full"
+                    style={{ backgroundColor: "var(--color-brand)" }}
+                  />
+                ) : null}
+                <span
+                  className="inline-flex h-5 w-5 items-center justify-center transition-colors"
+                  style={{
+                    color: active
+                      ? "var(--color-brand)"
+                      : "var(--color-text-tertiary)",
+                  }}
+                >
+                  {item.icon}
+                </span>
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 export function PortalSidebar({
   userName,
@@ -97,12 +190,6 @@ export function PortalSidebar({
     return pathname === item.href;
   };
 
-  const allNav: NavItem[] = [
-    ...primaryNav,
-    ...(setupIncomplete ? [setupNav] : []),
-    ...secondaryNav,
-  ];
-
   return (
     <aside
       aria-label="Primary navigation"
@@ -118,7 +205,11 @@ export function PortalSidebar({
           className="inline-flex items-center gap-2.5 focus-visible:outline-none"
         >
           <Image
-            src={resolvedTheme === "dark" ? "/brand/logo-mark-white.png" : "/brand/logo-mark.png"}
+            src={
+              resolvedTheme === "dark"
+                ? "/brand/logo-mark-white.png"
+                : "/brand/logo-mark.png"
+            }
             alt="Parcel"
             width={28}
             height={28}
@@ -133,32 +224,27 @@ export function PortalSidebar({
         </Link>
       </div>
 
-      <nav className="flex-1 px-3">
-        <div
-          className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          Portfolio
-        </div>
-        <ul className="flex flex-col gap-0.5">
-          {allNav.map((item) => {
-            const active = isActive(item);
-            return (
-              <li key={item.href}>
+      <nav className="flex-1 overflow-y-auto px-3">
+        <NavSection label="Portfolio" items={portfolioNav} isActive={isActive} />
+
+        {setupIncomplete && (
+          <div className="mb-4">
+            <ul className="flex flex-col gap-0.5">
+              <li>
                 <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
+                  href={setupNav.href}
+                  aria-current={isActive(setupNav) ? "page" : undefined}
                   className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                   style={{
-                    color: active
+                    color: isActive(setupNav)
                       ? "var(--color-text-primary)"
                       : "var(--color-text-secondary)",
-                    backgroundColor: active
+                    backgroundColor: isActive(setupNav)
                       ? "var(--color-warm-gray-100)"
                       : "transparent",
                   }}
                 >
-                  {active ? (
+                  {isActive(setupNav) ? (
                     <span
                       aria-hidden
                       className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full"
@@ -168,19 +254,22 @@ export function PortalSidebar({
                   <span
                     className="inline-flex h-5 w-5 items-center justify-center transition-colors"
                     style={{
-                      color: active
+                      color: isActive(setupNav)
                         ? "var(--color-brand)"
                         : "var(--color-text-tertiary)",
                     }}
                   >
-                    {item.icon}
+                    {setupNav.icon}
                   </span>
-                  {item.label}
+                  {setupNav.label}
                 </Link>
               </li>
-            );
-          })}
-        </ul>
+            </ul>
+          </div>
+        )}
+
+        <NavSection label="Activity" items={activityNav} isActive={isActive} />
+        <NavSection label="Resources" items={resourcesNav} isActive={isActive} />
       </nav>
 
       <SidebarFooter
@@ -198,12 +287,35 @@ export function PortalSidebar({
 /* ─── Tablet Icon Rail (md to lg) ─── */
 
 const railItems = [
-  { href: "/portal/dashboard", icon: <House size={20} weight="duotone" />, label: "Home" },
-  { href: "/portal/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/portal/properties" },
-  { href: "/portal/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/portal/calendar" },
-  { href: "/portal/messages", icon: <ChatCircle size={20} weight="duotone" />, label: "Messages", matchPrefix: "/portal/messages" },
-  { href: "/portal/documents", icon: <FileText size={20} weight="duotone" />, label: "Documents", matchPrefix: "/portal/documents" },
-  { href: "/portal/account", icon: <GearSix size={20} weight="duotone" />, label: "Account", matchPrefix: "/portal/account" },
+  {
+    href: "/portal/dashboard",
+    icon: <House size={20} weight="duotone" />,
+    label: "Home",
+  },
+  {
+    href: "/portal/properties",
+    icon: <Buildings size={20} weight="duotone" />,
+    label: "Properties",
+    matchPrefix: "/portal/properties",
+  },
+  {
+    href: "/portal/reserve",
+    icon: <CalendarCheck size={20} weight="duotone" />,
+    label: "Reserve",
+    matchPrefix: "/portal/reserve",
+  },
+  {
+    href: "/portal/messages",
+    icon: <ChatCircle size={20} weight="duotone" />,
+    label: "Messages",
+    matchPrefix: "/portal/messages",
+  },
+  {
+    href: "/portal/account",
+    icon: <GearSix size={20} weight="duotone" />,
+    label: "Account",
+    matchPrefix: "/portal/account",
+  },
 ];
 
 export function PortalIconRail() {
@@ -261,4 +373,3 @@ export function PortalIconRail() {
     </aside>
   );
 }
-

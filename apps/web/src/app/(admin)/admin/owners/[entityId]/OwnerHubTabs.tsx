@@ -210,9 +210,10 @@ type OwnerHubProps = {
 const SECTIONS = [
   { key: "overview", label: "Overview", icon: ChartBar },
   { key: "members", label: "Members", icon: UsersThree },
+  { key: "reserve", label: "Reserve", icon: CalendarCheck },
   { key: "tasks", label: "Tasks", icon: ListChecks },
   { key: "timeline", label: "Timeline", icon: ClockCounterClockwise },
-  { key: "notes", label: "Notes", icon: NotePencil },
+  { key: "notes", label: "Meetings", icon: NotePencil },
   { key: "documents", label: "Documents", icon: FileText },
   { key: "financials", label: "Financials", icon: CurrencyDollar },
   { key: "properties", label: "Properties", icon: Buildings },
@@ -483,6 +484,12 @@ export function OwnerHubTabs({
               notes={notes}
               properties={properties}
               ownerId={ownerId}
+            />
+          )}
+          {section === "reserve" && (
+            <AdminReserveSection
+              blockRequests={blockRequests}
+              propertyMap={new Map(properties.map((p) => [p.id, p.name?.trim() || p.address_line1 || "Property"]))}
             />
           )}
           {section === "documents" && <DocumentsSection documents={documents} />}
@@ -3382,4 +3389,113 @@ function formatRelativeTime(dateStr: string): string {
 
 function isOverdue(dateStr: string): boolean {
   return new Date(dateStr) < new Date();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN RESERVE SECTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function AdminReserveSection({
+  blockRequests,
+  propertyMap,
+}: {
+  blockRequests: BlockRequest[];
+  propertyMap: Map<string, string>;
+}) {
+  if (blockRequests.length === 0) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center rounded-2xl border px-8 py-16 text-center"
+        style={{
+          backgroundColor: "var(--color-white)",
+          borderColor: "var(--color-warm-gray-200)",
+        }}
+      >
+        <CalendarCheck
+          size={28}
+          weight="duotone"
+          style={{ color: "var(--color-text-tertiary)" }}
+        />
+        <p className="mt-3 text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          No block requests
+        </p>
+        <p className="mt-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          This owner has not submitted any block requests yet.
+        </p>
+      </div>
+    );
+  }
+
+  const statusStyle = (s: string) => {
+    if (s === "approved")
+      return { bg: "rgba(22, 163, 74, 0.12)", fg: "#15803d", label: "Approved" };
+    if (s === "declined")
+      return { bg: "rgba(220, 38, 38, 0.10)", fg: "#b91c1c", label: "Declined" };
+    return { bg: "rgba(245, 158, 11, 0.14)", fg: "#b45309", label: "Pending" };
+  };
+
+  const formatDateRange = (start: string, end: string) => {
+    const s = new Date(start + "T00:00:00");
+    const e = new Date(end + "T00:00:00");
+    const opts: Intl.DateTimeFormatOptions = {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    };
+    return `${s.toLocaleDateString("en-US", opts)} – ${e.toLocaleDateString("en-US", opts)}`;
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      {blockRequests.map((req) => {
+        const ss = statusStyle(req.status);
+        const label = propertyMap.get(req.property_id) ?? req.propertyLabel ?? "Property";
+        return (
+          <div
+            key={req.id}
+            className="flex items-start gap-4 rounded-2xl border p-5"
+            style={{
+              backgroundColor: "var(--color-white)",
+              borderColor: "var(--color-warm-gray-200)",
+            }}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  {formatDateRange(req.start_date, req.end_date)}
+                </span>
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                  style={{ backgroundColor: ss.bg, color: ss.fg }}
+                >
+                  {ss.label}
+                </span>
+              </div>
+              <div className="mt-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                {label}
+              </div>
+              {req.note && (
+                <div
+                  className="mt-1.5 text-xs italic"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  {req.note}
+                </div>
+              )}
+            </div>
+            <div className="shrink-0 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+              {new Date(req.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
