@@ -58,18 +58,6 @@ export default async function TimelinePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1
-          className="text-2xl font-semibold tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Timeline
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          A history of activity on your account and properties.
-        </p>
-      </div>
-
       {entries.length === 0 ? (
         <EmptyState
           icon={<ClockCounterClockwise size={26} weight="duotone" />}

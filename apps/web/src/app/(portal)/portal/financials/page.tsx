@@ -7,18 +7,6 @@ export const dynamic = "force-dynamic";
 export default function FinancialsPage() {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1
-          className="text-2xl font-semibold tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Financials
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Your billing and revenue summary.
-        </p>
-      </div>
-
       <div
         className="rounded-2xl border p-6"
         style={{

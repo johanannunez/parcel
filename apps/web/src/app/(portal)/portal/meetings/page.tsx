@@ -39,18 +39,6 @@ export default async function MeetingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1
-          className="text-2xl font-semibold tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Meetings
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Notes and summaries from your conversations with Parcel.
-        </p>
-      </div>
-
       <div
         className="rounded-2xl border px-5 py-4 text-sm"
         style={{

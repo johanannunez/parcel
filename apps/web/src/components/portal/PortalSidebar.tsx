@@ -211,13 +211,13 @@ export function PortalSidebar({
                 : "/brand/logo-mark.png"
             }
             alt="Parcel"
-            width={28}
-            height={28}
+            width={32}
+            height={32}
             className="shrink-0"
           />
           <span
-            className="text-[11px] font-medium uppercase tracking-[0.18em]"
-            style={{ color: "var(--color-text-tertiary)" }}
+            className="text-[13px] font-bold uppercase tracking-[0.1em]"
+            style={{ color: "var(--color-text-secondary)" }}
           >
             Owner
           </span>

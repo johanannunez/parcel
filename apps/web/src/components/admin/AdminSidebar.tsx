@@ -117,13 +117,13 @@ export function AdminSidebar({
           <img
             src="/brand/logo-mark-white.png"
             alt="Parcel"
-            width={28}
-            height={28}
+            width={32}
+            height={32}
             className="shrink-0"
           />
           <span
-            className="text-[11px] font-medium uppercase tracking-[0.18em]"
-            style={{ color: "rgba(255,255,255,0.4)" }}
+            className="text-[13px] font-bold uppercase tracking-[0.1em]"
+            style={{ color: "rgba(255,255,255,0.65)" }}
           >
             Admin
           </span>
@@ -262,13 +262,13 @@ export function AdminTopBar({
         <img
           src="/brand/logo-mark-white.png"
           alt="Parcel"
-          width={22}
-          height={22}
+          width={26}
+          height={26}
           className="shrink-0"
         />
         <span
-          className="text-[9px] font-medium uppercase tracking-[0.18em]"
-          style={{ color: "rgba(255,255,255,0.4)" }}
+          className="text-[11px] font-bold uppercase tracking-[0.1em]"
+          style={{ color: "rgba(255,255,255,0.65)" }}
         >
           Admin
         </span>

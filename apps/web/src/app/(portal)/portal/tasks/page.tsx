@@ -63,17 +63,6 @@ export default async function TasksPage() {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col gap-6">
-        <div>
-          <h1
-            className="text-2xl font-semibold tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Tasks
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            Action items and to-dos from your Parcel team.
-          </p>
-        </div>
         <EmptyState
           icon={<ListChecks size={26} weight="duotone" />}
           title="No tasks yet"
@@ -85,18 +74,6 @@ export default async function TasksPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1
-          className="text-2xl font-semibold tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Tasks
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Action items and to-dos from your Parcel team.
-        </p>
-      </div>
-
       {/* Summary strip */}
       <div className="flex flex-wrap items-center gap-2">
         <span

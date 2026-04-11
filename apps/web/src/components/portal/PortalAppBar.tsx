@@ -76,6 +76,48 @@ function getPortalHeader(
     };
   }
 
+  if (pathname === "/portal/reserve") {
+    return {
+      title: "Reserve",
+      subtitle: "Request time off for your home or review past requests.",
+    };
+  }
+
+  if (pathname === "/portal/tasks") {
+    return {
+      title: "Tasks",
+      subtitle: "Action items and to-dos from your Parcel team.",
+    };
+  }
+
+  if (pathname === "/portal/timeline") {
+    return {
+      title: "Timeline",
+      subtitle: "A history of activity on your account and properties.",
+    };
+  }
+
+  if (pathname === "/portal/meetings") {
+    return {
+      title: "Meetings",
+      subtitle: "Notes and summaries from your conversations with Parcel.",
+    };
+  }
+
+  if (pathname === "/portal/members") {
+    return {
+      title: "Members",
+      subtitle: "Your Parcel team and the people on your account.",
+    };
+  }
+
+  if (pathname === "/portal/financials") {
+    return {
+      title: "Financials",
+      subtitle: "Your billing and revenue summary.",
+    };
+  }
+
   if (pathname === "/portal/calendar") {
     return {
       title: "Calendar",

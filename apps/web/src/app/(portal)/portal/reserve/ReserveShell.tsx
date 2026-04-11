@@ -75,18 +75,6 @@ export function ReserveShell({
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1
-          className="text-2xl font-semibold tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Reserve
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Request time off for your home or review past requests.
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Left: Request form */}
         <div className="lg:col-span-2">
