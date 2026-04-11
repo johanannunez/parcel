@@ -77,8 +77,8 @@ function getActiveSection(pathname: string | null): string {
 const mainNavItems = [
   { href: "/portal/dashboard", label: "Home", icon: <House size={22} weight="regular" />, activeIcon: <House size={22} weight="fill" /> },
   { href: "/portal/properties", label: "Properties", icon: <Buildings size={22} weight="regular" />, activeIcon: <Buildings size={22} weight="fill" />, matchPrefix: "/portal/properties" },
-  { href: "/portal/financials", label: "Financials", icon: <CurrencyDollar size={22} weight="regular" />, activeIcon: <CurrencyDollar size={22} weight="fill" />, matchPrefix: "/portal/financials" },
   { href: "/portal/messages", label: "Messages", icon: <ChatCircle size={22} weight="regular" />, activeIcon: <ChatCircle size={22} weight="fill" />, matchPrefix: "/portal/messages" },
+  { href: "/portal/financials", label: "Financials", icon: <CurrencyDollar size={22} weight="regular" />, activeIcon: <CurrencyDollar size={22} weight="fill" />, matchPrefix: "/portal/financials" },
 ];
 
 export function PortalBottomNav({
@@ -381,10 +381,7 @@ export function PortalBottomNav({
 
                 <button
                   type="button"
-                  onClick={() => {
-                    toggleTheme();
-                    closeMore();
-                  }}
+                  onClick={toggleTheme}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)]"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
