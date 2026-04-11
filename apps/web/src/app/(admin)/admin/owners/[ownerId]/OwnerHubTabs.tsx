@@ -34,6 +34,7 @@ import {
   deleteNote,
   addTimelineEntry,
 } from "./hub-actions";
+import { InviteOwnerButton } from "./InviteOwnerButton";
 
 /* ─── Types ─── */
 
@@ -129,9 +130,20 @@ type Document = {
   created_at: string;
 };
 
+type OwnerInfo = {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  createdAt: string;
+  onboardedAt: string | null;
+  isPending: boolean;
+};
+
 type OwnerHubProps = {
   activeTab: string;
   ownerId: string;
+  owner: OwnerInfo;
   properties: Property[];
   bookings: Booking[];
   payouts: Payout[];
@@ -159,9 +171,17 @@ type SectionKey = (typeof SECTIONS)[number]["key"];
 
 /* ─── Main component ─── */
 
+function buildInitials(name: string) {
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export function OwnerHubTabs({
   activeTab,
   ownerId,
+  owner,
   properties,
   bookings,
   payouts,
@@ -177,23 +197,98 @@ export function OwnerHubTabs({
 
   const pendingTaskCount = tasks.filter((t) => t.status !== "done").length;
 
+  const memberSince = new Date(owner.createdAt).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+
   return (
     <div
-      className="flex overflow-hidden rounded-xl border"
+      className="flex"
       style={{
-        borderColor: "var(--color-warm-gray-200)",
-        minHeight: "calc(100vh - 220px)",
+        minHeight: "calc(100vh - var(--admin-topbar-h, 0px))",
       }}
     >
       {/* ─── Left sidebar ─── */}
       <nav
-        className="flex w-[200px] shrink-0 flex-col border-r"
+        className="flex w-[240px] shrink-0 flex-col border-r"
         style={{
           backgroundColor: "var(--color-white)",
           borderColor: "var(--color-warm-gray-200)",
         }}
       >
-        <div className="flex flex-col gap-0.5 p-2">
+        {/* Owner profile header */}
+        <div
+          className="border-b px-5 py-5"
+          style={{ borderColor: "var(--color-warm-gray-200)" }}
+        >
+          <div className="flex items-start gap-3">
+            <span
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+              style={{
+                background: "linear-gradient(135deg, #02aaeb, #1b77be)",
+              }}
+            >
+              {buildInitials(owner.fullName)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <h1
+                className="truncate text-[15px] font-semibold leading-tight"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                {owner.fullName}
+              </h1>
+              <div
+                className="mt-0.5 truncate text-[11px]"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                {owner.isPending ? "No email on file" : owner.email}
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-1.5">
+            {owner.isPending ? (
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor: "var(--color-warm-gray-100)",
+                  color: "var(--color-text-tertiary)",
+                }}
+              >
+                Not invited
+              </span>
+            ) : owner.onboardedAt ? (
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor: "rgba(22, 163, 74, 0.12)",
+                  color: "#15803d",
+                }}
+              >
+                Onboarded
+              </span>
+            ) : (
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor: "rgba(245, 158, 11, 0.14)",
+                  color: "#b45309",
+                }}
+              >
+                Setting up
+              </span>
+            )}
+            <span
+              className="text-[10px]"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              Since {memberSince}
+            </span>
+          </div>
+        </div>
+
+        {/* Section nav */}
+        <div className="flex flex-1 flex-col gap-0.5 p-2">
           {SECTIONS.map((s) => {
             const active = section === s.key;
             const Icon = s.icon;
@@ -219,7 +314,6 @@ export function OwnerHubTabs({
                     : "transparent",
                 }}
               >
-                {/* Active indicator bar */}
                 {active && (
                   <span
                     className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
@@ -255,49 +349,61 @@ export function OwnerHubTabs({
             );
           })}
         </div>
+
+        {/* Bottom actions */}
+        {owner.isPending && (
+          <div
+            className="border-t px-3 py-3"
+            style={{ borderColor: "var(--color-warm-gray-200)" }}
+          >
+            <InviteOwnerButton ownerId={ownerId} ownerName={owner.fullName} />
+          </div>
+        )}
       </nav>
 
       {/* ─── Right content area ─── */}
       <div
-        className="flex-1 overflow-y-auto p-6"
+        className="min-w-0 flex-1 overflow-y-auto"
         style={{ backgroundColor: "var(--color-off-white)" }}
       >
-        {section === "overview" && (
-          <OverviewSection
-            properties={properties}
-            bookings={bookings}
-            payouts={payouts}
-            tasks={tasks}
-            timeline={timeline}
-            ownerId={ownerId}
-          />
-        )}
-        {section === "tasks" && (
-          <TasksSection
-            tasks={tasks}
-            properties={properties}
-            ownerId={ownerId}
-          />
-        )}
-        {section === "timeline" && (
-          <TimelineSection
-            timeline={timeline}
-            properties={properties}
-            ownerId={ownerId}
-          />
-        )}
-        {section === "notes" && (
-          <NotesSection
-            notes={notes}
-            properties={properties}
-            ownerId={ownerId}
-          />
-        )}
-        {section === "documents" && <DocumentsSection documents={documents} />}
-        {section === "billing" && <BillingSection />}
-        {section === "properties" && (
-          <PropertiesSection properties={properties} />
-        )}
+        <div className="px-8 py-8">
+          {section === "overview" && (
+            <OverviewSection
+              properties={properties}
+              bookings={bookings}
+              payouts={payouts}
+              tasks={tasks}
+              timeline={timeline}
+              ownerId={ownerId}
+            />
+          )}
+          {section === "tasks" && (
+            <TasksSection
+              tasks={tasks}
+              properties={properties}
+              ownerId={ownerId}
+            />
+          )}
+          {section === "timeline" && (
+            <TimelineSection
+              timeline={timeline}
+              properties={properties}
+              ownerId={ownerId}
+            />
+          )}
+          {section === "notes" && (
+            <NotesSection
+              notes={notes}
+              properties={properties}
+              ownerId={ownerId}
+            />
+          )}
+          {section === "documents" && <DocumentsSection documents={documents} />}
+          {section === "billing" && <BillingSection />}
+          {section === "properties" && (
+            <PropertiesSection properties={properties} />
+          )}
+        </div>
       </div>
     </div>
   );

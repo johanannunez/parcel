@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OwnerHubTabs } from "./OwnerHubTabs";
 
@@ -17,6 +18,18 @@ export default async function OwnerHubPage({
   const { ownerId } = await params;
   const { tab = "overview" } = await searchParams;
   const supabase = await createClient();
+
+  // Fetch owner profile
+  const { data: owner } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, phone, created_at, onboarding_completed_at")
+    .eq("id", ownerId)
+    .eq("role", "owner")
+    .single();
+
+  if (!owner) {
+    notFound();
+  }
 
   // Get property IDs for this owner (primary + co-owned)
   const [{ data: primaryProps }, { data: coOwnedProps }] = await Promise.all([
@@ -120,6 +133,15 @@ export default async function OwnerHubPage({
     <OwnerHubTabs
       activeTab={tab}
       ownerId={ownerId}
+      owner={{
+        id: owner.id,
+        fullName: owner.full_name?.trim() || owner.email,
+        email: owner.email,
+        phone: owner.phone,
+        createdAt: owner.created_at,
+        onboardedAt: owner.onboarding_completed_at,
+        isPending: owner.email.endsWith("@pending.theparcelco.com"),
+      }}
       properties={properties ?? []}
       bookings={(bookings ?? []).map((b) => ({
         ...b,

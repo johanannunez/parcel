@@ -41,15 +41,13 @@ export function InviteOwnerButton({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
+        className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
         style={{
-          borderColor: "var(--color-brand)",
-          color: "var(--color-brand)",
-          backgroundColor: "transparent",
+          background: "linear-gradient(135deg, #02aaeb, #1b77be)",
         }}
       >
         <EnvelopeSimple size={14} weight="bold" />
-        Invite
+        Invite Owner
       </button>
     );
   }
