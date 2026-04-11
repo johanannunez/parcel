@@ -73,7 +73,23 @@ export function SidebarFooter({
 
       {/* Action rows */}
       <div className="pt-1 pb-1">
-        {/* Theme toggle */}
+        <Link href="/portal/account" className="sidebar-footer-row">
+          <GearSix size={15} weight="regular" className="shrink-0" />
+          Account
+        </Link>
+
+        {isAdmin ? (
+          <Link href="/admin" className="sidebar-footer-row">
+            <ShieldCheck size={15} weight="regular" className="shrink-0" />
+            Switch to Admin
+          </Link>
+        ) : null}
+
+        <Link href="/help" className="sidebar-footer-row">
+          <Question size={15} weight="regular" className="shrink-0" />
+          Help
+        </Link>
+
         <button
           type="button"
           onClick={toggleTheme}
@@ -86,23 +102,6 @@ export function SidebarFooter({
           )}
           {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
         </button>
-
-        <Link href="/help" className="sidebar-footer-row">
-          <Question size={15} weight="regular" className="shrink-0" />
-          Help
-        </Link>
-
-        <Link href="/portal/account" className="sidebar-footer-row">
-          <GearSix size={15} weight="regular" className="shrink-0" />
-          Account
-        </Link>
-
-        {isAdmin ? (
-          <Link href="/admin" className="sidebar-footer-row">
-            <ShieldCheck size={15} weight="regular" className="shrink-0" />
-            Switch to Admin
-          </Link>
-        ) : null}
 
         {signOutSlot}
       </div>

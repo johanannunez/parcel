@@ -72,6 +72,21 @@ export function AdminSidebarFooter({
 
       {/* Action rows */}
       <div className="pt-1 pb-1">
+        <Link href="/portal/account" className="admin-footer-row">
+          <GearSix size={15} weight="regular" className="shrink-0" />
+          Account
+        </Link>
+
+        <Link href="/portal/dashboard" className="admin-footer-row">
+          <UserCircle size={15} weight="regular" className="shrink-0" />
+          Switch to Portal
+        </Link>
+
+        <Link href="/help" className="admin-footer-row">
+          <Question size={15} weight="regular" className="shrink-0" />
+          Help
+        </Link>
+
         <button
           type="button"
           onClick={toggleTheme}
@@ -84,21 +99,6 @@ export function AdminSidebarFooter({
           )}
           {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
         </button>
-
-        <Link href="/help" className="admin-footer-row">
-          <Question size={15} weight="regular" className="shrink-0" />
-          Help
-        </Link>
-
-        <Link href="/portal/account" className="admin-footer-row">
-          <GearSix size={15} weight="regular" className="shrink-0" />
-          Account
-        </Link>
-
-        <Link href="/portal/dashboard" className="admin-footer-row">
-          <UserCircle size={15} weight="regular" className="shrink-0" />
-          Switch to Portal
-        </Link>
 
         {signOutSlot}
       </div>
