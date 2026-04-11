@@ -48,13 +48,23 @@ export async function GET(_request: NextRequest) {
     });
   }
 
-  await sendPushToOwner({
-    ownerId: user.id,
-    title: "Parcel push test",
-    body: "If you see this on your lock screen, Web Push is fully working. Tap to open the portal.",
-    url: "/portal/messages",
-    tag: "push-test",
-  });
+  try {
+    await sendPushToOwner({
+      ownerId: user.id,
+      title: "Parcel push test",
+      body: "If you see this on your lock screen, Web Push is fully working. Tap to open the portal.",
+      url: "/portal/messages",
+      tag: "push-test",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error("[test-push-self] Failed to send push:", err);
+    return NextResponse.json(
+      { ok: false, error: message, stack },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
     ok: true,
