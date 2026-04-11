@@ -12,38 +12,52 @@ export default async function OwnerHubPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ ownerId: string }>;
+  params: Promise<{ entityId: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const { ownerId } = await params;
+  const { entityId } = await params;
   const { tab = "overview" } = await searchParams;
   const supabase = await createClient();
 
-  // Fetch owner profile
-  const { data: owner } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, phone, created_at, onboarding_completed_at")
-    .eq("id", ownerId)
-    .eq("role", "owner")
-    .single();
+  // Fetch entity and all member profiles
+  const [{ data: entity }, { data: members }] = await Promise.all([
+    supabase
+      .from("entities")
+      .select("id, name, type, ein, notes, created_at, updated_at")
+      .eq("id", entityId)
+      .single(),
+    supabase
+      .from("profiles")
+      .select("id, full_name, email, phone, avatar_url, created_at, onboarding_completed_at")
+      .eq("entity_id", entityId)
+      .eq("role", "owner")
+      .order("created_at", { ascending: true }),
+  ]);
 
-  if (!owner) {
+  if (!entity || !members || members.length === 0) {
     notFound();
   }
 
-  // Get property IDs for this owner (primary + co-owned)
+  const memberIds = members.map((m) => m.id);
+  const primaryMember = members[0];
+
+  // Get property IDs across all members (primary + co-owned)
   const [{ data: primaryProps }, { data: coOwnedProps }] = await Promise.all([
-    supabase.from("properties").select("id").eq("owner_id", ownerId),
-    (supabase as any).from("property_owners").select("property_id").eq("owner_id", ownerId),
+    supabase.from("properties").select("id").in("owner_id", memberIds),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("property_owners")
+      .select("property_id")
+      .in("owner_id", memberIds),
   ]);
   const propertyIds = [
     ...new Set([
       ...(primaryProps ?? []).map((p) => p.id),
-      ...(coOwnedProps ?? []).map((po: { property_id: string }) => po.property_id),
+      ...((coOwnedProps as Array<{ property_id: string }> | null) ?? []).map((po) => po.property_id),
     ]),
   ];
 
-  // Fetch all data in parallel
+  // Fetch all data in parallel, scoped to all member profiles
   const [
     { data: properties },
     { data: bookings },
@@ -84,47 +98,47 @@ export default async function OwnerHubPage({
     supabase
       .from("block_requests")
       .select("id, property_id, start_date, end_date, note, status, created_at")
-      .eq("owner_id", ownerId)
+      .in("owner_id", memberIds)
       .order("created_at", { ascending: false })
       .limit(20),
     supabase
       .from("owner_setup_drafts")
       .select("data")
-      .eq("user_id", ownerId)
+      .eq("user_id", primaryMember.id)
       .single(),
-    // Tasks
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from("owner_tasks")
-      .select("id, title, description, status, priority, property_id, due_date, created_at, completed_at")
-      .eq("owner_id", ownerId)
+      .select("id, title, description, status, priority, property_id, due_date, created_at, completed_at, owner_id")
+      .in("owner_id", memberIds)
       .order("created_at", { ascending: false })
       .limit(100),
-    // Notes
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from("owner_notes")
-      .select("id, body, visibility, property_id, created_at")
-      .eq("owner_id", ownerId)
+      .select("id, body, visibility, property_id, created_at, owner_id")
+      .in("owner_id", memberIds)
       .order("created_at", { ascending: false })
       .limit(100),
-    // Timeline
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from("owner_timeline")
-      .select("id, event_type, title, body, property_id, created_at")
-      .eq("owner_id", ownerId)
+      .select("id, event_type, title, body, property_id, created_at, owner_id")
+      .in("owner_id", memberIds)
       .order("created_at", { ascending: false })
       .limit(100),
-    // Documents
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from("documents")
-      .select("id, title, doc_type, status, scope, file_url, created_at")
-      .eq("owner_id", ownerId)
+      .select("id, title, doc_type, status, scope, file_url, created_at, owner_id")
+      .in("owner_id", memberIds)
       .order("created_at", { ascending: false })
       .limit(100),
-    // Receipts
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from("owner_receipts")
-      .select("id, vendor, amount, currency, category, purchase_date, image_url, notes, visibility, property_id, created_at")
-      .eq("owner_id", ownerId)
+      .select("id, vendor, amount, currency, category, purchase_date, image_url, notes, visibility, property_id, created_at, owner_id")
+      .in("owner_id", memberIds)
       .order("purchase_date", { ascending: false })
       .limit(500),
   ]);
@@ -137,18 +151,37 @@ export default async function OwnerHubPage({
     ]),
   );
 
+  const allMembersOnboarded = members.every((m) => !!m.onboarding_completed_at);
+  const allPending = members.every((m) => m.email.endsWith("@pending.theparcelco.com"));
+
   return (
     <OwnerHubTabs
       activeTab={tab}
-      ownerId={ownerId}
+      ownerId={primaryMember.id}
       owner={{
-        id: owner.id,
-        fullName: owner.full_name?.trim() || owner.email,
-        email: owner.email,
-        phone: owner.phone,
-        createdAt: owner.created_at,
-        onboardedAt: owner.onboarding_completed_at,
-        isPending: owner.email.endsWith("@pending.theparcelco.com"),
+        id: entity.id,
+        fullName: entity.name,
+        email: primaryMember.email,
+        phone: primaryMember.phone,
+        createdAt: entity.created_at,
+        onboardedAt: allMembersOnboarded ? primaryMember.onboarding_completed_at : null,
+        isPending: allPending,
+      }}
+      entity={{
+        id: entity.id,
+        name: entity.name,
+        type: entity.type,
+        ein: entity.ein,
+        notes: entity.notes,
+        members: members.map((m) => ({
+          id: m.id,
+          fullName: m.full_name,
+          email: m.email,
+          phone: m.phone,
+          avatarUrl: m.avatar_url,
+          onboardedAt: m.onboarding_completed_at,
+          isPending: m.email.endsWith("@pending.theparcelco.com"),
+        })),
       }}
       properties={properties ?? []}
       bookings={(bookings ?? []).map((b) => ({
@@ -164,12 +197,14 @@ export default async function OwnerHubPage({
         propertyLabel: propertyMap.get(br.property_id) ?? "Property",
       }))}
       setupData={setupDraft?.data ?? null}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tasks={(tasks ?? []).map((t: any) => ({
         ...t,
         propertyLabel: t.property_id
           ? propertyMap.get(t.property_id) ?? "Property"
           : null,
       }))}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       notes={(notes ?? []).map((n: any) => ({
         ...n,
         propertyLabel: n.property_id
@@ -177,15 +212,18 @@ export default async function OwnerHubPage({
           : null,
         created_by_name: null,
       }))}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       timeline={(timeline ?? []).map((e: any) => ({
         ...e,
         propertyLabel: e.property_id
           ? propertyMap.get(e.property_id) ?? "Property"
           : null,
       }))}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       documents={(documents ?? []).map((d: any) => ({
         ...d,
       }))}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       receipts={(receipts ?? []).map((r: any) => ({
         ...r,
         propertyLabel: r.property_id

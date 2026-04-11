@@ -9,6 +9,7 @@ import { NotificationsSection } from "./components/NotificationsSection";
 import { RegionSection } from "./components/RegionSection";
 import { DataExportSection } from "./components/DataExportSection";
 import { DangerZoneSection } from "./components/DangerZoneSection";
+import { EntitySection } from "./components/EntitySection";
 
 export const metadata: Metadata = { title: "Account" };
 export const dynamic = "force-dynamic";
@@ -25,6 +26,27 @@ export default async function AccountPage() {
     .select("*")
     .eq("id", user.id)
     .single();
+
+  // Fetch entity and other members (only if profile has an entity)
+  let entity = null;
+  let entityMembers: Array<{ id: string; full_name: string | null; email: string; avatar_url: string | null }> = [];
+
+  if (profile?.entity_id) {
+    const [{ data: entityData }, { data: members }] = await Promise.all([
+      supabase
+        .from("entities")
+        .select("id, name, type, ein")
+        .eq("id", profile.entity_id)
+        .single(),
+      supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url")
+        .eq("entity_id", profile.entity_id)
+        .order("created_at", { ascending: true }),
+    ]);
+    entity = entityData;
+    entityMembers = members ?? [];
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -66,6 +88,14 @@ export default async function AccountPage() {
               created_at: profile?.created_at ?? new Date().toISOString(),
             }}
           />
+
+          {entity ? (
+            <EntitySection
+              entity={entity}
+              members={entityMembers}
+              currentUserId={user.id}
+            />
+          ) : null}
 
           <SecuritySection userEmail={user.email ?? ""} />
 

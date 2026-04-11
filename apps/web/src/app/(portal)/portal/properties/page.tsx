@@ -7,6 +7,7 @@ import {
   Users as UsersIcon,
   MapPin,
   Plus,
+  UsersThree,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/portal/PageHeader";
@@ -32,6 +33,24 @@ export default async function PropertiesPage() {
     .order("created_at", { ascending: false });
 
   const rows = properties ?? [];
+
+  // Fetch entity members so we can show "Co-owned with X" badges
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("entity_id")
+    .eq("id", user.id)
+    .single();
+
+  let coOwners: Array<{ id: string; full_name: string | null; email: string }> = [];
+  if (profile?.entity_id) {
+    const { data: members } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("entity_id", profile.entity_id)
+      .neq("id", user.id);
+    coOwners = members ?? [];
+  }
+  const hasCoOwners = coOwners.length > 0;
 
   return (
     <div className="flex flex-col gap-10">
@@ -140,6 +159,19 @@ export default async function PropertiesPage() {
                     label={`${p.guest_capacity ?? "—"} guests`}
                   />
                 </div>
+
+                {hasCoOwners ? (
+                  <div
+                    className="flex items-center gap-1.5 text-xs"
+                    style={{ color: "var(--color-text-tertiary)" }}
+                  >
+                    <UsersThree size={12} weight="duotone" />
+                    Co-owned with{" "}
+                    {coOwners
+                      .map((c) => (c.full_name?.split(" ")[0] || c.email.split("@")[0]))
+                      .join(", ")}
+                  </div>
+                ) : null}
               </Link>
             );
           })}

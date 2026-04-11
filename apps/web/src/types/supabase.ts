@@ -492,6 +492,7 @@ export type Database = {
           timezone: string | null
           updated_at: string
           deleted_at: string | null
+          entity_id: string | null
           years_investing: string | null
         }
         Insert: {
@@ -511,6 +512,7 @@ export type Database = {
           timezone?: string | null
           updated_at?: string
           deleted_at?: string | null
+          entity_id?: string | null
           years_investing?: string | null
         }
         Update: {
@@ -530,6 +532,7 @@ export type Database = {
           timezone?: string | null
           updated_at?: string
           deleted_at?: string | null
+          entity_id?: string | null
           years_investing?: string | null
         }
         Relationships: []
@@ -1048,6 +1051,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      entities: {
+        Row: {
+          id: string
+          name: string
+          type: string
+          ein: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          type?: string
+          ein?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          type?: string
+          ein?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       push_subscriptions: {
         Row: {

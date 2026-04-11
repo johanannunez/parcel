@@ -31,6 +31,7 @@ import {
   DownloadSimple,
   Sparkle,
   Image as ImageIcon,
+  UsersThree,
 } from "@phosphor-icons/react";
 import {
   createOwnerTask,
@@ -168,15 +169,35 @@ type OwnerInfo = {
   isPending: boolean;
 };
 
+type EntityMember = {
+  id: string;
+  fullName: string | null;
+  email: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  onboardedAt: string | null;
+  isPending: boolean;
+};
+
+type EntityInfo = {
+  id: string;
+  name: string;
+  type: string;
+  ein: string | null;
+  notes: string | null;
+  members: EntityMember[];
+};
+
 type OwnerHubProps = {
   activeTab: string;
   ownerId: string;
   owner: OwnerInfo;
+  entity?: EntityInfo;
   properties: Property[];
   bookings: Booking[];
   payouts: Payout[];
   blockRequests: BlockRequest[];
-  setupData: any;
+  setupData: unknown;
   tasks: Task[];
   notes: Note[];
   timeline: TimelineEntry[];
@@ -188,6 +209,7 @@ type OwnerHubProps = {
 
 const SECTIONS = [
   { key: "overview", label: "Overview", icon: ChartBar },
+  { key: "members", label: "Members", icon: UsersThree },
   { key: "tasks", label: "Tasks", icon: ListChecks },
   { key: "timeline", label: "Timeline", icon: ClockCounterClockwise },
   { key: "notes", label: "Notes", icon: NotePencil },
@@ -211,6 +233,7 @@ export function OwnerHubTabs({
   activeTab,
   ownerId,
   owner,
+  entity,
   properties,
   bookings,
   payouts,
@@ -437,6 +460,9 @@ export function OwnerHubTabs({
               timeline={timeline}
               ownerId={ownerId}
             />
+          )}
+          {section === "members" && entity && (
+            <MembersSection entity={entity} />
           )}
           {section === "tasks" && (
             <TasksSection
@@ -2429,6 +2455,166 @@ function formatCurrency(amount: number): string {
 /* ═══════════════════════════════════════════════════════════════════════════
    PROPERTIES
    ═══════════════════════════════════════════════════════════════════════════ */
+
+function MembersSection({ entity }: { entity: EntityInfo }) {
+  return (
+    <div className="flex flex-col gap-5">
+      <SectionHeading>Entity Members</SectionHeading>
+
+      {/* Entity info card */}
+      <div
+        className="rounded-xl border p-5"
+        style={{
+          backgroundColor: "var(--color-white)",
+          borderColor: "var(--color-warm-gray-200)",
+        }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3
+                className="text-base font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                {entity.name}
+              </h3>
+              <span
+                className="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                style={{
+                  backgroundColor: "rgba(2, 170, 235, 0.08)",
+                  color: "var(--color-brand)",
+                }}
+              >
+                {entity.type}
+              </span>
+            </div>
+            {entity.ein ? (
+              <p
+                className="mt-1 font-mono text-xs"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                EIN: {entity.ein}
+              </p>
+            ) : null}
+            {entity.notes ? (
+              <p
+                className="mt-2 text-sm"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                {entity.notes}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {/* Members list */}
+      <div>
+        <p
+          className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em]"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          {entity.members.length} {entity.members.length === 1 ? "member" : "members"}
+        </p>
+        <div
+          className="overflow-hidden rounded-xl border"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
+          }}
+        >
+          <ul>
+            {entity.members.map((member, index) => {
+              const initials = buildInitials(member.fullName ?? member.email);
+              const displayName = member.fullName?.trim() || member.email;
+              return (
+                <li
+                  key={member.id}
+                  className="flex items-center gap-4 border-t px-5 py-4 first:border-t-0"
+                  style={{ borderColor: "var(--color-warm-gray-100)" }}
+                >
+                  {member.avatarUrl ? (
+                    <img
+                      src={member.avatarUrl}
+                      alt={displayName}
+                      className="h-10 w-10 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                      style={{
+                        backgroundColor: "var(--color-warm-gray-100)",
+                        color: "var(--color-text-secondary)",
+                      }}
+                    >
+                      {initials}
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="truncate text-sm font-semibold"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {displayName}
+                      </span>
+                      {index === 0 ? (
+                        <span
+                          className="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
+                          style={{
+                            backgroundColor: "rgba(22, 163, 74, 0.08)",
+                            color: "var(--color-success)",
+                          }}
+                        >
+                          Primary
+                        </span>
+                      ) : null}
+                      {member.isPending ? (
+                        <span
+                          className="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
+                          style={{
+                            backgroundColor: "rgba(245, 158, 11, 0.08)",
+                            color: "#d97706",
+                          }}
+                        >
+                          Not invited
+                        </span>
+                      ) : !member.onboardedAt ? (
+                        <span
+                          className="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
+                          style={{
+                            backgroundColor: "var(--color-warm-gray-100)",
+                            color: "var(--color-text-tertiary)",
+                          }}
+                        >
+                          Setting up
+                        </span>
+                      ) : null}
+                    </div>
+                    <div
+                      className="mt-0.5 truncate text-xs"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      {member.email}
+                      {member.phone ? ` · ${member.phone}` : null}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <p
+          className="mt-3 text-[11px]"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          To add or remove members, use the entity actions in the admin tools (coming soon).
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function PropertiesSection({ properties }: { properties: Property[] }) {
   if (properties.length === 0) {

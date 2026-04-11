@@ -3,28 +3,40 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { MagnifyingGlass } from "@phosphor-icons/react";
+import { MagnifyingGlass, UsersThree } from "@phosphor-icons/react";
 
-type Owner = {
+export type EntityRow = {
   id: string;
-  fullName: string | null;
-  email: string;
+  name: string;
+  type: string;
+  memberCount: number;
+  primaryMemberName: string | null;
+  primaryEmail: string;
   propertyCount: number;
   onboarded: boolean;
   pending: boolean;
 };
 
-export function OwnerListPanel({ owners }: { owners: Owner[] }) {
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  individual: "Individual",
+  llc: "LLC",
+  partnership: "Partnership",
+  trust: "Trust",
+  corporation: "Corp",
+};
+
+export function OwnerListPanel({ entities }: { entities: EntityRow[] }) {
   const [search, setSearch] = useState("");
   const params = useParams();
-  const activeOwnerId = params?.ownerId as string | undefined;
+  const activeEntityId = params?.entityId as string | undefined;
 
-  const filtered = owners.filter((o) => {
+  const filtered = entities.filter((e) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
-      (o.fullName?.toLowerCase().includes(q) ?? false) ||
-      o.email.toLowerCase().includes(q)
+      e.name.toLowerCase().includes(q) ||
+      e.primaryEmail.toLowerCase().includes(q) ||
+      (e.primaryMemberName?.toLowerCase().includes(q) ?? false)
     );
   });
 
@@ -46,7 +58,7 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
             Owners
           </h2>
           <span className="text-[11px]" style={{ color: "var(--color-text-tertiary)" }}>
-            {owners.length} total
+            {entities.length} total
           </span>
         </div>
 
@@ -74,7 +86,7 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
         </div>
       </div>
 
-      {/* Owner list */}
+      {/* Entity list */}
       <div className="flex-1 overflow-y-auto px-2 py-2">
         {filtered.length === 0 ? (
           <p
@@ -85,15 +97,16 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
           </p>
         ) : (
           <ul className="flex flex-col gap-0.5">
-            {filtered.map((owner) => {
-              const active = activeOwnerId === owner.id;
-              const displayName = owner.fullName || owner.email.split("@")[0];
-              const initials = buildInitials(displayName);
+            {filtered.map((entity) => {
+              const active = activeEntityId === entity.id;
+              const initials = buildInitials(entity.name);
+              const isMultiMember = entity.memberCount > 1;
+              const typeLabel = ENTITY_TYPE_LABELS[entity.type] ?? entity.type;
 
               return (
-                <li key={owner.id}>
+                <li key={entity.id}>
                   <Link
-                    href={`/admin/owners/${owner.id}`}
+                    href={`/admin/owners/${entity.id}`}
                     className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors"
                     style={{
                       backgroundColor: active
@@ -111,7 +124,7 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
                     }}
                   >
                     <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
+                      className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
                       style={{
                         backgroundColor: active
                           ? "var(--color-brand)"
@@ -119,25 +132,37 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
                         color: active ? "white" : "var(--color-text-secondary)",
                       }}
                     >
-                      {initials}
+                      {isMultiMember ? <UsersThree size={14} weight="bold" /> : initials}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div
-                        className="truncate text-sm font-medium"
+                        className="flex items-center gap-1.5 truncate text-sm font-medium"
                         style={{ color: "var(--color-text-primary)" }}
                       >
-                        {owner.fullName || owner.email}
+                        <span className="truncate">{entity.name}</span>
+                        {entity.type !== "individual" ? (
+                          <span
+                            className="shrink-0 rounded px-1 py-0 text-[9px] font-semibold uppercase tracking-wide"
+                            style={{
+                              backgroundColor: "rgba(2, 170, 235, 0.08)",
+                              color: "var(--color-brand)",
+                            }}
+                          >
+                            {typeLabel}
+                          </span>
+                        ) : null}
                       </div>
                       <div
                         className="truncate text-[11px]"
                         style={{ color: "var(--color-text-tertiary)" }}
                       >
-                        {owner.propertyCount === 0
+                        {isMultiMember ? `${entity.memberCount} members · ` : ""}
+                        {entity.propertyCount === 0
                           ? "No properties"
-                          : owner.propertyCount === 1
+                          : entity.propertyCount === 1
                             ? "1 property"
-                            : `${owner.propertyCount} properties`}
-                        {owner.pending ? " · Not invited" : !owner.onboarded ? " · Setting up" : ""}
+                            : `${entity.propertyCount} properties`}
+                        {entity.pending ? " · Not invited" : !entity.onboarded ? " · Setting up" : ""}
                       </div>
                     </div>
                   </Link>
