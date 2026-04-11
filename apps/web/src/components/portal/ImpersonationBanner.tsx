@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { ArrowLeft, Eye } from "@phosphor-icons/react";
+import { X, Eye } from "@phosphor-icons/react";
 import { clearViewingAs } from "@/app/(portal)/portal/viewing-as-actions";
 
 export function ImpersonationBanner({ ownerName }: { ownerName: string }) {
@@ -12,17 +12,17 @@ export function ImpersonationBanner({ ownerName }: { ownerName: string }) {
       className="relative flex shrink-0 items-center px-4 py-2 sm:px-6 lg:px-10"
       style={{ backgroundColor: "#c2410c" }}
     >
-      {/* Left: semi-transparent circle with white arrow */}
+      {/* Left: semi-transparent circle with close icon */}
       <button
         type="button"
         onClick={() => startTransition(() => clearViewingAs())}
         disabled={isPending}
-        title="Return to your view"
-        aria-label="Return to your view"
+        title="Exit this view"
+        aria-label="Exit this view"
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-80 disabled:opacity-40"
         style={{ backgroundColor: "rgba(0, 0, 0, 0.20)" }}
       >
-        <ArrowLeft size={15} weight="bold" color="#ffffff" />
+        <X size={15} weight="bold" color="#ffffff" />
       </button>
 
       {/* Center: label */}
