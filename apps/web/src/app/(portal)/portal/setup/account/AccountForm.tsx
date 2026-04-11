@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { saveAccount, type SaveAccountState } from "./actions";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 
 type MailingAddress = {
   street?: string;
@@ -393,21 +394,14 @@ export function AccountForm({
               >
                 State <span style={{ color: "var(--color-brand)" }}>*</span>
               </label>
-              <select
+              <CustomSelect
                 name="state"
                 defaultValue={addr?.state ?? ""}
                 required
-                className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
-                style={{
-                  borderColor: err("state") ? "#e3867a" : "var(--color-warm-gray-200)",
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                <option value="">Select</option>
-                {US_STATES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                hasError={Boolean(err("state"))}
+                aria-invalid={Boolean(err("state"))}
+                options={[{ value: "", label: "Select" }, ...US_STATES.map((s) => ({ value: s, label: s }))]}
+              />
               {err("state") ? <FieldError>{err("state")}</FieldError> : null}
             </div>
             <TextInput
@@ -548,20 +542,11 @@ export function AccountForm({
           >
             Your time zone
           </label>
-          <select
+          <CustomSelect
             value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-            className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: "var(--color-warm-gray-200)",
-              color: "var(--color-text-primary)",
-            }}
-          >
-            <option value="">Select time zone</option>
-            {US_TIMEZONES.map((tz) => (
-              <option key={tz.value} value={tz.value}>{tz.label}</option>
-            ))}
-          </select>
+            onChange={(v) => setTimezone(v)}
+            options={[{ value: "", label: "Select time zone" }, ...US_TIMEZONES]}
+          />
           <p
             className="text-xs"
             style={{ color: "var(--color-text-tertiary)" }}

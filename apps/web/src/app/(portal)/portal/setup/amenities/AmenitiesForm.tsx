@@ -33,6 +33,7 @@ import {
   autosaveAmenities,
   type SaveAmenitiesState,
 } from "./actions";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 
 const initialState: SaveAmenitiesState = {};
 
@@ -512,24 +513,11 @@ function DetailField({
         {field.label}
       </label>
       {field.type === "select" && field.options ? (
-        <select
+        <CustomSelect
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-lg border bg-[var(--color-white)] px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
-          style={{
-            borderColor: "var(--color-warm-gray-200)",
-            color: value
-              ? "var(--color-text-primary)"
-              : "var(--color-text-tertiary)",
-          }}
-        >
-          <option value="">Select...</option>
-          {field.options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+          onChange={onChange}
+          options={[{ value: "", label: "Select..." }, ...field.options]}
+        />
       ) : (
         <input
           type={field.type}
@@ -639,30 +627,17 @@ function RepeaterSection({
                     {field.label}
                   </label>
                   {field.type === "select" && field.options ? (
-                    <select
+                    <CustomSelect
                       value={details[`item_${i}_${field.key}`] ?? ""}
-                      onChange={(e) =>
+                      onChange={(v) =>
                         updateDetail(
                           amenityId,
                           `item_${i}_${field.key}`,
-                          e.target.value,
+                          v,
                         )
                       }
-                      className="w-full appearance-none rounded-lg border bg-[var(--color-white)] px-3 py-2 text-sm outline-none transition-colors focus:border-[#02aaeb]"
-                      style={{
-                        borderColor: "var(--color-warm-gray-200)",
-                        color: details[`item_${i}_${field.key}`]
-                          ? "var(--color-text-primary)"
-                          : "var(--color-text-tertiary)",
-                      }}
-                    >
-                      <option value="">Select...</option>
-                      {field.options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                      options={[{ value: "", label: "Select..." }, ...field.options]}
+                    />
                   ) : (
                     <input
                       type={field.type}

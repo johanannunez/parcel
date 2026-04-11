@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 
 /**
  * Shared form primitives for the wizard. Keeping these in one file
@@ -99,20 +100,12 @@ export function Select({
   required?: boolean;
 }) {
   return (
-    <select
+    <CustomSelect
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
       required={required}
-      className={inputBase}
-      style={{ borderColor: "var(--color-warm-gray-200)" }}
-    >
-      <option value="">{placeholder}</option>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+      options={[{ value: "", label: placeholder }, ...options]}
+    />
   );
 }
 

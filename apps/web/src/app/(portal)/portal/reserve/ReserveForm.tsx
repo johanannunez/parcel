@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -10,8 +11,10 @@ import {
 } from "react";
 import {
   Broom,
+  CaretDown,
   CaretLeft,
   CaretRight,
+  Check,
   CheckCircle,
   EnvelopeSimple,
   FileArrowDown,
@@ -29,6 +32,7 @@ import {
 import { submitBlockRequest } from "./actions";
 import type { ReserveProperty } from "./types";
 import { ReserveSummary } from "./ReserveSummary";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 
 /**
  * Single-page reservation form. This is the unrolled version of the
@@ -110,9 +114,24 @@ const NOTE_SUGGESTIONS = [
 const DEFAULT_PET_FEE = 25;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX = /^[+\d][\d\s()+\-.]{8,}$/;
+// Accept formatted US numbers like "(509) 579-9685" (10 digits) or international (+...)
+function isValidPhone(phone: string): boolean {
+  const trimmed = phone.trim();
+  if (trimmed.startsWith("+")) return /^\+\d[\d\s()+\-.]{6,}$/.test(trimmed);
+  return trimmed.replace(/\D/g, "").length === 10;
+}
 
 type TimeGroup = { label: string; times: string[] };
+
+/** Convert TimeGroup[] into the SelectGroup[] format expected by CustomSelect. */
+function timeGroupsToSelectGroups(
+  groups: TimeGroup[],
+): import("@/components/portal/CustomSelect").SelectGroup[] {
+  return groups.map((g) => ({
+    label: g.label,
+    options: g.times.map((t) => ({ value: t, label: t })),
+  }));
+}
 
 /** Standard check-in is 4 PM+. Earlier = early, after 8 PM = late. */
 const CHECK_IN_TIME_GROUPS: TimeGroup[] = [
@@ -185,6 +204,174 @@ function fmtLongDate(iso: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+/**
+ * Custom property selector. Replaces the native <select> with a premium
+ * dropdown that matches the Parcel brand palette and portal design language.
+ */
+function PropertyDropdown({
+  properties,
+  value,
+  onChange,
+  hasError,
+}: {
+  properties: ReserveProperty[];
+  value: string;
+  onChange: (id: string) => void;
+  hasError?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = properties.find((p) => p.id === value) ?? properties[0];
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    if (open) document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+        style={{
+          backgroundColor: open
+            ? "rgba(2, 170, 235, 0.04)"
+            : "var(--color-white)",
+          borderColor: hasError
+            ? "#ef4444"
+            : open
+              ? "var(--color-brand)"
+              : "var(--color-warm-gray-200)",
+          boxShadow: open
+            ? "0 0 0 3px rgba(2, 170, 235, 0.12)"
+            : "none",
+          // @ts-ignore
+          "--tw-ring-color": "rgba(2, 170, 235, 0.35)",
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span
+            className="truncate text-sm font-medium leading-tight"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {selected?.name ?? "Select a property"}
+          </span>
+          {selected?.address ? (
+            <span
+              className="truncate text-[11.5px] leading-tight"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              {selected.address}
+            </span>
+          ) : null}
+        </div>
+        <CaretDown
+          size={14}
+          weight="bold"
+          className="shrink-0 transition-transform duration-150"
+          style={{
+            color: "var(--color-text-tertiary)",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        />
+      </button>
+
+      {/* Dropdown panel */}
+      {open ? (
+        <div
+          className="absolute left-0 right-0 z-50 mt-1.5 overflow-hidden rounded-xl border py-1 shadow-lg"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
+            boxShadow:
+              "0 4px 6px -1px rgba(0,0,0,0.07), 0 10px 32px -4px rgba(0,0,0,0.10)",
+          }}
+          role="listbox"
+        >
+          {properties.map((p) => {
+            const isSelected = p.id === value;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onChange(p.id);
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-75"
+                style={{
+                  backgroundColor: isSelected
+                    ? "rgba(2, 170, 235, 0.06)"
+                    : undefined,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected)
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                      "var(--color-warm-gray-50, #fafaf9)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected)
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                      "";
+                }}
+              >
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span
+                    className="truncate text-sm font-medium leading-tight"
+                    style={{
+                      color: isSelected
+                        ? "var(--color-brand)"
+                        : "var(--color-text-primary)",
+                    }}
+                  >
+                    {p.name}
+                  </span>
+                  {p.address ? (
+                    <span
+                      className="truncate text-[11.5px] leading-tight"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      {p.address}
+                    </span>
+                  ) : null}
+                </div>
+                {isSelected ? (
+                  <Check
+                    size={14}
+                    weight="bold"
+                    style={{ color: "var(--color-brand)", flexShrink: 0 }}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function ReserveForm({
@@ -271,7 +458,7 @@ export function ReserveForm({
   const guestPhoneValid =
     data.isOwnerStaying || data.guestPhone.trim() === ""
       ? true
-      : PHONE_REGEX.test(data.guestPhone.trim());
+      : isValidPhone(data.guestPhone);
 
   const reasonDetailNeeded = REASONS_NEED_DETAIL.has(data.reason);
   const reasonDetailComplete =
@@ -432,23 +619,12 @@ export function ReserveForm({
               </div>
             </div>
           ) : (
-            <select
+            <PropertyDropdown
+              properties={properties}
               value={data.propertyId}
-              onChange={(e) => update({ propertyId: e.target.value })}
-              className="h-11 w-full rounded-lg border px-3.5 text-sm outline-none focus:ring-2"
-              style={{
-                backgroundColor: "var(--color-white)",
-                borderColor: "var(--color-warm-gray-200)",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                  {p.address ? ` · ${p.address}` : ""}
-                </option>
-              ))}
-            </select>
+              onChange={(id) => update({ propertyId: id })}
+              hasError={submitAttempted && !data.propertyId}
+            />
           )}
         </Section>
 
@@ -494,45 +670,19 @@ export function ReserveForm({
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <MicroLabel>Check-in time</MicroLabel>
-              <select
+              <CustomSelect
                 value={data.checkInTime}
-                onChange={(e) => update({ checkInTime: e.target.value })}
-                className="h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
-                style={{
-                  backgroundColor: "var(--color-white)",
-                  borderColor: "var(--color-warm-gray-200)",
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                {CHECK_IN_TIME_GROUPS.map((group) => (
-                  <optgroup key={group.label} label={group.label}>
-                    {group.times.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+                onChange={(v) => update({ checkInTime: v })}
+                groups={timeGroupsToSelectGroups(CHECK_IN_TIME_GROUPS)}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <MicroLabel>Check-out time</MicroLabel>
-              <select
+              <CustomSelect
                 value={data.checkOutTime}
-                onChange={(e) => update({ checkOutTime: e.target.value })}
-                className="h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2"
-                style={{
-                  backgroundColor: "var(--color-white)",
-                  borderColor: "var(--color-warm-gray-200)",
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                {CHECK_OUT_TIME_GROUPS.map((group) => (
-                  <optgroup key={group.label} label={group.label}>
-                    {group.times.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+                onChange={(v) => update({ checkOutTime: v })}
+                groups={timeGroupsToSelectGroups(CHECK_OUT_TIME_GROUPS)}
+              />
             </div>
           </div>
         </Section>

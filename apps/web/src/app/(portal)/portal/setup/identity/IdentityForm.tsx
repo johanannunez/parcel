@@ -4,6 +4,7 @@ import { useActionState, useId, useState } from "react";
 import { WarningCircle, UploadSimple } from "@phosphor-icons/react";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
 import { saveIdentity, type SaveIdentityState } from "./actions";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 
 type IdentityInitial = {
   legal_name: string;
@@ -85,21 +86,14 @@ export function IdentityForm({
             >
               Issuing state <span style={{ color: "var(--color-brand)" }}>*</span>
             </label>
-            <select
+            <CustomSelect
               name="issuing_state"
               defaultValue={initial.issuing_state}
               required
-              className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
-              style={{
-                borderColor: err("issuing_state") ? "#e3867a" : "var(--color-warm-gray-200)",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              <option value="">Select</option>
-              {US_STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              hasError={Boolean(err("issuing_state"))}
+              aria-invalid={Boolean(err("issuing_state"))}
+              options={[{ value: "", label: "Select" }, ...US_STATES.map((s) => ({ value: s, label: s }))]}
+            />
           </div>
           <TextInput
             name="expiration_date"

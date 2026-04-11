@@ -2,6 +2,7 @@
 
 import { useActionState, useId, useState } from "react";
 import { WarningCircle, MapPin, Crosshair } from "@phosphor-icons/react";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
 import { saveAddress, type SaveAddressState } from "./actions";
 
@@ -145,22 +146,15 @@ export function AddressForm({
               >
                 State <span style={{ color: "var(--color-brand)" }}>*</span>
               </label>
-              <select
+              <CustomSelect
                 name="state"
                 value={fields.state}
-                onChange={(e) => setFields((p) => ({ ...p, state: e.target.value }))}
+                onChange={(v) => setFields((p) => ({ ...p, state: v }))}
                 required
-                className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
-                style={{
-                  borderColor: err("state") ? "#e3867a" : "var(--color-warm-gray-200)",
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                <option value="">Select</option>
-                {US_STATES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                hasError={Boolean(err("state"))}
+                aria-invalid={Boolean(err("state"))}
+                options={[{ value: "", label: "Select" }, ...US_STATES.map((s) => ({ value: s, label: s }))]}
+              />
             </div>
             <TextInput
               name="postal_code"

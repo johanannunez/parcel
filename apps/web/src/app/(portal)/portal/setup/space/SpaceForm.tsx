@@ -2,6 +2,7 @@
 
 import { useActionState, useId, useState } from "react";
 import { WarningCircle, Plus, Minus } from "@phosphor-icons/react";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
 import { saveSpace, type SaveSpaceState } from "./actions";
 
@@ -180,19 +181,11 @@ export function SpaceForm({
               <div className="flex flex-col gap-2">
                 {arr.beds.map((bed, bedIdx) => (
                   <div key={bedIdx} className="flex items-center gap-3">
-                    <select
+                    <CustomSelect
                       value={bed.type}
-                      onChange={(e) => updateBed(bedroomIdx, bedIdx, "type", e.target.value)}
-                      className="flex-1 rounded-lg border bg-[var(--color-white)] px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                      style={{
-                        borderColor: "var(--color-warm-gray-200)",
-                        color: "var(--color-text-primary)",
-                      }}
-                    >
-                      {BED_TYPES.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => updateBed(bedroomIdx, bedIdx, "type", v)}
+                      options={BED_TYPES.map((t) => ({ value: t, label: t }))}
+                    />
                     <div className="flex items-center gap-1">
                       <button
                         type="button"

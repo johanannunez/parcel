@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Globe, CalendarBlank, Clock } from "@phosphor-icons/react";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 
 const STORAGE_KEY = "parcel-region-prefs";
 
@@ -217,31 +218,13 @@ export function RegionSection({ timezone }: { timezone: string }) {
             ) : null}
           </div>
 
-          <div className="relative shrink-0">
-            <select
+          <div className="w-52 shrink-0">
+            <CustomSelect
               id="region-timezone"
               value={prefs.timezone}
-              onChange={(e) => updatePref("timezone", e.target.value)}
-              className="appearance-none rounded-lg border py-2 pl-3 pr-8 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
-              style={{
-                borderColor: "var(--color-warm-gray-200)",
-                color: "var(--color-text-primary)",
-                backgroundColor: "var(--color-white)",
-              }}
-            >
-              {US_TIMEZONES.map((tz) => (
-                <option key={tz.value} value={tz.value}>
-                  {tz.label}
-                </option>
-              ))}
-            </select>
-            <svg
-              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-              width="12" height="12" viewBox="0 0 12 12" fill="none"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+              onChange={(v) => updatePref("timezone", v)}
+              options={US_TIMEZONES}
+            />
           </div>
         </div>
 
@@ -282,31 +265,13 @@ export function RegionSection({ timezone }: { timezone: string }) {
             </div>
           </div>
 
-          <div className="relative shrink-0">
-            <select
+          <div className="w-52 shrink-0">
+            <CustomSelect
               id="region-date-format"
               value={prefs.dateFormat}
-              onChange={(e) => updatePref("dateFormat", e.target.value)}
-              className="appearance-none rounded-lg border py-2 pl-3 pr-8 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
-              style={{
-                borderColor: "var(--color-warm-gray-200)",
-                color: "var(--color-text-primary)",
-                backgroundColor: "var(--color-white)",
-              }}
-            >
-              {DATE_FORMATS.map((fmt) => (
-                <option key={fmt.value} value={fmt.value}>
-                  {fmt.label}
-                </option>
-              ))}
-            </select>
-            <svg
-              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
-              width="12" height="12" viewBox="0 0 12 12" fill="none"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+              onChange={(v) => updatePref("dateFormat", v)}
+              options={DATE_FORMATS}
+            />
           </div>
         </div>
       </div>

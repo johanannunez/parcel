@@ -2,6 +2,7 @@
 
 import { useActionState, useId } from "react";
 import { WarningCircle } from "@phosphor-icons/react";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
 import { saveFinancial, type SaveFinancialState } from "./actions";
 
@@ -158,13 +159,12 @@ function SelectInput({ name, label, options, defaultValue }: { name: string; lab
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-[12px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>{label}</label>
-      <select id={id} name={name} defaultValue={defaultValue}
-        className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
-        style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}
-      >
-        <option value="">Select</option>
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
+      <CustomSelect
+        id={id}
+        name={name}
+        defaultValue={defaultValue}
+        options={[{ value: "", label: "Select" }, ...options]}
+      />
     </div>
   );
 }

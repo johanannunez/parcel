@@ -5,6 +5,7 @@ import { CalendarBlank, Camera, Trash, PencilSimple, UploadSimple } from "@phosp
 import { updateProfile } from "../actions"
 import { uploadAvatar, removeAvatar, getOriginalAvatar } from "../avatar-actions"
 import { AvatarCropModal } from "@/components/portal/AvatarCropModal"
+import { CustomSelect } from "@/components/portal/CustomSelect"
 
 type Props = {
   profile: {
@@ -451,21 +452,16 @@ export default function ProfileSection({ profile }: Props) {
             >
               Preferred contact method
             </label>
-            <select
+            <CustomSelect
               id="contact_method"
               name="contact_method"
               defaultValue={profile.contact_method ?? "email"}
-              className="w-full appearance-none rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
-              style={{
-                borderColor: "var(--color-warm-gray-200)",
-                color: "var(--color-text-primary)",
-                backgroundColor: "var(--color-white)",
-              }}
-            >
-              <option value="email">Email</option>
-              <option value="phone">Phone</option>
-              <option value="text">Text</option>
-            </select>
+              options={[
+                { value: "email", label: "Email" },
+                { value: "phone", label: "Phone" },
+                { value: "text", label: "Text" },
+              ]}
+            />
           </div>
 
           {/* Status Message */}

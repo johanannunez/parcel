@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { saveBasics, type SaveBasicsState } from "./actions";
 import { homeTypeOptions } from "@/lib/labels";
+import { CustomSelect } from "@/components/portal/CustomSelect";
 
 export type HomeType =
   | ""
@@ -231,14 +232,8 @@ export function BasicsForm({
           defaultValue={initial.home_type}
           required
           error={err("home_type")}
-        >
-          <option value="">Select home type</option>
-          {homeTypeOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </SelectInput>
+          options={[{ value: "", label: "Select home type" }, ...homeTypeOptions]}
+        />
       </FormSection>
 
       {/* Nickname */}
@@ -292,14 +287,8 @@ export function BasicsForm({
               defaultValue={initial.state}
               required
               error={err("state")}
-            >
-              <option value="">Select</option>
-              {US_STATES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </SelectInput>
+              options={[{ value: "", label: "Select" }, ...US_STATES.map((s) => ({ value: s, label: s }))]}
+            />
             <TextInput
               name="postal_code"
               label="ZIP"
@@ -533,14 +522,14 @@ function SelectInput({
   defaultValue,
   required,
   error,
-  children,
+  options,
 }: {
   name: string;
   label: string;
   defaultValue?: string;
   required?: boolean;
   error?: string;
-  children: React.ReactNode;
+  options: { value: string; label: string }[];
 }) {
   const id = useId();
   return (
@@ -561,23 +550,16 @@ function SelectInput({
           </span>
         ) : null}
       </label>
-      <select
+      <CustomSelect
         id={id}
         name={name}
         defaultValue={defaultValue}
         required={required}
+        hasError={Boolean(error)}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className="rounded-lg border bg-[var(--color-white)] px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
-        style={{
-          borderColor: error
-            ? "#e3867a"
-            : "var(--color-warm-gray-200)",
-          color: "var(--color-text-primary)",
-        }}
-      >
-        {children}
-      </select>
+        options={options}
+      />
       {error ? <FieldError id={`${id}-error`}>{error}</FieldError> : null}
     </div>
   );
