@@ -15,7 +15,7 @@ export default async function OwnerHubPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { ownerId } = await params;
-  const { tab = "dashboard" } = await searchParams;
+  const { tab = "overview" } = await searchParams;
   const supabase = await createClient();
 
   // Get property IDs for this owner (primary + co-owned)
@@ -30,13 +30,17 @@ export default async function OwnerHubPage({
     ]),
   ];
 
-  // Fetch all data in parallel for the active tab
+  // Fetch all data in parallel
   const [
     { data: properties },
     { data: bookings },
     { data: payouts },
     { data: blockRequests },
     { data: setupDraft },
+    { data: tasks },
+    { data: notes },
+    { data: timeline },
+    { data: documents },
   ] = await Promise.all([
     propertyIds.length > 0
       ? supabase
@@ -74,6 +78,34 @@ export default async function OwnerHubPage({
       .select("data")
       .eq("user_id", ownerId)
       .single(),
+    // Tasks
+    (supabase as any)
+      .from("owner_tasks")
+      .select("id, title, description, status, priority, property_id, due_date, created_at, completed_at")
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    // Notes
+    (supabase as any)
+      .from("owner_notes")
+      .select("id, body, visibility, property_id, created_at")
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    // Timeline
+    (supabase as any)
+      .from("owner_timeline")
+      .select("id, event_type, title, body, property_id, created_at")
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    // Documents
+    (supabase as any)
+      .from("documents")
+      .select("id, title, doc_type, status, scope, file_url, created_at")
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: false })
+      .limit(100),
   ]);
 
   // Build property name map for display
@@ -102,6 +134,28 @@ export default async function OwnerHubPage({
         propertyLabel: propertyMap.get(br.property_id) ?? "Property",
       }))}
       setupData={setupDraft?.data ?? null}
+      tasks={(tasks ?? []).map((t: any) => ({
+        ...t,
+        propertyLabel: t.property_id
+          ? propertyMap.get(t.property_id) ?? "Property"
+          : null,
+      }))}
+      notes={(notes ?? []).map((n: any) => ({
+        ...n,
+        propertyLabel: n.property_id
+          ? propertyMap.get(n.property_id) ?? "Property"
+          : null,
+        created_by_name: null,
+      }))}
+      timeline={(timeline ?? []).map((e: any) => ({
+        ...e,
+        propertyLabel: e.property_id
+          ? propertyMap.get(e.property_id) ?? "Property"
+          : null,
+      }))}
+      documents={(documents ?? []).map((d: any) => ({
+        ...d,
+      }))}
     />
   );
 }
