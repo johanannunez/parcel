@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   House,
   Buildings,
-  CalendarCheck,
   ChatCircle,
   DotsThree,
   FileText,
@@ -62,7 +61,7 @@ const sheetSections = [
 const mainNavPrefixes = [
   "/portal/dashboard",
   "/portal/properties",
-  "/portal/reserve",
+  "/portal/financials",
   "/portal/messages",
 ];
 
@@ -77,7 +76,7 @@ function getActiveSection(pathname: string | null): string {
 const mainNavItems = [
   { href: "/portal/dashboard", label: "Home", icon: <House size={22} weight="regular" />, activeIcon: <House size={22} weight="fill" /> },
   { href: "/portal/properties", label: "Properties", icon: <Buildings size={22} weight="regular" />, activeIcon: <Buildings size={22} weight="fill" />, matchPrefix: "/portal/properties" },
-  { href: "/portal/reserve", label: "Reserve", icon: <CalendarCheck size={22} weight="regular" />, activeIcon: <CalendarCheck size={22} weight="fill" />, matchPrefix: "/portal/reserve" },
+  { href: "/portal/financials", label: "Financials", icon: <CurrencyDollar size={22} weight="regular" />, activeIcon: <CurrencyDollar size={22} weight="fill" />, matchPrefix: "/portal/financials" },
   { href: "/portal/messages", label: "Messages", icon: <ChatCircle size={22} weight="regular" />, activeIcon: <ChatCircle size={22} weight="fill" />, matchPrefix: "/portal/messages" },
 ];
 
