@@ -31,7 +31,14 @@ import {
 
 export type PortalHeaderOverride = {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
+  /**
+   * If true, the AppBar renders a small copy-to-clipboard button next to
+   * the title that copies `title` verbatim on click. Use on pages where
+   * the title is a meaningful piece of data the user often wants to paste
+   * elsewhere (e.g. a property address).
+   */
+  copyable?: boolean;
 };
 
 type PortalHeaderContextValue = {
@@ -82,17 +89,19 @@ export function usePortalHeaderOverride(): PortalHeaderOverride | null {
 export function SetPortalHeader({
   title,
   subtitle,
+  copyable,
 }: {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
+  copyable?: boolean;
 }) {
   const ctx = useContext(PortalHeaderContext);
 
   useEffect(() => {
     if (!ctx) return;
-    ctx.setOverride({ title, subtitle });
+    ctx.setOverride({ title, subtitle, copyable });
     return () => ctx.setOverride(null);
-  }, [ctx, title, subtitle]);
+  }, [ctx, title, subtitle, copyable]);
 
   return null;
 }

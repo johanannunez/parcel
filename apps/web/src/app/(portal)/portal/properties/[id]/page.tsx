@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -108,27 +109,75 @@ export default async function PropertyDetailPage({
   // App bar owns the page title + subtitle for this route. Title is the
   // full formatted address built defensively (skip empty fragments so
   // partially filled or malformed rows still render cleanly). Subtitle
-  // is a single-line spec row of bed / bath / sqft / sleeps; null
-  // fields drop out. property_type is intentionally NOT included — it
-  // represents the rental business model (e.g. "co-hosting"), not the
-  // building type, so it reads confusingly as a "home type" here.
+  // is a single-line spec row with a Phosphor icon per item
+  // (home type, bed, bath, sqft, sleeps); null fields drop out so
+  // half-onboarded rows still render cleanly. property_type is
+  // intentionally NOT surfaced here because it represents the rental
+  // business model, not the building type.
   const headerTitle = buildAddressLine(property) || "Property details";
 
-  const headerSubtitleParts: string[] = [];
+  type SpecItem = {
+    key: string;
+    icon: ReactNode;
+    text: string;
+  };
+
+  const specs: SpecItem[] = [];
   if (property.home_type) {
-    headerSubtitleParts.push(
-      homeTypeLabels[property.home_type] ?? property.home_type,
-    );
+    specs.push({
+      key: "home",
+      icon: <House size={13} weight="duotone" />,
+      text: homeTypeLabels[property.home_type] ?? property.home_type,
+    });
   }
-  if (property.bedrooms != null)
-    headerSubtitleParts.push(`${property.bedrooms} bd`);
-  if (property.bathrooms != null)
-    headerSubtitleParts.push(`${property.bathrooms} ba`);
-  if (property.square_feet != null)
-    headerSubtitleParts.push(`${property.square_feet.toLocaleString()} sqft`);
-  if (property.guest_capacity != null)
-    headerSubtitleParts.push(`Sleeps ${property.guest_capacity}`);
-  const headerSubtitle = headerSubtitleParts.join(" · ");
+  if (property.bedrooms != null) {
+    specs.push({
+      key: "bd",
+      icon: <Bed size={13} weight="duotone" />,
+      text: `${property.bedrooms} bd`,
+    });
+  }
+  if (property.bathrooms != null) {
+    specs.push({
+      key: "ba",
+      icon: <Bathtub size={13} weight="duotone" />,
+      text: `${property.bathrooms} ba`,
+    });
+  }
+  if (property.square_feet != null) {
+    specs.push({
+      key: "sqft",
+      icon: <Ruler size={13} weight="duotone" />,
+      text: `${property.square_feet.toLocaleString()} sqft`,
+    });
+  }
+  if (property.guest_capacity != null) {
+    specs.push({
+      key: "sleeps",
+      icon: <UsersIcon size={13} weight="duotone" />,
+      text: `Sleeps ${property.guest_capacity}`,
+    });
+  }
+
+  const headerSubtitle = (
+    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
+      {specs.map((spec) => (
+        <span
+          key={spec.key}
+          className="inline-flex items-center gap-1.5 whitespace-nowrap"
+        >
+          <span
+            className="inline-flex shrink-0 items-center justify-center"
+            style={{ color: "rgba(255, 255, 255, 0.72)" }}
+            aria-hidden
+          >
+            {spec.icon}
+          </span>
+          {spec.text}
+        </span>
+      ))}
+    </div>
+  );
 
   const ytdRevenue = (ytdBookings ?? []).reduce(
     (s, b) => s + Number(b.total_amount ?? 0),
@@ -142,7 +191,11 @@ export default async function PropertyDetailPage({
 
   return (
     <div className="flex flex-col gap-10">
-      <SetPortalHeader title={headerTitle} subtitle={headerSubtitle} />
+      <SetPortalHeader
+        title={headerTitle}
+        subtitle={headerSubtitle}
+        copyable
+      />
 
       <div className="flex items-center justify-between gap-4">
         <Link

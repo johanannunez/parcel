@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
+import { Check, Copy, MagnifyingGlass, Plus } from "@phosphor-icons/react";
 import { NotificationBell } from "@/components/portal/NotificationBell";
 import { usePortalHeaderOverride } from "@/components/portal/PortalHeaderContext";
 import { useTheme } from "@/components/ThemeProvider";
@@ -28,8 +29,9 @@ import { useTheme } from "@/components/ThemeProvider";
 
 type PortalHeader = {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   action?: { href: string; label: string };
+  copyable?: boolean;
 };
 
 function getGreeting(): string {
@@ -135,6 +137,7 @@ export function PortalAppBar({ firstName }: { firstName: string }) {
         title: override.title,
         subtitle: override.subtitle,
         action: routeHeader?.action,
+        copyable: override.copyable,
       }
     : routeHeader;
   const isDark = resolvedTheme === "dark";
@@ -156,22 +159,27 @@ export function PortalAppBar({ firstName }: { firstName: string }) {
             : "mx-auto flex max-w-6xl items-center justify-end gap-6 px-4 py-2.5 sm:px-6 lg:px-10"
         }
       >
-        {/* Left: title + single-line subtitle */}
+        {/* Left: title (+ optional copy button) + single-line subtitle */}
         {header ? (
           <div className="min-w-0 flex-1">
-            <h1
-              className="truncate text-[19px] font-semibold leading-tight tracking-[-0.012em] sm:text-[22px]"
-              style={{ color: "#ffffff" }}
-            >
-              {header.title}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1
+                className="min-w-0 truncate text-[19px] font-semibold leading-tight tracking-[-0.012em] sm:text-[22px]"
+                style={{ color: "#ffffff" }}
+              >
+                {header.title}
+              </h1>
+              {header.copyable ? (
+                <CopyButton text={header.title} />
+              ) : null}
+            </div>
             {header.subtitle ? (
-              <p
-                className="mt-1 max-w-[640px] truncate text-[12.5px] leading-snug sm:text-[13px]"
-                style={{ color: "rgba(255, 255, 255, 0.78)" }}
+              <div
+                className="mt-1 max-w-[640px] overflow-hidden text-[12.5px] leading-snug sm:text-[13px]"
+                style={{ color: "rgba(255, 255, 255, 0.82)" }}
               >
                 {header.subtitle}
-              </p>
+              </div>
             ) : null}
           </div>
         ) : null}
@@ -282,5 +290,58 @@ function BellOnBrand() {
     >
       <NotificationBell align="right" />
     </div>
+  );
+}
+
+/**
+ * Small icon button that copies `text` to the clipboard on click.
+ * Swaps the copy glyph to a check for ~1.5s after a successful copy to
+ * confirm the action without a toast. Silent on clipboard-API failures
+ * (older browsers, insecure contexts) since the user can still select
+ * the visible title text as a fallback.
+ */
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard API unavailable; user can still select the title manually.
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      aria-label={copied ? "Copied" : `Copy ${text}`}
+      title={copied ? "Copied" : "Copy address"}
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors"
+      style={{
+        color: "#ffffff",
+        backgroundColor: copied
+          ? "rgba(255, 255, 255, 0.22)"
+          : "rgba(255, 255, 255, 0.12)",
+      }}
+      onMouseEnter={(e) => {
+        if (!copied) {
+          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.22)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!copied) {
+          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.12)";
+        }
+      }}
+    >
+      {copied ? (
+        <Check size={13} weight="bold" />
+      ) : (
+        <Copy size={13} weight="bold" />
+      )}
+    </button>
   );
 }
