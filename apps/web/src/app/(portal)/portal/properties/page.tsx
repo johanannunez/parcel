@@ -1,59 +1,118 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import {
-  Buildings,
-  Bed,
-  Bathtub,
-  Users as UsersIcon,
-  MapPin,
-  Plus,
-  UsersThree,
-} from "@phosphor-icons/react/dist/ssr";
+import { Buildings, Plus } from "@phosphor-icons/react/dist/ssr";
 import { getPortalContext } from "@/lib/portal-context";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { LinkButton } from "@/components/portal/Button";
-import { propertyTypeLabels } from "@/lib/labels";
+import { PropertiesView } from "./components/PropertiesView";
+import type { ImageSource } from "./actions";
+import type { PropertyRowData } from "./components/types";
 
 export const metadata: Metadata = { title: "Properties" };
 export const dynamic = "force-dynamic";
 
+const MAPS_KEY = process.env.GOOGLE_MAPS_API_KEY ?? null;
+
+function mapsAerialUrl(
+  address: string,
+  city: string,
+  state: string,
+): string | null {
+  if (!MAPS_KEY) return null;
+  const loc = [address, city, state].filter(Boolean).join(", ");
+  return `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(loc)}&zoom=18&size=760x460&maptype=satellite&key=${MAPS_KEY}`;
+}
+
+function mapsStreetUrl(
+  address: string,
+  city: string,
+  state: string,
+): string | null {
+  if (!MAPS_KEY) return null;
+  const loc = [address, city, state].filter(Boolean).join(", ");
+  return `https://maps.googleapis.com/maps/api/streetview?size=760x460&location=${encodeURIComponent(loc)}&fov=90&key=${MAPS_KEY}`;
+}
+
 export default async function PropertiesPage() {
   const { userId, client } = await getPortalContext();
 
-  const [{ data: properties }, { data: profile }] = await Promise.all([
-    client
+  // Base property data — columns known to exist in the schema
+  const { data: properties } = await client
+    .from("properties")
+    .select(
+      "id, address_line1, city, state, postal_code, home_type, bedrooms, bathrooms, guest_capacity, square_feet, active, created_at",
+    )
+    .eq("owner_id", userId)
+    .order("created_at", { ascending: false });
+
+  // image_source and cover_photo_url require the schema migration below.
+  // Wrapped in a try/catch so the page renders cleanly before the migration runs.
+  //
+  // SQL to run once in Supabase SQL Editor:
+  //   ALTER TABLE properties
+  //     ADD COLUMN IF NOT EXISTS image_source TEXT
+  //       CHECK (image_source IN ('aerial','street','photo'))
+  //       DEFAULT 'aerial';
+  //   ALTER TABLE properties
+  //     ADD COLUMN IF NOT EXISTS cover_photo_url TEXT;
+  const imageMap = new Map<
+    string,
+    { source: ImageSource; coverUrl: string | null; streetViewAvailable: boolean }
+  >();
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: imgRows } = await (client as any)
       .from("properties")
-      .select(
-        "id, name, property_type, address_line1, city, state, bedrooms, bathrooms, guest_capacity, active, created_at",
-      )
-      .eq("owner_id", userId)
-      .order("created_at", { ascending: false }),
-    client
-      .from("profiles")
-      .select("entity_id")
-      .eq("id", userId)
-      .single(),
-  ]);
-
-  const rows = properties ?? [];
-
-  // Fetch entity co-members for "Co-owned with X" badges
-  let coOwners: Array<{ id: string; full_name: string | null; email: string }> = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const entityId = (profile as any)?.entity_id ?? null;
-  if (entityId) {
-    const { data: members } = await client
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("entity_id", entityId)
-      .neq("id", userId);
-    coOwners = members ?? [];
+      .select("id, image_source, cover_photo_url, street_view_available")
+      .eq("owner_id", userId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (imgRows ?? []).forEach((row: any) => {
+      imageMap.set(row.id, {
+        source: (row.image_source ?? "aerial") as ImageSource,
+        coverUrl: row.cover_photo_url ?? null,
+        streetViewAvailable: row.street_view_available ?? true,
+      });
+    });
+  } catch {
+    // columns don't exist yet — safe defaults
   }
-  const hasCoOwners = coOwners.length > 0;
 
-  return (
-    <div className="flex flex-col gap-10">
-      {rows.length === 0 ? (
+  const rows: PropertyRowData[] = (properties ?? []).map((p) => {
+    const address = p.address_line1 ?? "";
+    const city = p.city ?? "";
+    const state = p.state ?? "";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const postalCode = (p as any).postal_code ?? "";
+    const img = imageMap.get(p.id) ?? {
+      source: "aerial" as ImageSource,
+      coverUrl: null,
+      streetViewAvailable: true,
+    };
+    return {
+      id: p.id,
+      address,
+      city,
+      state,
+      postalCode,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      homeType: (p as any).home_type ?? null,
+      bedrooms: p.bedrooms ?? null,
+      bathrooms: p.bathrooms ?? null,
+      guests: p.guest_capacity ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      sqft: (p as any).square_feet ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      active: (p as any).active ?? true,
+      imageSource: img.source,
+      coverPhotoUrl: img.coverUrl,
+      aerialUrl: mapsAerialUrl(address, city, state),
+      streetUrl: mapsStreetUrl(address, city, state),
+      streetViewAvailable: img.streetViewAvailable,
+    };
+  });
+
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col gap-4">
         <EmptyState
           icon={<Buildings size={26} weight="duotone" />}
           title="No properties yet"
@@ -65,114 +124,9 @@ export default async function PropertiesPage() {
             </LinkButton>
           }
         />
-      ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {rows.map((p) => {
-            const title = p.name?.trim() || p.address_line1;
-            return (
-              <Link
-                key={p.id}
-                href={`/portal/properties/${p.id}`}
-                aria-label={`Open ${title}`}
-                className="group flex flex-col gap-5 rounded-2xl border p-6 transition-[transform,box-shadow] duration-300 hover:-translate-y-[2px] hover:shadow-[0_20px_44px_-28px_rgba(15,23,42,0.22)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-                style={{
-                  backgroundColor: "var(--color-white)",
-                  borderColor: "var(--color-warm-gray-200)",
-                }}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <span
-                      className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
-                      style={{
-                        backgroundColor: "var(--color-warm-gray-100)",
-                        color: "var(--color-text-secondary)",
-                      }}
-                    >
-                      {propertyTypeLabels[p.property_type] ?? p.property_type}
-                    </span>
-                    <h3
-                      className="mt-3 truncate text-lg font-semibold tracking-tight"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {title}
-                    </h3>
-                    <div
-                      className="mt-1.5 flex items-center gap-1.5 text-sm"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      <MapPin size={14} weight="duotone" />
-                      <span className="truncate">
-                        {p.city}, {p.state}
-                      </span>
-                    </div>
-                  </div>
-                  <span
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                    style={{
-                      backgroundColor: p.active
-                        ? "rgba(22, 163, 74, 0.12)"
-                        : "rgba(118, 113, 112, 0.12)",
-                      color: p.active ? "#15803d" : "#4b4948",
-                    }}
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{
-                        backgroundColor: p.active ? "#16a34a" : "var(--color-text-tertiary)",
-                      }}
-                    />
-                    {p.active ? "Active" : "Paused"}
-                  </span>
-                </div>
+      </div>
+    );
+  }
 
-                <div
-                  className="flex items-center gap-5 border-t pt-4 text-sm"
-                  style={{
-                    borderColor: "var(--color-warm-gray-100)",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  <Stat
-                    icon={<Bed size={14} weight="duotone" />}
-                    label={`${p.bedrooms ?? "—"} bd`}
-                  />
-                  <Stat
-                    icon={<Bathtub size={14} weight="duotone" />}
-                    label={`${p.bathrooms ?? "—"} ba`}
-                  />
-                  <Stat
-                    icon={<UsersIcon size={14} weight="duotone" />}
-                    label={`${p.guest_capacity ?? "—"} guests`}
-                  />
-                </div>
-
-                {hasCoOwners ? (
-                  <div
-                    className="flex items-center gap-1.5 text-xs"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    <UsersThree size={12} weight="duotone" />
-                    Co-owned with{" "}
-                    {coOwners
-                      .map((c) => (c.full_name?.split(" ")[0] || c.email.split("@")[0]))
-                      .join(", ")}
-                  </div>
-                ) : null}
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Stat({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 tabular-nums">
-      {icon}
-      {label}
-    </span>
-  );
+  return <PropertiesView properties={rows} />;
 }

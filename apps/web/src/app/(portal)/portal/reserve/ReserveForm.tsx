@@ -1142,13 +1142,11 @@ export function ReserveForm({
                     If you choose to clean yourself, you must follow our
                     cleaning standards.{" "}
                     <a
-                      href="/cleaning-checklist.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="/portal/cleaning-checklist"
                       className="font-semibold underline"
                       style={{ color: "#b45309" }}
                     >
-                      Download the checklist
+                      Open the checklist
                     </a>
                   </p>
                 </div>

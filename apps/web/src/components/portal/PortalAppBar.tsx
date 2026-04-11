@@ -66,7 +66,6 @@ function getPortalHeader(
     return {
       title: "Your properties",
       subtitle: "Every home under Parcel management.",
-      action: { href: "/portal/setup/basics", label: "Add property" },
     };
   }
 
@@ -89,6 +88,14 @@ function getPortalHeader(
       title: "Reserve",
       subtitle:
         "Bookings, blocked dates, and owner stays across your portfolio.",
+    };
+  }
+
+  if (pathname === "/portal/cleaning-checklist") {
+    return {
+      title: "Cleaning checklist",
+      subtitle:
+        "The standards every Parcel home meets between guests. Use this if you're cleaning the home yourself.",
     };
   }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -32,6 +33,8 @@ import { currency0, formatMedium, formatRelative } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Property" };
 export const dynamic = "force-dynamic";
+// External fetches (weather, Hospitable) are cached individually below.
+// force-dynamic stays so auth cookies are always read fresh.
 
 /* ─── Weather ─── */
 
@@ -56,7 +59,7 @@ async function fetchPropertyWeather(
   try {
     const geoRes = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=3&format=json&language=en`,
-      { cache: "no-store" },
+      { next: { revalidate: 86400 } }, // geocoding result is stable — cache 24h
     );
     if (!geoRes.ok) return null;
 
@@ -80,7 +83,7 @@ async function fetchPropertyWeather(
 
     const wxRes = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph`,
-      { cache: "no-store" },
+      { next: { revalidate: 1800 } }, // weather — cache 30 min
     );
     if (!wxRes.ok) return null;
 
@@ -220,21 +223,6 @@ export default async function PropertyDetailPage({
 
   if (!property) notFound();
 
-  // Fetch current weather for this property's location. Non-blocking: null
-  // is returned on any failure and the card simply doesn't render.
-  const weather = await fetchPropertyWeather(property.city, property.state);
-
-  // Reconcile with Hospitable. Parcel is the source of truth; this only
-  // surfaces drift so the user can fix whichever side is wrong. No-op
-  // when the property isn't linked to a Hospitable listing.
-  const syncStatus = await reconcilePropertyWithHospitable({
-    hospitable_property_id: property.hospitable_property_id ?? null,
-    home_type: property.home_type ?? null,
-    bedrooms: property.bedrooms ?? null,
-    bathrooms: property.bathrooms ?? null,
-    guest_capacity: property.guest_capacity ?? null,
-  });
-
   // App bar owns the page title + subtitle for this route. Title is the
   // full formatted address built defensively (skip empty fragments so
   // partially filled or malformed rows still render cleanly). Subtitle
@@ -336,11 +324,15 @@ export default async function PropertyDetailPage({
           Back to properties
         </Link>
         <div className="flex flex-wrap items-start gap-2">
-          <HospitableSyncStatus
-            linked={syncStatus.linked}
-            diffs={syncStatus.diffs}
-            error={syncStatus.error}
-          />
+          <Suspense fallback={null}>
+            <HospitableSyncSection
+              hospitablePropertyId={property.hospitable_property_id ?? null}
+              homeType={property.home_type ?? null}
+              bedrooms={property.bedrooms ?? null}
+              bathrooms={property.bathrooms ?? null}
+              guestCapacity={property.guest_capacity ?? null}
+            />
+          </Suspense>
           <span
             className="inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
             style={{
@@ -409,12 +401,10 @@ export default async function PropertyDetailPage({
         />
       </section>
 
-      {weather !== null && property.city ? (
-        <PropertyWeatherCard
-          weather={weather}
-          city={property.city}
-          state={property.state ?? ""}
-        />
+      {property.city ? (
+        <Suspense fallback={<WeatherSkeleton />}>
+          <WeatherSection city={property.city} state={property.state ?? ""} />
+        </Suspense>
       ) : null}
 
       {/* Occupancy calendar */}
@@ -561,6 +551,61 @@ export default async function PropertyDetailPage({
         />
       </Link>
     </div>
+  );
+}
+
+/* ─── Suspense-deferred async components ─── */
+
+async function WeatherSection({ city, state }: { city: string; state: string }) {
+  const weather = await fetchPropertyWeather(city, state);
+  if (!weather) return null;
+  return <PropertyWeatherCard weather={weather} city={city} state={state} />;
+}
+
+function WeatherSkeleton() {
+  return (
+    <div
+      className="flex items-center gap-5 rounded-2xl border px-6 py-5"
+      style={{
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
+      }}
+    >
+      <div className="h-14 w-14 shrink-0 animate-pulse rounded-2xl" style={{ backgroundColor: "var(--color-warm-gray-100)" }} />
+      <div className="flex flex-col gap-2">
+        <div className="h-9 w-16 animate-pulse rounded" style={{ backgroundColor: "var(--color-warm-gray-100)" }} />
+        <div className="h-3 w-24 animate-pulse rounded" style={{ backgroundColor: "var(--color-warm-gray-100)" }} />
+      </div>
+    </div>
+  );
+}
+
+async function HospitableSyncSection({
+  hospitablePropertyId,
+  homeType,
+  bedrooms,
+  bathrooms,
+  guestCapacity,
+}: {
+  hospitablePropertyId: string | null;
+  homeType: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  guestCapacity: number | null;
+}) {
+  const syncStatus = await reconcilePropertyWithHospitable({
+    hospitable_property_id: hospitablePropertyId,
+    home_type: homeType,
+    bedrooms,
+    bathrooms,
+    guest_capacity: guestCapacity,
+  });
+  return (
+    <HospitableSyncStatus
+      linked={syncStatus.linked}
+      diffs={syncStatus.diffs}
+      error={syncStatus.error}
+    />
   );
 }
 
