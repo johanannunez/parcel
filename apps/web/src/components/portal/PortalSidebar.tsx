@@ -199,10 +199,10 @@ export function PortalSidebar({
         borderColor: "var(--color-warm-gray-200)",
       }}
     >
-      <div className="flex items-center px-6 pb-6 pt-7">
+      <div className="flex justify-center px-6 pb-8 pt-8">
         <Link
           href="/portal/dashboard"
-          className="inline-flex items-center gap-2.5 focus-visible:outline-none"
+          className="inline-flex flex-col items-center gap-3 focus-visible:outline-none"
         >
           <Image
             src={
@@ -211,12 +211,12 @@ export function PortalSidebar({
                 : "/brand/logo-mark.png"
             }
             alt="Parcel"
-            width={32}
-            height={32}
+            width={48}
+            height={48}
             className="shrink-0"
           />
           <span
-            className="text-[13px] font-bold uppercase tracking-[0.1em]"
+            className="text-[15px] font-bold uppercase tracking-[0.12em]"
             style={{ color: "var(--color-text-secondary)" }}
           >
             Owner
@@ -224,7 +224,7 @@ export function PortalSidebar({
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3">
+      <nav className="flex-1 overflow-y-auto px-3 pt-2">
         <NavSection label="Portfolio" items={portfolioNav} isActive={isActive} />
 
         {setupIncomplete && (

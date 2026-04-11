@@ -109,20 +109,20 @@ export function AdminSidebar({
       }}
     >
       {/* Logo */}
-      <div className="px-6 pb-6 pt-7">
+      <div className="flex justify-center px-6 pb-8 pt-8">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2.5 focus-visible:outline-none"
+          className="inline-flex flex-col items-center gap-3 focus-visible:outline-none"
         >
           <img
             src="/brand/logo-mark-white.png"
             alt="Parcel"
-            width={32}
-            height={32}
+            width={48}
+            height={48}
             className="shrink-0"
           />
           <span
-            className="text-[13px] font-bold uppercase tracking-[0.1em]"
+            className="text-[15px] font-bold uppercase tracking-[0.12em]"
             style={{ color: "rgba(255,255,255,0.65)" }}
           >
             Admin
@@ -131,7 +131,7 @@ export function AdminSidebar({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3">
+      <nav className="flex-1 px-3 pt-2">
         <SectionLabel>Main</SectionLabel>
         <ul className="flex flex-col gap-0.5">
           {mainNav.map((item) => (
