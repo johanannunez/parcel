@@ -161,7 +161,7 @@ export default async function PortalLayout({
             userEmail={displayEmail}
             initials={initials}
             avatarUrl={displayAvatar}
-            isAdmin={isAdmin && !isImpersonating}
+            isAdmin={isAdmin}
             setupIncomplete={setupIncomplete}
             signOutSlot={<SignOutButton />}
           />
@@ -188,7 +188,7 @@ export default async function PortalLayout({
           </div>
 
           <PortalBottomNav
-            isAdmin={isAdmin && !isImpersonating}
+            isAdmin={isAdmin}
             signOutSlot={<SignOutButton />}
             userName={displayName}
             userEmail={displayEmail}

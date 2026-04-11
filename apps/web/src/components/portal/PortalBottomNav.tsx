@@ -373,9 +373,15 @@ export function PortalBottomNav({
                   <Link
                     href="/admin"
                     onClick={closeMore}
-                    className="admin-switch-link"
+                    className="mb-2 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold"
+                    style={{
+                      background: "linear-gradient(135deg, #F6A825 0%, #D4860A 100%)",
+                      color: "#fff",
+                      boxShadow: "0 2px 8px rgba(196, 120, 10, 0.28)",
+                      textDecoration: "none",
+                    }}
                   >
-                    <ShieldStar size={18} weight="duotone" className="shrink-0" />
+                    <ShieldStar size={18} weight="duotone" className="shrink-0" style={{ color: "#fff" }} />
                     Admin
                   </Link>
                 ) : null}
