@@ -20,6 +20,7 @@ import {
 } from "@/components/portal/CommandPalette";
 import { SidebarFooter } from "@/components/portal/SidebarFooter";
 import { useTheme } from "@/components/ThemeProvider";
+import { NotificationBell } from "@/components/portal/NotificationBell";
 
 type NavItem = {
   href: string;
@@ -70,6 +71,7 @@ const secondaryNav: NavItem[] = [
 ];
 
 export function PortalSidebar({
+  userId,
   userName,
   userEmail,
   initials,
@@ -78,6 +80,7 @@ export function PortalSidebar({
   setupIncomplete = false,
   signOutSlot,
 }: {
+  userId: string;
   userName: string;
   userEmail: string;
   initials: string;
@@ -109,7 +112,7 @@ export function PortalSidebar({
         borderColor: "var(--color-warm-gray-200)",
       }}
     >
-      <div className="px-6 pb-6 pt-7">
+      <div className="flex items-center justify-between px-6 pb-6 pt-7">
         <Link
           href="/portal/dashboard"
           className="inline-flex items-center gap-2.5 focus-visible:outline-none"
@@ -128,6 +131,7 @@ export function PortalSidebar({
             Owner
           </span>
         </Link>
+        <NotificationBell userId={userId} />
       </div>
 
       <nav className="flex-1 px-3">

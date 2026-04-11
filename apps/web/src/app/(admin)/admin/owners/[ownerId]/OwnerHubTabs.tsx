@@ -24,6 +24,13 @@ import {
   CaretRight,
   Warning,
   ArrowsClockwise,
+  Receipt as ReceiptIcon,
+  Invoice,
+  ChartLineUp,
+  Scales,
+  DownloadSimple,
+  Sparkle,
+  Image as ImageIcon,
 } from "@phosphor-icons/react";
 import {
   createOwnerTask,
@@ -34,6 +41,12 @@ import {
   deleteNote,
   addTimelineEntry,
 } from "./hub-actions";
+import {
+  createReceipt,
+  deleteReceipt,
+  toggleReceiptVisibility,
+  exportReceiptsCSV,
+} from "./financials-actions";
 import { InviteOwnerButton } from "./InviteOwnerButton";
 
 /* ─── Types ─── */
@@ -130,6 +143,21 @@ type Document = {
   created_at: string;
 };
 
+type Receipt = {
+  id: string;
+  vendor: string;
+  amount: number;
+  currency: string;
+  category: string;
+  purchase_date: string;
+  image_url: string | null;
+  notes: string | null;
+  visibility: string;
+  property_id: string | null;
+  propertyLabel: string | null;
+  created_at: string;
+};
+
 type OwnerInfo = {
   id: string;
   fullName: string;
@@ -153,6 +181,7 @@ type OwnerHubProps = {
   notes: Note[];
   timeline: TimelineEntry[];
   documents: Document[];
+  receipts: Receipt[];
 };
 
 /* ─── Section definitions ─── */
@@ -163,7 +192,7 @@ const SECTIONS = [
   { key: "timeline", label: "Timeline", icon: ClockCounterClockwise },
   { key: "notes", label: "Notes", icon: NotePencil },
   { key: "documents", label: "Documents", icon: FileText },
-  { key: "billing", label: "Billing", icon: CurrencyDollar },
+  { key: "financials", label: "Financials", icon: CurrencyDollar },
   { key: "properties", label: "Properties", icon: Buildings },
 ] as const;
 
@@ -191,6 +220,7 @@ export function OwnerHubTabs({
   notes,
   timeline,
   documents,
+  receipts,
 }: OwnerHubProps) {
   const searchParams = useSearchParams();
   const section = (searchParams.get("tab") as SectionKey) || activeTab || "overview";
@@ -399,7 +429,6 @@ export function OwnerHubTabs({
             />
           )}
           {section === "documents" && <DocumentsSection documents={documents} />}
-          {section === "billing" && <BillingSection />}
           {section === "properties" && (
             <PropertiesSection properties={properties} />
           )}

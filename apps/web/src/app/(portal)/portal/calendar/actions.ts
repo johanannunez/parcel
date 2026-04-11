@@ -184,16 +184,55 @@ export async function decideBlockRequest(
   if (profile?.role !== "admin")
     return { ok: false, error: "Admins only." };
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("block_requests")
     .update({ status: parsed.data.decision })
-    .eq("id", parsed.data.id);
+    .eq("id", parsed.data.id)
+    .select("owner_id, start_date, end_date")
+    .single();
 
   if (error) return { ok: false, error: error.message };
+
+  // Create in-app notification for the owner
+  if (updated) {
+    const { createNotification } = await import("@/lib/notifications");
+    const { sendPushToOwner } = await import("@/lib/push");
+    const range = updated.start_date === updated.end_date
+      ? formatDate(updated.start_date)
+      : `${formatDate(updated.start_date)} - ${formatDate(updated.end_date)}`;
+
+    const isApproved = parsed.data.decision === "approved";
+    const title = isApproved ? "Block request approved" : "Block request denied";
+    const body = isApproved
+      ? `Your block for ${range} has been approved.`
+      : `Your block for ${range} could not be approved.`;
+
+    createNotification({
+      ownerId: updated.owner_id,
+      type: isApproved ? "block_approved" : "block_denied",
+      title,
+      body,
+      link: "/portal/calendar",
+    }).catch(() => {});
+
+    // Push notification too
+    sendPushToOwner({
+      ownerId: updated.owner_id,
+      title,
+      body,
+      url: "/portal/calendar",
+      tag: "parcel-block",
+    }).catch(() => {});
+  }
 
   revalidatePath("/admin/block-requests");
   revalidatePath("/portal/calendar");
   return { ok: true };
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 const CancelSchema = z.object({

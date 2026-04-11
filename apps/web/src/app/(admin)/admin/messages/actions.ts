@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buildMessageEmail, buildBroadcastEmail } from "@/lib/email-template";
 import { sendPushToOwner, sendPushToAllOwners } from "@/lib/push";
+import { createNotification, createNotificationForAllOwners } from "@/lib/notifications";
 
 /* ─── Helpers ─── */
 
@@ -139,6 +140,17 @@ export async function sendMessage(args: {
 
   if (msgErr || !msg) return { error: msgErr?.message ?? "Failed to send message" };
 
+  // In-app notification (only if there's actual content)
+  if (args.body.trim()) {
+    createNotification({
+      ownerId: args.ownerId,
+      type: "message_received",
+      title: "New message from The Parcel Company",
+      body: args.body.replace(/<[^>]*>/g, "").slice(0, 120),
+      link: "/portal/messages",
+    }).catch(() => {});
+  }
+
   // Push notification (fire-and-forget)
   sendPushToOwner({
     ownerId: args.ownerId,
@@ -222,6 +234,14 @@ export async function sendBroadcast(args: {
       await Promise.allSettled(emailPromises);
     }
   }
+
+  // In-app notifications for all owners
+  createNotificationForAllOwners({
+    type: "announcement",
+    title: args.subject,
+    body: args.body.replace(/<[^>]*>/g, "").slice(0, 120),
+    link: "/portal/messages",
+  }).catch(() => {});
 
   // Push notification to all owners (fire-and-forget)
   sendPushToAllOwners({

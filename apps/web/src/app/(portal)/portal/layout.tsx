@@ -77,6 +77,7 @@ export default async function PortalLayout({
     >
       <PortalIconRail />
       <PortalSidebar
+        userId={user.id}
         userName={fullName}
         userEmail={user.email ?? ""}
         initials={initials}
