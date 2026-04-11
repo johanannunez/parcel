@@ -137,6 +137,18 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          rel="apple-touch-icon"
+          href="/brand/app-icon-light-180.png"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="apple-touch-icon"
+          href="/brand/app-icon-dark-180.png"
+          media="(prefers-color-scheme: dark)"
+        />
+      </head>
       <body className={`${generalSans.variable} antialiased`}>
         <script
           dangerouslySetInnerHTML={{
