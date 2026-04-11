@@ -64,6 +64,14 @@ export default function FrostedNav() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/login"
+              className={`text-sm font-medium transition-colors duration-300 hover:text-brand ${
+                scrolled ? "text-text-primary" : "text-white"
+              }`}
+            >
+              Owner Login
+            </Link>
             <button
               onClick={toggleTheme}
               className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-300 ${

@@ -116,7 +116,7 @@ body {
   background: var(--color-white);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 120ms ease-out, color 120ms ease-out;
 }
 
 /* ─── Typography Utilities ─── */
