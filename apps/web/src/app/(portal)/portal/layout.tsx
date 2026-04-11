@@ -190,6 +190,10 @@ export default async function PortalLayout({
           <PortalBottomNav
             isAdmin={isAdmin && !isImpersonating}
             signOutSlot={<SignOutButton />}
+            userName={displayName}
+            userEmail={displayEmail}
+            initials={initials}
+            avatarUrl={displayAvatar}
           />
           <ServiceWorkerRegistration />
         </div>

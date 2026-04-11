@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   Sun,
   Moon,
-  Question,
   GearSix,
   ShieldCheck,
 } from "@phosphor-icons/react";
@@ -84,11 +83,6 @@ export function SidebarFooter({
             Switch to Admin
           </Link>
         ) : null}
-
-        <Link href="/help" className="sidebar-footer-row">
-          <Question size={15} weight="regular" className="shrink-0" />
-          Help
-        </Link>
 
         <button
           type="button"
