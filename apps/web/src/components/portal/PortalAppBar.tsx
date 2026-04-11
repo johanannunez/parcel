@@ -299,7 +299,7 @@ function SearchPill() {
     <button
       type="button"
       onClick={handleClick}
-      className="hidden h-9 w-[200px] items-center gap-2 rounded-full border pl-3 pr-1.5 text-[12.5px] font-medium backdrop-blur-sm transition-colors lg:w-[240px] sm:flex"
+      className="hidden h-9 w-[200px] items-center gap-2 rounded-full border px-3.5 text-[12.5px] font-medium backdrop-blur-sm transition-colors lg:w-[240px] sm:flex"
       style={{
         backgroundColor: "rgba(255, 255, 255, 0.15)",
         borderColor: "rgba(255, 255, 255, 0.28)",
@@ -319,17 +319,7 @@ function SearchPill() {
     >
       <MagnifyingGlass size={14} weight="bold" />
       <span className="flex-1 text-left">Search</span>
-      <kbd
-        className="ml-1 inline-flex items-center justify-center rounded border px-1.5 py-0.5 text-[9.5px] font-semibold leading-none"
-        style={{
-          fontFamily: "inherit",
-          backgroundColor: "rgba(255, 255, 255, 0.18)",
-          borderColor: "rgba(255, 255, 255, 0.32)",
-          color: "rgba(255, 255, 255, 0.88)",
-        }}
-      >
-        ⌘K
-      </kbd>
+      <span style={{ color: "rgba(255, 255, 255, 0.55)" }}>⌘K</span>
     </button>
   );
 }
