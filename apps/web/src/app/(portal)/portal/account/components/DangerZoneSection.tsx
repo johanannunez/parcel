@@ -1,12 +1,57 @@
 "use client";
 
 import { useActionState, useCallback, useState } from "react";
-import { Warning, Trash, X, ArrowCounterClockwise } from "@phosphor-icons/react";
+import type { ComponentType } from "react";
+import {
+  WarningIcon,
+  TrashIcon,
+  XIcon,
+  ArrowCounterClockwiseIcon,
+  HouseIcon,
+  FileArrowDownIcon,
+  CalendarXIcon,
+  ChatCircleIcon,
+  FilesIcon,
+  HeartIcon,
+  type Icon,
+} from "@phosphor-icons/react";
 import { requestAccountDeletion } from "../actions";
+
+const LOSSES: {
+  Icon: ComponentType<React.ComponentProps<Icon>>;
+  title: string;
+  detail: string;
+}[] = [
+  {
+    Icon: FilesIcon,
+    title: "Delete all documents",
+    detail: "Host agreements, W-9 forms, and any files you've uploaded.",
+  },
+  {
+    Icon: HouseIcon,
+    title: "Delete every property",
+    detail: "Addresses, beds, baths, photos, and specs — all of it.",
+  },
+  {
+    Icon: ChatCircleIcon,
+    title: "Delete your message history",
+    detail: "Every message you've exchanged with your host in the portal.",
+  },
+  {
+    Icon: FileArrowDownIcon,
+    title: "Delete your ability to export data",
+    detail: "No more CSV exports for your records or your accountant.",
+  },
+  {
+    Icon: CalendarXIcon,
+    title: "Delete your calendar block history",
+    detail: "Every stay block and maintenance hold, approved or pending.",
+  },
+];
 
 export function DangerZoneSection() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [state, formAction, isPending] = useActionState(
+  const [deleteState, deleteFormAction, isDeleting] = useActionState(
     requestAccountDeletion,
     null,
   );
@@ -34,88 +79,127 @@ export function DangerZoneSection() {
         className="mb-6 text-sm"
         style={{ color: "var(--color-text-secondary)" }}
       >
-        Account deletion with a 30-day recovery window.
+        Irreversible actions for your Parcel account.
       </p>
 
-      <div
-        className="relative overflow-hidden rounded-2xl border p-7"
-        style={{
-          backgroundColor: "rgba(220, 38, 38, 0.03)",
-          borderColor: "rgba(220, 38, 38, 0.2)",
-        }}
-      >
-        {/* Subtle shimmer */}
+      <div className="parcel-danger-card relative overflow-hidden rounded-2xl p-7">
+        {/* Drifting radial shimmer */}
+        <div aria-hidden="true" className="parcel-danger-shimmer" />
+        {/* Fractal noise texture */}
+        <div aria-hidden="true" className="parcel-danger-noise" />
+
+        {/* Loss items */}
+        <div className="relative flex flex-col gap-2.5">
+          {LOSSES.map((loss) => {
+            const LossIcon = loss.Icon;
+            return (
+              <div
+                key={loss.title}
+                className="flex items-start gap-3 rounded-xl px-3.5 py-3"
+                style={{
+                  backgroundColor: "var(--color-white)",
+                  border: "1px solid rgba(220, 38, 38, 0.16)",
+                }}
+              >
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                  style={{
+                    backgroundColor: "rgba(220, 38, 38, 0.10)",
+                    border: "1px solid rgba(220, 38, 38, 0.18)",
+                  }}
+                >
+                  <LossIcon
+                    size={15}
+                    weight="duotone"
+                    style={{ color: "var(--color-error)" }}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="text-sm font-semibold leading-tight"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    {loss.title}
+                  </p>
+                  <p
+                    className="mt-0.5 text-xs leading-snug"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    {loss.detail}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Warm farewell note */}
         <div
-          className="pointer-events-none absolute inset-0"
+          className="relative mt-3 flex items-start gap-3 rounded-xl px-3.5 py-3"
           style={{
-            background:
-              "linear-gradient(105deg, transparent 40%, rgba(220, 38, 38, 0.04) 50%, transparent 60%)",
-            backgroundSize: "200% 100%",
-            animation: "shimmer 6s ease-in-out infinite",
+            backgroundColor: "var(--color-white)",
+            border: "1px solid rgba(2, 170, 235, 0.22)",
           }}
-        />
-
-        <div className="relative flex items-start gap-4">
-          <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-            style={{ backgroundColor: "rgba(220, 38, 38, 0.08)" }}
-          >
-            <Warning
-              size={20}
-              weight="duotone"
-              style={{ color: "var(--color-error)" }}
-            />
-          </div>
-
-          <div className="flex flex-1 flex-col gap-1">
-            <h3
-              className="text-sm font-semibold"
+        >
+          <HeartIcon
+            size={15}
+            weight="duotone"
+            className="mt-0.5 shrink-0"
+            style={{ color: "var(--color-brand)" }}
+          />
+          <div>
+            <p
+              className="text-sm font-semibold leading-tight"
               style={{ color: "var(--color-text-primary)" }}
             >
-              Delete your account
-            </h3>
+              And honestly, we&apos;ll miss you
+            </p>
             <p
-              className="text-sm"
+              className="mt-0.5 text-xs leading-snug"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Your account will be deactivated immediately and scheduled for permanent deletion after 30 days.
+              Hosting is a relationship. We built Parcel to take care of yours.
             </p>
-
-            {/* Recovery info */}
-            <div
-              className="mt-3 flex items-start gap-2.5 rounded-lg px-3.5 py-2.5"
-              style={{ backgroundColor: "rgba(2, 170, 235, 0.05)", border: "1px solid rgba(2, 170, 235, 0.12)" }}
-            >
-              <ArrowCounterClockwise
-                size={16}
-                weight="bold"
-                className="mt-0.5 shrink-0"
-                style={{ color: "var(--color-brand)" }}
-              />
-              <div>
-                <p className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
-                  30-day recovery window
-                </p>
-                <p className="mt-0.5 text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                  If you sign back in within 30 days, your account and all data will be fully restored. After 30 days, everything is permanently deleted and cannot be recovered.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={openModal}
-              className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "var(--color-error)" }}
-            >
-              <Trash size={16} weight="bold" />
-              Delete account
-            </button>
           </div>
+        </div>
+
+        {/* 30-day recovery callout */}
+        <div
+          className="relative mt-3 flex items-start gap-2.5 rounded-xl px-3.5 py-2.5"
+          style={{
+            backgroundColor: "var(--color-white)",
+            border: "1px solid rgba(2, 170, 235, 0.22)",
+          }}
+        >
+          <ArrowCounterClockwiseIcon
+            size={15}
+            weight="bold"
+            className="mt-0.5 shrink-0"
+            style={{ color: "var(--color-brand)" }}
+          />
+          <p
+            className="text-xs"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            Account deletion is reversible for 30 days. Sign back in and
+            everything is restored. After that, it is permanently gone.
+          </p>
+        </div>
+
+        {/* Delete button */}
+        <div className="relative mt-6">
+          <button
+            type="button"
+            onClick={openModal}
+            className="parcel-danger-delete-btn inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold"
+          >
+            <TrashIcon size={15} weight="bold" />
+            Delete my account
+          </button>
         </div>
       </div>
 
-      {/* Confirmation modal */}
+      {/* Confirmation modal — lean final check, no repeat of the loss list */}
       {modalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -125,7 +209,7 @@ export function DangerZoneSection() {
           }}
         >
           <div
-            className="relative w-full max-w-md rounded-2xl p-7"
+            className="relative w-full max-w-sm rounded-2xl p-7"
             style={{
               backgroundColor: "var(--color-white)",
               boxShadow:
@@ -139,27 +223,36 @@ export function DangerZoneSection() {
               style={{ color: "var(--color-text-tertiary)" }}
               aria-label="Close"
             >
-              <X size={18} weight="bold" />
+              <XIcon size={18} weight="bold" />
             </button>
 
             <div
-              className="mb-5 flex h-12 w-12 items-center justify-center rounded-full"
+              className="mb-5 flex h-11 w-11 items-center justify-center rounded-full"
               style={{ backgroundColor: "rgba(220, 38, 38, 0.08)" }}
             >
-              <Warning size={24} weight="duotone" style={{ color: "var(--color-error)" }} />
+              <WarningIcon
+                size={22}
+                weight="duotone"
+                style={{ color: "var(--color-error)" }}
+              />
             </div>
 
-            <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Are you sure?
+            <h3
+              className="text-lg font-semibold"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Last chance. Are you sure?
             </h3>
-            <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-              Your account will be deactivated and you will be signed out. All your data (properties, calendar blocks, messages) will be preserved for 30 days.
-            </p>
-            <p className="mt-2 text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
-              Sign back in within 30 days to restore your account. After that, everything is permanently deleted.
+            <p
+              className="mt-2 text-sm"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Your account will be deactivated immediately. You have 30 days to
+              sign back in and recover everything. After that, it is gone for
+              good.
             </p>
 
-            <form action={formAction}>
+            <form action={deleteFormAction}>
               <div className="mt-5">
                 <label
                   htmlFor="delete-confirmation"
@@ -167,7 +260,10 @@ export function DangerZoneSection() {
                   style={{ color: "var(--color-text-primary)" }}
                 >
                   Type{" "}
-                  <span className="font-bold" style={{ color: "var(--color-error)" }}>
+                  <span
+                    className="font-bold"
+                    style={{ color: "var(--color-error)" }}
+                  >
                     DELETE
                   </span>{" "}
                   to confirm
@@ -190,7 +286,7 @@ export function DangerZoneSection() {
                 />
               </div>
 
-              {state && !state.ok && (
+              {deleteState && !deleteState.ok && (
                 <div
                   className="mt-3 rounded-lg border px-4 py-3 text-sm font-medium"
                   style={{
@@ -199,7 +295,7 @@ export function DangerZoneSection() {
                     color: "var(--color-error)",
                   }}
                 >
-                  {state.message}
+                  {deleteState.message}
                 </div>
               )}
 
@@ -218,12 +314,12 @@ export function DangerZoneSection() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending || confirmText !== "DELETE"}
+                  disabled={isDeleting || confirmText !== "DELETE"}
                   className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
                   style={{ backgroundColor: "var(--color-error)" }}
                 >
-                  <Trash size={16} weight="bold" />
-                  {isPending ? "Deleting..." : "Delete my account"}
+                  <TrashIcon size={15} weight="bold" />
+                  {isDeleting ? "Deleting..." : "Delete my account"}
                 </button>
               </div>
             </form>
@@ -232,9 +328,77 @@ export function DangerZoneSection() {
       )}
 
       <style>{`
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
+        @keyframes dangerShimmer {
+          0% { background-position: 0% 0%; }
+          25% { background-position: 100% 30%; }
+          50% { background-position: 60% 100%; }
+          75% { background-position: 10% 60%; }
+          100% { background-position: 0% 0%; }
+        }
+        .parcel-danger-card {
+          background: rgba(220, 38, 38, 0.08);
+          backdrop-filter: blur(24px) saturate(1.2);
+          -webkit-backdrop-filter: blur(24px) saturate(1.2);
+          border: 1px solid rgba(220, 38, 38, 0.25);
+          box-shadow:
+            0 2px 16px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+          transition: box-shadow 0.6s ease, border-color 0.6s ease;
+        }
+        .parcel-danger-card:hover {
+          box-shadow:
+            0 0 24px rgba(220, 38, 38, 0.20),
+            0 0 60px rgba(220, 38, 38, 0.10),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+          border-color: rgba(220, 38, 38, 0.45);
+        }
+        .parcel-danger-shimmer {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse 50% 50%, rgba(220, 38, 38, 0.14) 0%, transparent 70%);
+          background-size: 200% 200%;
+          animation: dangerShimmer 8s linear infinite;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .parcel-danger-noise {
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          background-repeat: repeat;
+          background-size: 256px 256px;
+          opacity: 0.025;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .parcel-danger-delete-btn {
+          background: rgba(220, 38, 38, 0.10);
+          color: #E05252;
+          border: 1px solid rgba(220, 38, 38, 0.28);
+          transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+        .parcel-danger-delete-btn:hover {
+          background: rgba(220, 38, 38, 0.18);
+          border-color: rgba(220, 38, 38, 0.45);
+          box-shadow: 0 2px 10px rgba(220, 38, 38, 0.14);
+        }
+        .parcel-danger-delete-btn:active {
+          background: rgba(220, 38, 38, 0.25);
+        }
+        .parcel-danger-delete-btn:focus-visible {
+          outline: 2px solid var(--color-error);
+          outline-offset: 2px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .parcel-danger-shimmer { animation: none; }
+          .parcel-danger-card,
+          .parcel-danger-delete-btn { transition: none; }
+        }
+        @media (max-width: 768px) {
+          .parcel-danger-card { padding: 20px; }
         }
       `}</style>
     </section>
