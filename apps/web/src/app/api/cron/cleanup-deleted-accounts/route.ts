@@ -70,27 +70,47 @@ export async function GET(request: NextRequest) {
     ...new Set(toDelete.map((p) => p.entity_id).filter(Boolean)),
   ] as string[];
 
-  // Delete auth users one at a time. Cascade handles the profile and all
-  // related data via FK constraints.
+  // Delete profiles one at a time. We delete the profile FIRST (which cascades
+  // to all related data via FK ON DELETE CASCADE), then try to clean up the
+  // auth.users row as a best-effort step. This ordering ensures data is always
+  // removed even if the auth admin API call fails for any reason.
   let deletedCount = 0;
   const failures: Array<{ email: string; error: string }> = [];
 
   for (const profile of toDelete) {
     try {
-      const { error: deleteError } = await svc.auth.admin.deleteUser(profile.id);
-      if (deleteError) {
-        failures.push({ email: profile.email, error: deleteError.message });
+      // Step 1: Delete the profile (cascades to messages, properties, bookings,
+      // payouts, notifications, push_subscriptions, session_log, etc.)
+      const { error: profileDeleteError } = await svc
+        .from("profiles")
+        .delete()
+        .eq("id", profile.id);
+
+      if (profileDeleteError) {
+        failures.push({ email: profile.email, error: `Profile delete: ${profileDeleteError.message}` });
         console.error(
-          `[Cron] Failed to delete user ${profile.email}:`,
-          deleteError,
+          `[Cron] Failed to delete profile ${profile.email}:`,
+          profileDeleteError,
         );
-      } else {
-        deletedCount++;
+        continue;
       }
+
+      // Step 2: Best-effort auth user cleanup. Don't count this as a failure
+      // since the actual user data is already gone.
+      try {
+        await svc.auth.admin.deleteUser(profile.id);
+      } catch (authErr) {
+        console.warn(
+          `[Cron] Profile ${profile.email} deleted but auth user cleanup failed:`,
+          authErr,
+        );
+      }
+
+      deletedCount++;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       failures.push({ email: profile.email, error: message });
-      console.error(`[Cron] Exception deleting user ${profile.email}:`, err);
+      console.error(`[Cron] Exception deleting ${profile.email}:`, err);
     }
   }
 
