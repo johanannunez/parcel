@@ -14,7 +14,7 @@ export function SignOutButton() {
       onClick={() => startTransition(() => signOut())}
       className="sidebar-footer-row sidebar-footer-signout"
     >
-      <Power size={15} weight="regular" className="shrink-0" />
+      <Power size={19} weight="duotone" className="shrink-0" />
       {pending ? "Signing out..." : "Sign out"}
     </button>
   );
