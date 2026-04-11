@@ -107,11 +107,15 @@ export function ReserveSummary({
           >
             Reserving
           </p>
-          <p
-            className="truncate text-[14px] font-semibold leading-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            {property?.name ?? "Select a home"}
+          <p className="flex items-baseline gap-1.5 truncate text-[14px] font-semibold leading-tight">
+            <span style={{ color: "var(--color-text-primary)" }}>
+              {property?.name ?? "Select a home"}
+            </span>
+            {property?.unit ? (
+              <span className="shrink-0 text-[12px] font-semibold" style={{ color: "var(--color-brand)" }}>
+                {property.unit}
+              </span>
+            ) : null}
           </p>
           {property?.address ? (
             <p

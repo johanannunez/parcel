@@ -123,30 +123,65 @@ function isValidPhone(phone: string): boolean {
 
 type TimeGroup = { label: string; times: string[] };
 
+/** Friendly display labels for times that benefit from disambiguation. */
+const TIME_DISPLAY_LABELS: Record<string, string> = {
+  "12:00 AM": "12:00 AM (Midnight)",
+  "12:00 PM": "12:00 PM (Noon)",
+};
+
 /** Convert TimeGroup[] into the SelectGroup[] format expected by CustomSelect. */
 function timeGroupsToSelectGroups(
   groups: TimeGroup[],
 ): import("@/components/portal/CustomSelect").SelectGroup[] {
   return groups.map((g) => ({
     label: g.label,
-    options: g.times.map((t) => ({ value: t, label: t })),
+    options: g.times.map((t) => ({
+      value: t,
+      label: TIME_DISPLAY_LABELS[t] ?? t,
+    })),
   }));
 }
 
-/** Standard check-in is 4 PM+. Earlier = early, after 8 PM = late. */
+/**
+ * Full 24-hour check-in coverage, grouped by convention:
+ * standard (4 PM–11 PM), midnight, early morning through noon.
+ */
 const CHECK_IN_TIME_GROUPS: TimeGroup[] = [
-  { label: "Standard (4 PM or later)", times: ["4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM"] },
-  { label: "Late check-in", times: ["9:00 PM", "10:00 PM", "11:00 PM"] },
-  { label: "Early check-in", times: ["12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "11:00 AM", "10:00 AM", "9:00 AM", "8:00 AM", "7:00 AM", "6:00 AM", "5:00 AM"] },
-  { label: "Midnight / overnight", times: ["12:00 AM", "1:00 AM", "2:00 AM", "3:00 AM", "4:00 AM"] },
+  {
+    label: "Standard (4 PM or later)",
+    times: ["4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM", "10:00 PM", "11:00 PM"],
+  },
+  {
+    label: "Midnight",
+    times: ["12:00 AM"],
+  },
+  {
+    label: "Early check-in",
+    times: ["1:00 AM", "2:00 AM", "3:00 AM", "4:00 AM", "5:00 AM", "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM"],
+  },
+  {
+    label: "Afternoon",
+    times: ["1:00 PM", "2:00 PM", "3:00 PM"],
+  },
 ];
 
-/** Standard check-out is before 10 AM. Later = late check-out. */
+/**
+ * Full 24-hour check-out coverage, grouped by convention:
+ * standard (up through noon), afternoon/evening, midnight.
+ */
 const CHECK_OUT_TIME_GROUPS: TimeGroup[] = [
-  { label: "Standard (10 AM or earlier)", times: ["8:00 AM", "9:00 AM", "10:00 AM"] },
-  { label: "Late check-out", times: ["11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"] },
-  { label: "Very late", times: ["7:00 PM", "8:00 PM", "9:00 PM", "10:00 PM", "11:00 PM"] },
-  { label: "Overnight / next day", times: ["12:00 AM", "1:00 AM", "2:00 AM", "3:00 AM", "4:00 AM", "5:00 AM", "6:00 AM", "7:00 AM"] },
+  {
+    label: "Standard (before noon)",
+    times: ["6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM"],
+  },
+  {
+    label: "Afternoon / late check-out",
+    times: ["12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM", "10:00 PM", "11:00 PM"],
+  },
+  {
+    label: "Midnight / next day",
+    times: ["12:00 AM"],
+  },
 ];
 const REASONS = [
   "Personal stay",
@@ -264,18 +299,20 @@ function PropertyDropdown({
           boxShadow: open
             ? "0 0 0 3px rgba(2, 170, 235, 0.12)"
             : "none",
-          // @ts-ignore
-          "--tw-ring-color": "rgba(2, 170, 235, 0.35)",
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
         <div className="flex min-w-0 flex-1 flex-col">
-          <span
-            className="truncate text-sm font-medium leading-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            {selected?.name ?? "Select a property"}
+          <span className="flex min-w-0 items-baseline gap-1.5 truncate text-sm font-medium leading-tight">
+            <span style={{ color: "var(--color-text-primary)" }}>
+              {selected?.name ?? "Select a property"}
+            </span>
+            {selected?.unit ? (
+              <span className="shrink-0 text-[11.5px] font-semibold" style={{ color: "var(--color-brand)" }}>
+                {selected.unit}
+              </span>
+            ) : null}
           </span>
           {selected?.address ? (
             <span
@@ -300,7 +337,7 @@ function PropertyDropdown({
       {/* Dropdown panel */}
       {open ? (
         <div
-          className="absolute left-0 right-0 z-50 mt-1.5 overflow-hidden rounded-xl border py-1 shadow-lg"
+          className="scrollbar-hide absolute left-0 right-0 z-50 mt-1.5 max-h-72 overflow-y-auto rounded-xl border py-1"
           style={{
             backgroundColor: "var(--color-white)",
             borderColor: "var(--color-warm-gray-200)",
@@ -339,15 +376,24 @@ function PropertyDropdown({
                 }}
               >
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span
-                    className="truncate text-sm font-medium leading-tight"
-                    style={{
-                      color: isSelected
-                        ? "var(--color-brand)"
-                        : "var(--color-text-primary)",
-                    }}
-                  >
-                    {p.name}
+                  <span className="flex min-w-0 items-baseline gap-1.5 truncate text-sm font-medium leading-tight">
+                    <span
+                      style={{
+                        color: isSelected
+                          ? "var(--color-brand)"
+                          : "var(--color-text-primary)",
+                      }}
+                    >
+                      {p.name}
+                    </span>
+                    {p.unit ? (
+                      <span
+                        className="shrink-0 text-[11.5px] font-semibold"
+                        style={{ color: "var(--color-brand)" }}
+                      >
+                        {p.unit}
+                      </span>
+                    ) : null}
                   </span>
                   {p.address ? (
                     <span
@@ -602,11 +648,15 @@ export function ReserveForm({
                 <House size={18} weight="duotone" />
               </span>
               <div className="min-w-0 flex-1">
-                <p
-                  className="text-[15px] font-semibold leading-tight"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  {selectedProperty.name}
+                <p className="flex items-baseline gap-2 text-[15px] font-semibold leading-tight">
+                  <span style={{ color: "var(--color-text-primary)" }}>
+                    {selectedProperty.name}
+                  </span>
+                  {selectedProperty.unit ? (
+                    <span className="text-[13px] font-semibold" style={{ color: "var(--color-brand)" }}>
+                      {selectedProperty.unit}
+                    </span>
+                  ) : null}
                 </p>
                 {selectedProperty.address ? (
                   <p

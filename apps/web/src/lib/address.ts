@@ -18,7 +18,7 @@ type AddressParts = {
  * Normalizes the unit field so bare identifiers like "B" become "Unit B"
  * while existing prefixes like "Apt 4", "Suite 200", "#12" pass through unchanged.
  */
-function normalizeUnit(raw: string): string {
+export function normalizeUnit(raw: string): string {
   const s = raw.trim();
   if (!s) return "";
   // Recognized prefixes — keep as-is (case-insensitive)

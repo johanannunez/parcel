@@ -140,7 +140,7 @@ export function CustomSelect({
       {/* Dropdown panel */}
       {open ? (
         <div
-          className="absolute left-0 right-0 z-50 mt-1.5 max-h-64 overflow-y-auto rounded-xl border py-1 shadow-lg"
+          className="scrollbar-hide absolute left-0 right-0 z-50 mt-1.5 max-h-64 overflow-y-auto rounded-xl border py-1 shadow-lg"
           style={{
             backgroundColor: "var(--color-white)",
             borderColor: "var(--color-warm-gray-200)",

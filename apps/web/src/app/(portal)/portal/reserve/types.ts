@@ -38,7 +38,11 @@ export type BlockRequest = {
 
 export type ReserveProperty = {
   id: string;
+  /** Street address only (no unit). E.g. "524 Sycamore Avenue". */
   name: string;
+  /** Normalized unit string, e.g. "Unit A". Null if no unit. */
+  unit: string | null;
+  /** City, state, ZIP. E.g. "Pasco, WA, 99301". */
   address: string;
   bedrooms: number | null;
   /**

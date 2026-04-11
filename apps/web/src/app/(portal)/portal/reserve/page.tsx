@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CalendarBlank } from "@phosphor-icons/react/dist/ssr";
 import { getPortalContext } from "@/lib/portal-context";
-import { formatStreet } from "@/lib/address";
+import { normalizeUnit } from "@/lib/address";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { ReserveForm } from "./ReserveForm";
 import { MyReservationsList } from "./MyReservationsList";
@@ -62,7 +62,9 @@ export default async function ReservePage() {
 
   const propertyList: ReserveProperty[] = (properties ?? []).map((p) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const name = formatStreet({ address_line1: p.address_line1, address_line2: (p as any).address_line2 }) || p.address_line1 || "Property";
+    const rawUnit = (p as any).address_line2 as string | null | undefined;
+    const unit = rawUnit ? normalizeUnit(rawUnit) : null;
+    const name = p.address_line1?.trim() || "Property";
     const address = [p.city, p.state, p.postal_code]
       .filter(Boolean)
       .join(", ");
@@ -70,6 +72,7 @@ export default async function ReservePage() {
     return {
       id: p.id,
       name,
+      unit,
       address,
       bedrooms: (p as { bedrooms?: number | null }).bedrooms ?? null,
       petsAllowed: rule?.pets_allowed ?? null,
