@@ -429,6 +429,14 @@ export function OwnerHubTabs({
             />
           )}
           {section === "documents" && <DocumentsSection documents={documents} />}
+          {section === "financials" && (
+            <FinancialsSection
+              receipts={receipts}
+              properties={properties}
+              ownerId={ownerId}
+              ownerFirstName={owner.fullName.split(" ")[0]}
+            />
+          )}
           {section === "properties" && (
             <PropertiesSection properties={properties} />
           )}
