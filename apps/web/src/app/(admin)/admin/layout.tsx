@@ -28,7 +28,7 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name")
+    .select("role, full_name, avatar_url")
     .eq("id", user.id)
     .single();
 
@@ -56,6 +56,7 @@ export default async function AdminLayout({
         userName={fullName}
         userEmail={user.email ?? ""}
         initials={initials}
+        avatarUrl={profile?.avatar_url ?? null}
         pendingBlockCount={pendingBlockCount ?? 0}
         signOutSlot={<AdminSignOutButton />}
       />

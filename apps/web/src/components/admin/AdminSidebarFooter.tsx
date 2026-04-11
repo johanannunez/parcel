@@ -15,11 +15,13 @@ export function AdminSidebarFooter({
   userName,
   userEmail,
   initials,
+  avatarUrl = null,
   signOutSlot,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
+  avatarUrl?: string | null;
   signOutSlot: ReactNode;
 }) {
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -30,17 +32,28 @@ export function AdminSidebarFooter({
       style={{ borderColor: "rgba(255,255,255,0.08)" }}
     >
       {/* Identity row */}
-      <div className="flex items-center gap-2.5 px-3 pb-1.5 pt-2.5">
-        <span
-          className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-wide"
-          style={{
-            backgroundColor: "rgba(255,255,255,0.08)",
-            color: "white",
-            border: "1px solid rgba(255,255,255,0.1)",
-          }}
-        >
-          {initials}
-        </span>
+      <Link
+        href="/admin/account"
+        className="flex items-center gap-2.5 rounded-lg px-3 pb-1.5 pt-2.5 transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+      >
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={userName}
+            className="h-[34px] w-[34px] shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span
+            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-wide"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.08)",
+              color: "white",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            {initials}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <div
             className="truncate text-[13.5px] font-semibold leading-tight"
@@ -55,7 +68,7 @@ export function AdminSidebarFooter({
             {userEmail}
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Action rows */}
       <div className="pt-1 pb-1">

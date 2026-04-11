@@ -71,12 +71,14 @@ export function AdminSidebar({
   userName,
   userEmail,
   initials,
+  avatarUrl = null,
   pendingBlockCount,
   signOutSlot,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
+  avatarUrl?: string | null;
   pendingBlockCount: number;
   signOutSlot: ReactNode;
 }) {
@@ -149,6 +151,7 @@ export function AdminSidebar({
         userName={userName}
         userEmail={userEmail}
         initials={initials}
+        avatarUrl={avatarUrl}
         signOutSlot={signOutSlot}
       />
     </aside>
