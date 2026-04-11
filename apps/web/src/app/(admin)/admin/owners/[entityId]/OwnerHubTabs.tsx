@@ -50,13 +50,14 @@ import {
 } from "./financials-actions";
 import { InviteOwnerButton } from "./InviteOwnerButton";
 import { labelForBlockStatus } from "@/lib/labels";
+import { formatStreet, propertyLabel } from "@/lib/address";
 
 /* ─── Types ─── */
 
 type Property = {
   id: string;
-  name: string | null;
   address_line1: string;
+  address_line2: string | null;
   city: string;
   state: string;
   postal_code: string;
@@ -490,7 +491,7 @@ export function OwnerHubTabs({
           {section === "reserve" && (
             <AdminReserveSection
               blockRequests={blockRequests}
-              propertyMap={new Map(properties.map((p) => [p.id, p.name?.trim() || p.address_line1 || "Property"]))}
+              propertyMap={new Map(properties.map((p) => [p.id, propertyLabel(p)]))}
             />
           )}
           {section === "documents" && <DocumentsSection documents={documents} />}
@@ -687,7 +688,7 @@ function OverviewSection({
                     className="truncate text-sm font-medium"
                     style={{ color: "var(--color-text-primary)" }}
                   >
-                    {p.name?.trim() || p.address_line1}
+                    {formatStreet(p) || p.address_line1}
                   </div>
                   <div
                     className="mt-0.5 text-xs"
@@ -803,7 +804,7 @@ function TasksSection({
                   <option value="">No property</option>
                   {properties.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name?.trim() || p.address_line1}
+                      {formatStreet(p) || p.address_line1}
                     </option>
                   ))}
                 </select>
@@ -1085,7 +1086,7 @@ function TimelineSection({
                   <option value="">No property</option>
                   {properties.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name?.trim() || p.address_line1}
+                      {formatStreet(p) || p.address_line1}
                     </option>
                   ))}
                 </select>
@@ -1281,7 +1282,7 @@ function NotesSection({
                   <option value="">No property</option>
                   {properties.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name?.trim() || p.address_line1}
+                      {formatStreet(p) || p.address_line1}
                     </option>
                   ))}
                 </select>
@@ -2045,7 +2046,7 @@ function AddReceiptForm({
               <option value="">All properties / general</option>
               {properties.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name?.trim() || p.address_line1}
+                  {formatStreet(p) || p.address_line1}
                 </option>
               ))}
             </select>
@@ -3103,7 +3104,7 @@ function PropertiesSection({ properties }: { properties: Property[] }) {
                   className="text-sm font-semibold"
                   style={{ color: "var(--color-text-primary)" }}
                 >
-                  {p.name?.trim() || p.address_line1}
+                  {formatStreet(p) || p.address_line1}
                 </div>
                 <div
                   className="mt-0.5 text-xs"

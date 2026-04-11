@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CalendarBlank } from "@phosphor-icons/react/dist/ssr";
-import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal-context";
+import { formatStreet } from "@/lib/address";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { ReserveForm } from "./ReserveForm";
 import { MyReservationsList } from "./MyReservationsList";
@@ -10,11 +11,7 @@ export const metadata: Metadata = { title: "Reserve" };
 export const dynamic = "force-dynamic";
 
 export default async function ReservePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { userId, client, ownerProfile, isImpersonating } = await getPortalContext();
 
   const [
     { data: properties },
@@ -22,26 +19,27 @@ export default async function ReservePage() {
     { data: rules },
     requestsResult,
   ] = await Promise.all([
-    supabase
+    client
       .from("properties")
       .select(
-        "id, name, address_line1, city, state, postal_code, bedrooms",
+        "id, address_line1, address_line2, city, state, postal_code, bedrooms",
       )
+      .eq("owner_id", userId)
       .order("created_at", { ascending: true }),
-    supabase
+    client
       .from("profiles")
-      .select("full_name, phone")
-      .eq("id", user.id)
+      .select("full_name, phone, email, avatar_url")
+      .eq("id", userId)
       .single(),
-    supabase
+    client
       .from("property_rules")
       .select("property_id, pets_allowed, pet_fee, cleaning_fee"),
-    supabase
+    client
       .from("block_requests")
       .select(
         "id, property_id, start_date, end_date, status, note, created_at, check_in_time, check_out_time, reason, is_owner_staying, guest_name, guest_email, guest_phone, adults, children, pets, needs_lock_code, requested_lock_code, wants_cleaning, cleaning_fee, damage_acknowledged",
       )
-      .eq("owner_id", user.id)
+      .eq("owner_id", userId)
       .order("created_at", { ascending: false })
       .limit(40),
   ]);
@@ -63,8 +61,9 @@ export default async function ReservePage() {
   });
 
   const propertyList: ReserveProperty[] = (properties ?? []).map((p) => {
-    const name = p.name?.trim() || p.address_line1 || "Property";
-    const address = [p.address_line1, p.city, p.state, p.postal_code]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const name = formatStreet({ address_line1: p.address_line1, address_line2: (p as any).address_line2 }) || p.address_line1 || "Property";
+    const address = [p.city, p.state, p.postal_code]
       .filter(Boolean)
       .join(", ");
     const rule = rulesByProperty.get(p.id) ?? null;
@@ -81,7 +80,14 @@ export default async function ReservePage() {
 
   const hasProperties = propertyList.length > 0;
   const fullName =
-    profile?.full_name?.trim() || user.email?.split("@")[0] || "Owner";
+    profile?.full_name?.trim() ||
+    (profile as { email?: string | null })?.email?.split("@")[0] ||
+    "Owner";
+  const ownerEmail =
+    (profile as { email?: string | null })?.email ??
+    (isImpersonating ? (ownerProfile?.email ?? "") : "");
+  const ownerAvatarUrl =
+    (profile as { avatar_url?: string | null })?.avatar_url ?? null;
 
   const requests: BlockRequest[] = (requestsResult.data ?? []).map((r) => ({
     id: r.id,
@@ -125,8 +131,9 @@ export default async function ReservePage() {
       <ReserveForm
         properties={propertyList}
         ownerName={fullName}
-        ownerEmail={user.email ?? ""}
+        ownerEmail={ownerEmail}
         ownerPhone={(profile as { phone?: string | null })?.phone ?? ""}
+        ownerAvatarUrl={ownerAvatarUrl}
       />
 
       <div className="flex flex-col gap-4">

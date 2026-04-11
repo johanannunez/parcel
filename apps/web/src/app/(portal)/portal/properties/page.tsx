@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Buildings, Plus } from "@phosphor-icons/react/dist/ssr";
 import { getPortalContext } from "@/lib/portal-context";
+import { formatStreet } from "@/lib/address";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { LinkButton } from "@/components/portal/Button";
 import { PropertiesView } from "./components/PropertiesView";
@@ -39,7 +40,7 @@ export default async function PropertiesPage() {
   const { data: properties } = await client
     .from("properties")
     .select(
-      "id, address_line1, city, state, postal_code, home_type, bedrooms, bathrooms, guest_capacity, square_feet, active, created_at",
+      "id, address_line1, address_line2, city, state, postal_code, home_type, bedrooms, bathrooms, guest_capacity, square_feet, active, created_at",
     )
     .eq("owner_id", userId)
     .order("created_at", { ascending: false });
@@ -77,7 +78,8 @@ export default async function PropertiesPage() {
   }
 
   const rows: PropertyRowData[] = (properties ?? []).map((p) => {
-    const address = p.address_line1 ?? "";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const address = formatStreet({ address_line1: p.address_line1, address_line2: (p as any).address_line2 });
     const city = p.city ?? "";
     const state = p.state ?? "";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

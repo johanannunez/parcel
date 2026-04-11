@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { propertyLabel } from "@/lib/address";
 
 async function notifyAdminOfBlockRequest(args: {
   ownerEmail: string;
@@ -136,7 +137,7 @@ export async function submitBlockRequest(
       .maybeSingle(),
     supabase
       .from("properties")
-      .select("name, address_line1")
+      .select("address_line1, address_line2, city, state, postal_code")
       .eq("id", parsed.data.propertyId)
       .maybeSingle(),
   ]);
@@ -145,8 +146,7 @@ export async function submitBlockRequest(
     notifyAdminOfBlockRequest({
       ownerEmail: profile?.email ?? user.email ?? "unknown",
       ownerName: profile?.full_name ?? null,
-      propertyLabel:
-        property?.name?.trim() || property?.address_line1 || "Property",
+      propertyLabel: propertyLabel(property ?? {}),
       startDate: parsed.data.startDate,
       endDate: parsed.data.endDate,
       note: parsed.data.note ?? null,

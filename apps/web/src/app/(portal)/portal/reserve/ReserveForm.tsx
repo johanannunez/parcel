@@ -60,7 +60,20 @@ type FormData = {
   requestedLockCode: string;
   wantsCleaning: boolean;
   damageAcknowledged: boolean;
+  propertyStandardsAcknowledged: boolean;
 };
+
+/**
+ * Auto-formats a US phone number as (555) 000-0000 while typing.
+ * International numbers (starting with +) are passed through as-is.
+ */
+function formatPhoneInput(raw: string): string {
+  if (raw.startsWith("+")) return raw;
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
 
 /**
  * Reasons that require a follow-up detail field. When the owner picks
@@ -82,14 +95,15 @@ const REASON_DETAIL_PLACEHOLDER: Record<string, string> = {
 /**
  * Quick-add note presets. Clicking appends to the notes textarea so
  * owners don't have to type common special requests from scratch.
+ * Check-in/out times are handled by the time picker, not these chips.
  */
 const NOTE_SUGGESTIONS = [
-  "Early check-in around 1pm",
-  "Late check-out around 12pm",
-  "Extra towels please",
+  "Extra towels and linens needed",
   "Firewood stocked for the stay",
-  "Grocery delivery expected",
-  "Pool heated if possible",
+  "Grocery delivery scheduled",
+  "Pool/hot tub heated on arrival",
+  "Baby or toddler items needed",
+  "Special occasion — note in welcome message",
 ];
 
 /** Default pet surcharge when owner has not configured one on the property. */
@@ -98,8 +112,23 @@ const DEFAULT_PET_FEE = 25;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[+\d][\d\s()+\-.]{8,}$/;
 
-const CHECK_IN_TIMES = ["12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
-const CHECK_OUT_TIMES = ["10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM"];
+type TimeGroup = { label: string; times: string[] };
+
+/** Standard check-in is 4 PM+. Earlier = early, after 8 PM = late. */
+const CHECK_IN_TIME_GROUPS: TimeGroup[] = [
+  { label: "Standard (4 PM or later)", times: ["4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM"] },
+  { label: "Late check-in", times: ["9:00 PM", "10:00 PM", "11:00 PM"] },
+  { label: "Early check-in", times: ["12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "11:00 AM", "10:00 AM", "9:00 AM", "8:00 AM", "7:00 AM", "6:00 AM", "5:00 AM"] },
+  { label: "Midnight / overnight", times: ["12:00 AM", "1:00 AM", "2:00 AM", "3:00 AM", "4:00 AM"] },
+];
+
+/** Standard check-out is before 10 AM. Later = late check-out. */
+const CHECK_OUT_TIME_GROUPS: TimeGroup[] = [
+  { label: "Standard (10 AM or earlier)", times: ["8:00 AM", "9:00 AM", "10:00 AM"] },
+  { label: "Late check-out", times: ["11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"] },
+  { label: "Very late", times: ["7:00 PM", "8:00 PM", "9:00 PM", "10:00 PM", "11:00 PM"] },
+  { label: "Overnight / next day", times: ["12:00 AM", "1:00 AM", "2:00 AM", "3:00 AM", "4:00 AM", "5:00 AM", "6:00 AM", "7:00 AM"] },
+];
 const REASONS = [
   "Personal stay",
   "Family visiting",
@@ -163,11 +192,13 @@ export function ReserveForm({
   ownerName,
   ownerEmail,
   ownerPhone,
+  ownerAvatarUrl,
 }: {
   properties: ReserveProperty[];
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
+  ownerAvatarUrl?: string | null;
 }) {
   const [data, setData] = useState<FormData>(() => ({
     propertyId: properties[0]?.id ?? "",
@@ -190,8 +221,10 @@ export function ReserveForm({
     requestedLockCode: "",
     wantsCleaning: true,
     damageAcknowledged: false,
+    propertyStandardsAcknowledged: false,
   }));
   const [submitted, setSubmitted] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -261,6 +294,7 @@ export function ReserveForm({
     reasonDetailComplete &&
     guestComplete &&
     data.damageAcknowledged &&
+    data.propertyStandardsAcknowledged &&
     !pending;
 
   const missingFields: string[] = [];
@@ -276,7 +310,8 @@ export function ReserveForm({
     if (!data.guestPhone.trim()) missingFields.push("phone");
     else if (!guestPhoneValid) missingFields.push("valid phone");
   }
-  if (!data.damageAcknowledged) missingFields.push("acknowledgment");
+  if (!data.damageAcknowledged) missingFields.push("damage acknowledgment");
+  if (!data.propertyStandardsAcknowledged) missingFields.push("property standards");
 
   // ─── Auto-populate lock code suggestion from guest phone last 4 digits ───
   const phoneDigits = data.guestPhone.replace(/\D/g, "");
@@ -286,6 +321,7 @@ export function ReserveForm({
       : null;
 
   const onSubmit = () => {
+    setSubmitAttempted(true);
     if (!canSubmit) return;
     setError(null);
     // Concat the reason detail into the reason field so admins see
@@ -468,10 +504,12 @@ export function ReserveForm({
                   color: "var(--color-text-primary)",
                 }}
               >
-                {CHECK_IN_TIMES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+                {CHECK_IN_TIME_GROUPS.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.times.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -487,10 +525,12 @@ export function ReserveForm({
                   color: "var(--color-text-primary)",
                 }}
               >
-                {CHECK_OUT_TIMES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+                {CHECK_OUT_TIME_GROUPS.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.times.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -505,7 +545,14 @@ export function ReserveForm({
         >
           <div className="flex flex-col gap-2">
             <MicroLabel>Reason (required)</MicroLabel>
-            <div className="flex flex-wrap gap-2">
+            <div
+              className="flex flex-wrap gap-2 rounded-lg p-1 transition-colors"
+              style={{
+                outline: submitAttempted && !data.reason
+                  ? "2px solid rgba(220, 38, 38, 0.5)"
+                  : "2px solid transparent",
+              }}
+            >
               {REASONS.map((r) => (
                 <button
                   key={r}
@@ -741,15 +788,24 @@ export function ReserveForm({
               }}
             >
               <div className="flex items-center gap-3">
-                <span
-                  className="flex h-10 w-10 items-center justify-center rounded-full"
-                  style={{
-                    backgroundColor: "rgba(2, 170, 235, 0.1)",
-                    color: "var(--color-brand)",
-                  }}
-                >
-                  <User size={18} weight="duotone" />
-                </span>
+                {ownerAvatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={ownerAvatarUrl}
+                    alt={ownerName}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className="flex h-10 w-10 items-center justify-center rounded-full"
+                    style={{
+                      backgroundColor: "rgba(2, 170, 235, 0.1)",
+                      color: "var(--color-brand)",
+                    }}
+                  >
+                    <User size={18} weight="duotone" />
+                  </span>
+                )}
                 <p
                   className="text-sm font-semibold"
                   style={{ color: "var(--color-text-primary)" }}
@@ -791,6 +847,7 @@ export function ReserveForm({
                   onChange={(v) => update({ guestFirstName: v })}
                   placeholder="First"
                   required
+                  forceError={submitAttempted && !data.guestFirstName.trim()}
                 />
                 <TextInput
                   label="Last name"
@@ -798,6 +855,7 @@ export function ReserveForm({
                   onChange={(v) => update({ guestLastName: v })}
                   placeholder="Last"
                   required
+                  forceError={submitAttempted && !data.guestLastName.trim()}
                 />
               </div>
               <TextInput
@@ -812,12 +870,13 @@ export function ReserveForm({
                     ? "Enter a valid email address"
                     : null
                 }
+                forceError={submitAttempted && !data.guestEmail.trim()}
               />
               <TextInput
                 label="Phone"
                 value={data.guestPhone}
-                onChange={(v) => update({ guestPhone: v })}
-                placeholder="+1 (555) 000-0000"
+                onChange={(v) => update({ guestPhone: formatPhoneInput(v) })}
+                placeholder="(555) 000-0000"
                 type="tel"
                 required
                 error={
@@ -825,6 +884,7 @@ export function ReserveForm({
                     ? "Enter a valid phone number"
                     : null
                 }
+                forceError={submitAttempted && !data.guestPhone.trim()}
               />
             </div>
           )}
@@ -927,7 +987,7 @@ export function ReserveForm({
               </div>
             )}
 
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
               <div className="flex gap-1.5">
                 {[false, true].map((val) => (
                   <button
@@ -954,106 +1014,102 @@ export function ReserveForm({
                   </button>
                 ))}
               </div>
+              {/* Pin field — more vibrant when active */}
               <PinField
                 value={data.requestedLockCode}
                 onChange={(v) => update({ requestedLockCode: v })}
                 disabled={!data.needsLockCode}
               />
-            </div>
-
-            {/* Auto-populate hint from guest phone last 4 */}
-            {data.needsLockCode &&
-            !data.isOwnerStaying &&
-            lockCodeSuggestion ? (
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-dashed px-3 py-2.5" style={{ borderColor: "rgba(2, 170, 235, 0.35)" }}>
+              {/* Inline suggestion: appears right of pin when available */}
+              {data.needsLockCode &&
+              !data.isOwnerStaying &&
+              lockCodeSuggestion ? (
                 <div className="flex items-center gap-2">
                   <Sparkle
-                    size={13}
+                    size={12}
                     weight="duotone"
                     style={{ color: "var(--color-brand)" }}
                   />
-                  <p
-                    className="text-[11.5px] leading-snug"
+                  <span
+                    className="text-[11.5px]"
                     style={{ color: "var(--color-text-secondary)" }}
                   >
-                    We suggest the{" "}
-                    <span
-                      className="font-semibold"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      last 4 digits
-                    </span>{" "}
-                    of your guest&apos;s phone number.
-                  </p>
+                    Suggest last 4:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      update({ requestedLockCode: lockCodeSuggestion })
+                    }
+                    disabled={data.requestedLockCode === lockCodeSuggestion}
+                    className="rounded-md px-2 py-0.5 text-[12px] font-bold tabular-nums tracking-widest transition-opacity hover:opacity-80 disabled:opacity-40"
+                    style={{
+                      backgroundColor: "rgba(2, 170, 235, 0.12)",
+                      color: "var(--color-brand)",
+                      border: "1px solid rgba(2, 170, 235, 0.35)",
+                    }}
+                  >
+                    {lockCodeSuggestion}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    update({ requestedLockCode: lockCodeSuggestion })
-                  }
-                  disabled={data.requestedLockCode === lockCodeSuggestion}
-                  className="shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-                  style={{
-                    backgroundColor: "var(--color-brand)",
-                    color: "#ffffff",
-                  }}
-                >
-                  Use {lockCodeSuggestion}
-                </button>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
 
           <div className="mt-4 flex flex-col gap-3">
-            <MicroLabel>Should we schedule a cleaning after?</MicroLabel>
-            {(
-              [
-                {
-                  val: true,
-                  label: "Yes, schedule a cleaning",
-                  icon: <CheckCircle size={16} weight="duotone" />,
-                },
-                {
-                  val: false,
-                  label: "No, I will clean it myself",
-                  icon: <Broom size={16} weight="duotone" />,
-                },
-              ] as const
-            ).map((opt) => (
-              <button
-                key={String(opt.val)}
-                type="button"
-                onClick={() => update({ wantsCleaning: opt.val })}
-                className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors"
-                style={{
-                  backgroundColor:
-                    data.wantsCleaning === opt.val
-                      ? "rgba(2, 170, 235, 0.04)"
-                      : "var(--color-white)",
-                  borderColor:
-                    data.wantsCleaning === opt.val
-                      ? "var(--color-brand)"
-                      : "var(--color-warm-gray-200)",
-                }}
-              >
-                <span
-                  style={{
-                    color:
-                      data.wantsCleaning === opt.val
-                        ? "var(--color-brand)"
-                        : "var(--color-text-tertiary)",
-                  }}
-                >
-                  {opt.icon}
-                </span>
-                <span
-                  className="text-sm font-medium"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  {opt.label}
-                </span>
-              </button>
-            ))}
+            <MicroLabel>Post-stay cleaning</MicroLabel>
+            {/* Yes — green */}
+            <button
+              type="button"
+              onClick={() => update({ wantsCleaning: true })}
+              className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors"
+              style={{
+                backgroundColor: data.wantsCleaning
+                  ? "rgba(22, 163, 74, 0.07)"
+                  : "var(--color-white)",
+                borderColor: data.wantsCleaning
+                  ? "rgba(22, 163, 74, 0.7)"
+                  : "var(--color-warm-gray-200)",
+              }}
+            >
+              <span style={{ color: data.wantsCleaning ? "#15803d" : "var(--color-text-tertiary)" }}>
+                <CheckCircle size={18} weight={data.wantsCleaning ? "fill" : "duotone"} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: data.wantsCleaning ? "#15803d" : "var(--color-text-primary)" }}>
+                  Yes, schedule our cleaning team
+                </p>
+                <p className="text-[11px]" style={{ color: "var(--color-text-tertiary)" }}>
+                  We will coordinate the cleaning. Fee added below.
+                </p>
+              </div>
+            </button>
+            {/* No — amber */}
+            <button
+              type="button"
+              onClick={() => update({ wantsCleaning: false })}
+              className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors"
+              style={{
+                backgroundColor: !data.wantsCleaning
+                  ? "rgba(234, 88, 12, 0.06)"
+                  : "var(--color-white)",
+                borderColor: !data.wantsCleaning
+                  ? "rgba(234, 88, 12, 0.55)"
+                  : "var(--color-warm-gray-200)",
+              }}
+            >
+              <span style={{ color: !data.wantsCleaning ? "#c2410c" : "var(--color-text-tertiary)" }}>
+                <Broom size={18} weight={!data.wantsCleaning ? "fill" : "duotone"} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: !data.wantsCleaning ? "#c2410c" : "var(--color-text-primary)" }}>
+                  No, I will clean it myself
+                </p>
+                <p className="text-[11px]" style={{ color: "var(--color-text-tertiary)" }}>
+                  Follow the checklist and approve the cleaning standards.
+                </p>
+              </div>
+            </button>
             {data.wantsCleaning ? (
               <div
                 className="flex flex-col gap-2 rounded-lg border px-4 py-3"
@@ -1155,52 +1211,102 @@ export function ReserveForm({
           </div>
         </Section>
 
-        {/* Section 6 — Acknowledgment */}
+        {/* Section 6 — Acknowledgments */}
         <Section
           number="06"
-          title="Acknowledgment"
-          description="One last thing before we send this over."
+          title="Acknowledgments"
+          description="Two quick confirmations before we send this over."
         >
-          <label
-            className="flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors"
-            style={{
-              borderColor: data.damageAcknowledged
-                ? "var(--color-brand)"
-                : "var(--color-warm-gray-200)",
-              backgroundColor: data.damageAcknowledged
-                ? "rgba(2, 170, 235, 0.04)"
-                : "var(--color-white)",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={data.damageAcknowledged}
-              onChange={(e) => update({ damageAcknowledged: e.target.checked })}
-              className="mt-0.5 h-4 w-4 rounded accent-[var(--color-brand)]"
-            />
-            <div>
-              <p
-                className="text-sm font-semibold"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                <ShieldCheck
-                  size={14}
-                  weight="duotone"
-                  className="mr-1 inline-block"
-                  style={{ color: "var(--color-brand)" }}
-                />
-                Liability for damage acknowledgment
-              </p>
-              <p
-                className="mt-1 text-xs leading-relaxed"
-                style={{ color: "var(--color-text-secondary)" }}
-              >
-                I acknowledge that any damage to or necessary replacements for
-                the property during my or my guests&apos; stay will be my
-                responsibility. I agree to address any issues promptly.
-              </p>
-            </div>
-          </label>
+          <div className="flex flex-col gap-3">
+            {/* Damage liability */}
+            <label
+              className="flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors"
+              style={{
+                borderColor: submitAttempted && !data.damageAcknowledged
+                  ? "rgba(220, 38, 38, 0.65)"
+                  : data.damageAcknowledged
+                    ? "var(--color-brand)"
+                    : "var(--color-warm-gray-200)",
+                backgroundColor: data.damageAcknowledged
+                  ? "rgba(2, 170, 235, 0.04)"
+                  : "var(--color-white)",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={data.damageAcknowledged}
+                onChange={(e) => update({ damageAcknowledged: e.target.checked })}
+                className="mt-0.5 h-4 w-4 rounded accent-[var(--color-brand)]"
+              />
+              <div>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  <ShieldCheck
+                    size={14}
+                    weight="duotone"
+                    className="mr-1 inline-block"
+                    style={{ color: "var(--color-brand)" }}
+                  />
+                  Damage and replacement liability
+                </p>
+                <p
+                  className="mt-1 text-xs leading-relaxed"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  I acknowledge that any damage or necessary replacements during
+                  my or my guests&apos; stay will be my responsibility. I agree
+                  to address any issues promptly.
+                </p>
+              </div>
+            </label>
+
+            {/* Property standards */}
+            <label
+              className="flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors"
+              style={{
+                borderColor: submitAttempted && !data.propertyStandardsAcknowledged
+                  ? "rgba(220, 38, 38, 0.65)"
+                  : data.propertyStandardsAcknowledged
+                    ? "var(--color-brand)"
+                    : "var(--color-warm-gray-200)",
+                backgroundColor: data.propertyStandardsAcknowledged
+                  ? "rgba(2, 170, 235, 0.04)"
+                  : "var(--color-white)",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={data.propertyStandardsAcknowledged}
+                onChange={(e) => update({ propertyStandardsAcknowledged: e.target.checked })}
+                className="mt-0.5 h-4 w-4 rounded accent-[var(--color-brand)]"
+              />
+              <div>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  <CheckCircle
+                    size={14}
+                    weight="duotone"
+                    className="mr-1 inline-block"
+                    style={{ color: "var(--color-brand)" }}
+                  />
+                  Property standards and condition
+                </p>
+                <p
+                  className="mt-1 text-xs leading-relaxed"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  I commit to leaving the home in the same condition as found:
+                  furniture in place, trash removed, and no damage. If I am
+                  cleaning myself, I will follow the Parcel cleaning checklist
+                  and take checkout photos before departure.
+                </p>
+              </div>
+            </label>
+          </div>
         </Section>
 
         {error ? (
@@ -1604,6 +1710,7 @@ function TextInput({
   type = "text",
   required,
   error,
+  forceError,
 }: {
   label: string;
   value: string;
@@ -1612,8 +1719,10 @@ function TextInput({
   type?: string;
   required?: boolean;
   error?: string | null;
+  /** Shows a red border even without a message (e.g. after submit attempt on empty required field) */
+  forceError?: boolean;
 }) {
-  const hasError = Boolean(error);
+  const hasError = Boolean(error) || Boolean(forceError);
   return (
     <label className="flex flex-col gap-1.5">
       <MicroLabel>{label}</MicroLabel>
@@ -1627,12 +1736,12 @@ function TextInput({
         style={{
           backgroundColor: "var(--color-white)",
           borderColor: hasError
-            ? "rgba(220, 38, 38, 0.5)"
+            ? "rgba(220, 38, 38, 0.65)"
             : "var(--color-warm-gray-200)",
           color: "var(--color-text-primary)",
         }}
       />
-      {hasError ? (
+      {error ? (
         <span className="text-[11px]" style={{ color: "#b91c1c" }}>
           {error}
         </span>
@@ -1657,17 +1766,22 @@ function PinField({
     <div
       className="relative flex items-center rounded-lg border px-3 transition-all duration-150"
       style={{
-        height: 36,
-        width: 100,
+        height: 40,
+        width: 112,
         backgroundColor: disabled
           ? "var(--color-warm-gray-50)"
-          : "var(--color-white)",
+          : value.length === 4
+            ? "rgba(2, 170, 235, 0.07)"
+            : "var(--color-white)",
         borderColor: disabled
           ? "var(--color-warm-gray-200)"
           : value.length === 4
             ? "var(--color-brand)"
-            : "rgba(2, 170, 235, 0.4)",
-        opacity: disabled ? 0.5 : 1,
+            : "rgba(2, 170, 235, 0.55)",
+        boxShadow: !disabled && value.length > 0
+          ? "0 0 0 3px rgba(2, 170, 235, 0.12), inset 0 1px 4px rgba(2, 170, 235, 0.08)"
+          : "none",
+        opacity: disabled ? 0.45 : 1,
         cursor: disabled ? "default" : "text",
       }}
       onClick={() => !disabled && inputRef.current?.focus()}

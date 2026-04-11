@@ -7,6 +7,7 @@ import {
 import { getPortalContext } from "@/lib/portal-context";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { formatMedium } from "@/lib/format";
+import { propertyLabel } from "@/lib/address";
 
 export const metadata: Metadata = { title: "Documents" };
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export default async function DocumentsPage() {
 
   const { data: properties } = await client
     .from("properties")
-    .select("id, name, address_line1, city")
+    .select("id, address_line1, address_line2")
     .eq("owner_id", userId);
 
   // Documents tables may not exist yet (pending migration)
@@ -79,10 +80,8 @@ export default async function DocumentsPage() {
 
   const rows = (documents ?? []) as DocumentRow[];
   const propertyNameById = new Map(
-    (properties ?? []).map((p) => [
-      p.id,
-      p.name?.trim() || p.address_line1 || p.city || "Property",
-    ]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (properties ?? []).map((p: any) => [p.id, propertyLabel(p)]),
   );
 
   // Build property scope map

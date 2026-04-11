@@ -2,13 +2,17 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin } from "@phosphor-icons/react";
+import { formatStreet, formatAddress } from "@/lib/address";
 
 type PropertyOption = {
   id: string;
-  name: string | null;
   address_line1: string | null;
+  address_line2?: string | null;
   city: string | null;
   state: string | null;
+  postal_code?: string | null;
+  /** Kept for backward compat, no longer used for display. */
+  name?: string | null;
 };
 
 type Props = {
@@ -36,8 +40,8 @@ export function PropertySwitcher({ properties, activeId }: Props) {
     >
       {properties.map((p) => {
         const isActive = p.id === activeId;
-        const label = p.name || p.address_line1 || "Untitled";
-        const sub = p.city && p.state ? `${p.city}, ${p.state}` : p.city || "";
+        const label = formatStreet(p) || formatAddress(p) || "Property";
+        const sub = [p.city, p.state].filter(Boolean).join(", ");
 
         return (
           <button

@@ -13,7 +13,6 @@ import { saveHospitableConnection } from "./actions";
 
 type Row = {
   id: string;
-  name: string | null;
   address: string;
   location: string;
   ownerName: string | null;
@@ -131,7 +130,6 @@ export function PropertyRow({ row }: { row: Row }) {
               style={{ color: "var(--color-text-tertiary)" }}
             >
               {row.location}
-              {row.name ? ` · ${row.name}` : ""}
               {" · "}
               {row.ownerName ?? row.ownerEmail}
             </div>

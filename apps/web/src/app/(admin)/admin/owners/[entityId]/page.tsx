@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { propertyLabel } from "@/lib/address";
 import { OwnerHubTabs } from "./OwnerHubTabs";
 
 export const metadata: Metadata = {
@@ -74,7 +75,7 @@ export default async function OwnerHubPage({
       ? supabase
           .from("properties")
           .select(
-            "id, name, address_line1, city, state, postal_code, active, hospitable_property_id, setup_status, created_at",
+            "id, address_line1, address_line2, city, state, postal_code, active, hospitable_property_id, setup_status, created_at",
           )
           .in("id", propertyIds)
           .order("created_at", { ascending: true })
@@ -143,12 +144,10 @@ export default async function OwnerHubPage({
       .limit(500),
   ]);
 
-  // Build property name map for display
+  // Build property label map for display
   const propertyMap = new Map(
-    (properties ?? []).map((p) => [
-      p.id,
-      p.name?.trim() || p.address_line1 || "Property",
-    ]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (properties ?? []).map((p) => [p.id, propertyLabel(p as any)]),
   );
 
   const allMembersOnboarded = members.every((m) => !!m.onboarding_completed_at);

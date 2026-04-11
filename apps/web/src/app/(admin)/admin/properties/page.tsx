@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { hasHospitable } from "@/lib/hospitable";
+import { formatStreet } from "@/lib/address";
 import { PropertyRow } from "./PropertyRow";
 import { SyncButton } from "./SyncButton";
 
@@ -14,7 +15,7 @@ export default async function AdminPropertiesPage() {
     supabase
       .from("properties")
       .select(
-        "id, name, address_line1, city, state, postal_code, owner_id, hospitable_property_id, ical_url, active, created_at",
+        "id, address_line1, address_line2, city, state, postal_code, owner_id, hospitable_property_id, ical_url, active, created_at",
       )
       .order("created_at", { ascending: true }),
     supabase
@@ -50,8 +51,8 @@ export default async function AdminPropertiesPage() {
 
   const rows = (properties ?? []).map((p) => ({
     id: p.id,
-    name: p.name?.trim() || null,
-    address: p.address_line1,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    address: formatStreet({ address_line1: p.address_line1, address_line2: (p as any).address_line2 }),
     location: `${p.city}, ${p.state} ${p.postal_code ?? ""}`.trim(),
     ownerName: ownerMap.get(p.owner_id)?.name ?? null,
     ownerEmail: ownerMap.get(p.owner_id)?.email ?? "Unknown",

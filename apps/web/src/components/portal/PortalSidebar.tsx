@@ -16,9 +16,8 @@ import {
   CurrencyDollar,
   GearSix,
   Question,
-  CaretDown,
 } from "@phosphor-icons/react";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import Image from "next/image";
 import { SidebarFooter } from "@/components/portal/SidebarFooter";
 import { useTheme } from "@/components/ThemeProvider";
@@ -115,83 +114,60 @@ function NavSection({
   label,
   items,
   isActive,
-  collapsed,
-  onToggle,
 }: {
   label: string;
   items: NavItem[];
   isActive: (item: NavItem) => boolean | undefined;
-  collapsed: boolean;
-  onToggle: () => void;
 }) {
   return (
     <div className="mb-4">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="group flex w-full items-center justify-between rounded px-3 pb-2 transition-colors hover:bg-[var(--color-warm-gray-50)]"
-        aria-expanded={!collapsed}
+      <div
+        className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em]"
+        style={{ color: "var(--color-text-tertiary)" }}
       >
-        <span
-          className="text-[10px] font-semibold uppercase tracking-[0.16em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          {label}
-        </span>
-        <CaretDown
-          size={10}
-          weight="bold"
-          className="transition-transform duration-200"
-          style={{
-            color: "var(--color-text-tertiary)",
-            transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
-          }}
-        />
-      </button>
-
-      {!collapsed && (
-        <ul className="flex flex-col gap-0.5">
-          {items.map((item) => {
-            const active = isActive(item);
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        {label}
+      </div>
+      <ul className="flex flex-col gap-0.5">
+        {items.map((item) => {
+          const active = isActive(item);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{
+                  color: active
+                    ? "var(--color-text-primary)"
+                    : "var(--color-text-secondary)",
+                  backgroundColor: active
+                    ? "var(--color-warm-gray-100)"
+                    : "transparent",
+                }}
+              >
+                {active ? (
+                  <span
+                    aria-hidden
+                    className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full"
+                    style={{ backgroundColor: "var(--color-brand)" }}
+                  />
+                ) : null}
+                <span
+                  className="inline-flex h-5 w-5 items-center justify-center transition-colors"
                   style={{
                     color: active
-                      ? "var(--color-text-primary)"
-                      : "var(--color-text-secondary)",
-                    backgroundColor: active
-                      ? "var(--color-warm-gray-100)"
-                      : "transparent",
+                      ? "var(--color-brand)"
+                      : "var(--color-text-tertiary)",
                   }}
                 >
-                  {active ? (
-                    <span
-                      aria-hidden
-                      className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full"
-                      style={{ backgroundColor: "var(--color-brand)" }}
-                    />
-                  ) : null}
-                  <span
-                    className="inline-flex h-5 w-5 items-center justify-center transition-colors"
-                    style={{
-                      color: active
-                        ? "var(--color-brand)"
-                        : "var(--color-text-tertiary)",
-                    }}
-                  >
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  {item.icon}
+                </span>
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -215,15 +191,6 @@ export function PortalSidebar({
 }) {
   const pathname = usePathname();
   const { resolvedTheme } = useTheme();
-
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-
-  const toggle = (label: string) =>
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      next.has(label) ? next.delete(label) : next.add(label);
-      return next;
-    });
 
   const isActive = (item: NavItem) => {
     if (item.matchPrefix) return pathname?.startsWith(item.matchPrefix);
@@ -265,13 +232,7 @@ export function PortalSidebar({
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 pt-5">
-        <NavSection
-          label="Overview"
-          items={overviewNav}
-          isActive={isActive}
-          collapsed={collapsed.has("Overview")}
-          onToggle={() => toggle("Overview")}
-        />
+        <NavSection label="Overview" items={overviewNav} isActive={isActive} />
 
         {setupIncomplete && (
           <div className="mb-4">
@@ -314,21 +275,8 @@ export function PortalSidebar({
           </div>
         )}
 
-        <NavSection
-          label="Activity"
-          items={activityNav}
-          isActive={isActive}
-          collapsed={collapsed.has("Activity")}
-          onToggle={() => toggle("Activity")}
-        />
-
-        <NavSection
-          label="Resources"
-          items={resourcesNav}
-          isActive={isActive}
-          collapsed={collapsed.has("Resources")}
-          onToggle={() => toggle("Resources")}
-        />
+        <NavSection label="Activity" items={activityNav} isActive={isActive} />
+        <NavSection label="Resources" items={resourcesNav} isActive={isActive} />
       </nav>
 
       <SidebarFooter

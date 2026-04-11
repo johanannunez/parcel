@@ -15,6 +15,7 @@ import {
   UpcomingBookings,
   type UpcomingBookingRow,
 } from "@/components/portal/UpcomingBookings";
+import { propertyLabel } from "@/lib/address";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -35,7 +36,7 @@ export default async function DashboardPage() {
 
   const { data: propertiesData } = await client
     .from("properties")
-    .select("id, name, address_line1, city, active, property_type, bedrooms, bathrooms, guest_capacity")
+    .select("id, address_line1, address_line2, city, state, active, property_type, bedrooms, bathrooms, guest_capacity")
     .eq("owner_id", userId);
 
   const properties = propertiesData ?? [];
@@ -69,10 +70,8 @@ export default async function DashboardPage() {
   }
 
   const propertyNameById = new Map(
-    properties.map((p) => [
-      p.id,
-      p.name ?? p.address_line1 ?? `${p.city ?? "Property"}`,
-    ]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    properties.map((p: any) => [p.id, propertyLabel(p)]),
   );
   const totalProperties = properties.length;
   const activeListings = properties.filter((p) => p.active).length;
@@ -80,8 +79,9 @@ export default async function DashboardPage() {
   // Setup completion check
   const setupIncomplete =
     totalProperties === 0 ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     properties.some(
-      (p) =>
+      (p: any) =>
         !p.property_type ||
         !p.address_line1 ||
         !p.city ||

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { propertyLabel } from "@/lib/address";
 
 export const metadata: Metadata = {
   title: "Calendar (Admin)",
@@ -46,12 +47,13 @@ export default async function AdminCalendarPage() {
   const { data: props } = propertyIds.length
     ? await supabase
         .from("properties")
-        .select("id, name, address_line1")
+        .select("id, address_line1, address_line2, city, state, postal_code")
         .in("id", propertyIds)
     : { data: [] };
 
   const propMap = new Map(
-    (props ?? []).map((p) => [p.id, p.name?.trim() || p.address_line1 || "Property"]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (props ?? []).map((p) => [p.id, propertyLabel(p as any)]),
   );
 
   const monthName = now.toLocaleDateString("en-US", {

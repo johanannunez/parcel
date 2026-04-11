@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { propertyLabel } from "@/lib/address";
 import { BlockRequestRow } from "./BlockRequestRow";
 
 export const metadata: Metadata = { title: "Reservations to verify" };
@@ -15,7 +16,7 @@ export default async function AdminBlockRequestsPage() {
   const { data: rows } = await supabase
     .from("block_requests")
     .select(
-      "id, owner_id, property_id, start_date, end_date, note, status, created_at, profiles!block_requests_owner_id_fkey(full_name, email), properties!block_requests_property_id_fkey(name, address_line1)",
+      "id, owner_id, property_id, start_date, end_date, note, status, created_at, profiles!block_requests_owner_id_fkey(full_name, email), properties!block_requests_property_id_fkey(address_line1, address_line2, city, state, postal_code)",
     )
     .order("created_at", { ascending: false })
     .limit(50);
@@ -26,8 +27,11 @@ export default async function AdminBlockRequestsPage() {
       email: string;
     } | null;
     const property = r.properties as unknown as {
-      name: string | null;
       address_line1: string | null;
+      address_line2: string | null;
+      city: string | null;
+      state: string | null;
+      postal_code: string | null;
     } | null;
     return {
       id: r.id,
@@ -38,8 +42,7 @@ export default async function AdminBlockRequestsPage() {
       createdAt: r.created_at,
       ownerName: profile?.full_name ?? null,
       ownerEmail: profile?.email ?? "",
-      propertyLabel:
-        property?.name?.trim() || property?.address_line1 || "Property",
+      propertyLabel: propertyLabel(property ?? {}),
     };
   });
 

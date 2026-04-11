@@ -9,6 +9,7 @@ import {
 import { getPortalContext } from "@/lib/portal-context";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { formatMedium } from "@/lib/format";
+import { propertyLabel } from "@/lib/address";
 
 export const metadata: Metadata = { title: "Tasks" };
 export const dynamic = "force-dynamic";
@@ -45,12 +46,13 @@ export default async function TasksPage() {
       )
       .eq("owner_id", userId)
       .order("created_at", { ascending: false }),
-    client.from("properties").select("id, name, address_line1").eq("owner_id", userId),
+    client.from("properties").select("id, address_line1, address_line2").eq("owner_id", userId),
   ]);
 
   const tasks: Task[] = tasksResult.data ?? [];
   const propertyMap = new Map(
-    (properties ?? []).map((p) => [p.id, p.name?.trim() || p.address_line1 || "Property"]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (properties ?? []).map((p: any) => [p.id, propertyLabel(p)]),
   );
 
   const open = tasks.filter((t) => t.status !== "completed" && t.status !== "done");

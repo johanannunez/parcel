@@ -3,6 +3,7 @@ import { Handshake } from "@phosphor-icons/react/dist/ssr";
 import { getPortalContext } from "@/lib/portal-context";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { formatMedium } from "@/lib/format";
+import { propertyLabel } from "@/lib/address";
 
 export const metadata: Metadata = { title: "Meetings" };
 export const dynamic = "force-dynamic";
@@ -26,12 +27,13 @@ export default async function MeetingsPage() {
       .eq("owner_id", userId)
       .neq("visibility", "private")
       .order("created_at", { ascending: false }),
-    client.from("properties").select("id, name, address_line1").eq("owner_id", userId),
+    client.from("properties").select("id, address_line1, address_line2").eq("owner_id", userId),
   ]);
 
   const notes: MeetingNote[] = notesResult.data ?? [];
   const propertyMap = new Map(
-    (properties ?? []).map((p) => [p.id, p.name?.trim() || p.address_line1 || "Property"]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (properties ?? []).map((p: any) => [p.id, propertyLabel(p)]),
   );
 
   return (

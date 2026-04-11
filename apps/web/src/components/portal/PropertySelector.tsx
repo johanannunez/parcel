@@ -8,14 +8,18 @@ import {
   MapPin,
   MagnifyingGlass,
 } from "@phosphor-icons/react";
+import { formatAddress } from "@/lib/address";
 
 export type PropertyOption = {
   id: string;
-  name: string | null;
   address_line1: string | null;
+  address_line2?: string | null;
   city: string | null;
   state: string | null;
+  postal_code?: string | null;
   ownerName?: string | null;
+  /** Kept for backward compat with callers that still pass it, but no longer used for display. */
+  name?: string | null;
 };
 
 type PropertySelectorProps = {
@@ -29,15 +33,10 @@ type PropertySelectorProps = {
 };
 
 function displayName(p: PropertyOption): string {
-  if (p.address_line1) {
-    const parts = [p.address_line1, p.city, p.state].filter(Boolean);
-    return parts.join(", ");
-  }
-  return p.name || "Untitled property";
+  return formatAddress(p) || "Property";
 }
 
-function displaySub(p: PropertyOption): string {
-  // No subtext needed — address already includes city/state
+function displaySub(_p: PropertyOption): string {
   return "";
 }
 
