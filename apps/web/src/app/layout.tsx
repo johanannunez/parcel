@@ -138,6 +138,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Kill-switch for stale service worker caches from older versions.
+            Runs synchronously before any Next.js chunks are fetched. */}
+        <script src="/sw-killswitch.js" />
         <link
           rel="apple-touch-icon"
           href="/brand/app-icon-light-180.png"
