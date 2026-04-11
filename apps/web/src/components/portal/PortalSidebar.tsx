@@ -199,10 +199,10 @@ export function PortalSidebar({
         borderColor: "var(--color-warm-gray-200)",
       }}
     >
-      <div className="flex justify-center px-6 py-[18px]">
+      <div className="flex justify-center py-[18px]">
         <Link
           href="/portal/dashboard"
-          className="inline-flex items-center gap-2 focus-visible:outline-none"
+          className="inline-flex items-center gap-1.5 focus-visible:outline-none"
         >
           <Image
             src={

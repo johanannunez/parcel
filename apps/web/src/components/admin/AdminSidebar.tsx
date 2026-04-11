@@ -109,10 +109,10 @@ export function AdminSidebar({
       }}
     >
       {/* Logo */}
-      <div className="flex justify-center px-6 py-[18px]">
+      <div className="flex justify-center py-[18px]">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 focus-visible:outline-none"
+          className="inline-flex items-center gap-1.5 focus-visible:outline-none"
         >
           <img
             src="/brand/logo-mark-white.png"
