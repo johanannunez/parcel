@@ -49,6 +49,7 @@ import {
   exportReceiptsCSV,
 } from "./financials-actions";
 import { InviteOwnerButton } from "./InviteOwnerButton";
+import { labelForBlockStatus } from "@/lib/labels";
 
 /* ─── Types ─── */
 
@@ -3417,10 +3418,10 @@ function AdminReserveSection({
           style={{ color: "var(--color-text-tertiary)" }}
         />
         <p className="mt-3 text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-          No block requests
+          No reservations
         </p>
         <p className="mt-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
-          This owner has not submitted any block requests yet.
+          This owner has not reserved any time in their home yet.
         </p>
       </div>
     );
@@ -3428,10 +3429,28 @@ function AdminReserveSection({
 
   const statusStyle = (s: string) => {
     if (s === "approved")
-      return { bg: "rgba(22, 163, 74, 0.12)", fg: "#15803d", label: "Approved" };
+      return {
+        bg: "rgba(22, 163, 74, 0.12)",
+        fg: "#15803d",
+        label: labelForBlockStatus("approved"),
+      };
     if (s === "declined")
-      return { bg: "rgba(220, 38, 38, 0.10)", fg: "#b91c1c", label: "Declined" };
-    return { bg: "rgba(245, 158, 11, 0.14)", fg: "#b45309", label: "Pending" };
+      return {
+        bg: "rgba(220, 38, 38, 0.10)",
+        fg: "#b91c1c",
+        label: labelForBlockStatus("declined"),
+      };
+    if (s === "cancelled")
+      return {
+        bg: "rgba(100, 116, 139, 0.12)",
+        fg: "#475569",
+        label: labelForBlockStatus("cancelled"),
+      };
+    return {
+      bg: "rgba(245, 158, 11, 0.14)",
+      fg: "#b45309",
+      label: labelForBlockStatus("pending"),
+    };
   };
 
   const formatDateRange = (start: string, end: string) => {

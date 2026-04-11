@@ -12,6 +12,14 @@ import {
   FileText,
   House,
   CalendarX,
+  Sun,
+  Cloud,
+  CloudSun,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  Wind,
+  Drop,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
@@ -24,6 +32,110 @@ import { currency0, formatMedium, formatRelative } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Property" };
 export const dynamic = "force-dynamic";
+
+/* ─── Weather ─── */
+
+type WeatherSnapshot = {
+  temp: number;
+  feelsLike: number;
+  weatherCode: number;
+  humidity: number;
+  windSpeed: number;
+};
+
+/**
+ * Fetches current weather for a property via Open-Meteo (free, no API key).
+ * Two calls: geocoding (city → lat/lon) then current conditions.
+ * Returns null on any failure so the page renders cleanly without weather.
+ */
+async function fetchPropertyWeather(
+  city: string | null,
+  state: string | null,
+): Promise<WeatherSnapshot | null> {
+  if (!city) return null;
+  try {
+    const geoRes = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=3&format=json&language=en`,
+      { cache: "no-store" },
+    );
+    if (!geoRes.ok) return null;
+
+    const geoData = (await geoRes.json()) as {
+      results?: Array<{
+        latitude: number;
+        longitude: number;
+        admin1?: string;
+      }>;
+    };
+    const results = geoData.results ?? [];
+    if (results.length === 0) return null;
+
+    // Prefer the result whose admin1 (full state name) matches the state code.
+    const loc =
+      state
+        ? (results.find((r) =>
+            r.admin1?.toLowerCase().includes(state.toLowerCase()),
+          ) ?? results[0])
+        : results[0];
+
+    const wxRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph`,
+      { cache: "no-store" },
+    );
+    if (!wxRes.ok) return null;
+
+    const wxData = (await wxRes.json()) as {
+      current?: {
+        temperature_2m: number;
+        apparent_temperature: number;
+        weather_code: number;
+        wind_speed_10m: number;
+        relative_humidity_2m: number;
+      };
+    };
+    const current = wxData.current;
+    if (!current) return null;
+
+    return {
+      temp: Math.round(current.temperature_2m),
+      feelsLike: Math.round(current.apparent_temperature),
+      weatherCode: current.weather_code,
+      humidity: Math.round(current.relative_humidity_2m),
+      windSpeed: Math.round(current.wind_speed_10m),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getWeatherLabel(code: number): string {
+  if (code === 0) return "Clear sky";
+  if (code === 1) return "Mainly clear";
+  if (code === 2) return "Partly cloudy";
+  if (code === 3) return "Overcast";
+  if (code === 45 || code === 48) return "Foggy";
+  if (code >= 51 && code <= 57) return "Drizzle";
+  if (code >= 61 && code <= 67) return "Rainy";
+  if (code >= 71 && code <= 77) return "Snow";
+  if (code >= 80 && code <= 82) return "Rain showers";
+  if (code >= 85 && code <= 86) return "Snow showers";
+  if (code >= 95) return "Thunderstorm";
+  return "Clear";
+}
+
+function getWeatherIcon(code: number, size = 26): ReactNode {
+  const props = { size, weight: "duotone" as const };
+  if (code === 0 || code === 1) return <Sun {...props} />;
+  if (code === 2) return <CloudSun {...props} />;
+  if (code === 3) return <Cloud {...props} />;
+  if (code === 45 || code === 48) return <Cloud {...props} />;
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82))
+    return <CloudRain {...props} />;
+  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86))
+    return <CloudSnow {...props} />;
+  if (code >= 95) return <CloudLightning {...props} />;
+  return <Sun {...props} />;
+}
 
 type Params = Promise<{ id: string }>;
 
@@ -107,6 +219,10 @@ export default async function PropertyDetailPage({
   }
 
   if (!property) notFound();
+
+  // Fetch current weather for this property's location. Non-blocking: null
+  // is returned on any failure and the card simply doesn't render.
+  const weather = await fetchPropertyWeather(property.city, property.state);
 
   // Reconcile with Hospitable. Parcel is the source of truth; this only
   // surfaces drift so the user can fix whichever side is wrong. No-op
@@ -293,6 +409,14 @@ export default async function PropertyDetailPage({
         />
       </section>
 
+      {weather !== null && property.city ? (
+        <PropertyWeatherCard
+          weather={weather}
+          city={property.city}
+          state={property.state ?? ""}
+        />
+      ) : null}
+
       {/* Occupancy calendar */}
       <OccupancyCalendar
         bookings={calendarBookings ?? []}
@@ -303,8 +427,8 @@ export default async function PropertyDetailPage({
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Panel
           title="Recent bookings"
-          href="/portal/calendar"
-          linkLabel="View calendar"
+          href="/portal/reserve"
+          linkLabel="View reserve"
         >
           {(recentBookings ?? []).length === 0 ? (
             <PanelEmpty
@@ -400,7 +524,7 @@ export default async function PropertyDetailPage({
 
       {/* Block request link */}
       <Link
-        href={`/portal/calendar`}
+        href={`/portal/reserve`}
         className="flex items-center gap-4 rounded-2xl border p-5 transition-colors hover:opacity-95"
         style={{
           backgroundColor: "var(--color-white)",
@@ -608,6 +732,132 @@ function DocStatusChip({ status }: { status: string }) {
     >
       {status}
     </span>
+  );
+}
+
+function PropertyWeatherCard({
+  weather,
+  city,
+  state,
+}: {
+  weather: WeatherSnapshot;
+  city: string;
+  state: string;
+}) {
+  return (
+    <section
+      className="flex flex-wrap items-center gap-5 rounded-2xl border px-6 py-5"
+      style={{
+        backgroundColor: "var(--color-white)",
+        borderColor: "var(--color-warm-gray-200)",
+      }}
+      aria-label={`Current weather in ${city}, ${state}`}
+    >
+      {/* Icon + temperature */}
+      <div className="flex items-center gap-4">
+        <span
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
+          style={{
+            backgroundColor: "rgba(2, 170, 235, 0.10)",
+            color: "#0c6fae",
+          }}
+          aria-hidden
+        >
+          {getWeatherIcon(weather.weatherCode, 26)}
+        </span>
+        <div>
+          <div
+            className="text-[36px] font-bold leading-none tabular-nums tracking-tight"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {weather.temp}°
+          </div>
+          <div
+            className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {getWeatherLabel(weather.weatherCode)}
+          </div>
+        </div>
+      </div>
+
+      {/* Vertical divider (sm+) */}
+      <div
+        className="hidden h-12 w-px shrink-0 sm:block"
+        style={{ backgroundColor: "var(--color-warm-gray-100)" }}
+        aria-hidden
+      />
+
+      {/* Location + feels like */}
+      <div className="min-w-0 flex-1">
+        <div
+          className="text-sm font-semibold"
+          style={{ color: "var(--color-text-primary)" }}
+        >
+          {city}{state ? `, ${state}` : ""}
+        </div>
+        <div
+          className="mt-0.5 text-xs"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Feels like {weather.feelsLike}°F
+        </div>
+      </div>
+
+      {/* Secondary stats pill */}
+      <div
+        className="flex shrink-0 items-center gap-4 rounded-xl px-4 py-3"
+        style={{ backgroundColor: "var(--color-warm-gray-50)" }}
+      >
+        <div className="flex flex-col items-center gap-0.5">
+          <span
+            className="flex items-center justify-center"
+            style={{ color: "var(--color-text-tertiary)" }}
+            aria-hidden
+          >
+            <Drop size={13} weight="duotone" />
+          </span>
+          <span
+            className="text-xs font-semibold tabular-nums"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {weather.humidity}%
+          </span>
+          <span
+            className="text-[9.5px] font-semibold uppercase tracking-[0.1em]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            Humidity
+          </span>
+        </div>
+        <div
+          className="h-8 w-px shrink-0"
+          style={{ backgroundColor: "var(--color-warm-gray-200)" }}
+          aria-hidden
+        />
+        <div className="flex flex-col items-center gap-0.5">
+          <span
+            className="flex items-center justify-center"
+            style={{ color: "var(--color-text-tertiary)" }}
+            aria-hidden
+          >
+            <Wind size={13} weight="duotone" />
+          </span>
+          <span
+            className="text-xs font-semibold tabular-nums"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {weather.windSpeed} mph
+          </span>
+          <span
+            className="text-[9.5px] font-semibold uppercase tracking-[0.1em]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            Wind
+          </span>
+        </div>
+      </div>
+    </section>
   );
 }
 

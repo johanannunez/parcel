@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Check, Copy, MagnifyingGlass, Plus, Eye, X, CaretDown } from "@phosphor-icons/react";
+import { Check, Copy, Eye, MagnifyingGlass, Plus, X } from "@phosphor-icons/react";
 import { NotificationBell } from "@/components/portal/NotificationBell";
 import { usePortalHeaderOverride } from "@/components/portal/PortalHeaderContext";
 import { useTheme } from "@/components/ThemeProvider";
@@ -87,7 +87,8 @@ function getPortalHeader(
   if (pathname === "/portal/reserve") {
     return {
       title: "Reserve",
-      subtitle: "Request time off for your home or review past requests.",
+      subtitle:
+        "Bookings, blocked dates, and owner stays across your portfolio.",
     };
   }
 
@@ -126,15 +127,7 @@ function getPortalHeader(
     };
   }
 
-  if (pathname === "/portal/calendar") {
-    return {
-      title: "Calendar",
-      subtitle:
-        "Bookings, blocked dates, and owner stays across your portfolio.",
-    };
-  }
-
-  if (pathname === "/portal/messages") {
+if (pathname === "/portal/messages") {
     return {
       title: "Messages",
       subtitle: "Conversations with the Parcel team and important updates.",
@@ -242,7 +235,7 @@ export function PortalAppBar({
           </div>
         ) : null}
 
-        {/* Right: action pill (if any) + owner switcher + [clock above search] + bell */}
+        {/* Right: action pill + stacked [clock / (search + eye + bell)] */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {header?.action ? (
             <Link
@@ -257,17 +250,20 @@ export function PortalAppBar({
               {header.action.label}
             </Link>
           ) : null}
-          {owners && owners.length > 0 ? (
-            <AdminOwnerSwitcher
-              owners={owners}
-              viewingAsUserId={viewingAsUserId ?? null}
-            />
-          ) : null}
-          <div className="flex flex-col items-center gap-1.5">
+          {/* Clock sits above; search + eye + bell all share the bottom row */}
+          <div className="flex flex-col items-end gap-1.5">
             <LiveClock />
-            <SearchPill />
+            <div className="flex items-center gap-2">
+              {owners && owners.length > 0 ? (
+                <EyeButton
+                  owners={owners}
+                  viewingAsUserId={viewingAsUserId ?? null}
+                />
+              ) : null}
+              <BellOnBrand />
+              <SearchPill />
+            </div>
           </div>
-          <BellOnBrand />
         </div>
       </div>
     </header>
@@ -460,8 +456,19 @@ function BellOnBrand() {
   return (
     <div
       className="
-        [&_button[aria-label='Notifications']]:![color:#ffffff]
-        [&_button[aria-label='Notifications']:hover]:![background-color:rgba(255,255,255,0.15)]
+        [&_button[aria-label='Notifications']]:![display:flex]
+        [&_button[aria-label='Notifications']]:![align-items:center]
+        [&_button[aria-label='Notifications']]:![justify-content:center]
+        [&_button[aria-label='Notifications']]:![height:36px]
+        [&_button[aria-label='Notifications']]:![width:36px]
+        [&_button[aria-label='Notifications']]:![border-radius:9999px]
+        [&_button[aria-label='Notifications']]:![border:1px_solid_rgba(255,255,255,0.28)]
+        [&_button[aria-label='Notifications']]:![background-color:rgba(255,255,255,0.15)]
+        [&_button[aria-label='Notifications']]:![backdrop-filter:blur(8px)]
+        [&_button[aria-label='Notifications']]:![color:rgba(255,255,255,0.82)]
+        [&_button[aria-label='Notifications']:hover]:![background-color:rgba(255,255,255,0.25)]
+        [&_button[aria-label='Notifications']:hover]:![border-color:rgba(255,255,255,0.42)]
+        [&_button[aria-label='Notifications']:hover]:![color:#ffffff]
         [&_button[aria-label='Notifications']>span]:![background-color:#ffffff]
         [&_button[aria-label='Notifications']>span]:![color:#1b77be]
       "
@@ -553,130 +560,281 @@ function CopyButton({ text }: { text: string }) {
 }
 
 /**
- * Admin-only owner switcher pill for the portal app bar.
+ * Eye button — admin-only, sits next to the bell in the top bar.
  *
- * Idle state: ghost white pill "View as ▾" — opens a dropdown of all owners.
- * Active state: amber pill showing the owner's first name + X to exit.
- * Owners without an avatar fall back to two-letter initials.
+ * Idle: translucent icon-only button with a tooltip. No text label so it
+ * stays compact and doesn't clutter the bar.
+ * Active (impersonating): the button gets an amber ring + a small amber dot
+ * badge so it's instantly obvious admin mode is on. Clicking always opens
+ * the ViewAsModal regardless of state.
  */
-function AdminOwnerSwitcher({
+function EyeButton({
   owners,
   viewingAsUserId,
 }: {
   owners: OwnerOption[];
   viewingAsUserId: string | null;
 }) {
-  const [open, setOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const isActive = !!viewingAsUserId;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setModalOpen(true)}
+        title="View portal as owner"
+        aria-label="View portal as owner"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-sm transition-colors"
+        style={
+          isActive
+            ? {
+                backgroundColor: "rgba(245, 158, 11, 0.22)",
+                borderColor: "rgba(245, 158, 11, 0.55)",
+                color: "#ffffff",
+              }
+            : {
+                backgroundColor: "rgba(255, 255, 255, 0.15)",
+                borderColor: "rgba(255, 255, 255, 0.28)",
+                color: "rgba(255, 255, 255, 0.82)",
+              }
+        }
+        onMouseEnter={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.42)";
+            e.currentTarget.style.color = "#ffffff";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.28)";
+            e.currentTarget.style.color = "rgba(255, 255, 255, 0.82)";
+          }
+        }}
+      >
+        <Eye size={16} weight="duotone" />
+        {isActive ? (
+          <span
+            aria-hidden
+            className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full"
+            style={{
+              backgroundColor: "#f59e0b",
+              boxShadow: "0 0 0 1.5px #1b77be",
+            }}
+          />
+        ) : null}
+      </button>
+
+      {modalOpen ? (
+        <ViewAsModal
+          owners={owners}
+          viewingAsUserId={viewingAsUserId}
+          onClose={() => setModalOpen(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * Command+K-style modal for switching the portal view to any owner.
+ *
+ * Structure:
+ * - Full-screen backdrop (click to close)
+ * - Centered card (max-w-lg)
+ * - If impersonating: amber banner showing current owner + Exit button
+ * - Search input filters by name or email in real time
+ * - Scrollable owner list; click a row to switch
+ */
+function ViewAsModal({
+  owners,
+  viewingAsUserId,
+  onClose,
+}: {
+  owners: OwnerOption[];
+  viewingAsUserId: string | null;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
   const [isPending, startTransition] = useTransition();
-  const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const currentOwner = viewingAsUserId
     ? (owners.find((o) => o.id === viewingAsUserId) ?? null)
     : null;
 
-  const firstName =
-    currentOwner?.full_name?.split(" ")[0] ??
-    currentOwner?.email?.split("@")[0] ??
-    "";
-
-  // Close dropdown on outside click
+  // Auto-focus the search input when modal opens
   useEffect(() => {
-    if (!open) return;
-    function onMouseDown(e: MouseEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    const t = window.setTimeout(() => inputRef.current?.focus(), 40);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
     }
-    document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open]);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const filtered = query.trim()
+    ? owners.filter((o) => {
+        const q = query.toLowerCase();
+        return (
+          o.full_name?.toLowerCase().includes(q) ||
+          o.email.toLowerCase().includes(q)
+        );
+      })
+    : owners;
 
   function handleSelect(ownerId: string) {
-    setOpen(false);
-    startTransition(() => setViewingAs(ownerId));
+    startTransition(() => {
+      setViewingAs(ownerId);
+      onClose();
+    });
   }
 
-  function handleClearClick(e: React.MouseEvent) {
-    e.stopPropagation();
-    startTransition(() => clearViewingAs());
+  function handleExit() {
+    startTransition(() => {
+      clearViewingAs();
+      onClose();
+    });
   }
 
-  const isActive = !!currentOwner;
+  function ownerInitials(o: OwnerOption) {
+    return o.full_name
+      ? o.full_name
+          .split(" ")
+          .filter(Boolean)
+          .map((p) => p[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase()
+      : o.email.slice(0, 2).toUpperCase();
+  }
 
   return (
-    <div className="relative" ref={ref}>
-      {/* Pill trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        disabled={isPending}
-        className="inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors disabled:opacity-50"
-        style={
-          isActive
-            ? {
-                backgroundColor: "rgba(245, 158, 11, 0.22)",
-                borderColor: "rgba(245, 158, 11, 0.50)",
-                color: "#ffffff",
-              }
-            : {
-                backgroundColor: "rgba(255, 255, 255, 0.14)",
-                borderColor: "rgba(255, 255, 255, 0.28)",
-                color: "#ffffff",
-              }
-        }
+    <div
+      className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh]"
+      style={{ backgroundColor: "rgba(15, 23, 42, 0.55)" }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="mx-4 w-full max-w-lg overflow-hidden rounded-2xl"
+        style={{
+          backgroundColor: "var(--color-white)",
+          boxShadow:
+            "0 24px 64px -12px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0,0,0,0.06)",
+        }}
       >
-        <Eye size={13} weight="duotone" />
-        {isActive ? firstName : "View as"}
-        {isActive ? (
-          <span
-            role="button"
-            aria-label="Exit owner view"
-            onClick={handleClearClick}
-            className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full transition-colors hover:bg-white/20"
-          >
-            <X size={9} weight="bold" />
-          </span>
-        ) : (
-          <CaretDown size={11} weight="bold" />
-        )}
-      </button>
-
-      {/* Dropdown */}
-      {open && (
-        <div
-          className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-white)",
-            borderColor: "var(--color-warm-gray-200)",
-            boxShadow: "0 8px 32px -4px rgba(0,0,0,0.14)",
-          }}
-        >
+        {/* Active impersonation banner */}
+        {currentOwner ? (
           <div
-            className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em]"
-            style={{ color: "var(--color-text-tertiary)" }}
+            className="flex items-center justify-between gap-3 px-4 py-3"
+            style={{
+              backgroundColor: "rgba(245, 158, 11, 0.10)",
+              borderBottom: "1px solid rgba(245, 158, 11, 0.22)",
+            }}
           >
-            View portal as
+            <div className="flex items-center gap-2.5">
+              <Eye size={15} weight="duotone" style={{ color: "#d97706" }} />
+              <span
+                className="text-sm font-semibold"
+                style={{ color: "#92400e" }}
+              >
+                Viewing{" "}
+                {currentOwner.full_name?.trim() ||
+                  currentOwner.email.split("@")[0]}
+                &rsquo;s portal
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleExit}
+              disabled={isPending}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-amber-100 disabled:opacity-50"
+              style={{ color: "#b45309" }}
+            >
+              <X size={11} weight="bold" />
+              Exit
+            </button>
           </div>
-          <ul className="pb-1">
-            {owners.map((owner) => {
+        ) : null}
+
+        {/* Search input */}
+        <div
+          className="flex items-center gap-3 border-b px-4 py-3"
+          style={{ borderColor: "var(--color-warm-gray-100)" }}
+        >
+          <MagnifyingGlass
+            size={16}
+            weight="bold"
+            style={{ color: "var(--color-text-tertiary)", flexShrink: 0 }}
+          />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name or email..."
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--color-text-tertiary)]"
+            style={{ color: "var(--color-text-primary)" }}
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-[var(--color-warm-gray-100)]"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              <X size={10} weight="bold" />
+            </button>
+          ) : (
+            <kbd
+              className="inline-flex items-center justify-center rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-none"
+              style={{
+                backgroundColor: "var(--color-warm-gray-50)",
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-tertiary)",
+                fontFamily: "inherit",
+              }}
+            >
+              Esc
+            </kbd>
+          )}
+        </div>
+
+        {/* Owner list */}
+        <ul
+          className="max-h-[340px] overflow-y-auto py-1"
+          role="listbox"
+          aria-label="Select an owner"
+        >
+          {filtered.length === 0 ? (
+            <li
+              className="px-4 py-8 text-center text-sm"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              No owners match &ldquo;{query}&rdquo;
+            </li>
+          ) : (
+            filtered.map((owner) => {
               const isSelected = owner.id === viewingAsUserId;
-              const initials = owner.full_name
-                ? owner.full_name
-                    .split(" ")
-                    .filter(Boolean)
-                    .map((p) => p[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase()
-                : owner.email.slice(0, 2).toUpperCase();
               return (
-                <li key={owner.id}>
+                <li key={owner.id} role="option" aria-selected={isSelected}>
                   <button
                     type="button"
                     onClick={() => handleSelect(owner.id)}
                     disabled={isPending}
-                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[var(--color-warm-gray-50)] disabled:opacity-50"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--color-warm-gray-50)] disabled:opacity-50"
                     style={{
                       backgroundColor: isSelected
-                        ? "var(--color-warm-gray-100)"
+                        ? "rgba(2, 170, 235, 0.06)"
                         : undefined,
                     }}
                   >
@@ -684,23 +842,31 @@ function AdminOwnerSwitcher({
                       <img
                         src={owner.avatar_url}
                         alt=""
-                        className="h-8 w-8 shrink-0 rounded-full object-cover"
+                        className="h-9 w-9 shrink-0 rounded-full object-cover"
                       />
                     ) : (
                       <span
-                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
                         style={{
-                          backgroundColor: "rgba(2, 170, 235, 0.12)",
-                          color: "var(--color-brand)",
+                          backgroundColor: isSelected
+                            ? "rgba(2, 170, 235, 0.15)"
+                            : "var(--color-warm-gray-100)",
+                          color: isSelected
+                            ? "var(--color-brand)"
+                            : "var(--color-text-secondary)",
                         }}
                       >
-                        {initials}
+                        {ownerInitials(owner)}
                       </span>
                     )}
                     <div className="min-w-0 flex-1">
                       <div
                         className="truncate text-sm font-semibold"
-                        style={{ color: "var(--color-text-primary)" }}
+                        style={{
+                          color: isSelected
+                            ? "var(--color-brand)"
+                            : "var(--color-text-primary)",
+                        }}
                       >
                         {owner.full_name ?? owner.email}
                       </div>
@@ -711,13 +877,43 @@ function AdminOwnerSwitcher({
                         {owner.email}
                       </div>
                     </div>
+                    {isSelected ? (
+                      <span
+                        className="text-xs font-semibold"
+                        style={{ color: "var(--color-brand)" }}
+                      >
+                        Viewing
+                      </span>
+                    ) : null}
                   </button>
                 </li>
               );
-            })}
-          </ul>
+            })
+          )}
+        </ul>
+
+        {/* Footer hint */}
+        <div
+          className="flex items-center justify-between border-t px-4 py-2.5"
+          style={{
+            borderColor: "var(--color-warm-gray-100)",
+            backgroundColor: "var(--color-warm-gray-50)",
+          }}
+        >
+          <span
+            className="text-[11px]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {owners.length} {owners.length === 1 ? "owner" : "owners"} in your portfolio
+          </span>
+          <span
+            className="text-[11px]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            Click to view their portal
+          </span>
         </div>
-      )}
+      </div>
     </div>
   );
 }

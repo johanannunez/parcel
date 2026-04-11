@@ -48,7 +48,7 @@ export default async function AdminOverviewPage() {
       href: "/admin/inquiries",
     },
     {
-      label: "Pending blocks",
+      label: "Reservations to verify",
       value: blockResult.count ?? 0,
       href: "/admin/block-requests",
     },

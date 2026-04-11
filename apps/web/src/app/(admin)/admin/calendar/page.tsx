@@ -78,7 +78,7 @@ export default async function AdminCalendarPage() {
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label={`Bookings in ${monthName.split(" ")[0]}`} value={String(bookingsThisMonth.count ?? 0)} />
         <StatCard label="Total bookings (all time)" value={String(totalBookings.count ?? 0)} />
-        <StatCard label="Pending block requests" value={String(pendingBlocks.count ?? 0)} />
+        <StatCard label="Reservations to verify" value={String(pendingBlocks.count ?? 0)} />
         <StatCard label="Upcoming check-ins" value={String(upcomingCheckIns.data?.length ?? 0)} />
       </section>
 

@@ -61,11 +61,11 @@ export function UpcomingBookings({ rows }: { rows: UpcomingBookingRow[] }) {
           </p>
         </div>
         <Link
-          href="/portal/calendar"
+          href="/portal/reserve"
           className="inline-flex items-center gap-1.5 text-sm font-medium underline-offset-4 transition-opacity hover:opacity-80 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
           style={{ color: "var(--color-brand)" }}
         >
-          View calendar
+          View reserve
           <ArrowUpRight size={14} weight="bold" aria-hidden="true" />
         </Link>
       </header>

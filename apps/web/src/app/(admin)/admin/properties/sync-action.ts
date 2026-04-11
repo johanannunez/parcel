@@ -35,7 +35,7 @@ export async function triggerSync(): Promise<SyncResult> {
 
   revalidatePath("/admin/properties");
   revalidatePath("/portal/dashboard");
-  revalidatePath("/portal/calendar");
+  revalidatePath("/portal/reserve");
   revalidatePath("/portal/payouts");
 
   return result;

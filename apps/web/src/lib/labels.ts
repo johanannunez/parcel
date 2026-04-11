@@ -90,3 +90,61 @@ export const bookingStatusLabels: Record<string, string> = {
   pending: "Pending",
   cancelled: "Cancelled",
 };
+
+/**
+ * Block request status labels. The DB enum is
+ * `pending | approved | declined | cancelled` for historical reasons,
+ * but the user-facing language is softened because this is the owner's
+ * own home. Johan is not "approving" or "declining" a block, he's
+ * verifying it against existing bookings and confirming the dates are
+ * clear. Copy reflects that reality.
+ */
+export type BlockRequestStatus =
+  | "pending"
+  | "approved"
+  | "declined"
+  | "cancelled";
+
+export const blockStatusLabels: Record<BlockRequestStatus, string> = {
+  pending: "Under review",
+  approved: "Confirmed",
+  declined: "Conflict found",
+  cancelled: "Cancelled",
+};
+
+export function labelForBlockStatus(status: string): string {
+  return (
+    blockStatusLabels[status as BlockRequestStatus] ?? "Under review"
+  );
+}
+
+/**
+ * Visual tokens (background + foreground + optional dot color) for each
+ * block request status. Centralized so every list, pill, and badge in
+ * the portal and admin renders the same colorway.
+ */
+export const blockStatusVisual: Record<
+  BlockRequestStatus,
+  { bg: string; fg: string; dot: string }
+> = {
+  pending: {
+    bg: "rgba(245, 158, 11, 0.14)",
+    fg: "#b45309",
+    dot: "#f59e0b",
+  },
+  approved: {
+    bg: "rgba(22, 163, 74, 0.12)",
+    fg: "#15803d",
+    dot: "#22c55e",
+  },
+  declined: {
+    bg: "rgba(220, 38, 38, 0.10)",
+    fg: "#b91c1c",
+    dot: "#ef4444",
+  },
+  cancelled: {
+    bg: "rgba(100, 116, 139, 0.12)",
+    fg: "#475569",
+    dot: "#94a3b8",
+  },
+};

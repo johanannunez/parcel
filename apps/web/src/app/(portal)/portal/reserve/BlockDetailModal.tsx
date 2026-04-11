@@ -13,8 +13,9 @@ import {
   User,
   X,
 } from "@phosphor-icons/react";
-import type { BlockRequest } from "./BlockBar";
+import type { BlockRequest } from "./types";
 import { cancelBlockRequest } from "./actions";
+import { blockStatusVisual, labelForBlockStatus } from "@/lib/labels";
 
 function fmtDate(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
@@ -31,11 +32,6 @@ function nightCount(start: string, end: string): number {
   return Math.max(0, Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
-const STATUS_STYLES: Record<string, { bg: string; fg: string; label: string }> = {
-  pending: { bg: "rgba(245, 158, 11, 0.14)", fg: "#b45309", label: "Pending review" },
-  approved: { bg: "rgba(22, 163, 74, 0.14)", fg: "#15803d", label: "Approved" },
-  declined: { bg: "rgba(220, 38, 38, 0.14)", fg: "#b91c1c", label: "Declined" },
-};
 
 export function BlockDetailModal({
   block,
@@ -61,11 +57,9 @@ export function BlockDetailModal({
   }, [onClose]);
 
   const nights = nightCount(block.start_date, block.end_date);
-  const status = STATUS_STYLES[block.status] ?? STATUS_STYLES.pending;
+  const statusVisual = blockStatusVisual[block.status] ?? blockStatusVisual.pending;
+  const statusLabel = labelForBlockStatus(block.status);
   const isPending = block.status === "pending";
-  const stayingLabel = block.is_owner_staying
-    ? "Owner staying"
-    : block.guest_name || "Guest";
 
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -115,13 +109,13 @@ export function BlockDetailModal({
                 className="text-[11px] font-semibold uppercase tracking-[0.14em]"
                 style={{ color: "var(--color-text-tertiary)" }}
               >
-                Block request
+                Reservation
               </p>
               <span
                 className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                style={{ backgroundColor: status.bg, color: status.fg }}
+                style={{ backgroundColor: statusVisual.bg, color: statusVisual.fg }}
               >
-                {status.label}
+                {statusLabel}
               </span>
             </div>
             <h3

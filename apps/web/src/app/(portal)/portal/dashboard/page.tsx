@@ -10,7 +10,7 @@ import {
   Plus,
   ArrowSquareOut,
 } from "@phosphor-icons/react/dist/ssr";
-import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal-context";
 import {
   UpcomingBookings,
   type UpcomingBookingRow,
@@ -27,42 +27,47 @@ function isoDate(date: Date) {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { userId, client } = await getPortalContext();
 
   const today = new Date();
   const todayIso = isoDate(today);
   const thirtyDaysAhead = isoDate(new Date(today.getTime() + 30 * 86400000));
 
-  const [propertiesResult, upcomingBookingsResult] = await Promise.all([
-    supabase
-      .from("properties")
-      .select("id, name, address_line1, city, active, property_type, bedrooms, bathrooms, guest_capacity"),
-    supabase
-      .from("bookings")
-      .select(
-        "id, guest_name, check_in, check_out, source, status, property_id",
-      )
-      .gte("check_in", todayIso)
-      .lte("check_in", thirtyDaysAhead)
-      .neq("status", "cancelled")
-      .order("check_in", { ascending: true })
-      .limit(5),
-  ]);
+  const { data: propertiesData } = await client
+    .from("properties")
+    .select("id, name, address_line1, city, active, property_type, bedrooms, bathrooms, guest_capacity")
+    .eq("owner_id", userId);
+
+  const properties = propertiesData ?? [];
+  const propertyIds = properties.map((p) => p.id);
+
+  // Bookings are linked to properties; scope via property IDs.
+  const upcomingBookingsResult = propertyIds.length > 0
+    ? await client
+        .from("bookings")
+        .select("id, guest_name, check_in, check_out, source, status, property_id")
+        .in("property_id", propertyIds)
+        .gte("check_in", todayIso)
+        .lte("check_in", thirtyDaysAhead)
+        .neq("status", "cancelled")
+        .order("check_in", { ascending: true })
+        .limit(5)
+    : { data: [] };
 
   // Documents table may not exist yet (pending migration)
   let pendingDocs = 0;
   try {
-    const { data } = await (supabase as any).from("documents").select("id").eq("status", "pending");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (client as any)
+      .from("documents")
+      .select("id")
+      .eq("owner_id", userId)
+      .eq("status", "pending");
     pendingDocs = data?.length ?? 0;
   } catch {
     // table doesn't exist yet
   }
 
-  const properties = propertiesResult.data ?? [];
   const propertyNameById = new Map(
     properties.map((p) => [
       p.id,

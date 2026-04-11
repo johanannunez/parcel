@@ -12,7 +12,8 @@ import {
 import {
   decideBlockRequest,
   reopenBlockRequest,
-} from "@/app/(portal)/portal/calendar/actions";
+} from "@/app/(portal)/portal/reserve/actions";
+import { labelForBlockStatus } from "@/lib/labels";
 
 type Row = {
   id: string;
@@ -48,30 +49,11 @@ function fmtCreated(iso: string) {
   });
 }
 
-const STATUS_STYLES: Record<
-  string,
-  { bg: string; fg: string; label: string }
-> = {
-  pending: {
-    bg: "rgba(245, 158, 11, 0.16)",
-    fg: "#fbbf24",
-    label: "Pending",
-  },
-  approved: {
-    bg: "rgba(22, 163, 74, 0.16)",
-    fg: "#4ade80",
-    label: "Approved",
-  },
-  declined: {
-    bg: "rgba(220, 38, 38, 0.16)",
-    fg: "#f87171",
-    label: "Declined",
-  },
-  cancelled: {
-    bg: "rgba(161, 161, 170, 0.16)",
-    fg: "#a1a1aa",
-    label: "Cancelled",
-  },
+const STATUS_STYLES: Record<string, { bg: string; fg: string }> = {
+  pending: { bg: "rgba(245, 158, 11, 0.16)", fg: "#fbbf24" },
+  approved: { bg: "rgba(22, 163, 74, 0.16)", fg: "#4ade80" },
+  declined: { bg: "rgba(220, 38, 38, 0.16)", fg: "#f87171" },
+  cancelled: { bg: "rgba(161, 161, 170, 0.16)", fg: "#a1a1aa" },
 };
 
 const UNDO_SECONDS = 7;
@@ -184,7 +166,7 @@ export function BlockRequestRow({ row }: { row: Row }) {
                 className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                 style={{ backgroundColor: style.bg, color: style.fg }}
               >
-                {style.label}
+                {labelForBlockStatus(status)}
               </span>
             )}
           </div>
@@ -230,7 +212,7 @@ export function BlockRequestRow({ row }: { row: Row }) {
                 backgroundColor: "transparent",
               }}
             >
-              <X size={14} weight="bold" /> Decline
+              <X size={14} weight="bold" /> Flag conflict
             </button>
             <button
               type="button"
@@ -242,7 +224,7 @@ export function BlockRequestRow({ row }: { row: Row }) {
                 color: "#ffffff",
               }}
             >
-              <Check size={14} weight="bold" /> Approve
+              <Check size={14} weight="bold" /> Confirm clear
             </button>
           </div>
         ) : null}
@@ -260,7 +242,7 @@ export function BlockRequestRow({ row }: { row: Row }) {
                 className="text-sm font-semibold tabular-nums"
                 style={{ color: "#f87171" }}
               >
-                Declining in {undoCountdown}s
+                Flagging conflict in {undoCountdown}s
               </span>
             </div>
             <button
@@ -290,7 +272,7 @@ export function BlockRequestRow({ row }: { row: Row }) {
               backgroundColor: "transparent",
             }}
           >
-            <ArrowCounterClockwise size={14} weight="bold" /> Reopen
+            <ArrowCounterClockwise size={14} weight="bold" /> Reopen for review
           </button>
         ) : null}
       </div>
@@ -313,7 +295,9 @@ export function BlockRequestRow({ row }: { row: Row }) {
           style={{ color: "var(--color-text-tertiary)" }}
         >
           <CheckCircle size={12} weight="fill" /> Updated. Remember to{" "}
-          {status === "approved" ? "block these dates" : "let the owner know"}{" "}
+          {status === "approved"
+            ? "block these dates"
+            : "let the owner know about the conflict"}{" "}
           in Hospitable.
         </div>
       ) : null}

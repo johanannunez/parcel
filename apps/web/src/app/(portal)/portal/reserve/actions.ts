@@ -30,16 +30,16 @@ async function notifyAdminOfBlockRequest(args: {
       body: JSON.stringify({
         from: "Parcel <hello@theparcelco.com>",
         to,
-        subject: `New block request: ${args.propertyLabel} (${range})`,
+        subject: `New reservation to verify: ${args.propertyLabel} (${range})`,
         text: [
-          `A new block request was submitted in the owner portal.`,
+          `An owner reserved time in their home.`,
           ``,
           `Owner: ${args.ownerName ?? args.ownerEmail} (${args.ownerEmail})`,
           `Property: ${args.propertyLabel}`,
           `Dates: ${range}`,
           args.note ? `\nReason:\n${args.note}` : null,
           ``,
-          `Review and approve: https://www.theparcelco.com/admin/block-requests`,
+          `Check for conflicts: https://www.theparcelco.com/admin/block-requests`,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -153,7 +153,7 @@ export async function submitBlockRequest(
     }),
   );
 
-  revalidatePath("/portal/calendar");
+  revalidatePath("/portal/reserve");
   return { ok: true };
 }
 
@@ -202,17 +202,19 @@ export async function decideBlockRequest(
       : `${formatDate(updated.start_date)} - ${formatDate(updated.end_date)}`;
 
     const isApproved = parsed.data.decision === "approved";
-    const title = isApproved ? "Block request approved" : "Block request denied";
+    const title = isApproved
+      ? "Your dates are confirmed"
+      : "Conflict on your block dates";
     const body = isApproved
-      ? `Your block for ${range} has been approved.`
-      : `Your block for ${range} could not be approved.`;
+      ? `Your block for ${range} is clear of other bookings.`
+      : `Another booking already covers part of ${range}. Open Reserve to pick new dates.`;
 
     createNotification({
       ownerId: updated.owner_id,
       type: isApproved ? "block_approved" : "block_denied",
       title,
       body,
-      link: "/portal/calendar",
+      link: "/portal/reserve",
     }).catch(() => {});
 
     // Push notification too
@@ -220,13 +222,13 @@ export async function decideBlockRequest(
       ownerId: updated.owner_id,
       title,
       body,
-      url: "/portal/calendar",
+      url: "/portal/reserve",
       tag: "parcel-block",
     }).catch(() => {});
   }
 
   revalidatePath("/admin/block-requests");
-  revalidatePath("/portal/calendar");
+  revalidatePath("/portal/reserve");
   return { ok: true };
 }
 
@@ -264,7 +266,7 @@ export async function cancelBlockRequest(
   if (!data || data.length === 0)
     return { ok: false, error: "Request not found or already processed." };
 
-  revalidatePath("/portal/calendar");
+  revalidatePath("/portal/reserve");
   return { ok: true };
 }
 
@@ -304,6 +306,6 @@ export async function reopenBlockRequest(
     return { ok: false, error: "Request not found or not in a reopenable state." };
 
   revalidatePath("/admin/block-requests");
-  revalidatePath("/portal/calendar");
+  revalidatePath("/portal/reserve");
   return { ok: true };
 }

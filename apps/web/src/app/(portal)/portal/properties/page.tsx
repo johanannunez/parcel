@@ -9,7 +9,7 @@ import {
   Plus,
   UsersThree,
 } from "@phosphor-icons/react/dist/ssr";
-import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal-context";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { LinkButton } from "@/components/portal/Button";
 import { propertyTypeLabels } from "@/lib/labels";
@@ -18,35 +18,35 @@ export const metadata: Metadata = { title: "Properties" };
 export const dynamic = "force-dynamic";
 
 export default async function PropertiesPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { userId, client } = await getPortalContext();
 
-  const { data: properties } = await supabase
-    .from("properties")
-    .select(
-      "id, name, property_type, address_line1, city, state, bedrooms, bathrooms, guest_capacity, active, created_at",
-    )
-    .order("created_at", { ascending: false });
+  const [{ data: properties }, { data: profile }] = await Promise.all([
+    client
+      .from("properties")
+      .select(
+        "id, name, property_type, address_line1, city, state, bedrooms, bathrooms, guest_capacity, active, created_at",
+      )
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: false }),
+    client
+      .from("profiles")
+      .select("entity_id")
+      .eq("id", userId)
+      .single(),
+  ]);
 
   const rows = properties ?? [];
 
-  // Fetch entity members so we can show "Co-owned with X" badges
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("entity_id")
-    .eq("id", user.id)
-    .single();
-
+  // Fetch entity co-members for "Co-owned with X" badges
   let coOwners: Array<{ id: string; full_name: string | null; email: string }> = [];
-  if (profile?.entity_id) {
-    const { data: members } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const entityId = (profile as any)?.entity_id ?? null;
+  if (entityId) {
+    const { data: members } = await client
       .from("profiles")
       .select("id, full_name, email")
-      .eq("entity_id", profile.entity_id)
-      .neq("id", user.id);
+      .eq("entity_id", entityId)
+      .neq("id", userId);
     coOwners = members ?? [];
   }
   const hasCoOwners = coOwners.length > 0;

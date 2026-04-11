@@ -16,7 +16,7 @@ import {
   CurrencyDollar,
   GearSix,
 } from "@phosphor-icons/react";
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import Image from "next/image";
 import { SidebarFooter } from "@/components/portal/SidebarFooter";
 import { useTheme } from "@/components/ThemeProvider";
@@ -283,6 +283,7 @@ export function PortalSidebar({
     </aside>
   );
 }
+
 
 /* ─── Tablet Icon Rail (md to lg) ─── */
 

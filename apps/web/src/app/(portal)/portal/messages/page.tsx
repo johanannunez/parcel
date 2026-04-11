@@ -87,7 +87,7 @@ export default async function PortalMessagesPage() {
   const { data: notifications } = await client
     .from("notifications")
     .select("id, type, title, body, link, read, created_at")
-    .eq("user_id", userId)
+    .eq("owner_id", userId)
     .order("created_at", { ascending: false })
     .limit(5);
 

@@ -9,31 +9,36 @@ export function ImpersonationBanner({ ownerName }: { ownerName: string }) {
 
   return (
     <div
-      className="flex shrink-0 items-center justify-between gap-4 px-4 py-2.5 sm:px-6 lg:px-10"
-      style={{
-        backgroundColor: "rgba(245, 158, 11, 0.10)",
-        borderBottom: "1px solid rgba(245, 158, 11, 0.28)",
-      }}
+      className="relative flex shrink-0 items-center px-4 py-2 sm:px-6 lg:px-10"
+      style={{ backgroundColor: "#c2410c" }}
     >
-      <div
-        className="flex items-center gap-2 text-xs font-medium"
-        style={{ color: "#92400e" }}
-      >
-        <Eye size={13} weight="duotone" style={{ color: "#d97706" }} />
-        Viewing{" "}
-        <span className="font-semibold">{ownerName}</span>
-        &apos;s portal
-      </div>
+      {/* Left: semi-transparent circle with white arrow */}
       <button
         type="button"
         onClick={() => startTransition(() => clearViewingAs())}
         disabled={isPending}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-70 disabled:opacity-40"
-        style={{ color: "#92400e" }}
+        title="Return to your view"
+        aria-label="Return to your view"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-80 disabled:opacity-40"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.20)" }}
       >
-        <ArrowLeft size={11} weight="bold" />
-        Return to your view
+        <ArrowLeft size={15} weight="bold" color="#ffffff" />
       </button>
+
+      {/* Center: label */}
+      <div className="absolute inset-0 flex items-center justify-center gap-2 pointer-events-none">
+        <Eye size={15} weight="duotone" style={{ color: "rgba(255, 255, 255, 0.70)" }} />
+        <span className="text-sm font-medium" style={{ color: "rgba(255, 255, 255, 0.75)" }}>
+          Viewing{" "}
+          <strong className="font-semibold" style={{ color: "#ffffff" }}>
+            {`${ownerName}'s`}
+          </strong>
+          {" "}portal
+        </span>
+      </div>
+
+      {/* Right: invisible spacer to keep label optically centered */}
+      <div className="ml-auto h-7 w-7 shrink-0" aria-hidden />
     </div>
   );
 }

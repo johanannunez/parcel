@@ -42,9 +42,9 @@ const portalPages: Result[] = [
     icon: <Buildings size={16} weight="duotone" />,
   },
   {
-    id: "nav-calendar",
-    label: "Calendar",
-    href: "/portal/calendar",
+    id: "nav-reserve",
+    label: "Reserve",
+    href: "/portal/reserve",
     category: "Go to...",
     icon: <CalendarBlank size={16} weight="duotone" />,
   },

@@ -54,6 +54,6 @@ export async function saveHospitableConnection(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/admin/properties");
-  revalidatePath("/portal/calendar");
+  revalidatePath("/portal/reserve");
   return { ok: true };
 }

@@ -92,7 +92,7 @@ export function AdminSidebar({
   const opsNav: NavItem[] = [
     {
       href: "/admin/block-requests",
-      label: "Block requests",
+      label: "Reservations",
       icon: <ClipboardText size={18} weight="duotone" />,
       matchPrefix: "/admin/block-requests",
       badge: pendingBlockCount,
@@ -288,7 +288,7 @@ export function AdminTopBar({
             href="/admin/block-requests"
             className="flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-[10px] font-bold"
             style={{ backgroundColor: "#f59e0b", color: "#1a1a1a" }}
-            aria-label={`${pendingBlockCount} pending block requests`}
+            aria-label={`${pendingBlockCount} reservations to verify`}
           >
             {pendingBlockCount}
           </Link>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { BlockRequestRow } from "./BlockRequestRow";
 
-export const metadata: Metadata = { title: "Block requests" };
+export const metadata: Metadata = { title: "Reservations to verify" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminBlockRequestsPage() {
@@ -57,14 +57,15 @@ export default async function AdminBlockRequestsPage() {
           Admin
         </p>
         <h1 className="mt-2 text-[32px] font-semibold leading-tight tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-          Block requests
+          Reservations to verify
         </h1>
         <p
           className="mt-2 max-w-2xl text-base"
           style={{ color: "var(--color-text-secondary)" }}
         >
-          Owners ask to reserve dates for personal use. Approve or decline
-          here, then update Hospitable.
+          Owners requesting time in their own homes. Check each range for
+          conflicts against existing bookings and confirm clear, then mirror
+          the dates in Hospitable.
         </p>
       </header>
 
@@ -74,7 +75,7 @@ export default async function AdminBlockRequestsPage() {
             className="text-xs font-semibold uppercase tracking-[0.1em]"
             style={{ color: "var(--color-text-tertiary)" }}
           >
-            Pending ({pending.length})
+            Under review ({pending.length})
           </h2>
           {pending.map((r) => (
             <BlockRequestRow key={r.id} row={r} />
@@ -88,7 +89,7 @@ export default async function AdminBlockRequestsPage() {
             color: "var(--color-text-tertiary)",
           }}
         >
-          No pending block requests.
+          No reservations to verify right now.
         </div>
       )}
 

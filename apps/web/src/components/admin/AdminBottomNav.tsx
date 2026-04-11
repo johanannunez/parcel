@@ -226,7 +226,7 @@ export function AdminBottomNav({
                 <AdminMoreLink
                   href="/admin/block-requests"
                   icon={<ClipboardText size={20} weight="duotone" />}
-                  label="Block requests"
+                  label="Reservations"
                   active={pathname?.startsWith("/admin/block-requests")}
                   badge={pendingBlockCount}
                   onClick={closeMore}
