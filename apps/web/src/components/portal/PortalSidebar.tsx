@@ -224,7 +224,7 @@ export function PortalSidebar({
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 pt-3">
+      <nav className="flex-1 overflow-y-auto px-3 pt-5">
         <NavSection label="Portfolio" items={portfolioNav} isActive={isActive} />
 
         {setupIncomplete && (
