@@ -149,6 +149,7 @@ export function PortalBottomNav({
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={closeMore}
                 className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
                 style={{ color: active ? "var(--color-brand)" : "var(--color-text-tertiary)" }}
               >
