@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -97,11 +98,25 @@ export function SetPortalHeader({
 }) {
   const ctx = useContext(PortalHeaderContext);
 
+  // Keep the latest subtitle (a ReactNode, so a fresh object every render)
+  // in a ref so the effect below can read it without depending on it.
+  // Listing subtitle as a dep would cause an infinite loop: each render
+  // produces a new ReactNode reference, the effect would fire, setOverride
+  // would update context, that re-renders consumers (this component included
+  // via useContext), and the cycle repeats until React bails with
+  // "maximum update depth exceeded".
+  const subtitleRef = useRef(subtitle);
+  subtitleRef.current = subtitle;
+
   useEffect(() => {
     if (!ctx) return;
-    ctx.setOverride({ title, subtitle, copyable });
+    ctx.setOverride({ title, subtitle: subtitleRef.current, copyable });
     return () => ctx.setOverride(null);
-  }, [ctx, title, subtitle, copyable]);
+    // title and copyable are the stability signals. When title changes
+    // (e.g. navigating between property detail pages) the effect re-runs
+    // and picks up the fresh subtitle via the ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx, title, copyable]);
 
   return null;
 }
