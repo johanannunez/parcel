@@ -13,11 +13,29 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { saveBasics, type SaveBasicsState } from "./actions";
+import { homeTypeOptions } from "@/lib/labels";
+
+export type HomeType =
+  | ""
+  | "single_family"
+  | "apartment"
+  | "condo"
+  | "townhouse"
+  | "duplex"
+  | "multi_family"
+  | "adu"
+  | "studio"
+  | "loft"
+  | "cabin"
+  | "tiny_home"
+  | "mobile_home"
+  | "other";
 
 export type BasicsInitial = {
   property_id: string;
   name: string;
   property_type: "" | "str" | "ltr" | "arbitrage" | "mtr" | "co-hosting";
+  home_type: HomeType;
   address_line1: string;
   address_line2: string;
   city: string;
@@ -201,9 +219,31 @@ export function BasicsForm({
         ) : null}
       </FormSection>
 
-      {/* Nickname */}
+      {/* Home type */}
       <FormSection
         eyebrow="02"
+        title="What kind of home is it?"
+        description="The building type. We use this to group your portfolio and tailor listing details."
+      >
+        <SelectInput
+          name="home_type"
+          label="Home type"
+          defaultValue={initial.home_type}
+          required
+          error={err("home_type")}
+        >
+          <option value="">Select home type</option>
+          {homeTypeOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </SelectInput>
+      </FormSection>
+
+      {/* Nickname */}
+      <FormSection
+        eyebrow="03"
         title="Give it a nickname"
         description="Optional. Used in your dashboard and guest messages. Something like “Downing Drive” or “Lake Cabin”."
       >
@@ -218,7 +258,7 @@ export function BasicsForm({
 
       {/* Address */}
       <FormSection
-        eyebrow="03"
+        eyebrow="04"
         title="Where is it?"
         description="The actual street address. Guests never see this until their reservation is confirmed."
       >
@@ -279,7 +319,7 @@ export function BasicsForm({
 
       {/* Specs */}
       <FormSection
-        eyebrow="04"
+        eyebrow="05"
         title="The space"
         description="The numbers that show up on every listing."
       >

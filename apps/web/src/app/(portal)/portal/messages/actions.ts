@@ -162,7 +162,7 @@ export async function recordMessageRead(args: {
     await supabase.rpc("increment_message_read", {
       p_message_id: args.messageId,
       p_reader_id: user.id,
-      p_device_info: args.deviceInfo ?? null,
+      p_device_info: args.deviceInfo ?? undefined,
     });
   }
 }

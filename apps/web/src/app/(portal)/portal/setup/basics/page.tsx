@@ -27,7 +27,7 @@ export default async function SetupBasicsPage({
   let query = supabase
     .from("properties")
     .select(
-      "id, name, property_type, address_line1, address_line2, city, state, postal_code, country, bedrooms, bathrooms, square_feet, guest_capacity, updated_at",
+      "id, name, property_type, home_type, address_line1, address_line2, city, state, postal_code, country, bedrooms, bathrooms, square_feet, guest_capacity, updated_at",
     );
 
   if (propertyId) {
@@ -42,6 +42,7 @@ export default async function SetupBasicsPage({
     property_id: property?.id ?? "",
     name: property?.name ?? "",
     property_type: (property?.property_type ?? "") as BasicsInitial["property_type"],
+    home_type: (property?.home_type ?? "") as BasicsInitial["home_type"],
     address_line1: property?.address_line1 ?? "",
     address_line2: property?.address_line2 ?? "",
     city: property?.city ?? "",

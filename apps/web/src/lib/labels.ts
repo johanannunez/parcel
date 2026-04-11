@@ -20,6 +20,31 @@ export const propertyTypeLongLabels: Record<string, string> = {
   "co-hosting": "Co-hosting",
 };
 
+/**
+ * Physical building type. Distinct from propertyType (which is the rental
+ * business model). Ordered by expected frequency in the portfolio so the
+ * dropdown feels natural: most common types at the top.
+ */
+export const homeTypeLabels: Record<string, string> = {
+  single_family: "Single-family home",
+  apartment: "Apartment",
+  condo: "Condominium",
+  townhouse: "Townhouse",
+  duplex: "Duplex",
+  multi_family: "Multi-family home",
+  adu: "ADU",
+  studio: "Studio",
+  loft: "Loft",
+  cabin: "Cabin",
+  tiny_home: "Tiny home",
+  mobile_home: "Mobile home",
+  other: "Other",
+};
+
+/** Ordered list of home_type slugs for building form dropdowns. */
+export const homeTypeOptions: Array<{ value: string; label: string }> =
+  Object.entries(homeTypeLabels).map(([value, label]) => ({ value, label }));
+
 export const bookingSourceLabels: Record<string, string> = {
   direct: "Direct",
   airbnb: "Airbnb",

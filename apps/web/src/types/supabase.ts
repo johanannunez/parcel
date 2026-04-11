@@ -260,6 +260,146 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string
+          owner_id: string | null
+          subject: string | null
+          type: Database["public"]["Enums"]["conversation_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          owner_id?: string | null
+          subject?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          owner_id?: string | null
+          subject?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_properties: {
+        Row: {
+          document_id: string
+          property_id: string
+        }
+        Insert: {
+          document_id: string
+          property_id: string
+        }
+        Update: {
+          document_id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_properties_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_properties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          doc_type: string
+          file_url: string | null
+          id: string
+          notes: string | null
+          owner_id: string
+          scope: string
+          status: string
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          doc_type?: string
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          owner_id: string
+          scope?: string
+          status?: string
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          scope?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      entities: {
+        Row: {
+          created_at: string
+          ein: string | null
+          id: string
+          name: string
+          notes: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ein?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ein?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inquiries: {
         Row: {
           assigned_to: string | null
@@ -310,6 +450,140 @@ export type Database = {
           {
             foreignKeyName: "inquiries_assigned_to_fkey"
             columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reads: {
+        Row: {
+          device_info: string | null
+          first_read_at: string
+          id: string
+          last_read_at: string
+          message_id: string
+          read_count: number
+          reader_id: string
+        }
+        Insert: {
+          device_info?: string | null
+          first_read_at?: string
+          id?: string
+          last_read_at?: string
+          message_id: string
+          read_count?: number
+          reader_id: string
+        }
+        Update: {
+          device_info?: string | null
+          first_read_at?: string
+          id?: string
+          last_read_at?: string
+          message_id?: string
+          read_count?: number
+          reader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reads_reader_id_fkey"
+            columns: ["reader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          delivery_method: string
+          id: string
+          is_system: boolean
+          metadata: Json
+          sender_id: string
+        }
+        Insert: {
+          body?: string
+          conversation_id: string
+          created_at?: string
+          delivery_method?: string
+          id?: string
+          is_system?: boolean
+          metadata?: Json
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          delivery_method?: string
+          id?: string
+          is_system?: boolean
+          metadata?: Json
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          link: string | null
+          owner_id: string
+          read: boolean
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          owner_id: string
+          read?: boolean
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          owner_id?: string
+          read?: boolean
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -398,6 +672,106 @@ export type Database = {
           },
         ]
       }
+      owner_notes: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          owner_id: string
+          property_id: string | null
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          owner_id: string
+          property_id?: string | null
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          owner_id?: string
+          property_id?: string | null
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_notes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_receipts: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          image_url: string | null
+          notes: string | null
+          owner_id: string
+          property_id: string | null
+          purchase_date: string
+          updated_at: string
+          vendor: string
+          visibility: string
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          owner_id: string
+          property_id?: string | null
+          purchase_date: string
+          updated_at?: string
+          vendor: string
+          visibility?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          owner_id?: string
+          property_id?: string | null
+          purchase_date?: string
+          updated_at?: string
+          vendor?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_receipts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_setup_drafts: {
         Row: {
           data: Json
@@ -420,6 +794,106 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          owner_id: string
+          priority: string
+          property_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner_id: string
+          priority?: string
+          property_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner_id?: string
+          priority?: string
+          property_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_tasks_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_timeline: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          owner_id: string
+          property_id: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          owner_id: string
+          property_id?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          owner_id?: string
+          property_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_timeline_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -479,7 +953,9 @@ export type Database = {
           avatar_url: string | null
           contact_method: string | null
           created_at: string
+          deleted_at: string | null
           email: string
+          entity_id: string | null
           full_name: string | null
           id: string
           mailing_address: Json | null
@@ -491,15 +967,15 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           timezone: string | null
           updated_at: string
-          deleted_at: string | null
-          entity_id: string | null
           years_investing: string | null
         }
         Insert: {
           avatar_url?: string | null
           contact_method?: string | null
           created_at?: string
+          deleted_at?: string | null
           email: string
+          entity_id?: string | null
           full_name?: string | null
           id: string
           mailing_address?: Json | null
@@ -511,15 +987,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           timezone?: string | null
           updated_at?: string
-          deleted_at?: string | null
-          entity_id?: string | null
           years_investing?: string | null
         }
         Update: {
           avatar_url?: string | null
           contact_method?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string
+          entity_id?: string | null
           full_name?: string | null
           id?: string
           mailing_address?: Json | null
@@ -531,11 +1007,17 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           timezone?: string | null
           updated_at?: string
-          deleted_at?: string | null
-          entity_id?: string | null
           years_investing?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       properties: {
         Row: {
@@ -559,6 +1041,7 @@ export type Database = {
           guest_capacity: number | null
           guidebook_spots: Json | null
           half_bathrooms: number | null
+          home_type: string | null
           hospitable_property_id: string | null
           house_rules: Json | null
           ical_url: string | null
@@ -607,6 +1090,7 @@ export type Database = {
           guest_capacity?: number | null
           guidebook_spots?: Json | null
           half_bathrooms?: number | null
+          home_type?: string | null
           hospitable_property_id?: string | null
           house_rules?: Json | null
           ical_url?: string | null
@@ -655,6 +1139,7 @@ export type Database = {
           guest_capacity?: number | null
           guidebook_spots?: Json | null
           half_bathrooms?: number | null
+          home_type?: string | null
           hospitable_property_id?: string | null
           house_rules?: Json | null
           ical_url?: string | null
@@ -784,6 +1269,35 @@ export type Database = {
             foreignKeyName: "property_compliance_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_owners: {
+        Row: {
+          created_at: string
+          owner_id: string
+          property_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          owner_id: string
+          property_id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          owner_id?: string
+          property_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_owners_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
             referencedRelation: "properties"
             referencedColumns: ["id"]
           },
@@ -943,6 +1457,88 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          device_info: string | null
+          endpoint: string
+          id: string
+          keys: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: string | null
+          endpoint: string
+          id?: string
+          keys?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: string | null
+          endpoint?: string
+          id?: string
+          keys?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_log: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          logged_in_at: string
+          os: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          logged_in_at?: string
+          os?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          logged_in_at?: string
+          os?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       setup_field_versions: {
         Row: {
           data: Json
@@ -1052,290 +1648,6 @@ export type Database = {
           },
         ]
       }
-      entities: {
-        Row: {
-          id: string
-          name: string
-          type: string
-          ein: string | null
-          notes: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          type?: string
-          ein?: string | null
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          type?: string
-          ein?: string | null
-          notes?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      push_subscriptions: {
-        Row: {
-          id: string
-          user_id: string
-          endpoint: string
-          keys: Json
-          device_info: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          endpoint: string
-          keys?: Json
-          device_info?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          endpoint?: string
-          keys?: Json
-          device_info?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "push_subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      session_log: {
-        Row: {
-          id: string
-          user_id: string
-          ip_address: string | null
-          user_agent: string | null
-          browser: string | null
-          os: string | null
-          device_type: string | null
-          country: string | null
-          city: string | null
-          logged_in_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          ip_address?: string | null
-          user_agent?: string | null
-          browser?: string | null
-          os?: string | null
-          device_type?: string | null
-          country?: string | null
-          city?: string | null
-          logged_in_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          browser?: string | null
-          os?: string | null
-          device_type?: string | null
-          country?: string | null
-          city?: string | null
-          logged_in_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversations: {
-        Row: {
-          id: string
-          owner_id: string | null
-          subject: string | null
-          type: Database["public"]["Enums"]["conversation_type"]
-          last_message_at: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          owner_id?: string | null
-          subject?: string | null
-          type?: Database["public"]["Enums"]["conversation_type"]
-          last_message_at?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          owner_id?: string | null
-          subject?: string | null
-          type?: Database["public"]["Enums"]["conversation_type"]
-          last_message_at?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          id: string
-          conversation_id: string
-          sender_id: string
-          body: string
-          is_system: boolean
-          delivery_method: string
-          metadata: Json
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          conversation_id: string
-          sender_id: string
-          body?: string
-          is_system?: boolean
-          delivery_method?: string
-          metadata?: Json
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          conversation_id?: string
-          sender_id?: string
-          body?: string
-          is_system?: boolean
-          delivery_method?: string
-          metadata?: Json
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      message_reads: {
-        Row: {
-          id: string
-          message_id: string
-          reader_id: string
-          first_read_at: string
-          read_count: number
-          last_read_at: string
-          device_info: string | null
-        }
-        Insert: {
-          id?: string
-          message_id: string
-          reader_id: string
-          first_read_at?: string
-          read_count?: number
-          last_read_at?: string
-          device_info?: string | null
-        }
-        Update: {
-          id?: string
-          message_id?: string
-          reader_id?: string
-          first_read_at?: string
-          read_count?: number
-          last_read_at?: string
-          device_info?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "message_reads_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_reads_reader_id_fkey"
-            columns: ["reader_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notifications: {
-        Row: {
-          id: string
-          owner_id: string
-          type: string
-          title: string
-          body: string
-          link: string | null
-          read: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          owner_id: string
-          type: string
-          title: string
-          body?: string
-          link?: string | null
-          read?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          owner_id?: string
-          type?: string
-          title?: string
-          body?: string
-          link?: string | null
-          read?: boolean
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -1343,9 +1655,9 @@ export type Database = {
     Functions: {
       increment_message_read: {
         Args: {
+          p_device_info?: string
           p_message_id: string
           p_reader_id: string
-          p_device_info?: string | null
         }
         Returns: undefined
       }
@@ -1353,7 +1665,6 @@ export type Database = {
       user_owns_property: { Args: { p_property_id: string }; Returns: boolean }
     }
     Enums: {
-      conversation_type: "direct" | "announcement" | "email_log"
       booking_source:
         | "direct"
         | "airbnb"
@@ -1362,6 +1673,7 @@ export type Database = {
         | "furnished_finder"
         | "hospitable"
         | "other"
+      conversation_type: "direct" | "announcement" | "email_log"
       inquiry_status: "new" | "contacted" | "qualified" | "won" | "lost"
       property_type: "str" | "ltr" | "arbitrage" | "mtr" | "co-hosting"
       user_role: "owner" | "admin"
@@ -1492,7 +1804,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      conversation_type: ["direct", "announcement", "email_log"],
       booking_source: [
         "direct",
         "airbnb",
@@ -1502,9 +1813,11 @@ export const Constants = {
         "hospitable",
         "other",
       ],
+      conversation_type: ["direct", "announcement", "email_log"],
       inquiry_status: ["new", "contacted", "qualified", "won", "lost"],
       property_type: ["str", "ltr", "arbitrage", "mtr", "co-hosting"],
       user_role: ["owner", "admin"],
     },
   },
 } as const
+

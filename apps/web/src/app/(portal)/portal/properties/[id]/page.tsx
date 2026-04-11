@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { OccupancyCalendar } from "@/components/portal/OccupancyCalendar";
 import { SetPortalHeader } from "@/components/portal/PortalHeaderContext";
+import { homeTypeLabels } from "@/lib/labels";
 import { currency0, formatMedium, formatRelative } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Property" };
@@ -114,6 +115,11 @@ export default async function PropertyDetailPage({
   const headerTitle = buildAddressLine(property) || "Property details";
 
   const headerSubtitleParts: string[] = [];
+  if (property.home_type) {
+    headerSubtitleParts.push(
+      homeTypeLabels[property.home_type] ?? property.home_type,
+    );
+  }
   if (property.bedrooms != null)
     headerSubtitleParts.push(`${property.bedrooms} bd`);
   if (property.bathrooms != null)
