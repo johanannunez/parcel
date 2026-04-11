@@ -202,7 +202,7 @@ export function PortalSidebar({
       <div className="flex justify-center px-6 pb-8 pt-8">
         <Link
           href="/portal/dashboard"
-          className="inline-flex flex-col items-center gap-3 focus-visible:outline-none"
+          className="inline-flex items-center gap-3 focus-visible:outline-none"
         >
           <Image
             src={

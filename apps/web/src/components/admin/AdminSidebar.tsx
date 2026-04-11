@@ -112,7 +112,7 @@ export function AdminSidebar({
       <div className="flex justify-center px-6 pb-8 pt-8">
         <Link
           href="/admin"
-          className="inline-flex flex-col items-center gap-3 focus-visible:outline-none"
+          className="inline-flex items-center gap-3 focus-visible:outline-none"
         >
           <img
             src="/brand/logo-mark-white.png"
