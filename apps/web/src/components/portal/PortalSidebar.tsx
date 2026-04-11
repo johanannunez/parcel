@@ -16,7 +16,6 @@ import {
   CurrencyDollar,
   GearSix,
   Question,
-  Broom,
   CaretDown,
 } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
@@ -72,10 +71,10 @@ const setupNav: NavItem = {
 
 const activityNav: NavItem[] = [
   {
-    href: "/portal/tasks",
-    label: "Tasks",
-    icon: <ListChecks size={18} weight="duotone" />,
-    matchPrefix: "/portal/tasks",
+    href: "/portal/messages",
+    label: "Messages",
+    icon: <ChatCircle size={18} weight="duotone" />,
+    matchPrefix: "/portal/messages",
   },
   {
     href: "/portal/meetings",
@@ -84,16 +83,16 @@ const activityNav: NavItem[] = [
     matchPrefix: "/portal/meetings",
   },
   {
+    href: "/portal/tasks",
+    label: "Tasks",
+    icon: <ListChecks size={18} weight="duotone" />,
+    matchPrefix: "/portal/tasks",
+  },
+  {
     href: "/portal/timeline",
     label: "Timeline",
     icon: <ClockCounterClockwise size={18} weight="duotone" />,
     matchPrefix: "/portal/timeline",
-  },
-  {
-    href: "/portal/messages",
-    label: "Messages",
-    icon: <ChatCircle size={18} weight="duotone" />,
-    matchPrefix: "/portal/messages",
   },
 ];
 
@@ -103,12 +102,6 @@ const resourcesNav: NavItem[] = [
     label: "Members",
     icon: <UsersThree size={18} weight="duotone" />,
     matchPrefix: "/portal/members",
-  },
-  {
-    href: "/portal/cleaning-checklist",
-    label: "Cleaning Checklist",
-    icon: <Broom size={18} weight="duotone" />,
-    matchPrefix: "/portal/cleaning-checklist",
   },
   {
     href: "/portal/help",
