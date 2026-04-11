@@ -1,6 +1,16 @@
 const BASE_URL = "https://public.api.hospitable.com/v2";
 
 /**
+ * Hard cap on every Hospitable API call so a slow or dead upstream can
+ * never block a portal page render indefinitely. Picked deliberately on
+ * the short side: typical Hospitable response time is 150-400ms, so
+ * 4 seconds is ~10x the expected latency. If a request exceeds this,
+ * the caller (usually the reconcile helper) surfaces a degraded state
+ * rather than hanging the page.
+ */
+const REQUEST_TIMEOUT_MS = 4000;
+
+/**
  * Returns true when the Hospitable integration is configured.
  */
 export function hasHospitable(): boolean {
@@ -24,20 +34,40 @@ async function request<T>(
     }
   }
 
-  const res = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-      Accept: "application/json",
-    },
-    next: { revalidate: options?.revalidate ?? 3600 },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    REQUEST_TIMEOUT_MS,
+  );
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Hospitable API error ${res.status} on ${path}: ${body}`);
+  try {
+    const res = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        Accept: "application/json",
+      },
+      next: { revalidate: options?.revalidate ?? 3600 },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(
+        `Hospitable API error ${res.status} on ${path}: ${body}`,
+      );
+    }
+
+    return (await res.json()) as T;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error(
+        `Hospitable API timeout after ${REQUEST_TIMEOUT_MS}ms on ${path}`,
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return res.json() as Promise<T>;
 }
 
 // ---------------------------------------------------------------------------

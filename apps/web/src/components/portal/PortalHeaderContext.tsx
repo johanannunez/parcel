@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -25,9 +24,15 @@ import {
  *      writes into the context; on unmount (or route change) it clears
  *      the override so the next page falls back to the default lookup.
  *
- * This keeps layout → page data flow intact (pages can't pass props up),
- * while still letting individual routes personalize the AppBar when
- * they have data the shell doesn't.
+ * Architecture: the state and the setter live in SEPARATE contexts so
+ * readers (PortalAppBar) and writers (SetPortalHeader) are fully
+ * isolated. A writer calling setOverride only re-renders readers, never
+ * other writers. This prevents the class of infinite re-render bug where
+ * a writer component consumes the full context just to read the setter,
+ * sees a new wrapping value object on every override update, and
+ * re-fires its useEffect because its deps changed. Splitting the
+ * contexts makes the setter a permanently-stable reference that writers
+ * can safely put in their effect deps.
  */
 
 export type PortalHeaderOverride = {
@@ -42,41 +47,55 @@ export type PortalHeaderOverride = {
   copyable?: boolean;
 };
 
-type PortalHeaderContextValue = {
-  override: PortalHeaderOverride | null;
-  setOverride: (value: PortalHeaderOverride | null) => void;
-};
+type SetOverride = (value: PortalHeaderOverride | null) => void;
 
-const PortalHeaderContext = createContext<PortalHeaderContextValue | null>(
+const PortalHeaderStateContext = createContext<PortalHeaderOverride | null>(
   null,
 );
+
+const PortalHeaderSetterContext = createContext<SetOverride>(() => {
+  // Noop fallback so SetPortalHeader rendered outside a provider doesn't
+  // crash. In practice portal/layout.tsx always mounts the provider above
+  // any consumer, so this branch never executes at runtime.
+});
 
 export function PortalHeaderProvider({ children }: { children: ReactNode }) {
   const [override, setOverrideState] = useState<PortalHeaderOverride | null>(
     null,
   );
 
-  const setOverride = useCallback(
-    (value: PortalHeaderOverride | null) => setOverrideState(value),
-    [],
-  );
-
-  const value = useMemo(
-    () => ({ override, setOverride }),
-    [override, setOverride],
-  );
+  // Stable function reference. Empty dep array -> same reference for the
+  // lifetime of the provider, which means writer components can safely
+  // list it in their useEffect deps without retriggering on every state
+  // update.
+  const setOverride = useCallback<SetOverride>((value) => {
+    setOverrideState(value);
+  }, []);
 
   return (
-    <PortalHeaderContext.Provider value={value}>
-      {children}
-    </PortalHeaderContext.Provider>
+    <PortalHeaderSetterContext.Provider value={setOverride}>
+      <PortalHeaderStateContext.Provider value={override}>
+        {children}
+      </PortalHeaderStateContext.Provider>
+    </PortalHeaderSetterContext.Provider>
   );
 }
 
-/** Read the current override. Returns `null` if no page has set one. */
+/**
+ * Read the current override. Returns `null` if no page has set one.
+ * Consumers re-render when the override changes (PortalAppBar).
+ */
 export function usePortalHeaderOverride(): PortalHeaderOverride | null {
-  const ctx = useContext(PortalHeaderContext);
-  return ctx?.override ?? null;
+  return useContext(PortalHeaderStateContext);
+}
+
+/**
+ * Get the stable setter to write the override. Consumers of this hook do
+ * NOT re-render when the override changes because the setter context
+ * never updates after mount.
+ */
+export function useSetPortalHeaderOverride(): SetOverride {
+  return useContext(PortalHeaderSetterContext);
 }
 
 /**
@@ -96,32 +115,23 @@ export function SetPortalHeader({
   subtitle?: ReactNode;
   copyable?: boolean;
 }) {
-  const ctx = useContext(PortalHeaderContext);
-  // Extract the STABLE setter function out of the context value. The
-  // provider wraps setOverride in useCallback([],) so its reference never
-  // changes, even though the wrapping context value object (ctx) is a
-  // new reference on every override update. Putting ctx directly in the
-  // deps array would cause an infinite loop: setOverride -> override
-  // changes -> provider's useMemo produces a new value -> ctx is new ->
-  // effect fires -> setOverride again. We bypass that by listing only
-  // the stable function in deps.
-  const setOverride = ctx?.setOverride;
+  const setOverride = useSetPortalHeaderOverride();
 
   // Keep the latest subtitle (a ReactNode, so a fresh object every render)
   // in a ref so the effect below can read it without depending on it.
-  // Listing subtitle as a dep would cause the same kind of infinite loop:
-  // each render produces a new ReactNode reference which React compares
-  // by identity and treats as changed.
+  // Listing subtitle as a dep would cause an infinite loop since each
+  // render produces a new ReactNode reference.
   const subtitleRef = useRef(subtitle);
   subtitleRef.current = subtitle;
 
   useEffect(() => {
-    if (!setOverride) return;
     setOverride({ title, subtitle: subtitleRef.current, copyable });
     return () => setOverride(null);
     // title + copyable are the stability signals. When title changes
     // (e.g. navigating between property detail pages) the effect re-runs
-    // and picks up the fresh subtitle from the ref.
+    // and picks up the fresh subtitle from the ref. setOverride is a
+    // permanently-stable reference from a non-updating setter context,
+    // so including it in deps is safe.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setOverride, title, copyable]);
 
