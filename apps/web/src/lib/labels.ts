@@ -45,6 +45,36 @@ export const homeTypeLabels: Record<string, string> = {
 export const homeTypeOptions: Array<{ value: string; label: string }> =
   Object.entries(homeTypeLabels).map(([value, label]) => ({ value, label }));
 
+/**
+ * Maps Hospitable's `property_type` enum (which mirrors Airbnb's taxonomy)
+ * onto Parcel's `home_type` enum. Used by the reconciliation layer to
+ * detect when a Parcel row and a Hospitable listing describe the same
+ * building with different labels.
+ *
+ * Hospitable / Airbnb do NOT have concepts for duplex, multi-family, or
+ * ADU, so those Parcel types have no inbound match. In the reconciler a
+ * missing mapping is treated as "semantically different taxonomies" and
+ * surfaced as a warning rather than a hard mismatch.
+ */
+export const HOSPITABLE_TYPE_TO_HOME_TYPE: Record<string, string> = {
+  house: "single_family",
+  apartment: "apartment",
+  condominium: "condo",
+  condo: "condo",
+  townhouse: "townhouse",
+  townhome: "townhouse",
+  cabin: "cabin",
+  loft: "loft",
+  studio: "studio",
+  tiny_home: "tiny_home",
+  tiny_house: "tiny_home",
+  mobile_home: "mobile_home",
+  bungalow: "single_family",
+  cottage: "single_family",
+  villa: "single_family",
+  other: "other",
+};
+
 export const bookingSourceLabels: Record<string, string> = {
   direct: "Direct",
   airbnb: "Airbnb",

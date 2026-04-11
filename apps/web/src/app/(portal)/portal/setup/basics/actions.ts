@@ -38,9 +38,11 @@ const schema = z.object({
   country: z.string().trim().min(2).max(2).default("US"),
   bedrooms: z.coerce.number().int().min(0).max(30),
   bathrooms: z.coerce.number().min(0).max(30),
-  square_feet: z
-    .union([z.coerce.number().int().min(0).max(100000), z.literal("")])
-    .optional(),
+  square_feet: z.coerce
+    .number({ message: "Square footage is required." })
+    .int()
+    .min(1, "Square footage is required.")
+    .max(100000),
   guest_capacity: z.coerce.number().int().min(1).max(60),
 });
 
@@ -78,10 +80,6 @@ export async function saveBasics(
   }
 
   const v = parsed.data;
-  const sqftValue =
-    v.square_feet === "" || v.square_feet === undefined
-      ? null
-      : v.square_feet;
 
   const payload = {
     owner_id: user.id,
@@ -96,7 +94,7 @@ export async function saveBasics(
     country: v.country.toUpperCase(),
     bedrooms: v.bedrooms,
     bathrooms: v.bathrooms,
-    square_feet: sqftValue,
+    square_feet: v.square_feet,
     guest_capacity: v.guest_capacity,
     active: true,
   };

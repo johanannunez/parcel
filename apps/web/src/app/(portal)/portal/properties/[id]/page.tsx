@@ -17,6 +17,8 @@ import { createClient } from "@/lib/supabase/server";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { OccupancyCalendar } from "@/components/portal/OccupancyCalendar";
 import { SetPortalHeader } from "@/components/portal/PortalHeaderContext";
+import { HospitableSyncStatus } from "@/components/portal/HospitableSyncStatus";
+import { reconcilePropertyWithHospitable } from "@/lib/hospitable-reconcile";
 import { homeTypeLabels } from "@/lib/labels";
 import { currency0, formatMedium, formatRelative } from "@/lib/format";
 
@@ -105,6 +107,17 @@ export default async function PropertyDetailPage({
   }
 
   if (!property) notFound();
+
+  // Reconcile with Hospitable. Parcel is the source of truth; this only
+  // surfaces drift so the user can fix whichever side is wrong. No-op
+  // when the property isn't linked to a Hospitable listing.
+  const syncStatus = await reconcilePropertyWithHospitable({
+    hospitable_property_id: property.hospitable_property_id ?? null,
+    home_type: property.home_type ?? null,
+    bedrooms: property.bedrooms ?? null,
+    bathrooms: property.bathrooms ?? null,
+    guest_capacity: property.guest_capacity ?? null,
+  });
 
   // App bar owns the page title + subtitle for this route. Title is the
   // full formatted address built defensively (skip empty fragments so
@@ -197,7 +210,7 @@ export default async function PropertyDetailPage({
         copyable
       />
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <Link
           href="/portal/properties"
           className="inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-80"
@@ -206,25 +219,32 @@ export default async function PropertyDetailPage({
           <ArrowLeft size={14} weight="bold" />
           Back to properties
         </Link>
-        <span
-          className="inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-          style={{
-            backgroundColor: property.active
-              ? "rgba(22, 163, 74, 0.12)"
-              : "rgba(118, 113, 112, 0.12)",
-            color: property.active ? "#15803d" : "#4b4948",
-          }}
-        >
+        <div className="flex flex-wrap items-start gap-2">
+          <HospitableSyncStatus
+            linked={syncStatus.linked}
+            diffs={syncStatus.diffs}
+            error={syncStatus.error}
+          />
           <span
-            className="h-1.5 w-1.5 rounded-full"
+            className="inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
             style={{
               backgroundColor: property.active
-                ? "#16a34a"
-                : "var(--color-text-tertiary)",
+                ? "rgba(22, 163, 74, 0.12)"
+                : "rgba(118, 113, 112, 0.12)",
+              color: property.active ? "#15803d" : "#4b4948",
             }}
-          />
-          {property.active ? "Active" : "Paused"}
-        </span>
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{
+                backgroundColor: property.active
+                  ? "#16a34a"
+                  : "var(--color-text-tertiary)",
+              }}
+            />
+            {property.active ? "Active" : "Paused"}
+          </span>
+        </div>
       </div>
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">

@@ -360,8 +360,9 @@ export function BasicsForm({
             label="Square feet"
             defaultValue={initial.square_feet}
             type="number"
-            min="0"
+            min="1"
             max="100000"
+            required
             error={err("square_feet")}
           />
         </div>
