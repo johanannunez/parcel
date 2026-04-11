@@ -71,7 +71,7 @@ export default async function PortalLayout({
   return (
     <NotificationsProvider userId={user.id}>
       <div
-        className="flex min-h-screen overflow-x-hidden"
+        className="flex h-screen overflow-hidden"
         style={{ backgroundColor: "var(--color-off-white)" }}
       >
         <PortalIconRail />
@@ -85,9 +85,9 @@ export default async function PortalLayout({
           signOutSlot={<SignOutButton />}
         />
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <PortalTopBar userName={firstName} initials={initials} />
-          <main className="flex-1 pb-20 md:pb-0">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
             <PullToRefresh>
               <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
                 {children}

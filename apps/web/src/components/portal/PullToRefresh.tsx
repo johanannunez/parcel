@@ -21,9 +21,15 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const touchStartY = useRef(0);
   const pulling = useRef(false);
 
-  const isAtTop = useCallback(() => {
-    return window.scrollY <= 0;
+  const getScrollEl = useCallback((): HTMLElement | null => {
+    return containerRef.current?.closest("main") ?? null;
   }, []);
+
+  const isAtTop = useCallback(() => {
+    const el = getScrollEl();
+    if (el) return el.scrollTop <= 0;
+    return window.scrollY <= 0;
+  }, [getScrollEl]);
 
   useEffect(() => {
     const onTouchStart = (e: TouchEvent) => {
