@@ -249,7 +249,7 @@ export function OwnerHubTabs({
       >
         {/* Owner profile header */}
         <div
-          className="border-b px-5 py-5"
+          className="flex h-[120px] flex-col justify-center border-b px-5"
           style={{ borderColor: "var(--color-warm-gray-200)" }}
         >
           <div className="flex items-start gap-3">
@@ -393,9 +393,40 @@ export function OwnerHubTabs({
 
       {/* ─── Right content area ─── */}
       <div
-        className="min-w-0 flex-1 overflow-y-auto"
+        className="flex min-w-0 flex-1 flex-col overflow-y-auto"
         style={{ backgroundColor: "var(--color-off-white)" }}
       >
+        {/* Top bar matching sidebar header height */}
+        <div
+          className="flex h-[120px] shrink-0 items-center justify-between border-b px-8"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
+          }}
+        >
+          <div>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              {SECTIONS.find((s) => s.key === section)?.label ?? "Overview"}
+            </p>
+            <h2
+              className="mt-1 text-xl font-semibold tracking-tight"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              {owner.fullName}
+            </h2>
+          </div>
+          <div
+            className="flex items-center gap-3 text-xs"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {owner.phone && <span>{owner.phone}</span>}
+            {!owner.isPending && <span>{owner.email}</span>}
+          </div>
+        </div>
+
         <div className="px-8 py-8">
           {section === "overview" && (
             <OverviewSection

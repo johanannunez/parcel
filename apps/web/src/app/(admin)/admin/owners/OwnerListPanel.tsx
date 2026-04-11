@@ -37,14 +37,18 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
       }}
     >
       {/* Header */}
-      <div className="border-b px-4 pb-4 pt-6" style={{ borderColor: "var(--color-warm-gray-200)" }}>
-        <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>Owners</h2>
-        <p
-          className="mt-0.5 text-[11px]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          {owners.length} total
-        </p>
+      <div
+        className="flex h-[120px] flex-col justify-center border-b px-4"
+        style={{ borderColor: "var(--color-warm-gray-200)" }}
+      >
+        <div className="flex items-baseline gap-2">
+          <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            Owners
+          </h2>
+          <span className="text-[11px]" style={{ color: "var(--color-text-tertiary)" }}>
+            {owners.length} total
+          </span>
+        </div>
 
         {/* Search */}
         <div
@@ -120,9 +124,7 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
                     <div className="min-w-0 flex-1">
                       <div
                         className="truncate text-sm font-medium"
-                        style={{
-                          color: active ? "white" : "var(--color-text-primary)",
-                        }}
+                        style={{ color: "var(--color-text-primary)" }}
                       >
                         {owner.fullName || owner.email}
                       </div>
