@@ -199,10 +199,10 @@ export function PortalSidebar({
         borderColor: "var(--color-warm-gray-200)",
       }}
     >
-      <div className="flex justify-center px-6 pb-8 pt-8">
+      <div className="flex justify-center px-6 py-[18px]">
         <Link
           href="/portal/dashboard"
-          className="inline-flex items-center gap-3 focus-visible:outline-none"
+          className="inline-flex items-center gap-2 focus-visible:outline-none"
         >
           <Image
             src={
@@ -224,7 +224,7 @@ export function PortalSidebar({
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 pt-2">
+      <nav className="flex-1 overflow-y-auto px-3">
         <NavSection label="Portfolio" items={portfolioNav} isActive={isActive} />
 
         {setupIncomplete && (
