@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { PasswordField } from "@/components/auth/PasswordField";
 import { login, type LoginState } from "./actions";
 
 const initialState: LoginState = {};
@@ -48,14 +49,11 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
             Forgot password?
           </a>
         </div>
-        <input
+        <PasswordField
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           required
-          className="rounded-lg border border-[var(--color-warm-gray-200)] bg-[var(--color-white)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
-          style={{ color: "var(--color-text-primary)" }}
         />
       </div>
 
