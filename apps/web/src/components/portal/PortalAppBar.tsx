@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Check, Copy, MagnifyingGlass, Plus } from "@phosphor-icons/react";
@@ -184,8 +184,9 @@ export function PortalAppBar({ firstName }: { firstName: string }) {
           </div>
         ) : null}
 
-        {/* Right: action + search + bell */}
+        {/* Right: clock + action + search + bell */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <LiveClock />
           {header?.action ? (
             <Link
               href={header.action.href}
@@ -265,6 +266,74 @@ function SearchPill() {
 }
 
 /**
+ * Live clock for the portal app bar.
+ *
+ * Two-line stack: date on top, full time (h:mm:ss AM/PM) on bottom.
+ * Uniform font size and color throughout — no dimming, no size jumps.
+ * Hidden below `md` because the mobile bar only has room for the bell.
+ *
+ * Renders at opacity 0 until mounted so the SSR output and client "now"
+ * don't diverge (hydration mismatch). Space is still reserved so the
+ * neighboring pills don't shift when the clock appears.
+ *
+ * White colors are hardcoded literals — not `text-white` — because
+ * globals.css redefines `--color-white` in dark mode.
+ */
+function LiveClock() {
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  let timeStr = "12:00:00 AM";
+  let dateLabel = "SAT, APR 11";
+
+  if (now) {
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    const period = hours >= 12 ? "PM" : "AM";
+    const displayHours = hours % 12 || 12;
+    timeStr = `${displayHours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} ${period}`;
+    dateLabel = now
+      .toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      })
+      .toUpperCase();
+  }
+
+  const a11y = `${dateLabel} ${timeStr}`;
+
+  return (
+    <div
+      className="hidden flex-col items-end leading-snug md:flex"
+      style={{ opacity: now ? 1 : 0 }}
+      aria-label={`Current time: ${a11y}`}
+      title={a11y}
+      suppressHydrationWarning
+    >
+      <div
+        className="text-[11px] font-semibold uppercase tracking-[0.09em]"
+        style={{ color: "rgba(255, 255, 255, 0.82)" }}
+      >
+        {dateLabel}
+      </div>
+      <div
+        className="text-[11px] font-bold tabular-nums"
+        style={{ color: "#ffffff" }}
+      >
+        {timeStr}
+      </div>
+    </div>
+  );
+}
+
+/**
  * NotificationBell wrapper that forces the trigger button to white and the
  * unread badge to white-on-brand-blue. Uses Tailwind arbitrary variants
  * with `[&_button[aria-label='Notifications']]` descendant selectors plus
@@ -307,41 +376,69 @@ function CopyButton({ text }: { text: string }) {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
+      window.setTimeout(() => setCopied(false), 1800);
     } catch {
       // Clipboard API unavailable; user can still select the title manually.
     }
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      aria-label={copied ? "Copied" : `Copy ${text}`}
-      title={copied ? "Copied" : "Copy address"}
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors"
-      style={{
-        color: "#ffffff",
-        backgroundColor: copied
-          ? "rgba(255, 255, 255, 0.22)"
-          : "rgba(255, 255, 255, 0.12)",
-      }}
-      onMouseEnter={(e) => {
-        if (!copied) {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.22)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!copied) {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.12)";
-        }
-      }}
-    >
-      {copied ? (
-        <Check size={13} weight="bold" />
-      ) : (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label={`Copy ${text}`}
+        title="Copy address"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+        style={{
+          color: "#ffffff",
+          backgroundColor: copied
+            ? "rgba(255, 255, 255, 0.22)"
+            : "rgba(255, 255, 255, 0.12)",
+          transition: "background-color 150ms ease-out",
+        }}
+        onMouseEnter={(e) => {
+          if (!copied) {
+            e.currentTarget.style.backgroundColor =
+              "rgba(255, 255, 255, 0.22)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!copied) {
+            e.currentTarget.style.backgroundColor =
+              "rgba(255, 255, 255, 0.12)";
+          }
+        }}
+      >
         <Copy size={13} weight="bold" />
-      )}
-    </button>
+      </button>
+
+      {/* Floating toast that drops in on successful copy and fades out */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-hidden={!copied}
+        className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold"
+        style={{
+          backgroundColor: "rgba(17, 17, 20, 0.96)",
+          color: "#ffffff",
+          boxShadow: "0 10px 28px -10px rgba(0, 0, 0, 0.45)",
+          opacity: copied ? 1 : 0,
+          transform: copied
+            ? "translate(-50%, 0) scale(1)"
+            : "translate(-50%, -4px) scale(0.96)",
+          transition:
+            "opacity 180ms ease-out, transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1.1)",
+        }}
+      >
+        <Check
+          size={11}
+          weight="bold"
+          style={{ color: "#22c55e" }}
+          aria-hidden
+        />
+        Copied
+      </div>
+    </div>
   );
 }
