@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Check, Copy, MagnifyingGlass, Plus } from "@phosphor-icons/react";
+import { Check, Copy, MagnifyingGlass, Plus, Eye, X, CaretDown } from "@phosphor-icons/react";
 import { NotificationBell } from "@/components/portal/NotificationBell";
 import { usePortalHeaderOverride } from "@/components/portal/PortalHeaderContext";
 import { useTheme } from "@/components/ThemeProvider";
+import { setViewingAs, clearViewingAs } from "@/app/(portal)/portal/viewing-as-actions";
 
 /**
  * Portal app bar.
@@ -32,6 +33,13 @@ type PortalHeader = {
   subtitle?: ReactNode;
   action?: { href: string; label: string };
   copyable?: boolean;
+};
+
+export type OwnerOption = {
+  id: string;
+  full_name: string | null;
+  email: string;
+  avatar_url: string | null;
 };
 
 function getGreeting(): string {
@@ -164,7 +172,15 @@ function getPortalHeader(
   return null;
 }
 
-export function PortalAppBar({ firstName }: { firstName: string }) {
+export function PortalAppBar({
+  firstName,
+  owners,
+  viewingAsUserId,
+}: {
+  firstName: string;
+  owners?: OwnerOption[];
+  viewingAsUserId?: string | null;
+}) {
   const pathname = usePathname();
   const { resolvedTheme } = useTheme();
   const override = usePortalHeaderOverride();
@@ -226,7 +242,7 @@ export function PortalAppBar({ firstName }: { firstName: string }) {
           </div>
         ) : null}
 
-        {/* Right: action pill (if any) + [clock centered above search] + bell */}
+        {/* Right: action pill (if any) + owner switcher + [clock above search] + bell */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {header?.action ? (
             <Link
@@ -240,6 +256,12 @@ export function PortalAppBar({ firstName }: { firstName: string }) {
               <Plus size={13} weight="bold" />
               {header.action.label}
             </Link>
+          ) : null}
+          {owners && owners.length > 0 ? (
+            <AdminOwnerSwitcher
+              owners={owners}
+              viewingAsUserId={viewingAsUserId ?? null}
+            />
           ) : null}
           <div className="flex flex-col items-center gap-1.5">
             <LiveClock />
@@ -526,6 +548,176 @@ function CopyButton({ text }: { text: string }) {
         />
         Copied
       </div>
+    </div>
+  );
+}
+
+/**
+ * Admin-only owner switcher pill for the portal app bar.
+ *
+ * Idle state: ghost white pill "View as ▾" — opens a dropdown of all owners.
+ * Active state: amber pill showing the owner's first name + X to exit.
+ * Owners without an avatar fall back to two-letter initials.
+ */
+function AdminOwnerSwitcher({
+  owners,
+  viewingAsUserId,
+}: {
+  owners: OwnerOption[];
+  viewingAsUserId: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const ref = useRef<HTMLDivElement>(null);
+
+  const currentOwner = viewingAsUserId
+    ? (owners.find((o) => o.id === viewingAsUserId) ?? null)
+    : null;
+
+  const firstName =
+    currentOwner?.full_name?.split(" ")[0] ??
+    currentOwner?.email?.split("@")[0] ??
+    "";
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!open) return;
+    function onMouseDown(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open]);
+
+  function handleSelect(ownerId: string) {
+    setOpen(false);
+    startTransition(() => setViewingAs(ownerId));
+  }
+
+  function handleClearClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    startTransition(() => clearViewingAs());
+  }
+
+  const isActive = !!currentOwner;
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* Pill trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={isPending}
+        className="inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors disabled:opacity-50"
+        style={
+          isActive
+            ? {
+                backgroundColor: "rgba(245, 158, 11, 0.22)",
+                borderColor: "rgba(245, 158, 11, 0.50)",
+                color: "#ffffff",
+              }
+            : {
+                backgroundColor: "rgba(255, 255, 255, 0.14)",
+                borderColor: "rgba(255, 255, 255, 0.28)",
+                color: "#ffffff",
+              }
+        }
+      >
+        <Eye size={13} weight="duotone" />
+        {isActive ? firstName : "View as"}
+        {isActive ? (
+          <span
+            role="button"
+            aria-label="Exit owner view"
+            onClick={handleClearClick}
+            className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full transition-colors hover:bg-white/20"
+          >
+            <X size={9} weight="bold" />
+          </span>
+        ) : (
+          <CaretDown size={11} weight="bold" />
+        )}
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderColor: "var(--color-warm-gray-200)",
+            boxShadow: "0 8px 32px -4px rgba(0,0,0,0.14)",
+          }}
+        >
+          <div
+            className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            View portal as
+          </div>
+          <ul className="pb-1">
+            {owners.map((owner) => {
+              const isSelected = owner.id === viewingAsUserId;
+              const initials = owner.full_name
+                ? owner.full_name
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((p) => p[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()
+                : owner.email.slice(0, 2).toUpperCase();
+              return (
+                <li key={owner.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(owner.id)}
+                    disabled={isPending}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[var(--color-warm-gray-50)] disabled:opacity-50"
+                    style={{
+                      backgroundColor: isSelected
+                        ? "var(--color-warm-gray-100)"
+                        : undefined,
+                    }}
+                  >
+                    {owner.avatar_url ? (
+                      <img
+                        src={owner.avatar_url}
+                        alt=""
+                        className="h-8 w-8 shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: "rgba(2, 170, 235, 0.12)",
+                          color: "var(--color-brand)",
+                        }}
+                      >
+                        {initials}
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="truncate text-sm font-semibold"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {owner.full_name ?? owner.email}
+                      </div>
+                      <div
+                        className="truncate text-xs"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      >
+                        {owner.email}
+                      </div>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

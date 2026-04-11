@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Handshake } from "@phosphor-icons/react/dist/ssr";
-import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal-context";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { formatMedium } from "@/lib/format";
 
@@ -16,20 +16,17 @@ type MeetingNote = {
 };
 
 export default async function MeetingsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { userId, client } = await getPortalContext();
 
   const [notesResult, { data: properties }] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
+    (client as any)
       .from("owner_notes")
       .select("id, body, visibility, property_id, created_at")
+      .eq("owner_id", userId)
       .neq("visibility", "private")
       .order("created_at", { ascending: false }),
-    supabase.from("properties").select("id, name, address_line1"),
+    client.from("properties").select("id, name, address_line1").eq("owner_id", userId),
   ]);
 
   const notes: MeetingNote[] = notesResult.data ?? [];

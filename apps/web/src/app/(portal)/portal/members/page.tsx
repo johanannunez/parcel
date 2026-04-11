@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal-context";
 import { MembersShell } from "./MembersShell";
 
 export const metadata: Metadata = { title: "Members" };
@@ -23,20 +23,17 @@ type OwnerMember = {
 };
 
 export default async function MembersPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { userId, client, realUserId } = await getPortalContext();
 
   const [{ data: profile }, parcelTeamResult] = await Promise.all([
-    supabase
+    client
       .from("profiles")
-      .select("full_name, email, phone, avatar_url")
-      .eq("id", user.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .select("id, full_name, email, phone, avatar_url" as any)
+      .eq("id", userId)
       .single(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
+    (client as any)
       .from("parcel_team")
       .select("id, name, role, location, avatar_url, sort_order")
       .eq("active", true)
@@ -52,7 +49,7 @@ export default async function MembersPage() {
   const entityId = profileAny?.entity_id ?? null;
 
   if (entityId) {
-    const { data: members } = await supabase
+    const { data: members } = await client
       .from("profiles")
       .select("id, full_name, email, phone, avatar_url")
       .eq("entity_id", entityId)
@@ -72,37 +69,22 @@ export default async function MembersPage() {
     ownerMembers = profile
       ? [
           {
-            id: user.id,
-            full_name: profile.full_name,
-            email: user.email ?? "",
-            phone: profile.phone,
-            avatar_url: profile.avatar_url,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            responsibility: (profile as any).responsibility ?? null,
+            id: userId,
+            full_name: profileAny.full_name,
+            email: profileAny.email ?? "",
+            phone: profileAny.phone,
+            avatar_url: profileAny.avatar_url,
+            responsibility: profileAny.responsibility ?? null,
           },
         ]
       : [];
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1
-          className="text-2xl font-semibold tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Members
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Your Parcel team and ownership group.
-        </p>
-      </div>
-
-      <MembersShell
-        parcelTeam={parcelTeam}
-        ownerMembers={ownerMembers}
-        currentUserId={user.id}
-      />
-    </div>
+    <MembersShell
+      parcelTeam={parcelTeam}
+      ownerMembers={ownerMembers}
+      currentUserId={realUserId}
+    />
   );
 }

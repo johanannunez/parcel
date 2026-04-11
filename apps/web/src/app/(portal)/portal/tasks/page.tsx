@@ -6,7 +6,7 @@ import {
   Warning,
   ArrowUp,
 } from "@phosphor-icons/react/dist/ssr";
-import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal-context";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { formatMedium } from "@/lib/format";
 
@@ -34,22 +34,18 @@ const priorityStyle = (p: string | null) => {
 };
 
 export default async function TasksPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { userId, client } = await getPortalContext();
 
   const [tasksResult, { data: properties }] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
+    (client as any)
       .from("owner_tasks")
       .select(
         "id, title, description, status, priority, property_id, due_date, created_at, completed_at",
       )
-      .eq("owner_id", user.id)
+      .eq("owner_id", userId)
       .order("created_at", { ascending: false }),
-    supabase.from("properties").select("id, name, address_line1"),
+    client.from("properties").select("id, name, address_line1").eq("owner_id", userId),
   ]);
 
   const tasks: Task[] = tasksResult.data ?? [];

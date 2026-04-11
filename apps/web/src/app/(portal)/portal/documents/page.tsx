@@ -4,7 +4,7 @@ import {
   DownloadSimple,
   Buildings,
 } from "@phosphor-icons/react/dist/ssr";
-import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal-context";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { formatMedium } from "@/lib/format";
 
@@ -44,28 +44,32 @@ type DocumentRow = {
 };
 
 export default async function DocumentsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { userId, client } = await getPortalContext();
 
-  const { data: properties } = await supabase
+  const { data: properties } = await client
     .from("properties")
-    .select("id, name, address_line1, city");
+    .select("id, name, address_line1, city")
+    .eq("owner_id", userId);
 
   // Documents tables may not exist yet (pending migration)
   let documents: DocumentRow[] = [];
   let docProperties: Array<{ document_id: string; property_id: string }> = [];
+  const propertyIds = (properties ?? []).map((p) => p.id);
   try {
     const [docsResult, dpResult] = await Promise.all([
-      (supabase as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (client as any)
         .from("documents")
         .select("id, title, doc_type, status, scope, file_url, notes, created_at, updated_at")
+        .eq("owner_id", userId)
         .order("created_at", { ascending: false }),
-      (supabase as any)
-        .from("document_properties")
-        .select("document_id, property_id"),
+      propertyIds.length > 0
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? (client as any)
+            .from("document_properties")
+            .select("document_id, property_id")
+            .in("property_id", propertyIds)
+        : Promise.resolve({ data: [] }),
     ]);
     documents = docsResult.data ?? [];
     docProperties = dpResult.data ?? [];
