@@ -51,28 +51,6 @@ export default async function AccountPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header */}
-      <header>
-        <p
-          className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          Account settings
-        </p>
-        <h1
-          className="mt-2 text-[34px] font-semibold leading-tight tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Account
-        </h1>
-        <p
-          className="mt-2 max-w-2xl text-base"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Manage your profile, security, and preferences.
-        </p>
-      </header>
-
       {/* Two-column layout: sidebar nav + content */}
       <div className="flex gap-10">
         <AccountNav />

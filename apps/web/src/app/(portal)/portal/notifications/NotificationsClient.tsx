@@ -79,22 +79,10 @@ export function NotificationsClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-end justify-between">
-        <div>
-          <h1
-            className="text-2xl font-semibold tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Notifications
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            {unreadCount > 0
-              ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-              : "You're all caught up"}
-          </p>
-        </div>
-        {unreadCount > 0 ? (
+      {/* Mark-all-read action sits above the filter tabs since the page
+          title and subtitle are owned by the AppBar. */}
+      {unreadCount > 0 ? (
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={handleMarkAllRead}
@@ -107,8 +95,8 @@ export function NotificationsClient({
             <CheckSquare size={14} weight="bold" />
             Mark all read
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {/* Filter tabs */}
       <div

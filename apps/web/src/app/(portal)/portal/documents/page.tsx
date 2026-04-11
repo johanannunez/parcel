@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   FileText,
   DownloadSimple,
   Buildings,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader } from "@/components/portal/PageHeader";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { formatMedium } from "@/lib/format";
 
@@ -109,12 +107,6 @@ export default async function DocumentsPage() {
 
   return (
     <div className="flex flex-col gap-10">
-      <PageHeader
-        eyebrow="Paperwork"
-        title="Documents"
-        description="Your signed agreements, tax forms, and uploaded documents. Everything Parcel has on file for you."
-      />
-
       {/* Summary strip */}
       {rows.length > 0 ? (
         <div className="flex flex-wrap items-center gap-3">

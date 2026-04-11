@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   PortalSidebar,
   PortalIconRail,
-  PortalTopBar,
 } from "@/components/portal/PortalSidebar";
+import { PortalAppBar } from "@/components/portal/PortalAppBar";
 import { PortalBottomNav } from "@/components/portal/PortalBottomNav";
 import { PullToRefresh } from "@/components/portal/PullToRefresh";
 import { CommandPalette } from "@/components/portal/CommandPalette";
@@ -86,7 +86,7 @@ export default async function PortalLayout({
         />
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <PortalTopBar userName={firstName} initials={initials} />
+          <PortalAppBar firstName={firstName} />
           <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
             <PullToRefresh>
               <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">

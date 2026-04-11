@@ -10,7 +10,6 @@ import {
   UsersThree,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader } from "@/components/portal/PageHeader";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { LinkButton } from "@/components/portal/Button";
 import { propertyTypeLabels } from "@/lib/labels";
@@ -54,18 +53,6 @@ export default async function PropertiesPage() {
 
   return (
     <div className="flex flex-col gap-10">
-      <PageHeader
-        eyebrow="Portfolio"
-        title="Your properties"
-        description="Every home under Parcel management. Add a new one, or open any card to see bookings and documents."
-        actions={
-          <LinkButton href="/portal/setup/basics">
-            <Plus size={16} weight="bold" />
-            Add property
-          </LinkButton>
-        }
-      />
-
       {rows.length === 0 ? (
         <EmptyState
           icon={<Buildings size={26} weight="duotone" />}

@@ -8,19 +8,13 @@ import {
   ClipboardText,
   FileText,
   ChatCircle,
-  ArrowSquareOut,
   CalendarBlank,
   GearSix,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import Image from "next/image";
-import {
-  CommandPalette,
-  CommandPaletteTrigger,
-} from "@/components/portal/CommandPalette";
 import { SidebarFooter } from "@/components/portal/SidebarFooter";
 import { useTheme } from "@/components/ThemeProvider";
-import { NotificationBell } from "@/components/portal/NotificationBell";
 
 type NavItem = {
   href: string;
@@ -66,7 +60,15 @@ const secondaryNav: NavItem[] = [
   {
     href: "/portal/hospitable",
     label: "Hospitable",
-    icon: <ArrowSquareOut size={18} weight="duotone" />,
+    icon: (
+      <Image
+        src="/brand/hospitable-logo.png"
+        alt=""
+        width={18}
+        height={18}
+        className="shrink-0"
+      />
+    ),
   },
 ];
 
@@ -110,7 +112,7 @@ export function PortalSidebar({
         borderColor: "var(--color-warm-gray-200)",
       }}
     >
-      <div className="flex items-center justify-between px-6 pb-6 pt-7">
+      <div className="flex items-center px-6 pb-6 pt-7">
         <Link
           href="/portal/dashboard"
           className="inline-flex items-center gap-2.5 focus-visible:outline-none"
@@ -129,13 +131,9 @@ export function PortalSidebar({
             Owner
           </span>
         </Link>
-        <NotificationBell />
       </div>
 
       <nav className="flex-1 px-3">
-        <div className="mb-2">
-          <CommandPaletteTrigger />
-        </div>
         <div
           className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em]"
           style={{ color: "var(--color-text-tertiary)" }}
@@ -229,11 +227,6 @@ export function PortalIconRail() {
         <img src="/brand/logo-mark.png" alt="Parcel" width={24} height={24} />
       </Link>
 
-      {/* Notification bell */}
-      <div className="mb-3">
-        <NotificationBell />
-      </div>
-
       {/* Nav */}
       <nav className="flex flex-1 flex-col items-center gap-1">
         {railItems.map((item) => {
@@ -269,87 +262,3 @@ export function PortalIconRail() {
   );
 }
 
-export function PortalTopBar({
-  userName,
-  initials,
-}: {
-  userName: string;
-  initials: string;
-}) {
-  const pathname = usePathname();
-
-  const pageTitle = (() => {
-    if (!pathname) return "";
-    if (pathname === "/portal/dashboard") return "";
-    if (pathname.startsWith("/portal/properties")) return "Properties";
-    if (pathname.startsWith("/portal/calendar")) return "Calendar";
-    if (pathname.startsWith("/portal/messages")) return "Messages";
-    if (pathname.startsWith("/portal/documents")) return "Documents";
-    if (pathname.startsWith("/portal/account")) return "Account";
-    if (pathname.startsWith("/portal/setup")) return "Setup";
-    if (pathname.startsWith("/portal/hospitable")) return "Hospitable";
-    return "";
-  })();
-
-  return (
-    <header
-      className="relative flex items-center justify-between border-b px-4 py-3 md:hidden"
-      style={{
-        backgroundColor: "var(--color-white)",
-        borderColor: "var(--color-warm-gray-200)",
-      }}
-    >
-      <Link
-        href="/portal/dashboard"
-        className="inline-flex items-center gap-2"
-      >
-        <img
-          src="/brand/logo-mark.png"
-          alt="Parcel"
-          width={22}
-          height={22}
-          className="shrink-0"
-        />
-        <span
-          className="text-[9px] font-medium uppercase tracking-[0.18em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          Owner
-        </span>
-      </Link>
-
-      {pageTitle ? (
-        <span
-          className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          {pageTitle}
-        </span>
-      ) : null}
-
-      <div className="flex items-center gap-1">
-        <NotificationBell align="right" />
-        <Link
-          href="/portal/account"
-          className="flex items-center gap-2"
-        >
-          <span
-            className="hidden text-xs font-medium sm:block"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            {userName}
-          </span>
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold"
-            style={{
-              backgroundColor: "var(--color-warm-gray-100)",
-              color: "var(--color-text-primary)",
-            }}
-          >
-            {initials}
-          </span>
-        </Link>
-      </div>
-    </header>
-  );
-}

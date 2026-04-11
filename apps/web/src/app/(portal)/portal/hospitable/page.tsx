@@ -54,29 +54,6 @@ const FEATURES = [
 export default function HospitablePage() {
   return (
     <div className="flex flex-col gap-10">
-      {/* Header */}
-      <header>
-        <p
-          className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          Channel management
-        </p>
-        <h1
-          className="mt-2 text-[34px] font-semibold leading-tight tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Hospitable
-        </h1>
-        <p
-          className="mt-2 max-w-2xl text-base"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Your bookings, calendar, and guest communications are managed through
-          Hospitable, our channel management partner. Everything runs
-          automatically so your rentals perform at their best.
-        </p>
-      </header>
 
       {/* Hero CTA */}
       <section

@@ -22,13 +22,6 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-function greetingFor(date: Date) {
-  const h = date.getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
-}
-
 function isoDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
@@ -44,16 +37,7 @@ export default async function DashboardPage() {
   const todayIso = isoDate(today);
   const thirtyDaysAhead = isoDate(new Date(today.getTime() + 30 * 86400000));
 
-  const [
-    profileResult,
-    propertiesResult,
-    upcomingBookingsResult,
-  ] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .single(),
+  const [propertiesResult, upcomingBookingsResult] = await Promise.all([
     supabase
       .from("properties")
       .select("id, name, address_line1, city, active, property_type, bedrooms, bathrooms, guest_capacity"),
@@ -114,36 +98,8 @@ export default async function DashboardPage() {
     status: b.status,
   }));
 
-  const firstName =
-    profileResult.data?.full_name?.split(" ")[0] ??
-    user.email?.split("@")[0] ??
-    "there";
-
   return (
     <div className="flex flex-col gap-10">
-      {/* Header */}
-      <header>
-        <p
-          className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          Owner dashboard
-        </p>
-        <h1
-          className="mt-2 text-[26px] font-semibold leading-tight tracking-tight sm:text-[34px]"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          {greetingFor(today)}, {firstName}.
-        </h1>
-        <p
-          className="mt-2 max-w-2xl text-base"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Here is everything you need at a glance. Your properties, documents,
-          and messages are all managed from here.
-        </p>
-      </header>
-
       {/* Empty state for zero properties */}
       {totalProperties === 0 ? (
         <section

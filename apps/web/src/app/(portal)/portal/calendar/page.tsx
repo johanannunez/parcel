@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { CalendarBlank } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader } from "@/components/portal/PageHeader";
 import { EmptyState } from "@/components/portal/EmptyState";
-import { PropertySelector } from "@/components/portal/PropertySelector";
 import { CalendarShell } from "./CalendarShell";
 
 export const metadata: Metadata = { title: "Calendar" };
@@ -139,8 +137,6 @@ export default async function CalendarPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader eyebrow="Schedule" title="Calendar" />
-
       {!hasProperties ? (
         <EmptyState
           icon={<CalendarBlank size={26} weight="duotone" />}
