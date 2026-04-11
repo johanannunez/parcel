@@ -13,11 +13,13 @@ import {
   GearSix,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
+import Image from "next/image";
 import {
   CommandPalette,
   CommandPaletteTrigger,
 } from "@/components/portal/CommandPalette";
 import { SidebarFooter } from "@/components/portal/SidebarFooter";
+import { useTheme } from "@/components/ThemeProvider";
 
 type NavItem = {
   href: string;
@@ -85,6 +87,7 @@ export function PortalSidebar({
   signOutSlot: ReactNode;
 }) {
   const pathname = usePathname();
+  const { resolvedTheme } = useTheme();
 
   const isActive = (item: NavItem) => {
     if (item.matchPrefix) return pathname?.startsWith(item.matchPrefix);
@@ -109,14 +112,15 @@ export function PortalSidebar({
       <div className="px-6 pb-6 pt-7">
         <Link
           href="/portal/dashboard"
-          className="inline-flex items-baseline gap-2 focus-visible:outline-none"
+          className="inline-flex items-center gap-2.5 focus-visible:outline-none"
         >
-          <span
-            className="text-[19px] font-semibold tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Parcel
-          </span>
+          <Image
+            src={resolvedTheme === "dark" ? "/brand/logo-mark-white.png" : "/brand/logo-mark.png"}
+            alt="Parcel"
+            width={28}
+            height={28}
+            className="shrink-0"
+          />
           <span
             className="text-[11px] font-medium uppercase tracking-[0.18em]"
             style={{ color: "var(--color-text-tertiary)" }}
@@ -217,11 +221,10 @@ export function PortalIconRail() {
       {/* Logo */}
       <Link
         href="/portal/dashboard"
-        className="mb-6 flex h-8 w-8 items-center justify-center rounded-lg"
-        style={{ backgroundColor: "var(--color-brand)", color: "white" }}
+        className="mb-6 flex h-8 w-8 items-center justify-center"
         aria-label="Parcel Home"
       >
-        <span className="text-xs font-bold">P</span>
+        <img src="/brand/logo-mark.png" alt="Parcel" width={24} height={24} />
       </Link>
 
       {/* Nav */}
@@ -291,14 +294,15 @@ export function PortalTopBar({
     >
       <Link
         href="/portal/dashboard"
-        className="inline-flex items-baseline gap-1.5"
+        className="inline-flex items-center gap-2"
       >
-        <span
-          className="text-[15px] font-semibold tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Parcel
-        </span>
+        <img
+          src="/brand/logo-mark.png"
+          alt="Parcel"
+          width={22}
+          height={22}
+          className="shrink-0"
+        />
         <span
           className="text-[9px] font-medium uppercase tracking-[0.18em]"
           style={{ color: "var(--color-text-tertiary)" }}

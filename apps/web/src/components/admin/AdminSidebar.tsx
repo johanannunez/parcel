@@ -110,11 +110,15 @@ export function AdminSidebar({
       <div className="px-6 pb-6 pt-7">
         <Link
           href="/admin"
-          className="inline-flex items-baseline gap-2 focus-visible:outline-none"
+          className="inline-flex items-center gap-2.5 focus-visible:outline-none"
         >
-          <span className="text-[19px] font-semibold tracking-tight text-white">
-            Parcel
-          </span>
+          <img
+            src="/brand/logo-mark-white.png"
+            alt="Parcel"
+            width={28}
+            height={28}
+            className="shrink-0"
+          />
           <span
             className="text-[11px] font-medium uppercase tracking-[0.18em]"
             style={{ color: "rgba(255,255,255,0.4)" }}
@@ -251,10 +255,14 @@ export function AdminTopBar({
         borderColor: "rgba(255,255,255,0.06)",
       }}
     >
-      <Link href="/admin" className="inline-flex items-baseline gap-1.5">
-        <span className="text-[15px] font-semibold tracking-tight text-white">
-          Parcel
-        </span>
+      <Link href="/admin" className="inline-flex items-center gap-2">
+        <img
+          src="/brand/logo-mark-white.png"
+          alt="Parcel"
+          width={22}
+          height={22}
+          className="shrink-0"
+        />
         <span
           className="text-[9px] font-medium uppercase tracking-[0.18em]"
           style={{ color: "rgba(255,255,255,0.4)" }}
@@ -323,11 +331,10 @@ export function AdminIconRail({ pendingBlockCount = 0 }: { pendingBlockCount?: n
       {/* Logo */}
       <Link
         href="/admin"
-        className="mb-6 flex h-8 w-8 items-center justify-center rounded-lg"
-        style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+        className="mb-6 flex h-8 w-8 items-center justify-center"
         aria-label="Parcel Admin Home"
       >
-        <span className="text-xs font-bold text-white">P</span>
+        <img src="/brand/logo-mark-white.png" alt="Parcel" width={24} height={24} />
       </Link>
 
       {/* Nav */}
