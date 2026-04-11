@@ -22,7 +22,13 @@ import {
 } from "@/app/(portal)/portal/notifications/actions";
 import { createClient } from "@/lib/supabase/client";
 
-export function NotificationBell({ userId }: { userId: string }) {
+export function NotificationBell({
+  userId,
+  align = "left",
+}: {
+  userId: string;
+  align?: "left" | "right";
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -130,7 +136,9 @@ export function NotificationBell({ userId }: { userId: string }) {
 
       {open ? (
         <div
-          className="absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border shadow-lg"
+          className={`absolute top-full z-50 mt-2 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border shadow-lg ${
+            align === "right" ? "right-0" : "left-0"
+          }`}
           style={{
             backgroundColor: "var(--color-white)",
             borderColor: "var(--color-warm-gray-200)",

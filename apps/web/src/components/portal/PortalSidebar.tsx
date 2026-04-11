@@ -210,7 +210,7 @@ const railItems = [
   { href: "/portal/account", icon: <GearSix size={20} weight="duotone" />, label: "Account", matchPrefix: "/portal/account" },
 ];
 
-export function PortalIconRail() {
+export function PortalIconRail({ userId }: { userId: string }) {
   const pathname = usePathname();
 
   return (
@@ -225,11 +225,16 @@ export function PortalIconRail() {
       {/* Logo */}
       <Link
         href="/portal/dashboard"
-        className="mb-6 flex h-8 w-8 items-center justify-center"
+        className="mb-3 flex h-8 w-8 items-center justify-center"
         aria-label="Parcel Home"
       >
         <img src="/brand/logo-mark.png" alt="Parcel" width={24} height={24} />
       </Link>
+
+      {/* Notification bell */}
+      <div className="mb-3">
+        <NotificationBell userId={userId} />
+      </div>
 
       {/* Nav */}
       <nav className="flex flex-1 flex-col items-center gap-1">
@@ -267,9 +272,11 @@ export function PortalIconRail() {
 }
 
 export function PortalTopBar({
+  userId,
   userName,
   initials,
 }: {
+  userId: string;
   userName: string;
   initials: string;
 }) {
@@ -324,26 +331,29 @@ export function PortalTopBar({
         </span>
       ) : null}
 
-      <Link
-        href="/portal/account"
-        className="flex items-center gap-2"
-      >
-        <span
-          className="hidden text-xs font-medium sm:block"
-          style={{ color: "var(--color-text-secondary)" }}
+      <div className="flex items-center gap-1">
+        <NotificationBell userId={userId} align="right" />
+        <Link
+          href="/portal/account"
+          className="flex items-center gap-2"
         >
-          {userName}
-        </span>
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold"
-          style={{
-            backgroundColor: "var(--color-warm-gray-100)",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          {initials}
-        </span>
-      </Link>
+          <span
+            className="hidden text-xs font-medium sm:block"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            {userName}
+          </span>
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold"
+            style={{
+              backgroundColor: "var(--color-warm-gray-100)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            {initials}
+          </span>
+        </Link>
+      </div>
     </header>
   );
 }
