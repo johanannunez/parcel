@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useTransition, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useTransition, useRef, useState } from "react";
 import {
   House,
   ChartBar,
@@ -2457,9 +2457,40 @@ function formatCurrency(amount: number): string {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function MembersSection({ entity }: { entity: EntityInfo }) {
+  const router = useRouter();
+  const [editOpen, setEditOpen] = useState(false);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  const handleRemove = async (profileId: string, name: string) => {
+    if (!confirm(`Remove ${name} from "${entity.name}"? They will get their own one-person entity.`)) {
+      return;
+    }
+    setRemovingId(profileId);
+    const { unlinkProfileFromEntity } = await import("./entity-actions");
+    const result = await unlinkProfileFromEntity({ profileId });
+    setRemovingId(null);
+    if ("error" in result) {
+      alert(result.error);
+      return;
+    }
+    router.refresh();
+  };
+
   return (
     <div className="flex flex-col gap-5">
-      <SectionHeading>Entity Members</SectionHeading>
+      <div className="flex items-center justify-between">
+        <SectionHeading>Entity Members</SectionHeading>
+        <button
+          type="button"
+          onClick={() => setEditOpen(true)}
+          className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[var(--color-warm-gray-50)]"
+          style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}
+        >
+          <NotePencil size={13} weight="bold" />
+          Edit entity
+        </button>
+      </div>
 
       {/* Entity info card */}
       <div
@@ -2507,6 +2538,30 @@ function MembersSection({ entity }: { entity: EntityInfo }) {
           </div>
         </div>
       </div>
+
+      {editOpen ? (
+        <EditEntityModal
+          entity={entity}
+          onClose={() => setEditOpen(false)}
+          onSaved={() => {
+            setEditOpen(false);
+            router.refresh();
+          }}
+        />
+      ) : null}
+
+      {addMemberOpen ? (
+        <AddMemberModal
+          entityId={entity.id}
+          entityName={entity.name}
+          existingMemberIds={entity.members.map((m) => m.id)}
+          onClose={() => setAddMemberOpen(false)}
+          onAdded={() => {
+            setAddMemberOpen(false);
+            router.refresh();
+          }}
+        />
+      ) : null}
 
       {/* Members list */}
       <div>
@@ -2599,18 +2654,413 @@ function MembersSection({ entity }: { entity: EntityInfo }) {
                       {member.phone ? ` · ${member.phone}` : null}
                     </div>
                   </div>
+
+                  {/* Remove button (non-primary members only, if more than 1 member) */}
+                  {index > 0 && entity.members.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(member.id, displayName)}
+                      disabled={removingId === member.id}
+                      className="shrink-0 rounded px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[rgba(220,38,38,0.08)]"
+                      style={{ color: "var(--color-error)" }}
+                    >
+                      {removingId === member.id ? "Removing..." : "Remove"}
+                    </button>
+                  ) : null}
                 </li>
               );
             })}
           </ul>
         </div>
 
-        <p
-          className="mt-3 text-[11px]"
-          style={{ color: "var(--color-text-tertiary)" }}
+        <button
+          type="button"
+          onClick={() => setAddMemberOpen(true)}
+          className="mt-3 flex items-center gap-1.5 rounded-lg border border-dashed px-3 py-2 text-xs font-medium transition-colors hover:bg-[var(--color-warm-gray-50)]"
+          style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-brand)" }}
         >
-          To add or remove members, use the entity actions in the admin tools (coming soon).
+          <Plus size={13} weight="bold" />
+          Add existing profile to entity
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Edit Entity Modal ─── */
+
+function EditEntityModal({
+  entity,
+  onClose,
+  onSaved,
+}: {
+  entity: EntityInfo;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(entity.name);
+  const [type, setType] = useState(entity.type);
+  const [ein, setEin] = useState(entity.ein ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    setError(null);
+    setSaving(true);
+    const { updateEntity } = await import("./entity-actions");
+    const result = await updateEntity({
+      entityId: entity.id,
+      name: name.trim(),
+      type: type as "individual" | "llc" | "partnership" | "trust" | "corporation",
+      ein: ein.trim() || null,
+    });
+    setSaving(false);
+    if ("error" in result) {
+      setError(result.error ?? "Failed to save");
+      return;
+    }
+    onSaved();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl p-7"
+        style={{
+          backgroundColor: "var(--color-white)",
+          boxShadow: "0 20px 60px -12px rgba(0,0,0,0.25)",
+        }}
+      >
+        <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          Edit entity
+        </h3>
+        <p className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+          Update the entity name, type, or EIN. All members will see the change.
         </p>
+
+        <div className="mt-5 flex flex-col gap-4">
+          <div>
+            <label
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-wide"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              Entity name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
+              style={{
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+                backgroundColor: "var(--color-white)",
+              }}
+              placeholder="Acme Investments LLC"
+            />
+          </div>
+
+          <div>
+            <label
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-wide"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              Type
+            </label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
+              style={{
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+                backgroundColor: "var(--color-white)",
+              }}
+            >
+              <option value="individual">Individual</option>
+              <option value="llc">LLC</option>
+              <option value="partnership">Partnership</option>
+              <option value="trust">Trust</option>
+              <option value="corporation">Corporation</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-wide"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              EIN (optional)
+            </label>
+            <input
+              type="text"
+              value={ein}
+              onChange={(e) => setEin(e.target.value)}
+              className="w-full rounded-lg border px-3.5 py-2.5 font-mono text-sm outline-none transition-colors focus:border-[var(--color-brand)]"
+              style={{
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+                backgroundColor: "var(--color-white)",
+              }}
+              placeholder="12-3456789"
+            />
+          </div>
+
+          {error ? (
+            <div
+              className="rounded-lg border px-3 py-2 text-xs"
+              style={{
+                backgroundColor: "rgba(220,38,38,0.08)",
+                borderColor: "rgba(220,38,38,0.2)",
+                color: "var(--color-error)",
+              }}
+            >
+              {error}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: "var(--color-brand)" }}
+          >
+            {saving ? "Saving..." : "Save changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Add Member Modal ─── */
+
+type OwnerProfile = {
+  id: string;
+  full_name: string | null;
+  email: string;
+  entity_id: string | null;
+};
+
+function AddMemberModal({
+  entityId,
+  entityName,
+  existingMemberIds,
+  onClose,
+  onAdded,
+}: {
+  entityId: string;
+  entityName: string;
+  existingMemberIds: string[];
+  onClose: () => void;
+  onAdded: () => void;
+}) {
+  const [profiles, setProfiles] = useState<OwnerProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [adding, setAdding] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load all owner profiles on mount
+  useEffect(() => {
+    let cancelled = false;
+    import("./entity-actions").then(async ({ getAllOwnerProfiles }) => {
+      const result = await getAllOwnerProfiles();
+      if (cancelled) return;
+      if ("error" in result) {
+        setError(result.error ?? "Failed to load profiles");
+      } else {
+        setProfiles(result.profiles);
+      }
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Filter: exclude current members and filter by search
+  const filtered = profiles.filter((p) => {
+    if (existingMemberIds.includes(p.id)) return false;
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      (p.full_name?.toLowerCase().includes(q) ?? false) ||
+      p.email.toLowerCase().includes(q)
+    );
+  });
+
+  const handleAdd = async (profile: OwnerProfile) => {
+    setError(null);
+    setAdding(profile.id);
+    const { linkProfileToEntity } = await import("./entity-actions");
+    const result = await linkProfileToEntity({
+      profileId: profile.id,
+      entityId,
+    });
+    setAdding(null);
+    if ("error" in result) {
+      setError(result.error ?? "Failed to add member");
+      return;
+    }
+    onAdded();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-md overflow-hidden rounded-2xl"
+        style={{
+          backgroundColor: "var(--color-white)",
+          boxShadow: "0 20px 60px -12px rgba(0,0,0,0.25)",
+        }}
+      >
+        <div className="border-b px-6 py-5" style={{ borderColor: "var(--color-warm-gray-200)" }}>
+          <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            Add member to {entityName}
+          </h3>
+          <p className="mt-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+            Pick an existing profile to merge into this entity. Their current entity will be cleaned up if empty.
+          </p>
+
+          <div
+            className="mt-4 flex items-center gap-2 rounded-lg border px-3 py-2"
+            style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-warm-gray-50)" }}
+          >
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or email..."
+              className="w-full bg-transparent text-sm outline-none"
+              style={{ color: "var(--color-text-primary)" }}
+              autoFocus
+            />
+          </div>
+        </div>
+
+        {error ? (
+          <div
+            className="border-b px-6 py-3 text-xs"
+            style={{
+              borderColor: "rgba(220,38,38,0.2)",
+              backgroundColor: "rgba(220,38,38,0.04)",
+              color: "var(--color-error)",
+            }}
+          >
+            {error}
+          </div>
+        ) : null}
+
+        <div className="max-h-[360px] overflow-y-auto">
+          {loading ? (
+            <p className="px-6 py-8 text-center text-sm" style={{ color: "var(--color-text-tertiary)" }}>
+              Loading profiles...
+            </p>
+          ) : filtered.length === 0 ? (
+            <p className="px-6 py-8 text-center text-sm" style={{ color: "var(--color-text-tertiary)" }}>
+              {search ? "No matching profiles." : "All profiles are already in this entity."}
+            </p>
+          ) : (
+            <ul>
+              {filtered.map((profile) => {
+                const displayName = profile.full_name?.trim() || profile.email;
+                const initials = buildInitials(displayName);
+                return (
+                  <li
+                    key={profile.id}
+                    className="border-t first:border-t-0"
+                    style={{ borderColor: "var(--color-warm-gray-100)" }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleAdd(profile)}
+                      disabled={adding === profile.id}
+                      className="flex w-full items-center gap-3 px-6 py-3 text-left transition-colors hover:bg-[var(--color-warm-gray-50)] disabled:opacity-50"
+                    >
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
+                        style={{
+                          backgroundColor: "var(--color-warm-gray-100)",
+                          color: "var(--color-text-secondary)",
+                        }}
+                      >
+                        {initials}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className="truncate text-sm font-medium"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {displayName}
+                        </div>
+                        <div
+                          className="truncate text-xs"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          {profile.email}
+                        </div>
+                      </div>
+                      <span
+                        className="shrink-0 text-[11px] font-semibold"
+                        style={{ color: adding === profile.id ? "var(--color-text-tertiary)" : "var(--color-brand)" }}
+                      >
+                        {adding === profile.id ? "Adding..." : "Add"}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div
+          className="flex justify-end border-t px-6 py-4"
+          style={{ borderColor: "var(--color-warm-gray-200)" }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:bg-[var(--color-warm-gray-50)]"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            Done
+          </button>
+        </div>
       </div>
     </div>
   );
