@@ -291,6 +291,32 @@ input[type="button"] {
 }
 
 /* ------------------------------------------------
+   Admin switcher pill (amber gradient, portal sidebar + mobile sheet)
+   ------------------------------------------------ */
+.admin-switch-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: linear-gradient(135deg, #F6A825 0%, #D4860A 100%);
+  box-shadow: 0 2px 8px rgba(196, 120, 10, 0.28);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.admin-switch-link:hover {
+  background: linear-gradient(135deg, #FAB836 0%, #E09510 100%);
+  box-shadow: 0 4px 14px rgba(196, 120, 10, 0.38);
+  color: #fff;
+}
+
+/* ------------------------------------------------
    Admin sidebar footer rows (always-dark surface)
    ------------------------------------------------ */
 .admin-footer-row {

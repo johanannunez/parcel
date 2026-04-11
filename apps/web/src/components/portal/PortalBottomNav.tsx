@@ -15,7 +15,7 @@ import {
   Sun,
   Moon,
   X,
-  ShieldCheck,
+  ShieldStar,
   ListChecks,
   ClockCounterClockwise,
   UsersThree,
@@ -372,15 +372,10 @@ export function PortalBottomNav({
                   <Link
                     href="/admin"
                     onClick={closeMore}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)]"
-                    style={{ color: "var(--color-text-secondary)" }}
+                    className="admin-switch-link"
                   >
-                    <ShieldCheck
-                      size={19}
-                      weight="duotone"
-                      style={{ color: "var(--color-text-tertiary)" }}
-                    />
-                    Switch to Admin
+                    <ShieldStar size={18} weight="duotone" className="shrink-0" />
+                    Admin
                   </Link>
                 ) : null}
 
@@ -394,9 +389,9 @@ export function PortalBottomNav({
                   style={{ color: "var(--color-text-secondary)" }}
                 >
                   {resolvedTheme === "dark" ? (
-                    <Sun size={19} weight="duotone" style={{ color: "var(--color-text-tertiary)" }} />
+                    <Sun size={18} weight="duotone" style={{ color: "var(--color-text-tertiary)" }} />
                   ) : (
-                    <Moon size={19} weight="duotone" style={{ color: "var(--color-text-tertiary)" }} />
+                    <Moon size={18} weight="duotone" style={{ color: "var(--color-text-tertiary)" }} />
                   )}
                   {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
                 </button>

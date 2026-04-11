@@ -5,7 +5,7 @@ import {
   Sun,
   Moon,
   GearSix,
-  ShieldCheck,
+  ShieldStar,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -73,14 +73,14 @@ export function SidebarFooter({
       {/* Action rows */}
       <div className="pt-1 pb-1">
         <Link href="/portal/account" className="sidebar-footer-row">
-          <GearSix size={15} weight="regular" className="shrink-0" />
+          <GearSix size={18} weight="duotone" className="shrink-0" />
           Account
         </Link>
 
         {isAdmin ? (
-          <Link href="/admin" className="sidebar-footer-row">
-            <ShieldCheck size={15} weight="regular" className="shrink-0" />
-            Switch to Admin
+          <Link href="/admin" className="admin-switch-link">
+            <ShieldStar size={18} weight="duotone" className="shrink-0" />
+            Admin
           </Link>
         ) : null}
 
@@ -90,9 +90,9 @@ export function SidebarFooter({
           className="sidebar-footer-row"
         >
           {resolvedTheme === "dark" ? (
-            <Sun size={15} weight="regular" className="shrink-0" />
+            <Sun size={18} weight="duotone" className="shrink-0" />
           ) : (
-            <Moon size={15} weight="regular" className="shrink-0" />
+            <Moon size={18} weight="duotone" className="shrink-0" />
           )}
           {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
         </button>
