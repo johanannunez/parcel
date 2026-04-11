@@ -97,26 +97,33 @@ export function SetPortalHeader({
   copyable?: boolean;
 }) {
   const ctx = useContext(PortalHeaderContext);
+  // Extract the STABLE setter function out of the context value. The
+  // provider wraps setOverride in useCallback([],) so its reference never
+  // changes, even though the wrapping context value object (ctx) is a
+  // new reference on every override update. Putting ctx directly in the
+  // deps array would cause an infinite loop: setOverride -> override
+  // changes -> provider's useMemo produces a new value -> ctx is new ->
+  // effect fires -> setOverride again. We bypass that by listing only
+  // the stable function in deps.
+  const setOverride = ctx?.setOverride;
 
   // Keep the latest subtitle (a ReactNode, so a fresh object every render)
   // in a ref so the effect below can read it without depending on it.
-  // Listing subtitle as a dep would cause an infinite loop: each render
-  // produces a new ReactNode reference, the effect would fire, setOverride
-  // would update context, that re-renders consumers (this component included
-  // via useContext), and the cycle repeats until React bails with
-  // "maximum update depth exceeded".
+  // Listing subtitle as a dep would cause the same kind of infinite loop:
+  // each render produces a new ReactNode reference which React compares
+  // by identity and treats as changed.
   const subtitleRef = useRef(subtitle);
   subtitleRef.current = subtitle;
 
   useEffect(() => {
-    if (!ctx) return;
-    ctx.setOverride({ title, subtitle: subtitleRef.current, copyable });
-    return () => ctx.setOverride(null);
-    // title and copyable are the stability signals. When title changes
+    if (!setOverride) return;
+    setOverride({ title, subtitle: subtitleRef.current, copyable });
+    return () => setOverride(null);
+    // title + copyable are the stability signals. When title changes
     // (e.g. navigating between property detail pages) the effect re-runs
-    // and picks up the fresh subtitle via the ref.
+    // and picks up the fresh subtitle from the ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctx, title, copyable]);
+  }, [setOverride, title, copyable]);
 
   return null;
 }
