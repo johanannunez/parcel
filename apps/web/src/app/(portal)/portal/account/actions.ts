@@ -216,7 +216,20 @@ export async function getSessionLog(): Promise<{
 /*  exportUserData                                                            */
 /* -------------------------------------------------------------------------- */
 
-export async function exportUserData(): Promise<{
+export type ExportDataset = "properties" | "blocks";
+
+export type ExportOptions = {
+  datasets: ExportDataset[];
+  range: {
+    // ISO date (YYYY-MM-DD). null = no bound on that side.
+    start: string | null;
+    end: string | null;
+    // Human label for the SUMMARY header, e.g. "Last 12 months" or "All time".
+    label: string;
+  };
+};
+
+export async function exportUserData(options: ExportOptions): Promise<{
   ok: boolean;
   data?: string;
   message?: string;
@@ -231,30 +244,67 @@ export async function exportUserData(): Promise<{
     return { ok: false, message: "You must be signed in to export your data." };
   }
 
+  const wantsProperties = options.datasets.includes("properties");
+  const wantsBlocks = options.datasets.includes("blocks");
+
+  if (!wantsProperties && !wantsBlocks) {
+    return { ok: false, message: "Pick at least one dataset to export." };
+  }
+
+  // Always fetch both queries in parallel. Both are single-user scoped, small,
+  // and RLS-filtered, so there's no meaningful cost to running them both and
+  // dropping the unwanted result on the floor below. Keeps types clean.
+  let blocksQuery = supabase
+    .from("block_requests")
+    .select("id, start_date, end_date, status, created_at")
+    .eq("owner_id", user.id);
+  if (wantsBlocks && options.range.start) {
+    // Overlap-style date filter so blocks that straddle the window edge still
+    // get included, which matches what owners actually expect.
+    blocksQuery = blocksQuery.gte("end_date", options.range.start);
+  }
+  if (wantsBlocks && options.range.end) {
+    blocksQuery = blocksQuery.lte("start_date", options.range.end);
+  }
+
   const [profileResult, propertiesResult, blockRequestsResult] = await Promise.all([
-    supabase.from("profiles").select("full_name, email, phone, preferred_name, contact_method, created_at").eq("id", user.id).single(),
-    supabase.from("properties").select("name, property_type, address_line1, address_line2, city, state, postal_code, bedrooms, bathrooms, guest_capacity, active, created_at"),
-    supabase.from("block_requests").select("id, start_date, end_date, status, created_at").eq("owner_id", user.id),
+    supabase
+      .from("profiles")
+      .select("full_name, email, phone, preferred_name, contact_method, created_at")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("properties")
+      .select(
+        "name, property_type, address_line1, address_line2, city, state, postal_code, bedrooms, bathrooms, guest_capacity, active, created_at",
+      ),
+    blocksQuery,
   ]);
 
   const blocks = blockRequestsResult.data ?? [];
 
   const exportData = {
     exported_at: new Date().toISOString(),
+    range_label: options.range.label,
+    range_start: options.range.start,
+    range_end: options.range.end,
+    datasets: options.datasets,
     profile: profileResult.data,
-    properties: propertiesResult.data ?? [],
-    calendar_blocks: {
-      total_count: blocks.length,
-      approved: blocks.filter((b) => b.status === "approved").length,
-      pending: blocks.filter((b) => b.status === "pending").length,
-      denied: blocks.filter((b) => b.status === "denied").length,
-      entries: blocks.map((b) => ({
-        start_date: b.start_date,
-        end_date: b.end_date,
-        status: b.status,
-        created_at: b.created_at,
-      })),
-    },
+    properties: wantsProperties ? propertiesResult.data ?? [] : null,
+    calendar_blocks: wantsBlocks
+      ? {
+          total_count: blocks.length,
+          approved: blocks.filter((b) => b.status === "approved").length,
+          pending: blocks.filter((b) => b.status === "pending").length,
+          denied: blocks.filter((b) => b.status === "denied").length,
+          entries: blocks.map((b) => ({
+            start_date: b.start_date,
+            end_date: b.end_date,
+            status: b.status,
+            created_at: b.created_at,
+          })),
+        }
+      : null,
   };
 
   return { ok: true, data: JSON.stringify(exportData, null, 2) };

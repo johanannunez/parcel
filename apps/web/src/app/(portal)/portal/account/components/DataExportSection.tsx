@@ -7,113 +7,38 @@ import {
   CalendarX,
   CheckCircle,
   FileText,
+  Sliders,
 } from "@phosphor-icons/react";
-import { exportUserData } from "../actions";
-
-function jsonToCsv(rows: Record<string, unknown>[]): string {
-  if (rows.length === 0) return "";
-  const headers = Object.keys(rows[0]);
-  const lines = [
-    headers.join(","),
-    ...rows.map((row) =>
-      headers
-        .map((h) => {
-          const val = row[h];
-          if (val === null || val === undefined) return "";
-          const str = String(val);
-          if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-            return `"${str.replace(/"/g, '""')}"`;
-          }
-          return str;
-        })
-        .join(","),
-    ),
-  ];
-  return lines.join("\n");
-}
+import { exportUserData, type ExportOptions } from "../actions";
+import { buildExportCsv, triggerCsvDownload } from "./buildExportCsv";
+import { CustomizeExportModal } from "./CustomizeExportModal";
 
 type PreviewTab = "properties" | "blocks";
+
+const QUICK_DOWNLOAD_OPTIONS: ExportOptions = {
+  datasets: ["properties", "blocks"],
+  range: { start: null, end: null, label: "All time" },
+};
 
 export function DataExportSection() {
   const [pending, startTransition] = useTransition();
   const [downloaded, setDownloaded] = useState(false);
   const [previewTab, setPreviewTab] = useState<PreviewTab>("properties");
+  const [modalOpen, setModalOpen] = useState(false);
 
-  function handleExport() {
+  function handleQuickDownload() {
     setDownloaded(false);
     startTransition(async () => {
-      const result = await exportUserData();
-
-      if (result.ok && result.data) {
-        const parsed = JSON.parse(result.data);
-        const date = new Date().toISOString().split("T")[0];
-
-        const propertiesCsv = jsonToCsv(
-          (parsed.properties ?? []).map((p: Record<string, unknown>) => ({
-            Name: p.name ?? "",
-            Type: p.property_type ?? "",
-            Address: p.address_line1 ?? "",
-            "Address 2": p.address_line2 ?? "",
-            City: p.city ?? "",
-            State: p.state ?? "",
-            "Postal Code": p.postal_code ?? "",
-            Bedrooms: p.bedrooms ?? "",
-            Bathrooms: p.bathrooms ?? "",
-            "Guest Capacity": p.guest_capacity ?? "",
-            Active: p.active ? "Yes" : "No",
-            "Added On": p.created_at ?? "",
-          })),
-        );
-
-        const blocks = parsed.calendar_blocks?.entries ?? [];
-        const blocksCsv = jsonToCsv(
-          blocks.map((b: Record<string, unknown>) => ({
-            "Start Date": b.start_date ?? "",
-            "End Date": b.end_date ?? "",
-            Status: b.status ?? "",
-            "Requested On": b.created_at ?? "",
-          })),
-        );
-
-        const summary = [
-          `Parcel Data Export`,
-          `Exported: ${date}`,
-          `Owner: ${parsed.profile?.full_name ?? ""}`,
-          `Email: ${parsed.profile?.email ?? ""}`,
-          ``,
-          `Properties: ${(parsed.properties ?? []).length}`,
-          `Calendar Blocks: ${parsed.calendar_blocks?.total_count ?? 0} total (${parsed.calendar_blocks?.approved ?? 0} approved, ${parsed.calendar_blocks?.pending ?? 0} pending, ${parsed.calendar_blocks?.denied ?? 0} denied)`,
-        ].join("\n");
-
-        const fullCsv = [
-          "SUMMARY",
-          summary,
-          "",
-          "",
-          "PROPERTIES",
-          propertiesCsv || "No properties found",
-          "",
-          "",
-          "CALENDAR BLOCKS",
-          blocksCsv || "No calendar blocks found",
-        ].join("\n");
-
-        const blob = new Blob([fullCsv], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `parcel-export-${date}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setDownloaded(true);
-      }
+      const result = await exportUserData(QUICK_DOWNLOAD_OPTIONS);
+      if (!result.ok || !result.data) return;
+      const built = buildExportCsv(result.data, QUICK_DOWNLOAD_OPTIONS);
+      triggerCsvDownload(built);
+      setDownloaded(true);
     });
   }
 
   return (
-    <section id="data-export">
+    <section id="data-export" className="scroll-mt-8">
       <h2
         className="text-xl font-semibold tracking-tight"
         style={{ color: "var(--color-text-primary)" }}
@@ -124,7 +49,7 @@ export function DataExportSection() {
         className="mb-6 text-sm"
         style={{ color: "var(--color-text-secondary)" }}
       >
-        Download a copy of your property data as a spreadsheet.
+        Download a copy of your property data. Pick what to include and optionally filter by date range.
       </p>
 
       <div
@@ -295,19 +220,33 @@ export function DataExportSection() {
           )}
         </div>
 
-        {/* Export button */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={handleExport}
-            className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-            style={{ backgroundColor: "var(--color-brand)" }}
+        {/* Export actions */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "var(--color-brand)" }}
+            >
+              <Sliders size={16} weight="bold" />
+              Customize export
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={handleQuickDownload}
+              className="inline-flex items-center gap-1.5 text-xs font-medium underline-offset-2 transition-colors hover:underline disabled:opacity-50"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              <DownloadSimple size={12} weight="bold" />
+              {pending ? "Exporting..." : "Quick download (all data, all time)"}
+            </button>
+          </div>
+          <span
+            className="flex items-center gap-1.5 text-xs"
+            style={{ color: "var(--color-text-tertiary)" }}
           >
-            <DownloadSimple size={16} weight="bold" />
-            {pending ? "Exporting..." : "Download CSV"}
-          </button>
-          <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
             <FileText size={12} />
             Opens in Excel, Google Sheets, or any spreadsheet app
           </span>
@@ -329,6 +268,12 @@ export function DataExportSection() {
           </div>
         )}
       </div>
+
+      <CustomizeExportModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onDownloaded={() => setDownloaded(true)}
+      />
     </section>
   );
 }
