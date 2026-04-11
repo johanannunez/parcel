@@ -6,7 +6,7 @@ import {
   Moon,
   Question,
   GearSix,
-  House,
+  UserSwitch,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -87,7 +87,7 @@ export function AdminSidebarFooter({
             textDecoration: "none",
           }}
         >
-          <House size={15} weight="duotone" className="shrink-0" style={{ color: "#fff" }} />
+          <UserSwitch size={15} weight="duotone" className="shrink-0" style={{ color: "#fff" }} />
           Portal
         </Link>
 

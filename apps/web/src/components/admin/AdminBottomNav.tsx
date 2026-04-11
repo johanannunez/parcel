@@ -10,6 +10,7 @@ import {
   ChatCircle,
   DotsThree,
   Buildings,
+  UserSwitch,
   Wallet,
   EnvelopeSimple,
   ClipboardText,
@@ -250,7 +251,7 @@ export function AdminBottomNav({
                     textDecoration: "none",
                   }}
                 >
-                  <House size={20} weight="duotone" style={{ color: "#fff" }} />
+                  <UserSwitch size={20} weight="duotone" style={{ color: "#fff" }} />
                   Portal
                 </Link>
 
