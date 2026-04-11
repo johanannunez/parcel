@@ -143,7 +143,27 @@ export function PortalBottomNav({
         }}
       >
         <div className="flex h-16 items-stretch">
-          {/* More button — left side */}
+          {mainNavItems.map((item) => {
+            const active = isTabActive(item);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
+                style={{ color: active ? "var(--color-brand)" : "var(--color-text-tertiary)" }}
+              >
+                {active ? item.activeIcon : item.icon}
+                <span
+                  className="text-[10px] font-semibold leading-none"
+                  style={{ color: active ? "var(--color-brand)" : "var(--color-text-tertiary)" }}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+
+          {/* More button — right side */}
           <button
             type="button"
             onClick={() => setMoreOpen(!moreOpen)}
@@ -164,26 +184,6 @@ export function PortalBottomNav({
               More
             </span>
           </button>
-
-          {mainNavItems.map((item) => {
-            const active = isTabActive(item);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
-                style={{ color: active ? "var(--color-brand)" : "var(--color-text-tertiary)" }}
-              >
-                {active ? item.activeIcon : item.icon}
-                <span
-                  className="text-[10px] font-semibold leading-none"
-                  style={{ color: active ? "var(--color-brand)" : "var(--color-text-tertiary)" }}
-                >
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
         </div>
       </nav>
 
