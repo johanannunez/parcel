@@ -10,6 +10,11 @@
  * `tsx`. It imports the shared MODULES data, renders a React PDF
  * document with Parcel branding, and writes it to disk. Re-run after
  * any edit to modules.ts to keep the PDF in sync with the web page.
+ *
+ * Layout:
+ *   Page 1       — Full-bleed brand-blue cover with white logo + type
+ *   Pages 2-N    — White module pages with the brand mark fixed at
+ *                  the bottom-center footer
  */
 
 import path from "node:path";
@@ -18,6 +23,7 @@ import React from "react";
 import {
   Document,
   Page,
+  Image,
   Text,
   View,
   StyleSheet,
@@ -34,113 +40,217 @@ const outputPath = path.resolve(
   "cleaning-checklist.pdf",
 );
 
+/**
+ * Absolute paths to the brand assets embedded in every page of the
+ * PDF. react-pdf's `<Image>` accepts a file-system path when running
+ * in Node (which is how this script executes).
+ */
+const logoFullColorPath = path.resolve(
+  __dirname,
+  "..",
+  "public",
+  "brand",
+  "logo-full-color.png",
+);
+const logoWhitePath = path.resolve(
+  __dirname,
+  "..",
+  "public",
+  "brand",
+  "logo-white.png",
+);
+const logoMarkPath = path.resolve(
+  __dirname,
+  "..",
+  "public",
+  "brand",
+  "logo-mark.png",
+);
+
 /* ───── Brand tokens ───── */
 
 const BRAND_BLUE = "#02aaeb";
 const BRAND_BLUE_DARK = "#1b77be";
+const BRAND_BLUE_DEEP = "#0b5a94"; // darker variant used for the cover floor
 const TEXT_PRIMARY = "#141414";
 const TEXT_SECONDARY = "#4a4a4a";
 const TEXT_TERTIARY = "#7a7a7a";
 const BORDER = "#e5e5e5";
 const ACCENT_TINT = "#e7f7fd";
+const WHITE_90 = "#ffffff";
+const WHITE_72 = "rgba(255, 255, 255, 0.78)";
+const WHITE_55 = "rgba(255, 255, 255, 0.58)";
+const WHITE_12 = "rgba(255, 255, 255, 0.16)";
 
 const styles = StyleSheet.create({
-  page: {
-    paddingTop: 48,
-    paddingBottom: 60,
+  /* ═══ COVER PAGE ═══
+     Full-bleed brand-blue background. No padding on the Page itself;
+     we use a nested View with generous padding for content. */
+  coverPage: {
+    padding: 0,
+    backgroundColor: BRAND_BLUE_DARK,
+    fontFamily: "Helvetica",
+    color: WHITE_90,
+  },
+  coverInner: {
+    flex: 1,
+    paddingTop: 64,
+    paddingHorizontal: 56,
+    paddingBottom: 48,
+  },
+  coverLogoWhite: {
+    /* Full lockup in white, large on the cover. Aspect ~1.093. */
+    width: 220,
+    height: 201,
+    marginLeft: -18,
+    marginBottom: 20,
+  },
+  coverTitle: {
+    fontSize: 38,
+    fontFamily: "Helvetica-Bold",
+    color: WHITE_90,
+    letterSpacing: -0.6,
+    lineHeight: 1.1,
+    marginBottom: 18,
+    marginTop: 28,
+  },
+  coverLede: {
+    fontSize: 12,
+    color: WHITE_72,
+    lineHeight: 1.6,
+    marginBottom: 32,
+    maxWidth: 460,
+  },
+
+  /* Stats row on the cover. Top and bottom dividers are rendered as
+     explicit <View> elements below — react-pdf's `border` shorthand
+     parser mis-renders rgba() into a green-tinted blue on a blue
+     background, so we avoid the shorthand entirely. */
+  coverStatRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    gap: 22,
+  },
+  coverDivider: {
+    width: "100%",
+    height: 0.8,
+    backgroundColor: "#ffffff",
+    opacity: 0.28,
+  },
+  coverStat: {
+    flexDirection: "column",
+  },
+  coverStatLabel: {
+    fontSize: 7,
+    color: WHITE_55,
+    letterSpacing: 0.9,
+    textTransform: "uppercase",
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 3,
+  },
+  coverStatValue: {
+    fontSize: 12,
+    color: WHITE_90,
+    fontFamily: "Helvetica-Bold",
+  },
+  coverStatVerticalDivider: {
+    width: 0.8,
+    height: 26,
+    backgroundColor: "#ffffff",
+    opacity: 0.22,
+  },
+
+  /* "The few rules that matter" card on the blue cover.
+     White-tinted translucent surface so the blue still breathes
+     through but the text stays legible. Left accent rendered as a
+     separate View so we avoid the shorthand `borderLeft` that
+     mis-renders on blue. */
+  coverRules: {
+    marginTop: 28,
+    flexDirection: "row",
+    backgroundColor: WHITE_12,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  coverRulesAccent: {
+    width: 2,
+    backgroundColor: "#ffffff",
+  },
+  coverRulesBody: {
+    flex: 1,
+    padding: 18,
+  },
+  coverRulesTitle: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: WHITE_90,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    marginBottom: 10,
+  },
+  coverRulesItem: {
+    fontSize: 10.5,
+    color: WHITE_90,
+    marginBottom: 5,
+    lineHeight: 1.45,
+  },
+
+  /* Cover footer — small attribution strip at the very bottom. */
+  coverFooter: {
+    position: "absolute",
+    left: 56,
+    right: 56,
+    bottom: 40,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  coverFooterLabel: {
+    fontSize: 8,
+    color: WHITE_55,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    fontFamily: "Helvetica-Bold",
+  },
+  coverFooterUrl: {
+    fontSize: 8,
+    color: WHITE_55,
+    letterSpacing: 0.6,
+  },
+
+  /* ═══ CONTENT PAGES ═══ */
+  contentPage: {
+    paddingTop: 52,
+    paddingBottom: 70,
     paddingHorizontal: 48,
     fontSize: 10,
     color: TEXT_PRIMARY,
     lineHeight: 1.45,
     fontFamily: "Helvetica",
+    backgroundColor: "#ffffff",
   },
 
-  /* Cover / header */
-  cover: {
-    /* Slightly reduced top margin: the running header at the very
-       top of the page renders an empty string on page 1, but still
-       reserves ~15px of vertical space. So we compensate here. */
-    marginTop: 48,
-    marginBottom: 0,
-  },
-  eyebrow: {
-    fontSize: 8,
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    color: BRAND_BLUE_DARK,
-    fontFamily: "Helvetica-Bold",
-    marginBottom: 14,
-  },
-  title: {
-    fontSize: 30,
-    fontFamily: "Helvetica-Bold",
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.4,
-    lineHeight: 1.15,
-    marginBottom: 18,
-  },
-  lede: {
-    fontSize: 11.5,
-    color: TEXT_SECONDARY,
-    lineHeight: 1.55,
-    marginBottom: 22,
-    maxWidth: 440,
-  },
-  statRow: {
+  /* Footer brand mark — absolute-positioned, `fixed` so it repeats
+     on every content page break. Bottom-center placement reads like
+     a running brand anchor without stealing attention from content. */
+  footerWrap: {
+    position: "absolute",
+    bottom: 28,
+    left: 0,
+    right: 0,
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
-    borderTop: `1px solid ${BORDER}`,
-    borderBottom: `1px solid ${BORDER}`,
-    paddingVertical: 10,
-    gap: 16,
   },
-  stat: {
-    flexDirection: "column",
-  },
-  statLabel: {
-    fontSize: 7,
-    color: TEXT_TERTIARY,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    fontFamily: "Helvetica-Bold",
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: 11,
-    color: TEXT_PRIMARY,
-    fontFamily: "Helvetica-Bold",
-  },
-  statDivider: {
-    width: 1,
-    height: 22,
-    backgroundColor: BORDER,
-  },
-
-  /* Quick rules box */
-  rules: {
-    marginTop: 18,
-    padding: 14,
-    backgroundColor: ACCENT_TINT,
-    borderRadius: 6,
-    borderLeft: `3px solid ${BRAND_BLUE}`,
-  },
-  rulesTitle: {
-    fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    color: BRAND_BLUE_DARK,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  rulesItem: {
-    fontSize: 10,
-    color: TEXT_PRIMARY,
-    marginBottom: 3,
+  footerMark: {
+    width: 18,
+    height: 16,
   },
 
   /* Module section */
   module: {
-    marginTop: 20,
+    marginTop: 18,
   },
   moduleHeader: {
     flexDirection: "row",
@@ -171,11 +281,13 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   moduleSubtitle: {
-    fontSize: 9.5,
+    fontSize: 10,
     color: TEXT_SECONDARY,
     marginTop: 4,
-    marginBottom: 8,
+    marginBottom: 10,
     fontStyle: "italic",
+    lineHeight: 1.5,
+    maxWidth: 480,
   },
 
   /* Item row */
@@ -199,7 +311,7 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     color: TEXT_PRIMARY,
     flex: 1,
-    lineHeight: 1.4,
+    lineHeight: 1.5,
   },
   itemOnlyIf: {
     fontSize: 7.5,
@@ -207,20 +319,14 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     marginLeft: 4,
   },
-
-  /* Running header — subtle brand line at the top of every page
-     (except the cover which has its own big eyebrow). Uses the
-     `fixed` + `render` pattern which is the only reliable way to
-     repeat an element across pages in react-pdf. */
-  runningHeader: {
-    fontSize: 7,
-    color: TEXT_TERTIARY,
-    textAlign: "center",
-    letterSpacing: 1.2,
-    marginBottom: 24,
-    fontFamily: "Helvetica-Bold",
-  },
 });
+
+/* Unused imports kept here so future typo-fixes don't break things */
+void BRAND_BLUE;
+void BRAND_BLUE_DEEP;
+void ACCENT_TINT;
+void logoFullColorPath;
+void logoWhitePath;
 
 function ChecklistDocument() {
   return (
@@ -230,87 +336,95 @@ function ChecklistDocument() {
       subject="Turnover cleaning standards"
       creator="Parcel Portal"
     >
-      <Page size="LETTER" style={styles.page} wrap>
-        {/* Running header — hidden on page 1 (cover has its own big
-            eyebrow), visible on every subsequent page as a subtle
-            brand + page number line. */}
-        <Text
-          style={styles.runningHeader}
-          fixed
-          render={({ pageNumber, totalPages }) =>
-            pageNumber === 1
-              ? ""
-              : `THE PARCEL COMPANY     ·     CLEANING CHECKLIST     ·     PAGE ${pageNumber} OF ${totalPages}`
-          }
-        />
+      {/* ═══ PAGE 1 — COVER (full-bleed brand blue) ═══ */}
+      <Page size="LETTER" style={styles.coverPage}>
+        <View style={styles.coverInner}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <Image src={logoWhitePath} style={styles.coverLogoWhite} />
 
-        {/* Cover — its own page, forced break before module 01 below */}
-        <View style={styles.cover}>
-          <Text style={styles.eyebrow}>THE PARCEL COMPANY</Text>
-          <Text style={styles.title}>
+          <Text style={styles.coverTitle}>
             Turnover cleaning{"\n"}checklist
           </Text>
-          <Text style={styles.lede}>
+
+          <Text style={styles.coverLede}>
             Every step we expect a Parcel home to meet before the next
             guest checks in. Use this when you&apos;re turning over the
             home yourself instead of scheduling our cleaning team. Some
             items only apply to certain properties, and those are
-            marked.
+            marked along the way.
           </Text>
 
-          {/* Stats row */}
-          <View style={styles.statRow}>
-            <View style={styles.stat}>
-              <Text style={styles.statLabel}>Items</Text>
-              <Text style={styles.statValue}>{TOTAL_ITEMS}</Text>
+          {/* Stats strip with explicit thin-View dividers top + bottom */}
+          <View style={styles.coverDivider} />
+          <View style={styles.coverStatRow}>
+            <View style={styles.coverStat}>
+              <Text style={styles.coverStatLabel}>ITEMS</Text>
+              <Text style={styles.coverStatValue}>{TOTAL_ITEMS}</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <Text style={styles.statLabel}>Modules</Text>
-              <Text style={styles.statValue}>{MODULES.length}</Text>
+            <View style={styles.coverStatVerticalDivider} />
+            <View style={styles.coverStat}>
+              <Text style={styles.coverStatLabel}>MODULES</Text>
+              <Text style={styles.coverStatValue}>{MODULES.length}</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <Text style={styles.statLabel}>Thermostat</Text>
-              <Text style={styles.statValue}>70°F on exit</Text>
+            <View style={styles.coverStatVerticalDivider} />
+            <View style={styles.coverStat}>
+              <Text style={styles.coverStatLabel}>THERMOSTAT</Text>
+              <Text style={styles.coverStatValue}>70°F on exit</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <Text style={styles.statLabel}>Last step</Text>
-              <Text style={styles.statValue}>Photo of locked door</Text>
+            <View style={styles.coverStatVerticalDivider} />
+            <View style={styles.coverStat}>
+              <Text style={styles.coverStatLabel}>LAST STEP</Text>
+              <Text style={styles.coverStatValue}>Locked-door photo</Text>
             </View>
           </View>
+          <View style={styles.coverDivider} />
 
-          {/* House rules (owner-framed) */}
-          <View style={styles.rules}>
-            <Text style={styles.rulesTitle}>THE FEW RULES THAT MATTER</Text>
-            <Text style={styles.rulesItem}>
-              • Refill every supply to 100%. Nothing should drop below
-              75% before a guest arrives.
-            </Text>
-            <Text style={styles.rulesItem}>
-              • Check sheets and pillowcases carefully. Even one hair
-              makes the bed feel unclean to a guest.
-            </Text>
-            <Text style={styles.rulesItem}>
-              • Thermostat to 70°F, lights off, windows closed, and all
-              doors locked when you leave.
-            </Text>
-            <Text style={styles.rulesItem}>
-              • Before and after photos are optional, but helpful if
-              anything gets flagged later.
-            </Text>
+          {/* Rules card — accent bar is a sibling View so the color
+              renders cleanly without react-pdf's border shorthand
+              parser turning it green. */}
+          <View style={styles.coverRules}>
+            <View style={styles.coverRulesAccent} />
+            <View style={styles.coverRulesBody}>
+              <Text style={styles.coverRulesTitle}>
+                THE FEW RULES THAT MATTER
+              </Text>
+              <Text style={styles.coverRulesItem}>
+                • Refill every supply to 100%. Nothing should drop below
+                75% before a guest arrives.
+              </Text>
+              <Text style={styles.coverRulesItem}>
+                • Check sheets and pillowcases carefully. Even one hair
+                makes the bed feel unclean to a guest.
+              </Text>
+              <Text style={styles.coverRulesItem}>
+                • Thermostat to 70°F, lights off, windows closed, and
+                all doors locked when you leave.
+              </Text>
+              <Text style={styles.coverRulesItem}>
+                • Before and after photos are optional, but helpful if
+                anything gets flagged later.
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Modules — first one forces a new page so the cover stands alone */}
+        {/* Cover footer strip */}
+        <View style={styles.coverFooter}>
+          <Text style={styles.coverFooterLabel}>THE PARCEL COMPANY</Text>
+          <Text style={styles.coverFooterUrl}>theparcelco.com</Text>
+        </View>
+      </Page>
+
+      {/* ═══ PAGES 2+ — CONTENT (white, module list) ═══ */}
+      <Page size="LETTER" style={styles.contentPage} wrap>
+        {/* Footer brand mark — fixed, repeats on every content page */}
+        <View style={styles.footerWrap} fixed>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <Image src={logoMarkPath} style={styles.footerMark} />
+        </View>
+
         {MODULES.map((module, i) => (
-          <View
-            key={module.id}
-            style={styles.module}
-            wrap={false}
-            break={i === 0}
-          >
+          <View key={module.id} style={styles.module} wrap={false}>
             <View style={styles.moduleHeader}>
               <Text style={styles.moduleNumber}>
                 {String(i + 1).padStart(2, "0")}
@@ -336,7 +450,6 @@ function ChecklistDocument() {
             ))}
           </View>
         ))}
-
       </Page>
     </Document>
   );

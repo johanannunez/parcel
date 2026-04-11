@@ -7,11 +7,9 @@
  * import it from Node without a JSX transformer, and the page can
  * wrap each module with Phosphor icons separately.
  *
- * Content is enriched with the universal parts of the 19 S Edison
- * cleaning guide (specific counts, standards, and the high-touch
- * miss-list). Unit-specific content (addresses, door codes, phone
- * numbers, unit identifiers) is intentionally omitted — this file is
- * the portfolio-wide standard, not a property-specific guide.
+ * Voice: owner-to-owner. Warm, practical, explains the why where it
+ * earns the sentence. Specific counts (TP rolls, pillows, thermostat
+ * temp, supply thresholds) are rules of fact and never softened.
  */
 
 export type ChecklistItem = {
@@ -53,114 +51,117 @@ export const MODULES: ChecklistModule[] = [
   {
     id: "pre-clean",
     title: "Before you start",
-    subtitle: "Document the condition before touching anything.",
+    subtitle:
+      "A few quick photos now protect you if anything comes up later.",
     items: [
       {
         id: "pre-photo-rooms",
-        text: "Photograph every room before cleaning starts.",
+        text: "Walk the home with your phone out and snap a photo of every room before you touch anything. It saves you if there's ever a question later.",
       },
       {
         id: "pre-damage-log",
-        text: "Log any damage or missing items in a note before moving things around.",
+        text: "Jot a quick note of anything damaged or missing before you start moving things around, so you don't second-guess yourself later.",
       },
       {
         id: "pre-lost-items",
-        text: "Check under beds, couches, and nightstands for lost items.",
+        text: "Peek under the beds, couches, and nightstands for anything a guest left behind. Lost items are easier to return when you catch them early.",
       },
       {
         id: "pre-trash",
-        text: "Empty all interior and exterior trash bins.",
+        text: "Empty every trash bin, inside and out. Starting with fresh bins makes the rest of the clean feel lighter.",
       },
       {
         id: "pre-windows",
-        text: "Open windows for 10 minutes to air the home out.",
+        text: "Crack the windows for about 10 minutes to let the home breathe. It clears out any leftover smells before you start deep cleaning.",
       },
       {
         id: "pre-before-after",
-        text: "Take quick before and after photos for your own records. Helpful if anything gets flagged later.",
+        text: "Take a few before and after shots for your own records. If anything ever gets questioned, you'll be glad you have them.",
       },
     ],
   },
   {
     id: "full-clean-misses",
     title: "The spots people miss",
-    subtitle: "Small details, huge difference in how the home feels.",
+    subtitle:
+      "The little things guests notice but never mention. These are what turn a good stay into a great one.",
     items: [
       {
         id: "misses-baseboards",
-        text: "Baseboards: check for dust and dirt buildup.",
+        text: "Run your hand along the baseboards and check for dust buildup. Guests rarely say anything, but they always notice.",
       },
       {
         id: "misses-walls",
-        text: "Walls, doors, and trim: wipe off scuff marks.",
+        text: "Look at the walls, doors, and trim for scuff marks and wipe off anything you can. A magic eraser handles most of them in seconds.",
       },
       {
         id: "misses-high-touch",
-        text: "Light switches, door handles, and remotes. High-touch spots collect everything.",
+        text: "Wipe down light switches, door handles, and remotes. These are the spots everyone touches, and they collect more than you'd think.",
       },
       {
         id: "misses-glass",
-        text: "Mirrors, glass cups, windows, and glass tables: wipe streaks and fingerprints.",
+        text: "Give mirrors, glassware, windows, and glass tables a once-over for streaks and fingerprints. Clean glass is one of those small things that makes a home feel cared for.",
       },
       {
         id: "misses-behind",
-        text: "Behind doors, under furniture, and under beds: check for trash or dust.",
+        text: "Check behind doors, under furniture, and under beds for trash or dust bunnies. These are the spots rushed cleans almost always skip.",
       },
       {
         id: "misses-sheets-hair",
-        text: "Sheets: even one hair on a pillow makes a guest feel like the bed was not cleaned. Check carefully.",
+        text: "Take a close look at the sheets and pillowcases. One stray hair is all it takes for a guest to feel like the bed wasn't changed, so check carefully.",
       },
     ],
   },
   {
     id: "damaged-items",
     title: "Damaged or stained items",
-    subtitle: "Photos first, then decide wash or replace.",
+    subtitle: "Photos first, then figure out if it's a wash or a replace.",
     items: [
       {
         id: "damage-photo",
-        text: "Take photos of any damage before touching it. Send us a message in the portal if you want us to follow up.",
+        text: "Snap a photo of any damage before you touch it. Send us a message in the portal if you'd like us to follow up with the guest.",
       },
       {
         id: "damage-wash-check",
-        text: "If the item can be washed, check whether the stain came out. If it did, you're clear to move on.",
+        text: "If it's washable, throw it in and see if the stain comes out. If it does, you're good to move on.",
       },
       {
         id: "damage-broken",
-        text: "If the item is broken or beyond use, document it with photos and send us a message. We often keep backups and can help replace it.",
+        text: "If something's broken or past saving, take a photo and send us a message in the portal. We often keep backups on hand and can help you get it replaced.",
       },
     ],
   },
   {
     id: "laundry",
     title: "Laundry",
-    subtitle: "Towels first, then sheets. One load at a time.",
+    subtitle:
+      "Towels first, then sheets. One load at a time so nothing gets forgotten.",
     items: [
       {
         id: "laundry-towels-first",
-        text: "Start towels and bath mats first so they finish drying before sheets.",
+        text: "Throw in the towels and bath mats first. They take the longest to dry, so starting them early means you're not stuck waiting at the end.",
       },
       {
         id: "laundry-sheets-second",
-        text: "Start sheets after towels move to the dryer.",
+        text: "Start the sheets once the towels move to the dryer. Running them back to back keeps you in rhythm.",
       },
       {
         id: "laundry-check-stains",
-        text: "Check every sheet, pillowcase, and towel for stains or damage before washing.",
+        text: "Give every sheet, pillowcase, and towel a quick look for stains or damage before it goes in. Easier to catch now than after a hot wash sets it in.",
       },
       {
         id: "laundry-washer-drum",
-        text: "Wipe inside the washer drum after the last load.",
+        text: "Wipe the inside of the washer drum after the last load. It keeps mildew from setting in before the next turn.",
         onlyIf: "has washer",
       },
       {
         id: "laundry-dryer-lint",
-        text: "Empty the dryer lint trap.",
+        text: "Clear the lint trap in the dryer. A clogged trap is a fire risk and the reason loads take forever to dry.",
         onlyIf: "has dryer",
       },
       {
         id: "laundry-fold-put-away",
-        text: "Finish laundry all the way: dry, fold, put away. Leave nothing in the washer or dryer.",
+        text: "Finish the laundry all the way: dried, folded, and put away. Don't leave anything sitting in the washer or dryer for the next guest to find.",
       },
     ],
   },
@@ -168,99 +169,100 @@ export const MODULES: ChecklistModule[] = [
     id: "restock",
     title: "Restock supplies",
     subtitle:
-      "Refill anything under 75%. Ideally everything at 100% before check-in.",
+      "If anything is under 75%, top it up. Aim for 100% before the next guest walks in.",
     items: [
       {
         id: "restock-shampoo",
-        text: "Shampoo, conditioner, and body wash at 75%+ or replace. Preferably 100%.",
+        text: "Top up the shampoo, conditioner, and body wash, or swap in fresh bottles. Full bottles feel a lot more welcoming than half-empty ones.",
       },
       {
         id: "restock-kitchen-basics",
-        text: "Coffee, tea, sugar, oil, salt, and pepper restocked to 100%.",
+        text: "Refill the coffee, tea, sugar, oil, salt, and pepper back to full. These are the things guests reach for without thinking.",
       },
       {
         id: "restock-coffee-pods",
-        text: "Coffee pods restocked.",
+        text: "Restock the coffee pods so there's plenty for a few mornings.",
         onlyIf: "has coffee maker",
       },
       {
         id: "restock-dish-soap",
-        text: "Dish soap, dishwasher pods, and fresh sponges.",
+        text: "Check the dish soap, dishwasher pods, and swap in fresh sponges. Old sponges are one of the first things guests notice in a kitchen.",
       },
       {
         id: "restock-paper-towels",
-        text: "Paper towels: 2 rolls total. One full roll on the counter, one half-used (or backup) under the sink.",
+        text: "Leave 2 rolls of paper towels total: one full roll on the counter and one backup (full or half-used) under the sink.",
       },
       {
         id: "restock-trash-bags",
-        text: "Leave a full roll of trash bags in both the kitchen and the bathroom.",
+        text: "Leave a full roll of trash bags in both the kitchen and the bathroom. It saves guests from digging around when a bin fills up.",
       },
     ],
   },
   {
     id: "interior",
     title: "Interior standards",
-    subtitle: "Every room, every time.",
+    subtitle: "The baseline for every room, every time.",
     items: [
       {
         id: "interior-surfaces",
-        text: "Wipe all counters, tables, shelves, light switches, doorknobs, and handles with disinfectant.",
+        text: "Wipe every counter, table, shelf, light switch, doorknob, and handle with disinfectant. These are the surfaces guests touch the most.",
       },
       {
         id: "interior-vacuum",
-        text: "Vacuum all carpets and rugs.",
+        text: "Vacuum all the carpets and rugs. Don't forget the edges and corners where dust tends to gather.",
       },
       {
         id: "interior-mop",
-        text: "Sweep and mop kitchen, bathroom, and hard-floor areas.",
+        text: "Sweep and mop the kitchen, bathrooms, and any other hard-floor areas. A clean floor changes how the whole home feels.",
       },
       {
         id: "interior-lights",
-        text: "Check every light bulb. Replace any that are dead or dim.",
+        text: "Flip on every light and replace any bulbs that are dead or dim. A dark corner in a listing photo space is an easy thing to miss.",
       },
       {
         id: "interior-dust",
-        text: "Dust picture frames, shelves, fans, and accessible vents.",
+        text: "Dust picture frames, shelves, fans, and any vents you can reach. Ceiling fans especially, since guests look up from the bed.",
       },
       {
         id: "interior-trash-liners",
-        text: "Fresh trash liners in every bin.",
+        text: "Put a fresh liner in every trash bin. Little detail, but it makes the home feel ready.",
       },
     ],
   },
   {
     id: "kitchen",
     title: "Kitchen and pantry",
-    subtitle: "The room guests judge first.",
+    subtitle:
+      "This is the room guests judge first. A spotless kitchen buys you a lot of goodwill.",
     items: [
       {
         id: "kitchen-fridge-clear",
-        text: "Empty the fridge of any food left by guests. Wipe shelves and drawers.",
+        text: "Clear the fridge of any food the last guest left behind, then wipe down the shelves and drawers. Nothing ruins a first impression like opening a fridge to leftovers.",
       },
       {
         id: "kitchen-fridge-freezer",
-        text: "Check the freezer. Toss expired or opened items.",
+        text: "Check the freezer too. Toss anything opened or past its prime.",
       },
       {
         id: "kitchen-dishwasher-empty",
-        text: "Run the dishwasher on an empty rinse cycle if any dishes were left.",
+        text: "If any dishes were left inside, run an empty rinse cycle to clear it out.",
         onlyIf: "has dishwasher",
       },
       {
         id: "kitchen-sink-counter",
-        text: "Scrub the sink, polish the faucet, wipe the backsplash.",
+        text: "Scrub the sink, polish the faucet, and wipe the backsplash. A gleaming sink makes the whole kitchen look cleaner than it is.",
       },
       {
         id: "kitchen-microwave",
-        text: "Wipe inside the microwave. Check for spills on the turntable.",
+        text: "Wipe the inside of the microwave, including the turntable. Splatters from the last guest are easy to miss but impossible to unsee.",
       },
       {
         id: "kitchen-oven-stovetop",
-        text: "Wipe the stovetop and oven front. Deep clean if anything is burnt on.",
+        text: "Wipe the stovetop and the front of the oven. If anything is burnt on, take the time to scrub it off now.",
       },
       {
         id: "kitchen-coffee-maker",
-        text: "Descale the coffee maker at least once a month.",
+        text: "Descale the coffee maker at least once a month. It keeps the coffee tasting fresh and the machine running longer.",
         onlyIf: "has coffee maker",
       },
     ],
@@ -268,98 +270,101 @@ export const MODULES: ChecklistModule[] = [
   {
     id: "bathrooms",
     title: "Bathrooms",
-    subtitle: "Scrub, polish, restock. Specific counts matter.",
+    subtitle:
+      "Scrub, polish, and restock. The counts here matter, so stick to them.",
     items: [
       {
         id: "bath-sink",
-        text: "Scrub the sink, polish the faucet and mirror.",
+        text: "Scrub the sink, then polish the faucet and mirror until they shine. A streak-free mirror is worth the extra 30 seconds.",
       },
       {
         id: "bath-tub-shower",
-        text: "Scrub the tub, shower walls, and glass. Check the drain for hair.",
+        text: "Scrub the tub, shower walls, and glass. Don't forget to pull any hair out of the drain, that's the one detail guests always remember.",
       },
       {
         id: "bath-caulk",
-        text: "Wipe the caulk line along the tub and toilet base.",
+        text: "Wipe along the caulk line where the tub and toilet meet the floor. It's usually the spot that gives a bathroom away as less than spotless.",
       },
       {
         id: "bath-toilet",
-        text: "Clean the toilet bowl, base, and seat.",
+        text: "Clean the toilet bowl, the base, and the seat (including the underside of the lid).",
       },
       {
         id: "bath-toilet-paper",
-        text: "Toilet paper: 6 rolls total per bathroom. 1 on the holder, 5 backup.",
+        text: "Leave 6 rolls of toilet paper per bathroom: 1 on the holder and 5 as backup where guests can find them easily.",
       },
       {
         id: "bath-towels-hung",
-        text: "Bath towels: 8 total (2 per guest). Fold and hang with a fan fold, as shown in the listing photos.",
+        text: "Set out 8 bath towels total (2 per guest). Fold and hang them with a fan fold to match the listing photos.",
       },
     ],
   },
   {
     id: "bedrooms",
     title: "Bedrooms",
-    subtitle: "Fresh linens, neat beds, nothing left behind.",
+    subtitle:
+      "Fresh linens, beds made neat, nothing of the last guest left behind.",
     items: [
       {
         id: "bed-fresh-linens",
-        text: "Make every bed with fresh sheets and pillowcases.",
+        text: "Make every bed with fresh sheets and pillowcases. Always fresh, even if the last guest barely slept in it.",
       },
       {
         id: "bed-pillows-king-queen",
-        text: "4 pillows on each King or Queen bed.",
+        text: "Put 4 pillows on each King or Queen bed.",
       },
       {
         id: "bed-pillows-twin",
-        text: "2 pillows on each Twin bed.",
+        text: "Put 2 pillows on each Twin bed.",
       },
       {
         id: "bed-extra-sheets",
-        text: "Leave 1 extra sheet set per bed in the bedroom closet.",
+        text: "Leave one extra sheet set for each bed folded in the closet. If a guest has a late-night spill, they can change it themselves without bothering you.",
       },
       {
         id: "bed-arrange-pillows",
-        text: "Arrange decorative pillows and throws to match the listing photos.",
+        text: "Arrange the decorative pillows and throws to match the listing photos. Guests should walk in and see the same home they booked.",
       },
       {
         id: "bed-nightstands",
-        text: "Check nightstand drawers for guest belongings. Wipe the top.",
+        text: "Open the nightstand drawers to check for anything a guest may have left, then wipe the tops.",
       },
       {
         id: "bed-under",
-        text: "Vacuum or sweep under the bed and in the corners.",
+        text: "Vacuum or sweep under the bed and into the corners. Easy to skip, and the one place guests somehow always look.",
       },
       {
         id: "bed-closet",
-        text: "Open every closet. Count the hangers. Leave them evenly spaced.",
+        text: "Open every closet and count the hangers. Leave them evenly spaced so it feels like a hotel.",
       },
     ],
   },
   {
     id: "living",
     title: "Living room and dining",
-    subtitle: "The space guests spend the most time in.",
+    subtitle:
+      "Guests spend most of their time here. Make it feel like a home, not just a clean room.",
     items: [
       {
         id: "living-cushions",
-        text: "Fluff and rotate couch cushions. Check underneath for crumbs and items.",
+        text: "Fluff and rotate the couch cushions, and check underneath for crumbs or anything the last guest dropped.",
       },
       {
         id: "living-decor",
-        text: "Wipe tables, shelves, remotes, and décor.",
+        text: "Wipe the tables, shelves, remotes, and any décor. Remotes especially, since everyone touches them.",
       },
       {
         id: "living-blinds",
-        text: "Adjust blinds or shades to match the standard look.",
+        text: "Adjust the blinds or shades to match the standard look. Little thing, but it's what sells the first impression.",
       },
       {
         id: "living-tv",
-        text: "Power the TV on. Check for cracks. Confirm Roku or Apple TV is signed in.",
+        text: "Turn the TV on to check for cracks and confirm Roku or Apple TV is still signed in. Guests getting locked out is one of the most common complaints.",
         onlyIf: "has tv",
       },
       {
         id: "living-fireplace",
-        text: "Sweep the fireplace hearth. Check the glass.",
+        text: "Sweep the fireplace hearth and check the glass for soot or smudges.",
         onlyIf: "has indoor fireplace",
       },
     ],
@@ -367,68 +372,70 @@ export const MODULES: ChecklistModule[] = [
   {
     id: "entry",
     title: "Entry, lobby, and hallways",
-    subtitle: "First impressions when guests arrive.",
+    subtitle:
+      "This is the first thing guests see. Make the opening moment count.",
     items: [
       {
         id: "entry-tables",
-        text: "Wipe entry tables, mirrors, and handles.",
+        text: "Wipe the entry tables, mirrors, and door handles. It's the first surface a guest touches, so make it feel cared for.",
       },
       {
         id: "entry-scuffs",
-        text: "Check for scuffs or marks on walls and doors. Wipe any you can.",
+        text: "Look for scuff marks on the walls and doors, and wipe off anything you can. A magic eraser makes quick work of most of them.",
       },
       {
         id: "entry-sweep",
-        text: "Sweep and vacuum the lobby, inside the front door, and the area in front of the apartment.",
+        text: "Sweep and vacuum the lobby, just inside the front door, and the area right in front of the unit.",
       },
       {
         id: "entry-welcome",
-        text: "Ensure welcome items (snacks, note card, key instructions) are in place.",
+        text: "Make sure the welcome items (snacks, note card, key instructions) are in place and easy to spot.",
       },
     ],
   },
   {
     id: "outdoor",
     title: "Exterior, patio, and balcony",
-    subtitle: "Sweep, wipe, and check anything outside.",
+    subtitle:
+      "A quick sweep and wipe outside says you care about every corner of the home.",
     items: [
       {
         id: "outdoor-sweep",
-        text: "Sweep the porch, balcony, or patio. Remove trash, leaves, and cobwebs.",
+        text: "Sweep the porch, balcony, or patio and clear out any trash, leaves, or cobwebs. Guests love these spaces, so they're worth the extra minute.",
         onlyIf: "has patio or balcony",
       },
       {
         id: "outdoor-furniture-covers",
-        text: "Check outdoor furniture covers. Remove and wash if dirty.",
+        text: "Check the outdoor furniture covers, and wash them if they're dirty.",
         onlyIf: "has outdoor furniture",
       },
       {
         id: "outdoor-furniture-wipe",
-        text: "Wipe outdoor furniture. Check cushions for rain or stains.",
+        text: "Wipe down the outdoor furniture and check the cushions for rain spots or stains.",
         onlyIf: "has patio or balcony",
       },
       {
         id: "outdoor-bbq",
-        text: "Scrub BBQ grates and wipe the outside of the grill.",
+        text: "Scrub the BBQ grates and wipe the outside of the grill. Guests notice a dirty grill the second they lift the lid.",
         onlyIf: "has BBQ grill",
       },
       {
         id: "outdoor-pool",
-        text: "Test pool chemistry. Record pH and chlorine levels.",
+        text: "Test the pool chemistry and write down the pH and chlorine levels.",
         onlyIf: "has pool",
       },
       {
         id: "outdoor-hot-tub",
-        text: "Check hot tub cover and water level. Skim any debris.",
+        text: "Check the hot tub cover, the water level, and skim off any debris.",
         onlyIf: "has hot tub",
       },
       {
         id: "outdoor-trash-bins",
-        text: "Take all trash and recycling bags to the outside bins. Roll bins to the curb on your neighborhood's pickup day.",
+        text: "Take all the trash and recycling bags out to the outside bins. If it's your neighborhood's pickup day, roll them to the curb.",
       },
       {
         id: "outdoor-lights",
-        text: "Check all exterior lights. Switch on/off to verify.",
+        text: "Flip every exterior light on and off to make sure they still work. A dark walkway at check-in is a rough start to a stay.",
       },
     ],
   },
@@ -436,39 +443,42 @@ export const MODULES: ChecklistModule[] = [
     id: "photos",
     title: "Finished photos",
     subtitle:
-      "A visual record for your own files. Any order is fine. Optional but recommended.",
+      "A visual record for your own files. Any order is fine, and these are optional but really worth doing.",
     items: [
-      { id: "photo-entry", text: "Entry area." },
-      { id: "photo-kitchen", text: "Kitchen (include cabinets and drawers)." },
-      { id: "photo-dining", text: "Dining area." },
-      { id: "photo-living", text: "Living room." },
+      { id: "photo-entry", text: "The entry area." },
+      {
+        id: "photo-kitchen",
+        text: "The kitchen, including inside the cabinets and drawers.",
+      },
+      { id: "photo-dining", text: "The dining area." },
+      { id: "photo-living", text: "The living room." },
       { id: "photo-bathrooms", text: "Every bathroom." },
       {
         id: "photo-bedrooms",
-        text: "Every bedroom, including under the beds.",
+        text: "Every bedroom, including a quick shot under each bed.",
       },
-      { id: "photo-laundry", text: "Laundry room." },
-      { id: "photo-front", text: "Front patio or lobby." },
+      { id: "photo-laundry", text: "The laundry room." },
+      { id: "photo-front", text: "The front patio or lobby." },
       {
         id: "photo-balcony",
-        text: "Balcony or back patio.",
+        text: "The balcony or back patio.",
         onlyIf: "has patio or balcony",
       },
       {
         id: "photo-trash",
-        text: "Outdoor trash and recycling bins in place.",
+        text: "The outdoor trash and recycling bins in place.",
       },
       {
         id: "photo-supply-closet",
-        text: "Supply closet. Useful for knowing what to reorder.",
+        text: "The supply closet. Handy later when you're trying to remember what to reorder.",
       },
       {
         id: "photo-front-door",
-        text: "Locked front door (proof the home is secured).",
+        text: "The locked front door, as proof the home is secured on your way out.",
       },
       {
         id: "photo-tv-off",
-        text: "TV powered off with no cracks on screen.",
+        text: "The TV powered off with no cracks on the screen.",
         onlyIf: "has tv",
       },
     ],
@@ -476,43 +486,43 @@ export const MODULES: ChecklistModule[] = [
   {
     id: "final",
     title: "Final walkthrough",
-    subtitle: "One last pass before you lock up.",
+    subtitle: "One last loop through the home before you lock up.",
     items: [
       {
         id: "final-rooms-missed",
-        text: "Walk every room one more time. Check that nothing was missed.",
+        text: "Walk every room one more time with fresh eyes. It's amazing how often you'll catch something on the second pass.",
       },
       {
         id: "final-surfaces",
-        text: "Confirm all surfaces, floors, and beds are clean.",
+        text: "Double-check that all the surfaces, floors, and beds look clean and ready.",
       },
       {
         id: "final-laundry-done",
-        text: "Laundry is fully done: dry, folded, and put away.",
+        text: "Confirm the laundry is fully done: dried, folded, and put away. Nothing left sitting in the washer or dryer.",
       },
       {
         id: "final-thermostat",
-        text: "Set the thermostat to 70°F.",
+        text: "Set the thermostat to 70°F before you lock up. The next guest walks into a comfortable home without running your bill up overnight.",
       },
       {
         id: "final-tv-off",
-        text: "Make sure TVs are off. No cracks or broken displays.",
+        text: "Make sure the TVs are off and the screens are in good shape, no cracks or glitches.",
       },
       {
         id: "final-remotes",
-        text: "Confirm all remotes, smoke detectors, and devices have working batteries.",
+        text: "Test the remotes, smoke detectors, and any other battery-powered devices. Dead batteries are a quick way to get a middle-of-the-night message.",
       },
       {
         id: "final-snacks",
-        text: "Place snacks on the kitchen counter or entry table.",
+        text: "Set the welcome snacks out on the kitchen counter or entry table where guests will see them right away.",
       },
       {
         id: "final-lights-locks",
-        text: "Lights off, windows closed, all doors locked.",
+        text: "Lights off, windows closed, every door locked. That's the last thing to check before you go.",
       },
       {
         id: "final-reorder",
-        text: "Jot down anything running low so you can reorder it before the next stay.",
+        text: "Make a quick list of anything running low so you can reorder it before the next stay. Future you will be grateful.",
       },
     ],
   },
