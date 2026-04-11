@@ -1,10 +1,11 @@
 // Parcel PWA Service Worker
-// Caching strategy: shell = stale-while-revalidate, static = cache-first, data = network-only
+// Strategy: network-first for HTML, hands-off for Next.js chunks,
+// cache-first for brand assets only.
 
-const CACHE_NAME = "parcel-v1";
+const CACHE_NAME = "parcel-v3";
 const OFFLINE_URL = "/offline";
 
-// Pre-cache on install
+// Pre-cache brand assets that rarely change
 const PRE_CACHE = [
   OFFLINE_URL,
   "/brand/logo-mark.png",
@@ -12,26 +13,40 @@ const PRE_CACHE = [
   "/brand/app-icon-light-192.png",
 ];
 
-// Install: pre-cache essentials
+// Install: pre-cache essentials and take over immediately
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRE_CACHE))
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(PRE_CACHE))
+      .catch(() => {
+        // Fail open: if pre-cache fails, install still succeeds
+      }),
   );
   self.skipWaiting();
 });
 
-// Activate: clean old caches, take control
+// Allow the page to force activation on a new SW
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+// Activate: clean ALL old caches, take control of existing clients
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
+      ),
+      self.clients.claim(),
+    ]),
   );
-  self.clients.claim();
 });
 
 // Fetch: route requests through caching strategy
@@ -39,62 +54,70 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== "GET") return;
+  // Only handle GET from our own origin
+  if (request.method !== "GET" || url.origin !== self.location.origin) {
+    return;
+  }
 
-  // Skip Supabase, API, and auth requests (always network)
+  // NEVER intercept Next.js chunks, API routes, auth, or service worker itself.
+  // Next.js hashes its chunks and sets long-lived cache headers. Letting the
+  // browser HTTP cache handle them avoids ChunkLoadError after deploys.
   if (
+    url.pathname.startsWith("/_next/") ||
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/auth/") ||
-    url.hostname.includes("supabase")
+    url.pathname === "/sw.js"
   ) {
     return;
   }
 
-  // Static assets (JS, CSS, images, fonts): cache-first
-  if (
-    url.pathname.startsWith("/_next/static/") ||
-    url.pathname.startsWith("/brand/") ||
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|webp|woff|woff2|ttf|ico)$/)
-  ) {
+  // Brand assets: cache-first (these rarely change)
+  if (url.pathname.startsWith("/brand/")) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
-        return fetch(request).then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  // Navigation requests (HTML pages): stale-while-revalidate with offline fallback
-  if (request.mode === "navigate") {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const fetchPromise = fetch(request)
+        return fetch(request)
           .then((response) => {
             if (response.ok) {
               const clone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(request, clone));
             }
             return response;
           })
-          .catch(() => {
-            // Network failed: serve offline page
-            return caches.match(OFFLINE_URL);
-          });
-
-        // Return cached version immediately if available, otherwise wait for network
-        return cached || fetchPromise;
-      })
+          .catch(() => cached);
+      }),
     );
     return;
   }
+
+  // HTML navigation: network-first with offline fallback
+  // This ensures users always get fresh HTML (with fresh chunk references)
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Only cache successful navigations
+          if (response.ok) {
+            const clone = response.clone();
+            caches
+              .open(CACHE_NAME)
+              .then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          // Network failed: try cache, then offline page
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          return caches.match(OFFLINE_URL);
+        }),
+    );
+    return;
+  }
+
+  // Everything else: pass through to network (no SW caching)
 });
 
 // Push notification received
@@ -116,7 +139,7 @@ self.addEventListener("push", (event) => {
       data: payload.data || { url: "/portal/messages" },
       tag: payload.tag || "parcel-message",
       renotify: true,
-    })
+    }),
   );
 });
 
@@ -130,15 +153,13 @@ self.addEventListener("notificationclick", (event) => {
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
-        // Focus existing portal tab if open
         for (const client of clients) {
           if (client.url.includes("/portal") && "focus" in client) {
             client.navigate(targetUrl);
             return client.focus();
           }
         }
-        // Otherwise open a new window
         return self.clients.openWindow(targetUrl);
-      })
+      }),
   );
 });
