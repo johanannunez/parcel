@@ -239,12 +239,20 @@ export function AdminBottomNav({
                 />
 
                 {/* Portal link */}
-                <AdminMoreLink
+                <Link
                   href="/portal/dashboard"
-                  icon={<House size={20} weight="duotone" />}
-                  label="Switch to Portal"
                   onClick={closeMore}
-                />
+                  className="mb-1 flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold"
+                  style={{
+                    background: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
+                    color: "#fff",
+                    boxShadow: "0 2px 8px rgba(2, 170, 235, 0.25)",
+                    textDecoration: "none",
+                  }}
+                >
+                  <House size={20} weight="duotone" style={{ color: "#fff" }} />
+                  Portal
+                </Link>
 
                 {/* Sign out */}
                 <div className="mt-1">{signOutSlot}</div>

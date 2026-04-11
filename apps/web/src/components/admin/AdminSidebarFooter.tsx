@@ -6,7 +6,7 @@ import {
   Moon,
   Question,
   GearSix,
-  UserCircle,
+  House,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -77,9 +77,18 @@ export function AdminSidebarFooter({
           Account
         </Link>
 
-        <Link href="/portal/dashboard" className="admin-footer-row">
-          <UserCircle size={15} weight="regular" className="shrink-0" />
-          Switch to Portal
+        <Link
+          href="/portal/dashboard"
+          className="my-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold"
+          style={{
+            background: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
+            color: "#fff",
+            boxShadow: "0 2px 8px rgba(2, 170, 235, 0.25)",
+            textDecoration: "none",
+          }}
+        >
+          <House size={15} weight="duotone" className="shrink-0" style={{ color: "#fff" }} />
+          Portal
         </Link>
 
         <Link href="/help" className="admin-footer-row">

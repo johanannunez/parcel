@@ -78,8 +78,17 @@ export function SidebarFooter({
         </Link>
 
         {isAdmin ? (
-          <Link href="/admin" className="admin-switch-link">
-            <ShieldStar size={18} weight="duotone" className="shrink-0" />
+          <Link
+            href="/admin"
+            className="my-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold"
+            style={{
+              background: "linear-gradient(135deg, #F6A825 0%, #D4860A 100%)",
+              color: "#fff",
+              boxShadow: "0 2px 8px rgba(196, 120, 10, 0.28)",
+              textDecoration: "none",
+            }}
+          >
+            <ShieldStar size={18} weight="duotone" className="shrink-0" style={{ color: "#fff" }} />
             Admin
           </Link>
         ) : null}
