@@ -38,7 +38,7 @@ export default async function PropertiesPage() {
       <PageHeader
         eyebrow="Portfolio"
         title="Your properties"
-        description="Every home under Parcel management. Add a new one, or open any card to see bookings, payouts, and documents."
+        description="Every home under Parcel management. Add a new one, or open any card to see bookings and documents."
         actions={
           <LinkButton href="/portal/setup/basics">
             <Plus size={16} weight="bold" />

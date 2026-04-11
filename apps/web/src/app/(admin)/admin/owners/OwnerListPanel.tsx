@@ -11,6 +11,7 @@ type Owner = {
   email: string;
   propertyCount: number;
   onboarded: boolean;
+  pending: boolean;
 };
 
 export function OwnerListPanel({ owners }: { owners: Owner[] }) {
@@ -134,7 +135,7 @@ export function OwnerListPanel({ owners }: { owners: Owner[] }) {
                           : owner.propertyCount === 1
                             ? "1 property"
                             : `${owner.propertyCount} properties`}
-                        {!owner.onboarded ? " · Setting up" : ""}
+                        {owner.pending ? " · Not invited" : !owner.onboarded ? " · Setting up" : ""}
                       </div>
                     </div>
                   </Link>

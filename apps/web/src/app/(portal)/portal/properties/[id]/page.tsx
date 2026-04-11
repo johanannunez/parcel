@@ -9,12 +9,12 @@ import {
   Ruler,
   MapPin,
   CalendarBlank,
-  CurrencyDollar,
-  Wallet,
   FileText,
   House,
+  CalendarX,
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { OccupancyCalendar } from "@/components/portal/OccupancyCalendar";
 import { propertyTypeLongLabels } from "@/lib/labels";
 import { currency0, formatMedium, formatRelative } from "@/lib/format";
@@ -47,7 +47,6 @@ export default async function PropertyDetailPage({
     { data: recentBookings },
     { data: nextStay },
     { data: ytdBookings },
-    { data: payouts },
     { data: calendarBookings },
     { data: monthBookings },
   ] = await Promise.all([
@@ -76,12 +75,6 @@ export default async function PropertyDetailPage({
       .gte("check_in", yearStart)
       .neq("status", "cancelled"),
     supabase
-      .from("payouts")
-      .select("id, period_start, period_end, net_payout, paid_at")
-      .eq("property_id", id)
-      .order("period_start", { ascending: false })
-      .limit(6),
-    supabase
       .from("bookings")
       .select("check_in, check_out")
       .eq("property_id", id)
@@ -96,6 +89,19 @@ export default async function PropertyDetailPage({
       .lte("check_in", calMonthEnd)
       .neq("status", "cancelled"),
   ]);
+
+  // Documents table may not exist yet (pending migration)
+  let documents: Array<{ id: string; title: string; doc_type: string; status: string; file_url: string | null; created_at: string }> = [];
+  try {
+    const { data } = await (supabase as any)
+      .from("documents")
+      .select("id, title, doc_type, status, file_url, created_at")
+      .order("created_at", { ascending: false })
+      .limit(6);
+    documents = data ?? [];
+  } catch {
+    // table doesn't exist yet
+  }
 
   if (!property) notFound();
 
@@ -195,8 +201,8 @@ export default async function PropertyDetailPage({
         />
       </section>
 
-      {/* Revenue summary row */}
-      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Summary row */}
+      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <InfoCard
           icon={<House size={18} weight="duotone" />}
           label="Next stay"
@@ -207,19 +213,14 @@ export default async function PropertyDetailPage({
           }
         />
         <InfoCard
-          icon={<Wallet size={18} weight="duotone" />}
-          label="Revenue YTD"
-          value={currency0.format(ytdRevenue)}
-        />
-        <InfoCard
-          icon={<CurrencyDollar size={18} weight="duotone" />}
-          label="This month"
-          value={currency0.format(thisMonthRevenue)}
-        />
-        <InfoCard
           icon={<CalendarBlank size={18} weight="duotone" />}
           label="Bookings YTD"
           value={String(ytdBookingsCount)}
+        />
+        <InfoCard
+          icon={<FileText size={18} weight="duotone" />}
+          label="Documents"
+          value={`${(documents ?? []).length} on file`}
         />
       </section>
 
@@ -234,7 +235,7 @@ export default async function PropertyDetailPage({
         <Panel
           title="Recent bookings"
           href="/portal/calendar"
-          linkLabel="Open calendar"
+          linkLabel="View calendar"
         >
           {(recentBookings ?? []).length === 0 ? (
             <PanelEmpty
@@ -284,20 +285,20 @@ export default async function PropertyDetailPage({
         </Panel>
 
         <Panel
-          title="Recent payouts"
-          href="/portal/payouts"
-          linkLabel="Open payouts"
+          title="Documents"
+          href="/portal/documents"
+          linkLabel="View all"
         >
-          {(payouts ?? []).length === 0 ? (
+          {(documents ?? []).length === 0 ? (
             <PanelEmpty
-              icon={<Wallet size={22} weight="duotone" />}
-              text="No payouts recorded for this property yet."
+              icon={<FileText size={22} weight="duotone" />}
+              text="No documents on file for this property yet."
             />
           ) : (
             <ul className="flex flex-col">
-              {(payouts ?? []).map((p, i) => (
+              {(documents ?? []).slice(0, 5).map((d, i) => (
                 <li
-                  key={p.id}
+                  key={d.id}
                   className="flex items-center justify-between py-3"
                   style={{
                     borderTop:
@@ -308,27 +309,19 @@ export default async function PropertyDetailPage({
                 >
                   <div className="min-w-0">
                     <div
-                      className="text-sm font-semibold"
+                      className="truncate text-sm font-semibold"
                       style={{ color: "var(--color-text-primary)" }}
                     >
-                      {formatMedium(p.period_start)} to{" "}
-                      {formatMedium(p.period_end)}
+                      {d.title}
                     </div>
                     <div
                       className="text-xs"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      {p.paid_at
-                        ? `Paid ${formatMedium(p.paid_at)}`
-                        : "Awaiting transfer"}
+                      {formatMedium(d.created_at)}
                     </div>
                   </div>
-                  <div
-                    className="text-sm font-semibold tabular-nums"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    {currency0.format(Number(p.net_payout))}
-                  </div>
+                  <DocStatusChip status={d.status} />
                 </li>
               ))}
             </ul>
@@ -336,12 +329,44 @@ export default async function PropertyDetailPage({
         </Panel>
       </section>
 
-      <Panel title="Documents" linkLabel="" href="">
-        <PanelEmpty
-          icon={<FileText size={22} weight="duotone" />}
-          text="Document storage arrives with the onboarding flow. Your leases, insurance, and tax forms will live here."
+      {/* Block request link */}
+      <Link
+        href={`/portal/calendar`}
+        className="flex items-center gap-4 rounded-2xl border p-5 transition-colors hover:opacity-95"
+        style={{
+          backgroundColor: "var(--color-white)",
+          borderColor: "var(--color-warm-gray-200)",
+        }}
+      >
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+          style={{
+            backgroundColor: "rgba(245, 158, 11, 0.12)",
+            color: "#b45309",
+          }}
+        >
+          <CalendarX size={18} weight="duotone" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div
+            className="text-sm font-semibold"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            Need to block dates?
+          </div>
+          <div
+            className="text-sm"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            Request a date block and we will update your calendar across all platforms.
+          </div>
+        </div>
+        <ArrowRight
+          size={14}
+          weight="bold"
+          style={{ color: "var(--color-text-tertiary)" }}
         />
-      </Panel>
+      </Link>
     </div>
   );
 }
@@ -496,5 +521,23 @@ function PanelEmpty({
       </span>
       <p className="max-w-sm">{text}</p>
     </div>
+  );
+}
+
+function DocStatusChip({ status }: { status: string }) {
+  const styles: Record<string, { bg: string; fg: string }> = {
+    pending: { bg: "rgba(245, 158, 11, 0.14)", fg: "#b45309" },
+    signed: { bg: "rgba(22, 163, 74, 0.12)", fg: "#15803d" },
+    uploaded: { bg: "rgba(2, 170, 235, 0.12)", fg: "#0c6fae" },
+    expired: { bg: "rgba(220, 38, 38, 0.12)", fg: "#b91c1c" },
+  };
+  const s = styles[status] ?? styles.pending;
+  return (
+    <span
+      className="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
+      style={{ backgroundColor: s.bg, color: s.fg }}
+    >
+      {status}
+    </span>
   );
 }

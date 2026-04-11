@@ -233,7 +233,7 @@ export async function exportUserData(): Promise<{
 
   const [profileResult, propertiesResult, blockRequestsResult] = await Promise.all([
     supabase.from("profiles").select("full_name, email, phone, preferred_name, contact_method, created_at").eq("id", user.id).single(),
-    supabase.from("properties").select("name, property_type, address_line1, address_line2, city, state, postal_code, bedrooms, bathrooms, guest_capacity, active, created_at").eq("owner_id", user.id),
+    supabase.from("properties").select("name, property_type, address_line1, address_line2, city, state, postal_code, bedrooms, bathrooms, guest_capacity, active, created_at"),
     supabase.from("block_requests").select("id, start_date, end_date, status, created_at").eq("owner_id", user.id),
   ]);
 
