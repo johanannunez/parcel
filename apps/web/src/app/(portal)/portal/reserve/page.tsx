@@ -9,7 +9,8 @@ import {
 import { getPortalContext } from "@/lib/portal-context";
 import { normalizeUnit } from "@/lib/address";
 import { EmptyState } from "@/components/portal/EmptyState";
-import { labelForBlockStatus } from "@/lib/labels";
+import { ReservationsTable } from "./ReservationsTable";
+import type { ReservationRow } from "./ReservationsTable";
 
 export const metadata: Metadata = { title: "Reserve" };
 export const dynamic = "force-dynamic";
@@ -164,8 +165,50 @@ export default async function ReservePage() {
     daysAway = Math.max(0, Math.round((startMs - today.getTime()) / 86_400_000));
   }
 
-  // Cap the displayed list at 20 rows.
-  const listRows = requests.slice(0, 20);
+  // Split requests into upcoming/active vs. past.
+  function toRow(r: (typeof requests)[number]): ReservationRow {
+    const prop = propertyMap.get(r.property_id);
+    const adults   = (r.adults   as number | null) ?? 0;
+    const children = (r.children as number | null) ?? 0;
+    const pets     = (r as { pets?: number | null }).pets ?? 0;
+    const parts: string[] = [];
+    if (adults > 0)   parts.push(`${adults} ${adults === 1 ? "adult" : "adults"}`);
+    if (children > 0) parts.push(`${children} ${children === 1 ? "child" : "children"}`);
+    if (pets > 0)     parts.push(`${pets} ${pets === 1 ? "pet" : "pets"}`);
+    return {
+      id:              r.id,
+      status:          r.status,
+      propertyName:    prop?.name ?? "Property",
+      propertyUnit:    prop?.unit ?? null,
+      cityLine:        prop?.cityLine ?? "",
+      checkInDate:     formatSingleDate(r.start_date),
+      checkInTime:     r.check_in_time  ? formatTime(r.check_in_time)  : null,
+      checkOutDate:    formatSingleDate(r.end_date),
+      checkOutTime:    r.check_out_time ? formatTime(r.check_out_time) : null,
+      guestLine:       parts.join(" · "),
+      cleaning:        (r as { wants_cleaning?: boolean | null }).wants_cleaning ?? false,
+      isOwnerStaying:  (r.is_owner_staying as boolean | null) ?? true,
+    };
+  }
+
+  const upcomingRows: ReservationRow[] = requests
+    .filter(
+      (r) =>
+        r.status === "pending" ||
+        (r.status === "approved" && typeof r.end_date === "string" && r.end_date >= todayStr),
+    )
+    .slice(0, 20)
+    .map(toRow);
+
+  const pastRows: ReservationRow[] = requests
+    .filter(
+      (r) =>
+        r.status === "declined" ||
+        r.status === "cancelled" ||
+        (r.status === "approved" && typeof r.end_date === "string" && r.end_date < todayStr),
+    )
+    .slice(0, 50)
+    .map(toRow);
 
   return (
     <div className="flex flex-col gap-8 pb-12">
@@ -410,7 +453,7 @@ export default async function ReservePage() {
       })()}
 
       {/* No upcoming stay hint — only show when nothing is pending or confirmed upcoming */}
-      {!nextStayRaw && underReviewCount === 0 && listRows.length > 0 ? (
+      {!nextStayRaw && underReviewCount === 0 && (upcomingRows.length > 0 || pastRows.length > 0) ? (
         <div
           className="flex items-center gap-3 rounded-2xl border px-5 py-4"
           style={{
@@ -438,185 +481,11 @@ export default async function ReservePage() {
       ) : null}
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. Reservations list — rich cards                                    */}
+      {/* 4. Reservations table                                               */}
       {/* ------------------------------------------------------------------ */}
-      {listRows.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {/* Section header */}
-          <div
-            className="flex items-center justify-between border-b pb-3"
-            style={{ borderColor: "var(--color-warm-gray-200)" }}
-          >
-            <h2
-              className="text-[13px] font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              All Reservations
-            </h2>
-            <Link
-              href="/portal/reserve/new"
-              className="text-[12px] font-semibold transition-opacity hover:opacity-70"
-              style={{ color: "var(--color-brand)" }}
-            >
-              + New reservation
-            </Link>
-          </div>
-
-          {listRows.map((r) => {
-            const prop = propertyMap.get(r.property_id);
-            const label = labelForBlockStatus(r.status);
-
-            // Status color: explicit green / amber / red per status
-            const statusColor: { bg: string; fg: string; dot: string } =
-              r.status === "approved"
-                ? { bg: "rgba(22,163,74,0.10)", fg: "#14532d", dot: "#16a34a" }
-                : r.status === "declined" || r.status === "cancelled"
-                  ? { bg: "rgba(220,38,38,0.10)", fg: "#7f1d1d", dot: "#dc2626" }
-                  : { bg: "rgba(245,158,11,0.12)", fg: "#92400e", dot: "#f59e0b" }; // pending
-
-            // Left accent color (4px stripe)
-            const accentColor =
-              r.status === "approved"
-                ? "#16a34a"
-                : r.status === "declined" || r.status === "cancelled"
-                  ? "#dc2626"
-                  : "#f59e0b";
-
-            // Guest counts
-            const adults = (r.adults as number | null) ?? 0;
-            const children = (r.children as number | null) ?? 0;
-            const pets = (r as { pets?: number | null }).pets ?? 0;
-            const wantsCleaning = (r as { wants_cleaning?: boolean | null }).wants_cleaning ?? false;
-
-            const guestParts: string[] = [];
-            if (adults > 0) guestParts.push(`${adults} ${adults === 1 ? "adult" : "adults"}`);
-            if (children > 0) guestParts.push(`${children} ${children === 1 ? "child" : "children"}`);
-            if (pets > 0) guestParts.push(`${pets} ${pets === 1 ? "pet" : "pets"}`);
-
-            return (
-              <div
-                key={r.id}
-                className="rounded-2xl border overflow-hidden flex"
-                style={{
-                  backgroundColor: "var(--color-white)",
-                  borderColor: "var(--color-warm-gray-200)",
-                }}
-              >
-                {/* Left accent stripe */}
-                <span
-                  className="flex-shrink-0 w-1"
-                  style={{ backgroundColor: accentColor }}
-                  aria-hidden="true"
-                />
-
-                <div className="flex-1 p-5">
-                  {/* Top row: address + inline status badge */}
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div>
-                      <p
-                        className="text-[15px] font-semibold leading-tight"
-                        style={{ color: "var(--color-text-primary)" }}
-                      >
-                        {prop?.name ?? "Property"}
-                        {prop?.unit ? (
-                          <span className="ml-1.5 font-semibold" style={{ color: "var(--color-brand)" }}>
-                            {prop.unit}
-                          </span>
-                        ) : null}
-                      </p>
-                      {prop?.cityLine ? (
-                        <p className="mt-0.5 text-[12px]" style={{ color: "var(--color-text-tertiary)" }}>
-                          {prop.cityLine}
-                        </p>
-                      ) : null}
-                      {/* Status pill — inline below address */}
-                      <span
-                        className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                        style={{ backgroundColor: statusColor.bg, color: statusColor.fg }}
-                      >
-                        <span
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: statusColor.dot }}
-                        />
-                        {label}
-                      </span>
-                    </div>
-                    {/* Date range top-right */}
-                    <p
-                      className="shrink-0 text-[12px] font-medium tabular-nums"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      {formatSingleDate(r.start_date)} → {formatSingleDate(r.end_date)}
-                    </p>
-                  </div>
-
-                  {/* Detail grid */}
-                  <div
-                    className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-xl p-4 sm:grid-cols-4"
-                    style={{ backgroundColor: "var(--color-warm-gray-50)" }}
-                  >
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
-                        Check-in
-                      </p>
-                      <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
-                        {formatSingleDate(r.start_date)}
-                      </p>
-                      {r.check_in_time ? (
-                        <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-                          {formatTime(r.check_in_time)}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
-                        Check-out
-                      </p>
-                      <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
-                        {formatSingleDate(r.end_date)}
-                      </p>
-                      {r.check_out_time ? (
-                        <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-                          {formatTime(r.check_out_time)}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    {guestParts.length > 0 ? (
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
-                          Guests
-                        </p>
-                        <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
-                          {guestParts.join(" · ")}
-                        </p>
-                      </div>
-                    ) : null}
-
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
-                        Cleaning
-                      </p>
-                      <p className="text-[13px] font-medium" style={{ color: wantsCleaning ? "#15803d" : "var(--color-text-primary)" }}>
-                        {wantsCleaning ? "Yes, scheduled" : "Not requested"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Stay type */}
-                  <p className="mt-3 text-[12px]" style={{ color: "var(--color-text-tertiary)" }}>
-                    {r.is_owner_staying ? "Owner staying" : "Guest staying"}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Empty list state */}
-      {listRows.length === 0 && (
+      {(upcomingRows.length > 0 || pastRows.length > 0) ? (
+        <ReservationsTable upcoming={upcomingRows} past={pastRows} />
+      ) : (
         <div
           className="rounded-2xl border overflow-hidden px-8 py-10 text-center"
           style={{
@@ -624,10 +493,7 @@ export default async function ReservePage() {
             borderColor: "var(--color-warm-gray-200)",
           }}
         >
-          <p
-            className="text-sm"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
+          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
             No reservations yet.{" "}
             <Link
               href="/portal/reserve/new"
