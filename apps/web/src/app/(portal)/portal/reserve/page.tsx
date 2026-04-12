@@ -9,8 +9,7 @@ import {
 import { getPortalContext } from "@/lib/portal-context";
 import { normalizeUnit } from "@/lib/address";
 import { EmptyState } from "@/components/portal/EmptyState";
-import { blockStatusVisual, labelForBlockStatus } from "@/lib/labels";
-import type { BlockRequestStatus } from "@/lib/labels";
+import { labelForBlockStatus } from "@/lib/labels";
 
 export const metadata: Metadata = { title: "Reserve" };
 export const dynamic = "force-dynamic";
@@ -60,9 +59,15 @@ function formatSingleDate(dateStr: string): string {
 
 function formatTime(raw: string | null): string {
   if (!raw) return "";
-  const [hStr, mStr] = raw.split(":");
+  const trimmed = raw.trim();
+  // Already contains AM/PM (stored as 12-hour string) — normalize and return
+  if (/[AP]M/i.test(trimmed)) {
+    return trimmed.replace(/\s*(AM|PM)\s*/i, (_, p: string) => ` ${p.toUpperCase()}`).trim();
+  }
+  // Parse as 24-hour HH:MM[:SS]
+  const [hStr, mStr] = trimmed.split(":");
   const h = parseInt(hStr ?? "0", 10);
-  const m = mStr ?? "00";
+  const m = (mStr ?? "00").slice(0, 2);
   const period = h >= 12 ? "PM" : "AM";
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12}:${m} ${period}`;
@@ -438,13 +443,16 @@ export default async function ReservePage() {
       {listRows.length > 0 && (
         <div className="flex flex-col gap-3">
           {/* Section header */}
-          <div className="flex items-center justify-between px-1">
-            <p
-              className="text-[11px] font-semibold uppercase tracking-[0.13em]"
-              style={{ color: "var(--color-text-tertiary)" }}
+          <div
+            className="flex items-center justify-between border-b pb-3"
+            style={{ borderColor: "var(--color-warm-gray-200)" }}
+          >
+            <h2
+              className="text-[13px] font-semibold"
+              style={{ color: "var(--color-text-primary)" }}
             >
-              All reservations
-            </p>
+              All Reservations
+            </h2>
             <Link
               href="/portal/reserve/new"
               className="text-[12px] font-semibold transition-opacity hover:opacity-70"
@@ -456,10 +464,23 @@ export default async function ReservePage() {
 
           {listRows.map((r) => {
             const prop = propertyMap.get(r.property_id);
-            const visual =
-              blockStatusVisual[r.status as BlockRequestStatus] ??
-              blockStatusVisual["pending"];
             const label = labelForBlockStatus(r.status);
+
+            // Status color: explicit green / amber / red per status
+            const statusColor: { bg: string; fg: string; dot: string } =
+              r.status === "approved"
+                ? { bg: "rgba(22,163,74,0.10)", fg: "#14532d", dot: "#16a34a" }
+                : r.status === "declined" || r.status === "cancelled"
+                  ? { bg: "rgba(220,38,38,0.10)", fg: "#7f1d1d", dot: "#dc2626" }
+                  : { bg: "rgba(245,158,11,0.12)", fg: "#92400e", dot: "#f59e0b" }; // pending
+
+            // Left accent color (4px stripe)
+            const accentColor =
+              r.status === "approved"
+                ? "#16a34a"
+                : r.status === "declined" || r.status === "cancelled"
+                  ? "#dc2626"
+                  : "#f59e0b";
 
             // Guest counts
             const adults = (r.adults as number | null) ?? 0;
@@ -475,99 +496,119 @@ export default async function ReservePage() {
             return (
               <div
                 key={r.id}
-                className="rounded-2xl border p-5"
+                className="rounded-2xl border overflow-hidden flex"
                 style={{
                   backgroundColor: "var(--color-white)",
                   borderColor: "var(--color-warm-gray-200)",
                 }}
               >
-                {/* Top row: address + status pill */}
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div>
-                    <p
-                      className="text-[15px] font-semibold leading-tight"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {prop?.name ?? "Property"}
-                      {prop?.unit ? (
-                        <span className="ml-1.5 font-semibold" style={{ color: "var(--color-brand)" }}>
-                          {prop.unit}
-                        </span>
+                {/* Left accent stripe */}
+                <span
+                  className="flex-shrink-0 w-1"
+                  style={{ backgroundColor: accentColor }}
+                  aria-hidden="true"
+                />
+
+                <div className="flex-1 p-5">
+                  {/* Top row: address + inline status badge */}
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <p
+                        className="text-[15px] font-semibold leading-tight"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {prop?.name ?? "Property"}
+                        {prop?.unit ? (
+                          <span className="ml-1.5 font-semibold" style={{ color: "var(--color-brand)" }}>
+                            {prop.unit}
+                          </span>
+                        ) : null}
+                      </p>
+                      {prop?.cityLine ? (
+                        <p className="mt-0.5 text-[12px]" style={{ color: "var(--color-text-tertiary)" }}>
+                          {prop.cityLine}
+                        </p>
                       ) : null}
+                      {/* Status pill — inline below address */}
+                      <span
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                        style={{ backgroundColor: statusColor.bg, color: statusColor.fg }}
+                      >
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: statusColor.dot }}
+                        />
+                        {label}
+                      </span>
+                    </div>
+                    {/* Date range top-right */}
+                    <p
+                      className="shrink-0 text-[12px] font-medium tabular-nums"
+                      style={{ color: "var(--color-text-secondary)" }}
+                    >
+                      {formatSingleDate(r.start_date)} → {formatSingleDate(r.end_date)}
                     </p>
-                    {prop?.cityLine ? (
-                      <p className="mt-0.5 text-[12px]" style={{ color: "var(--color-text-tertiary)" }}>
-                        {prop.cityLine}
-                      </p>
-                    ) : null}
                   </div>
-                  <span
-                    className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                    style={{ backgroundColor: visual.bg, color: visual.fg }}
+
+                  {/* Detail grid */}
+                  <div
+                    className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-xl p-4 sm:grid-cols-4"
+                    style={{ backgroundColor: "var(--color-warm-gray-50)" }}
                   >
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: visual.dot }} />
-                    {label}
-                  </span>
-                </div>
-
-                {/* Detail grid */}
-                <div
-                  className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-xl p-4 sm:grid-cols-4"
-                  style={{ backgroundColor: "var(--color-warm-gray-50)" }}
-                >
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
-                      Check-in
-                    </p>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
-                      {formatSingleDate(r.start_date)}
-                    </p>
-                    {r.check_in_time ? (
-                      <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-                        {formatTime(r.check_in_time)}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
-                      Check-out
-                    </p>
-                    <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
-                      {formatSingleDate(r.end_date)}
-                    </p>
-                    {r.check_out_time ? (
-                      <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
-                        {formatTime(r.check_out_time)}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {guestParts.length > 0 ? (
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
-                        Guests
+                        Check-in
                       </p>
                       <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
-                        {guestParts.join(" · ")}
+                        {formatSingleDate(r.start_date)}
+                      </p>
+                      {r.check_in_time ? (
+                        <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+                          {formatTime(r.check_in_time)}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
+                        Check-out
+                      </p>
+                      <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
+                        {formatSingleDate(r.end_date)}
+                      </p>
+                      {r.check_out_time ? (
+                        <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+                          {formatTime(r.check_out_time)}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {guestParts.length > 0 ? (
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
+                          Guests
+                        </p>
+                        <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
+                          {guestParts.join(" · ")}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
+                        Cleaning
+                      </p>
+                      <p className="text-[13px] font-medium" style={{ color: wantsCleaning ? "#15803d" : "var(--color-text-primary)" }}>
+                        {wantsCleaning ? "Yes, scheduled" : "Not requested"}
                       </p>
                     </div>
-                  ) : null}
-
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
-                      Cleaning
-                    </p>
-                    <p className="text-[13px] font-medium" style={{ color: wantsCleaning ? "#15803d" : "var(--color-text-primary)" }}>
-                      {wantsCleaning ? "Yes, scheduled" : "Not requested"}
-                    </p>
                   </div>
-                </div>
 
-                {/* Stay type */}
-                <p className="mt-3 text-[12px]" style={{ color: "var(--color-text-tertiary)" }}>
-                  {r.is_owner_staying ? "Owner staying" : "Guest staying"}
-                </p>
+                  {/* Stay type */}
+                  <p className="mt-3 text-[12px]" style={{ color: "var(--color-text-tertiary)" }}>
+                    {r.is_owner_staying ? "Owner staying" : "Guest staying"}
+                  </p>
+                </div>
               </div>
             );
           })}
