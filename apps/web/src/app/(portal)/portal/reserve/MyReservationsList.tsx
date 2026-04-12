@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   CalendarCheck,
   CaretDown,
@@ -73,6 +74,7 @@ export function MyReservationsList({
     };
   }, [requests, today]);
 
+  const router = useRouter();
   const [selected, setSelected] = useState<BlockRequest | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -215,7 +217,10 @@ export function MyReservationsList({
             propertyMap.get(selected.property_id) ?? "Property"
           }
           onClose={() => setSelected(null)}
-          onEdit={() => setSelected(null)}
+          onEdit={() => {
+            setSelected(null);
+            router.push("/portal/reserve/new");
+          }}
         />
       ) : null}
     </div>

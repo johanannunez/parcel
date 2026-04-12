@@ -7,8 +7,8 @@ import {
 import { getPortalContext } from "@/lib/portal-context";
 import { normalizeUnit } from "@/lib/address";
 import { EmptyState } from "@/components/portal/EmptyState";
-import { ReservationsTable } from "./ReservationsTable";
-import type { ReservationRow } from "./ReservationsTable";
+import { MyReservationsList } from "./MyReservationsList";
+import type { BlockRequest } from "./types";
 
 export const metadata: Metadata = { title: "Reserve" };
 export const dynamic = "force-dynamic";
@@ -51,24 +51,6 @@ function formatDateRange(start: string, end: string): string {
   return `${sMonth} ${sDay} – ${eMonth} ${eDay}, ${eYear}`;
 }
 
-function formatSingleDate(dateStr: string): string {
-  return _dateFmt.format(new Date(dateStr + "T00:00:00"));
-}
-
-function formatTime(raw: string | null): string {
-  if (!raw) return "";
-  const trimmed = raw.trim();
-  if (/[AP]M/i.test(trimmed)) {
-    return trimmed.replace(/\s*(AM|PM)\s*/i, (_, p: string) => ` ${p.toUpperCase()}`).trim();
-  }
-  const [hStr, mStr] = trimmed.split(":");
-  const h      = parseInt(hStr ?? "0", 10);
-  const m      = (mStr ?? "00").slice(0, 2);
-  const period = h >= 12 ? "PM" : "AM";
-  const h12    = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${m} ${period}`;
-}
-
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -80,7 +62,7 @@ export default async function ReservePage() {
   today.setHours(0, 0, 0, 0);
   const todayStr = today.toISOString().split("T")[0]!;
 
-  const [{ data: rawProperties }, { data: rawRequests }] = await Promise.all([
+  const [{ data: rawProperties }, requestsResult] = await Promise.all([
     client
       .from("properties")
       .select("id, address_line1, address_line2, city, state, postal_code")
@@ -89,14 +71,14 @@ export default async function ReservePage() {
     client
       .from("block_requests")
       .select(
-        "id, property_id, start_date, end_date, status, created_at, check_in_time, check_out_time, is_owner_staying, adults, children, pets, wants_cleaning",
+        "id, property_id, start_date, end_date, status, note, created_at, check_in_time, check_out_time, reason, is_owner_staying, guest_name, guest_email, guest_phone, adults, children, pets, needs_lock_code, requested_lock_code, wants_cleaning, cleaning_fee, damage_acknowledged",
       )
       .eq("owner_id", userId)
-      .order("start_date", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(50),
   ]);
 
-  // Property map
+  // Property map (for banner + list)
   type PropertyRow = {
     id: string;
     name: string;
@@ -128,24 +110,43 @@ export default async function ReservePage() {
     );
   }
 
-  const requests = rawRequests ?? [];
-
   // ---------------------------------------------------------------------------
-  // Derived stats
+  // Serialise block requests
   // ---------------------------------------------------------------------------
 
-  const underReviewCount = requests.filter((r) => r.status === "pending").length;
+  const rawData = requestsResult.data ?? [];
 
-  const completedCount = requests.filter(
-    (r) =>
-      r.status === "approved" &&
-      typeof r.end_date === "string" &&
-      r.end_date < todayStr,
-  ).length;
+  const requests: BlockRequest[] = rawData.map((r) => ({
+    id:                   r.id,
+    property_id:          r.property_id,
+    start_date:           r.start_date,
+    end_date:             r.end_date,
+    status:               r.status as BlockRequest["status"],
+    note:                 r.note,
+    created_at:           r.created_at,
+    check_in_time:        r.check_in_time,
+    check_out_time:       r.check_out_time,
+    reason:               r.reason,
+    is_owner_staying:     r.is_owner_staying ?? true,
+    guest_name:           r.guest_name,
+    guest_email:          r.guest_email,
+    guest_phone:          r.guest_phone,
+    adults:               r.adults ?? 1,
+    children:             r.children ?? 0,
+    pets:                 r.pets ?? 0,
+    needs_lock_code:      r.needs_lock_code ?? false,
+    requested_lock_code:  r.requested_lock_code,
+    wants_cleaning:       r.wants_cleaning ?? false,
+    cleaning_fee:         r.cleaning_fee ? Number(r.cleaning_fee) : null,
+    damage_acknowledged:  r.damage_acknowledged ?? false,
+  }));
 
-  // Next confirmed upcoming stay
+  // ---------------------------------------------------------------------------
+  // Banner data — next confirmed upcoming stay
+  // ---------------------------------------------------------------------------
+
   const nextStayRaw =
-    requests.find(
+    rawData.find(
       (r) =>
         r.status === "approved" &&
         typeof r.start_date === "string" &&
@@ -163,78 +164,6 @@ export default async function ReservePage() {
           ),
         )
       : null;
-
-  // ---------------------------------------------------------------------------
-  // Row serialisation
-  // ---------------------------------------------------------------------------
-
-  function toRow(
-    r: (typeof requests)[number],
-    isPast: boolean,
-  ): ReservationRow {
-    const prop     = propertyMap.get(r.property_id);
-    const adults   = (r.adults   as number | null) ?? 0;
-    const children = (r.children as number | null) ?? 0;
-    const pets     = (r as { pets?: number | null }).pets ?? 0;
-
-    const parts: string[] = [];
-    if (adults   > 0) parts.push(`${adults}   ${adults   === 1 ? "adult"    : "adults"}`);
-    if (children > 0) parts.push(`${children} ${children === 1 ? "child"    : "children"}`);
-    if (pets     > 0) parts.push(`${pets}     ${pets     === 1 ? "pet"      : "pets"}`);
-
-    const daysAway = isPast
-      ? null
-      : Math.max(
-          0,
-          Math.round(
-            (new Date(r.start_date + "T00:00:00").getTime() - today.getTime()) /
-              86_400_000,
-          ),
-        );
-
-    return {
-      id:             r.id,
-      status:         r.status,
-      propertyName:   prop?.name ?? "Property",
-      propertyUnit:   prop?.unit ?? null,
-      cityLine:       prop?.cityLine ?? "",
-      checkInDate:    formatSingleDate(r.start_date),
-      checkInTime:    r.check_in_time  ? formatTime(r.check_in_time)  : null,
-      checkOutDate:   formatSingleDate(r.end_date),
-      checkOutTime:   r.check_out_time ? formatTime(r.check_out_time) : null,
-      guestLine:      parts.join(" · "),
-      cleaning:       (r as { wants_cleaning?: boolean | null }).wants_cleaning ?? false,
-      isOwnerStaying: (r.is_owner_staying as boolean | null) ?? true,
-      daysAway,
-    };
-  }
-
-  const upcomingRows: ReservationRow[] = requests
-    .filter(
-      (r) =>
-        r.status === "pending" ||
-        (r.status === "approved" &&
-          typeof r.end_date === "string" &&
-          r.end_date >= todayStr),
-    )
-    .slice(0, 20)
-    .map((r) => toRow(r, false));
-
-  const pastRows: ReservationRow[] = requests
-    .filter(
-      (r) =>
-        r.status === "declined" ||
-        r.status === "cancelled" ||
-        (r.status === "approved" &&
-          typeof r.end_date === "string" &&
-          r.end_date < todayStr),
-    )
-    .slice(0, 50)
-    .map((r) => toRow(r, true));
-
-  // ---------------------------------------------------------------------------
-  // Next stay panel data (used inside banner)
-  // ---------------------------------------------------------------------------
 
   const nextStayProp = nextStayRaw ? propertyMap.get(nextStayRaw.property_id) : null;
   const nextStayDateRange =
@@ -428,35 +357,35 @@ export default async function ReservePage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 2. Reservations table (stats folded into header)                   */}
+      {/* 2. Reservations list                                                 */}
       {/* ------------------------------------------------------------------ */}
-      {upcomingRows.length > 0 || pastRows.length > 0 ? (
-        <ReservationsTable
-          upcoming={upcomingRows}
-          past={pastRows}
-          underReviewCount={underReviewCount}
-          completedCount={completedCount}
-        />
-      ) : (
+      <div className="flex flex-col gap-4">
         <div
-          className="rounded-2xl border px-8 py-10 text-center"
-          style={{
-            backgroundColor: "var(--color-white)",
-            borderColor: "var(--color-warm-gray-200)",
-          }}
+          className="flex items-center justify-between border-b pb-3"
+          style={{ borderColor: "var(--color-warm-gray-200)" }}
         >
-          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            No reservations yet.{" "}
-            <Link
-              href="/portal/reserve/new"
-              className="font-semibold transition-opacity hover:opacity-70"
-              style={{ color: "var(--color-brand)" }}
-            >
-              + New reservation
-            </Link>
-          </p>
+          <h2
+            className="text-[13px] font-semibold"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            Your Reservations
+          </h2>
+          <Link
+            href="/portal/reserve/new"
+            className="shrink-0 text-[12px] font-semibold transition-opacity hover:opacity-70"
+            style={{ color: "var(--color-brand)" }}
+          >
+            + New reservation
+          </Link>
         </div>
-      )}
+        <MyReservationsList
+          requests={requests}
+          properties={(rawProperties ?? []).map((p) => ({
+            id:   p.id,
+            name: p.address_line1?.trim() || "Property",
+          }))}
+        />
+      </div>
     </div>
   );
 }
