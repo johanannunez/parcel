@@ -51,6 +51,30 @@ type DrawerItem =
   | { type: "parcel"; data: ParcelTeamMember }
   | { type: "owner"; data: OwnerMember };
 
+type MemberColors = {
+  gradient: string;
+  shadow: string;
+  shadowHover: string;
+  drawerBorder: string;
+};
+
+function getMemberColors(name: string): MemberColors {
+  if (name.toLowerCase().includes("elmira")) {
+    return {
+      gradient: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)",
+      shadow: "0 2px 8px rgba(168, 85, 247, 0.22)",
+      shadowHover: "0 6px 24px rgba(168, 85, 247, 0.45)",
+      drawerBorder: "rgba(109, 40, 217, 0.30)",
+    };
+  }
+  return {
+    gradient: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
+    shadow: "0 2px 8px rgba(2, 170, 235, 0.22)",
+    shadowHover: "0 6px 24px rgba(2, 170, 235, 0.45)",
+    drawerBorder: "rgba(27, 119, 190, 0.30)",
+  };
+}
+
 function getInitials(name: string | null, email: string): string {
   if (name?.trim()) {
     const parts = name.trim().split(/\s+/);
@@ -181,6 +205,7 @@ function ParcelCard({
   index: number;
   onClick: () => void;
 }) {
+  const colors = getMemberColors(member.name);
   return (
     <motion.button
       type="button"
@@ -190,16 +215,16 @@ function ParcelCard({
       onClick={onClick}
       className="flex w-full cursor-pointer items-start gap-4 rounded-2xl p-5 text-left"
       style={{
-        background: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
-        boxShadow: "0 2px 8px rgba(2, 170, 235, 0.22)",
+        background: colors.gradient,
+        boxShadow: colors.shadow,
         transition: "box-shadow 150ms ease, transform 150ms ease",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 6px 24px rgba(2, 170, 235, 0.45)";
+        e.currentTarget.style.boxShadow = colors.shadowHover;
         e.currentTarget.style.transform = "translateY(-2px)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "0 2px 8px rgba(2, 170, 235, 0.22)";
+        e.currentTarget.style.boxShadow = colors.shadow;
         e.currentTarget.style.transform = "translateY(0)";
       }}
     >
@@ -432,12 +457,14 @@ export function MembersShell({
 
               <div className="flex-1 overflow-y-auto">
                 {/* Horizontal hero zone */}
-                {drawer.type === "parcel" ? (
+                {drawer.type === "parcel" ? (() => {
+                  const dc = getMemberColors(drawer.data.name);
+                  return (
                   <div
                     className="flex items-center gap-4 px-5 py-5"
                     style={{
-                      background: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
-                      borderBottom: "1px solid rgba(27,119,190,0.3)",
+                      background: dc.gradient,
+                      borderBottom: `1px solid ${dc.drawerBorder}`,
                     }}
                   >
                     <Avatar
@@ -489,7 +516,8 @@ export function MembersShell({
                       )}
                     </div>
                   </div>
-                ) : (
+                  );
+                })() : (
                   <div
                     className="flex items-center gap-4 px-5 py-5"
                     style={{
