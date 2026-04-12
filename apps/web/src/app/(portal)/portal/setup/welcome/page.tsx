@@ -11,7 +11,6 @@ import {
   Globe,
   MapPin,
   Star,
-  CalendarBlank,
   Camera,
   Handshake,
   ChartLineUp,

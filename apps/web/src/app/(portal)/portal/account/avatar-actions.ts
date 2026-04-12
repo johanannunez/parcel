@@ -36,7 +36,7 @@ export async function uploadAvatar(args: {
   const origBytes = Buffer.from(origMatch[2], "base64");
 
   // Upload both in parallel
-  const [croppedResult, origResult] = await Promise.all([
+  const [croppedResult] = await Promise.all([
     supabase.storage
       .from("avatars")
       .upload(`${user.id}/cropped.${croppedExt}`, croppedBytes, {

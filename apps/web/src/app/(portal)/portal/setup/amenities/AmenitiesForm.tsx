@@ -124,7 +124,7 @@ export function AmenitiesForm({
       if (next.has(id)) {
         next.delete(id);
         setDetails((d) => {
-          const { [id]: _, ...rest } = d;
+          const { [id]: _removed, ...rest } = d;
           return rest;
         });
       } else {

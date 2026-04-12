@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const AI_SYSTEM_PROMPT = `You analyze documents and images for a property management company. Classify the document and provide a brief, useful summary.
 
@@ -28,154 +28,69 @@ Respond in JSON:
 
 Keep the summary under 2 sentences. Extract specific amounts, dates, names, and addresses when visible. For photos, describe what you see and any maintenance issues.`;
 
-type UploadResult = {
-  url: string;
+/**
+ * Run AI analysis on an uploaded file and update the message metadata.
+ * Called AFTER the message is sent, so the user never waits.
+ * Fire-and-forget from the client.
+ */
+export async function analyzeAttachment(args: {
+  messageId: string;
+  fileUrl: string;
   fileName: string;
   fileType: string;
-  fileSize: number;
-  aiSummary: string | null;
-  documentType: string | null;
-  keyDetails: Record<string, string> | null;
-  error?: string;
-};
+}) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return;
 
-export async function uploadMessageAttachment(formData: FormData): Promise<UploadResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    // Fetch the file from the public URL
+    const response = await fetch(args.fileUrl);
+    if (!response.ok) return;
 
-  if (!user) {
-    return {
-      url: "",
-      fileName: "",
-      fileType: "",
-      fileSize: 0,
-      aiSummary: null,
-      documentType: null,
-      keyDetails: null,
-      error: "Not authenticated",
-    };
-  }
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-  const file = formData.get("file") as File | null;
-  const conversationId = formData.get("conversationId") as string | null;
+    const aiResult = await callClaudeHaiku(apiKey, buffer, args.fileType, args.fileName);
+    if (!aiResult) return;
 
-  if (!file || !conversationId) {
-    return {
-      url: "",
-      fileName: "",
-      fileType: "",
-      fileSize: 0,
-      aiSummary: null,
-      documentType: null,
-      keyDetails: null,
-      error: "Missing file or conversation ID",
-    };
-  }
+    // Update the message metadata with the AI summary
+    const svc = createServiceClient();
+    const { data: msg } = await svc
+      .from("messages")
+      .select("metadata")
+      .eq("id", args.messageId)
+      .single();
 
-  // Validate file size (10MB max)
-  if (file.size > 10 * 1024 * 1024) {
-    return {
-      url: "",
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-      aiSummary: null,
-      documentType: null,
-      keyDetails: null,
-      error: "File exceeds 10MB limit",
-    };
-  }
+    if (!msg) return;
 
-  // Validate file type
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/heic",
-    "application/pdf",
-  ];
-  if (!allowedTypes.includes(file.type)) {
-    return {
-      url: "",
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-      aiSummary: null,
-      documentType: null,
-      keyDetails: null,
-      error: "File type not supported. Use JPEG, PNG, WebP, HEIC, or PDF.",
-    };
-  }
+    const existingMeta = (msg.metadata ?? {}) as Record<string, unknown>;
+    const attachments = (existingMeta.attachments ?? []) as Array<Record<string, unknown>>;
 
-  // Upload to Supabase Storage
-  const timestamp = Date.now();
-  const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storagePath = `${user.id}/${conversationId}/${timestamp}-${sanitizedName}`;
-
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-
-  const { error: uploadError } = await supabase.storage
-    .from("message-attachments")
-    .upload(storagePath, buffer, {
-      contentType: file.type,
-      upsert: false,
+    // Find the matching attachment and add the AI data
+    const updated = attachments.map((att) => {
+      if (att.url === args.fileUrl) {
+        return {
+          ...att,
+          aiSummary: aiResult.summary,
+          documentType: aiResult.documentType,
+          keyDetails: aiResult.keyDetails,
+        };
+      }
+      return att;
     });
 
-  if (uploadError) {
-    return {
-      url: "",
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-      aiSummary: null,
-      documentType: null,
-      keyDetails: null,
-      error: uploadError.message,
-    };
+    await svc
+      .from("messages")
+      .update({
+        metadata: { ...existingMeta, attachments: updated } as unknown as import("@/types/supabase").Json,
+      })
+      .eq("id", args.messageId);
+  } catch (err) {
+    console.error("[AI analysis] Failed:", err);
   }
-
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from("message-attachments")
-    .getPublicUrl(storagePath);
-
-  const publicUrl = urlData.publicUrl;
-
-  // AI analysis
-  let aiSummary: string | null = null;
-  let documentType: string | null = null;
-  let keyDetails: Record<string, string> | null = null;
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (apiKey) {
-    try {
-      const aiResult = await analyzeWithAI(apiKey, buffer, file.type, file.name);
-      if (aiResult) {
-        aiSummary = aiResult.summary;
-        documentType = aiResult.documentType;
-        keyDetails = aiResult.keyDetails;
-      }
-    } catch (err) {
-      // AI analysis is best-effort; don't block upload
-      console.error("[upload] AI analysis failed:", err);
-    }
-  }
-
-  return {
-    url: publicUrl,
-    fileName: file.name,
-    fileType: file.type,
-    fileSize: file.size,
-    aiSummary,
-    documentType,
-    keyDetails,
-  };
 }
 
-async function analyzeWithAI(
+async function callClaudeHaiku(
   apiKey: string,
   buffer: Buffer,
   mimeType: string,
@@ -184,20 +99,14 @@ async function analyzeWithAI(
   const isImage = mimeType.startsWith("image/");
   const isPdf = mimeType === "application/pdf";
 
-  // Build content for the API call
   const content: Array<Record<string, unknown>> = [];
 
   if (isImage) {
     const base64 = buffer.toString("base64");
-    // Map HEIC to jpeg for the API (it doesn't support HEIC natively)
     const mediaType = mimeType === "image/heic" ? "image/jpeg" : mimeType;
     content.push({
       type: "image",
-      source: {
-        type: "base64",
-        media_type: mediaType,
-        data: base64,
-      },
+      source: { type: "base64", media_type: mediaType, data: base64 },
     });
     content.push({
       type: "text",
@@ -207,11 +116,7 @@ async function analyzeWithAI(
     const base64 = buffer.toString("base64");
     content.push({
       type: "document",
-      source: {
-        type: "base64",
-        media_type: "application/pdf",
-        data: base64,
-      },
+      source: { type: "base64", media_type: "application/pdf", data: base64 },
     });
     content.push({
       type: "text",
@@ -221,7 +126,7 @@ async function analyzeWithAI(
     return null;
   }
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -236,16 +141,15 @@ async function analyzeWithAI(
     }),
   });
 
-  if (!response.ok) {
-    console.error("[upload] AI API error:", response.status, await response.text());
+  if (!res.ok) {
+    console.error("[AI] API error:", res.status, await res.text());
     return null;
   }
 
-  const data = await response.json();
+  const data = await res.json();
   const text = data?.content?.[0]?.text;
   if (!text) return null;
 
-  // Parse JSON from the response (handle markdown code blocks)
   const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
   try {
     const parsed = JSON.parse(jsonStr);
@@ -255,7 +159,6 @@ async function analyzeWithAI(
       keyDetails: parsed.keyDetails ?? null,
     };
   } catch {
-    // If it can't parse, use the raw text as summary
     return {
       summary: text.slice(0, 200),
       documentType: "Other",

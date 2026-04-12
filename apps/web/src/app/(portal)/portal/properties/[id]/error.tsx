@@ -28,7 +28,6 @@ export default function PropertyDetailError({
     // Surface the error in the dev console and in prod logs. We don't
     // have a telemetry layer plugged in yet; once we do, this is where
     // we'd forward to it.
-    // eslint-disable-next-line no-console
     console.error("[property-detail] render error", error);
   }, [error]);
 

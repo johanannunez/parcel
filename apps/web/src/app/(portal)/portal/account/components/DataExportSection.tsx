@@ -65,7 +65,7 @@ export function DataExportSection() {
           className="mb-3 text-sm font-semibold"
           style={{ color: "var(--color-text-primary)" }}
         >
-          Click to preview what's included
+          Click to preview what&apos;s included
         </p>
 
         <div className="mb-5 flex gap-3">

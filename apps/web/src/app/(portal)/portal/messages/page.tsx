@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { getPortalContext } from "@/lib/portal-context";
 import { PortalMessagesShell } from "./PortalMessagesShell";
 

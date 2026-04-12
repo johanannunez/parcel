@@ -8,7 +8,6 @@ import {
   Phone,
   Trash,
   WarningCircle,
-  CropIcon as Crop,
 } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { saveAccount, type SaveAccountState } from "./actions";
@@ -249,6 +248,7 @@ export function AccountForm({
             }}
           >
             {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={avatarUrl}
                 alt="Profile photo"

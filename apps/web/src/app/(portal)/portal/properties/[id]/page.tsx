@@ -29,7 +29,7 @@ import { SetPortalHeader } from "@/components/portal/PortalHeaderContext";
 import { HospitableSyncStatus } from "@/components/portal/HospitableSyncStatus";
 import { reconcilePropertyWithHospitable } from "@/lib/hospitable-reconcile";
 import { homeTypeLabels } from "@/lib/labels";
-import { currency0, formatMedium, formatRelative } from "@/lib/format";
+import { currency0, formatMedium } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Property" };
 export const dynamic = "force-dynamic";
@@ -211,6 +211,7 @@ export default async function PropertyDetailPage({
   // Documents table may not exist yet (pending migration)
   let documents: Array<{ id: string; title: string; doc_type: string; status: string; file_url: string | null; created_at: string }> = [];
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any)
       .from("documents")
       .select("id, title, doc_type, status, file_url, created_at")
@@ -296,14 +297,6 @@ export default async function PropertyDetailPage({
     </div>
   );
 
-  const ytdRevenue = (ytdBookings ?? []).reduce(
-    (s, b) => s + Number(b.total_amount ?? 0),
-    0,
-  );
-  const thisMonthRevenue = (monthBookings ?? []).reduce(
-    (s, b) => s + Number(b.total_amount ?? 0),
-    0,
-  );
   const ytdBookingsCount = (ytdBookings ?? []).length;
 
   return (

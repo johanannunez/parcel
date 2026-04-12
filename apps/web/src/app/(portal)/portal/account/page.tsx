@@ -70,7 +70,7 @@ export default async function AccountPage() {
             <strong className="font-semibold">
               {ownerProfile.full_name?.trim() || ownerProfile.email}
             </strong>
-            's account settings.
+            &apos;s account settings.
           </span>
           <span style={{ color: "rgba(154, 52, 18, 0.60)" }}>
             Security, sessions, and destructive actions are hidden.

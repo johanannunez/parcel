@@ -22,7 +22,7 @@ import {
   recordMessagesRead,
   createDirectConversation,
 } from "./actions";
-import { uploadMessageAttachment } from "./upload-actions";
+import { analyzeAttachment } from "./upload-actions";
 import { createClient } from "@/lib/supabase/client";
 
 /* ─── Parcel Company Avatar ─── */
@@ -38,6 +38,7 @@ function ParcelAvatar({ size = 40, highlighted = false }: { size?: number; highl
         backgroundColor: highlighted ? "var(--color-brand)" : "var(--color-warm-gray-100)",
       }}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/brand/logo-mark.png"
         alt="The Parcel Company"
@@ -190,6 +191,16 @@ export function PortalMessagesShell({
           startTransition(() => router.refresh());
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages" },
+        (payload) => {
+          // Re-fetch when AI analysis updates message metadata
+          if (selectedConvId && payload.new.conversation_id === selectedConvId) {
+            loadConversation(selectedConvId);
+          }
+        },
+      )
       .subscribe();
 
     return () => {
@@ -201,24 +212,33 @@ export function PortalMessagesShell({
     if ((!replyText.trim() && stagedFiles.length === 0) || !selectedConvId) return;
     setSending(true);
 
-    // Upload staged files first
+    // Upload files directly from browser to Supabase Storage (no server hop)
+    const supabase = createClient();
     const attachments: AttachmentData[] = [];
     for (const staged of stagedFiles) {
-      const formData = new FormData();
-      formData.set("file", staged.file);
-      formData.set("conversationId", selectedConvId);
-      const result = await uploadMessageAttachment(formData);
-      if (!result.error) {
-        attachments.push({
-          url: result.url,
-          fileName: result.fileName,
-          fileType: result.fileType,
-          fileSize: result.fileSize,
-          aiSummary: result.aiSummary,
-          documentType: result.documentType,
-          keyDetails: result.keyDetails,
-        });
-      }
+      const timestamp = Date.now();
+      const safeName = staged.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${currentUserId}/${selectedConvId}/${timestamp}-${safeName}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from("message-attachments")
+        .upload(path, staged.file, { contentType: staged.file.type, upsert: false });
+
+      if (uploadErr) continue;
+
+      const { data: urlData } = supabase.storage
+        .from("message-attachments")
+        .getPublicUrl(path);
+
+      attachments.push({
+        url: urlData.publicUrl,
+        fileName: staged.file.name,
+        fileType: staged.file.type,
+        fileSize: staged.file.size,
+        aiSummary: null,
+        documentType: null,
+        keyDetails: null,
+      });
     }
 
     // Build message body with inline attachments
@@ -233,7 +253,6 @@ export function PortalMessagesShell({
       body = body ? `${body}<br/>${attachmentHtml}` : attachmentHtml;
     }
 
-    // Build metadata
     const metadata = attachments.length > 0 ? { attachments } : undefined;
 
     const result = await replyToConversation({
@@ -243,15 +262,30 @@ export function PortalMessagesShell({
     });
     setSending(false);
     if (result.error) return;
+
+    // Fire AI analysis in the background (non-blocking)
+    if (result.messageId && attachments.length > 0) {
+      for (const att of attachments) {
+        analyzeAttachment({
+          messageId: result.messageId,
+          fileUrl: att.url,
+          fileName: att.fileName,
+          fileType: att.fileType,
+        }).catch(() => {});
+      }
+    }
+
     setReplyText("");
     setStagedFiles([]);
     loadConversation(selectedConvId);
   };
 
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
+
   const handleFilesSelected = (files: FileList | File[]) => {
     const fileArray = Array.from(files);
     const newStaged: StagedFile[] = fileArray
-      .filter((f) => f.size <= 10 * 1024 * 1024)
+      .filter((f) => f.size <= 10 * 1024 * 1024 && ALLOWED_TYPES.includes(f.type))
       .map((f) => ({
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         file: f,
@@ -259,7 +293,12 @@ export function PortalMessagesShell({
         uploading: false,
         error: null,
       }));
-    setStagedFiles((prev) => [...prev, ...newStaged]);
+    // Deduplicate by filename to prevent double-drops
+    setStagedFiles((prev) => {
+      const existingNames = new Set(prev.map((sf) => sf.file.name));
+      const unique = newStaged.filter((sf) => !existingNames.has(sf.file.name));
+      return [...prev, ...unique];
+    });
   };
 
   const removeStagedFile = (id: string) => {
@@ -708,8 +747,63 @@ function ChatThread({
     setNewMsgCount(0);
   }, [messagesEndRef]);
 
+  // Counter to dismiss drag overlay when leaving nested elements
+  const dragCounterRef = useRef(0);
+
   return (
-    <>
+    <div
+      className="relative flex flex-1 flex-col overflow-hidden"
+      onDragEnter={(e) => {
+        e.preventDefault();
+        dragCounterRef.current++;
+        setDragOver(true);
+      }}
+      onDragOver={(e) => e.preventDefault()}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        dragCounterRef.current--;
+        if (dragCounterRef.current <= 0) {
+          dragCounterRef.current = 0;
+          setDragOver(false);
+        }
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current = 0;
+        setDragOver(false);
+        if (e.dataTransfer.files.length > 0) {
+          onFilesSelected(e.dataTransfer.files);
+        }
+      }}
+    >
+      {/* Full-chat drag overlay (pointer-events-none so drops pass to parent) */}
+      {dragOver ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-3"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.92)",
+            backdropFilter: "blur(4px)",
+            border: "3px dashed var(--color-brand)",
+            borderRadius: "12px",
+            margin: "8px",
+          }}
+        >
+          <div
+            className="flex h-20 w-20 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: "rgba(2, 170, 235, 0.12)" }}
+          >
+            <Paperclip size={36} weight="duotone" style={{ color: "var(--color-brand)" }} />
+          </div>
+          <p className="text-base font-semibold" style={{ color: "var(--color-brand)" }}>
+            Drop to attach
+          </p>
+          <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+            Images and PDFs up to 10MB
+          </p>
+        </div>
+      ) : null}
+
       {/* Chat Header */}
       <div
         className="flex shrink-0 items-center gap-3 border-b px-4 py-3.5 md:px-6"
@@ -775,6 +869,7 @@ function ChatThread({
               <div className={`flex items-end gap-2 ${isOwner ? "flex-row-reverse" : "flex-row"}`}>
                 {!isOwner ? (
                   m.senderAvatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={m.senderAvatarUrl}
                       alt={m.senderName ?? "The Parcel Company"}
@@ -878,31 +973,7 @@ function ChatThread({
           backgroundColor: "var(--color-white)",
           paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))",
         }}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-          if (e.dataTransfer.files.length > 0) {
-            onFilesSelected(e.dataTransfer.files);
-          }
-        }}
       >
-        {/* Drag overlay */}
-        {dragOver ? (
-          <div
-            className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed"
-            style={{
-              borderColor: "var(--color-brand)",
-              backgroundColor: "rgba(2, 170, 235, 0.06)",
-            }}
-          >
-            <p className="text-sm font-medium" style={{ color: "var(--color-brand)" }}>
-              Drop files here
-            </p>
-          </div>
-        ) : null}
-
         {/* Staged file previews */}
         {stagedFiles.length > 0 ? (
           <div className="mb-2 flex flex-wrap gap-2">
@@ -916,6 +987,7 @@ function ChatThread({
                 }}
               >
                 {sf.previewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={sf.previewUrl}
                     alt={sf.file.name}
@@ -1008,7 +1080,7 @@ function ChatThread({
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -1029,6 +1101,7 @@ function MessageAttachments({
         <div key={idx}>
           {att.fileType.startsWith("image/") ? (
             <a href={att.url} target="_blank" rel="noopener noreferrer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={att.url}
                 alt={att.fileName}

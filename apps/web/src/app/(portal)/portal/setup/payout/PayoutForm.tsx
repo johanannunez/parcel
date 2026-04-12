@@ -7,9 +7,9 @@ import { SigningStep } from "@/components/portal/setup/SigningStep";
 type PayoutMethod = "ach" | "card";
 
 export function PayoutForm({
-  userEmail,
-  userName,
-  hasBoldSignKey,
+  userEmail: _userEmail,
+  userName: _userName,
+  hasBoldSignKey: _hasBoldSignKey,
 }: {
   userEmail: string;
   userName: string;

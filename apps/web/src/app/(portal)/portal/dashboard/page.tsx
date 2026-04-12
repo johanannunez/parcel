@@ -79,8 +79,8 @@ export default async function DashboardPage() {
   // Setup completion check
   const setupIncomplete =
     totalProperties === 0 ||
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     properties.some(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (p: any) =>
         !p.property_type ||
         !p.address_line1 ||

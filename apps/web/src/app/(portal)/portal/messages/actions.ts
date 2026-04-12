@@ -31,15 +31,26 @@ export async function replyToConversation(args: {
 
   if (!conv) return { error: "Conversation not found" };
 
-  const { error } = await supabase.from("messages").insert({
+  // Insert message. Try to get the ID back for AI analysis, but don't
+  // block on it if RLS prevents the select-back.
+  const insertPayload = {
     conversation_id: args.conversationId,
     sender_id: user.id,
     body: args.body,
     delivery_method: "portal",
     ...(args.metadata ? { metadata: args.metadata as Json } : {}),
-  });
+  };
 
-  if (error) return { error: error.message };
+  const { data: msg, error } = await supabase
+    .from("messages")
+    .insert(insertPayload)
+    .select("id")
+    .single();
+
+  // If select-back failed but insert succeeded, still treat as success
+  if (error && error.code !== "PGRST116") {
+    return { error: error.message };
+  }
 
   // Log activity (fire-and-forget)
   const svc = createServiceClient();
@@ -63,7 +74,7 @@ export async function replyToConversation(args: {
   });
 
   revalidatePath("/portal/messages");
-  return { success: true };
+  return { success: true, messageId: msg?.id ?? null };
 }
 
 /**
