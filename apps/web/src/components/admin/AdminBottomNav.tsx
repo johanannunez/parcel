@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,18 +8,24 @@ import {
   UsersThree,
   CalendarBlank,
   ChatCircle,
-  DotsThree,
+  List,
   Buildings,
   UserSwitch,
   Wallet,
+  Vault,
   EnvelopeSimple,
   ClipboardText,
   ListChecks,
   ClockCounterClockwise,
+  BookOpenText,
+  GearSix,
+  CaretDown,
   X,
+  SignOut,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
-import type { ReactNode } from "react";
+
+/* ── Types ── */
 
 type NavItem = {
   href: string;
@@ -28,6 +34,16 @@ type NavItem = {
   activeIcon: ReactNode;
   matchPrefix?: string;
 };
+
+type SheetNavItem = {
+  href: string;
+  label: string;
+  icon: ReactNode;
+  matchPrefix?: string;
+  badge?: number;
+};
+
+/* ── Bottom tab items (always visible) ── */
 
 const navItems: NavItem[] = [
   {
@@ -59,15 +75,64 @@ const navItems: NavItem[] = [
   },
 ];
 
+/* ── Sheet accordion section data ── */
+
+const managementItems = (pendingBlockCount: number): SheetNavItem[] => [
+  { href: "/admin", label: "Overview", icon: <House size={19} weight="duotone" /> },
+  { href: "/admin/owners", label: "Owners", icon: <UsersThree size={19} weight="duotone" />, matchPrefix: "/admin/owners" },
+  { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
+  { href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={19} weight="duotone" />, matchPrefix: "/admin/calendar" },
+  { href: "/admin/block-requests", label: "Reservations", icon: <ClipboardText size={19} weight="duotone" />, matchPrefix: "/admin/block-requests", badge: pendingBlockCount },
+  { href: "/admin/treasury", label: "Treasury", icon: <Vault size={19} weight="duotone" />, matchPrefix: "/admin/treasury" },
+];
+
+const communicationsItems: SheetNavItem[] = [
+  { href: "/admin/inquiries", label: "Inquiries", icon: <EnvelopeSimple size={19} weight="duotone" />, matchPrefix: "/admin/inquiries" },
+  { href: "/admin/messages", label: "Messages", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/messages" },
+  { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
+  { href: "/admin/timeline", label: "Timeline", icon: <ClockCounterClockwise size={19} weight="duotone" />, matchPrefix: "/admin/timeline" },
+];
+
+const toolsItems: SheetNavItem[] = [
+  { href: "/admin/help", label: "Help Articles", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
+  { href: "/admin/account", label: "Account", icon: <GearSix size={19} weight="duotone" />, matchPrefix: "/admin/account" },
+];
+
+/* ── Helpers ── */
+
+const mainNavPrefixes = ["/admin", "/admin/owners", "/admin/calendar", "/admin/messages"];
+
+function getActiveSection(pathname: string | null, pendingBlockCount: number): string {
+  if (!pathname) return "Management";
+  const mgmt = managementItems(pendingBlockCount);
+  if (mgmt.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Management";
+  if (communicationsItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Communications";
+  if (toolsItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Tools";
+  return "Management";
+}
+
+/* ── Component ── */
+
 export function AdminBottomNav({
   pendingBlockCount = 0,
   signOutSlot,
+  userName,
+  userEmail,
+  initials,
+  avatarUrl = null,
 }: {
   pendingBlockCount?: number;
   signOutSlot: ReactNode;
+  userName: string;
+  userEmail: string;
+  initials: string;
+  avatarUrl?: string | null;
 }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string>(() =>
+    getActiveSection(pathname, pendingBlockCount),
+  );
 
   const portalHref = (() => {
     const map: Array<[string, string]> = [
@@ -95,15 +160,33 @@ export function AdminBottomNav({
     [pathname],
   );
 
+  const isItemActive = useCallback(
+    (item: SheetNavItem) => {
+      if (item.matchPrefix) return pathname?.startsWith(item.matchPrefix);
+      return pathname === item.href;
+    },
+    [pathname],
+  );
+
   const isMoreActive =
-    pathname?.startsWith("/admin/properties") ||
-    pathname?.startsWith("/admin/payouts") ||
-    pathname?.startsWith("/admin/inquiries") ||
-    pathname?.startsWith("/admin/tasks") ||
-    pathname?.startsWith("/admin/block-requests") ||
-    pathname?.startsWith("/admin/timeline");
+    !mainNavPrefixes.some(
+      (p) => pathname === p || (p !== "/admin" && pathname?.startsWith(p + "/")),
+    ) && pathname?.startsWith("/admin") && pathname !== "/admin";
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
+
+  // Snap to the active section when sheet opens
+  useEffect(() => {
+    if (moreOpen) {
+      setOpenSection(getActiveSection(pathname, pendingBlockCount));
+    }
+  }, [moreOpen, pathname, pendingBlockCount]);
+
+  const sheetSections = [
+    { label: "Management", items: managementItems(pendingBlockCount) },
+    { label: "Communications", items: communicationsItems },
+    { label: "Tools", items: toolsItems },
+  ];
 
   return (
     <>
@@ -124,6 +207,7 @@ export function AdminBottomNav({
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={closeMore}
                 className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
                 style={{
                   color: active
@@ -162,7 +246,7 @@ export function AdminBottomNav({
             {moreOpen ? (
               <X size={22} weight="bold" />
             ) : (
-              <DotsThree size={22} weight="bold" />
+              <List size={22} weight="bold" />
             )}
             <span
               className="text-[10px] font-semibold leading-none"
@@ -197,7 +281,7 @@ export function AdminBottomNav({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-30 bg-black/50 md:hidden"
+              className="fixed inset-0 z-30 bg-black/30 md:hidden"
               onClick={closeMore}
               aria-hidden="true"
             />
@@ -212,150 +296,233 @@ export function AdminBottomNav({
               style={{
                 backgroundColor: "var(--color-navy)",
                 borderColor: "rgba(255,255,255,0.08)",
-                paddingBottom:
-                  "calc(env(safe-area-inset-bottom, 0px) + 80px)",
+                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)",
+                maxHeight: "82vh",
+                overflowY: "auto",
               }}
             >
               {/* Drag handle */}
-              <div className="flex justify-center py-3">
+              <div className="flex justify-center pt-3 pb-1">
                 <div
                   className="h-1 w-10 rounded-full"
                   style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
                 />
               </div>
 
-              <div className="px-4 pb-4">
-                <AdminMoreLink
-                  href="/admin/properties"
-                  icon={<Buildings size={20} weight="duotone" />}
-                  label="Properties"
-                  active={pathname?.startsWith("/admin/properties")}
-                  onClick={closeMore}
+              {/* User identity */}
+              <Link
+                href="/admin/account"
+                onClick={closeMore}
+                className="mx-4 mt-2 mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors"
+                style={{ textDecoration: "none" }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={userName}
+                    className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-wide"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.08)",
+                      color: "rgba(255,255,255,0.85)",
+                    }}
+                  >
+                    {initials}
+                  </span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div
+                    className="truncate text-[14px] font-semibold leading-tight"
+                    style={{ color: "#ffffff" }}
+                  >
+                    {userName}
+                  </div>
+                  <div
+                    className="mt-px truncate text-[12px] leading-tight"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
+                  >
+                    {userEmail}
+                  </div>
+                </div>
+                <GearSix
+                  size={16}
+                  weight="regular"
+                  style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }}
                 />
-                <AdminMoreLink
-                  href="/admin/payouts"
-                  icon={<Wallet size={20} weight="duotone" />}
-                  label="Payouts"
-                  active={pathname?.startsWith("/admin/payouts")}
-                  onClick={closeMore}
-                />
-                <AdminMoreLink
-                  href="/admin/inquiries"
-                  icon={<EnvelopeSimple size={20} weight="duotone" />}
-                  label="Inquiries"
-                  active={pathname?.startsWith("/admin/inquiries")}
-                  onClick={closeMore}
-                />
-                <AdminMoreLink
-                  href="/admin/messages"
-                  icon={<ChatCircle size={20} weight="duotone" />}
-                  label="Messages"
-                  active={pathname?.startsWith("/admin/messages")}
-                  onClick={closeMore}
-                />
-                <AdminMoreLink
-                  href="/admin/tasks"
-                  icon={<ListChecks size={20} weight="duotone" />}
-                  label="Tasks"
-                  active={pathname?.startsWith("/admin/tasks")}
-                  onClick={closeMore}
-                />
-                <AdminMoreLink
-                  href="/admin/block-requests"
-                  icon={<ClipboardText size={20} weight="duotone" />}
-                  label="Reservations"
-                  active={pathname?.startsWith("/admin/block-requests")}
-                  badge={pendingBlockCount}
-                  onClick={closeMore}
-                />
-                <AdminMoreLink
-                  href="/admin/timeline"
-                  icon={<ClockCounterClockwise size={20} weight="duotone" />}
-                  label="Timeline"
-                  active={pathname?.startsWith("/admin/timeline")}
-                  onClick={closeMore}
-                />
+              </Link>
 
-                {/* Divider */}
-                <div
-                  className="my-2 border-t"
-                  style={{ borderColor: "rgba(255,255,255,0.08)" }}
-                />
+              {/* Divider */}
+              <div
+                className="mx-4 my-2 border-t"
+                style={{ borderColor: "rgba(255,255,255,0.08)" }}
+              />
 
+              {/* Accordion sections */}
+              <div className="px-4">
+                {sheetSections.map((section) => {
+                  const isOpen = openSection === section.label;
+                  return (
+                    <div key={section.label} className="mb-1">
+                      {/* Section header */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenSection(isOpen ? "" : section.label)
+                        }
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 transition-colors"
+                        aria-expanded={isOpen}
+                      >
+                        <span
+                          className="text-[11px] font-semibold uppercase tracking-[0.14em]"
+                          style={{ color: "rgba(255,255,255,0.35)" }}
+                        >
+                          {section.label}
+                        </span>
+                        <CaretDown
+                          size={11}
+                          weight="bold"
+                          className="transition-transform duration-200"
+                          style={{
+                            color: "rgba(255,255,255,0.35)",
+                            transform: isOpen
+                              ? "rotate(0deg)"
+                              : "rotate(-90deg)",
+                          }}
+                        />
+                      </button>
+
+                      {/* Items with left-border treatment */}
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.18, ease: "easeInOut" }}
+                            style={{ overflow: "hidden" }}
+                          >
+                            <div
+                              className="ml-3 pl-3 pb-1"
+                              style={{
+                                borderLeft:
+                                  "2px solid rgba(255,255,255,0.08)",
+                              }}
+                            >
+                              {section.items.map((item) => {
+                                const active = isItemActive(item);
+                                return (
+                                  <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={closeMore}
+                                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+                                    style={{
+                                      color: active
+                                        ? "var(--color-brand-light)"
+                                        : "rgba(255,255,255,0.65)",
+                                      backgroundColor: active
+                                        ? "rgba(2, 170, 235, 0.09)"
+                                        : "transparent",
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        color: active
+                                          ? "var(--color-brand-light)"
+                                          : "rgba(255,255,255,0.4)",
+                                      }}
+                                    >
+                                      {item.icon}
+                                    </span>
+                                    <span className="flex-1">{item.label}</span>
+                                    {(item.badge ?? 0) > 0 ? (
+                                      <span
+                                        className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold"
+                                        style={{
+                                          backgroundColor: "#f59e0b",
+                                          color: "#1a1a1a",
+                                        }}
+                                      >
+                                        {item.badge}
+                                      </span>
+                                    ) : null}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Divider */}
+              <div
+                className="mx-4 my-2 border-t"
+                style={{ borderColor: "rgba(255,255,255,0.08)" }}
+              />
+
+              {/* Footer actions */}
+              <div className="px-4 pb-2">
                 {/* Portal link */}
                 <Link
                   href={portalHref}
                   onClick={closeMore}
-                  className="mb-1 flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold"
+                  className="mb-2 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold"
                   style={{
-                    background: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
+                    background:
+                      "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
                     color: "#fff",
                     boxShadow: "0 2px 8px rgba(2, 170, 235, 0.25)",
                     textDecoration: "none",
                   }}
                 >
-                  <UserSwitch size={20} weight="duotone" style={{ color: "#fff" }} />
+                  <UserSwitch
+                    size={18}
+                    weight="duotone"
+                    className="shrink-0"
+                    style={{ color: "#fff" }}
+                  />
                   Portal
                 </Link>
 
                 {/* Sign out */}
-                <div className="mt-1">{signOutSlot}</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMore();
+                    // Trigger the sign out action from the slot
+                    const btn = document.querySelector(
+                      "[data-admin-signout]",
+                    ) as HTMLButtonElement | null;
+                    if (btn) btn.click();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors"
+                  style={{ color: "rgba(239, 68, 68, 0.85)" }}
+                >
+                  <SignOut
+                    size={18}
+                    weight="regular"
+                    style={{ color: "rgba(239, 68, 68, 0.6)" }}
+                  />
+                  Sign out
+                </button>
+
+                {/* Hidden real sign out slot */}
+                <div className="hidden" aria-hidden="true">
+                  {signOutSlot}
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
     </>
-  );
-}
-
-function AdminMoreLink({
-  href,
-  icon,
-  label,
-  active = false,
-  badge,
-  onClick,
-}: {
-  href: string;
-  icon: ReactNode;
-  label: string;
-  active?: boolean;
-  badge?: number;
-  onClick: () => void;
-}) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors"
-      style={{
-        color: active
-          ? "var(--color-brand-light)"
-          : "rgba(255,255,255,0.7)",
-        backgroundColor: active
-          ? "rgba(2, 170, 235, 0.1)"
-          : "transparent",
-      }}
-    >
-      <span
-        style={{
-          color: active
-            ? "var(--color-brand-light)"
-            : "rgba(255,255,255,0.5)",
-        }}
-      >
-        {icon}
-      </span>
-      <span className="flex-1">{label}</span>
-      {badge && badge > 0 ? (
-        <span
-          className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold"
-          style={{ backgroundColor: "#f59e0b", color: "#1a1a1a" }}
-        >
-          {badge}
-        </span>
-      ) : null}
-    </Link>
   );
 }

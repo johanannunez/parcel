@@ -16,6 +16,9 @@ import {
   ListChecks,
   ClockCounterClockwise,
   BookOpenText,
+  Vault,
+  ArrowsLeftRight,
+  TrendUp,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
@@ -40,7 +43,13 @@ const managementNav: NavItem[] = [
 const operationsNav = (pendingBlockCount: number): NavItem[] => [
   { href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/calendar" },
   { href: "/admin/block-requests", label: "Reservations", icon: <ClipboardText size={18} weight="duotone" />, matchPrefix: "/admin/block-requests", badge: pendingBlockCount },
-  { href: "/admin/payouts", label: "Payouts", icon: <Wallet size={18} weight="duotone" />, matchPrefix: "/admin/payouts" },
+];
+
+const treasuryNav: NavItem[] = [
+  { href: "/admin/treasury", label: "Overview", icon: <Vault size={18} weight="duotone" /> },
+  { href: "/admin/treasury/accounts", label: "Accounts", icon: <Wallet size={18} weight="duotone" />, matchPrefix: "/admin/treasury/accounts" },
+  { href: "/admin/treasury/transactions", label: "Transactions", icon: <ArrowsLeftRight size={18} weight="duotone" />, matchPrefix: "/admin/treasury/transactions" },
+  { href: "/admin/treasury/forecast", label: "Forecast", icon: <TrendUp size={18} weight="duotone" />, matchPrefix: "/admin/treasury/forecast" },
 ];
 
 const communicationsNav: NavItem[] = [
@@ -361,6 +370,11 @@ export function AdminSidebar({
             isActive={isActive}
           />
           <AdminNavSection
+            label="Treasury"
+            items={treasuryNav}
+            isActive={isActive}
+          />
+          <AdminNavSection
             label="Communications"
             items={communicationsNav}
             isActive={isActive}
@@ -397,7 +411,7 @@ export function AdminTopBar({
     if (pathname.startsWith("/admin/owners")) return "Owners";
     if (pathname.startsWith("/admin/properties")) return "Properties";
     if (pathname.startsWith("/admin/calendar")) return "Calendar";
-    if (pathname.startsWith("/admin/payouts")) return "Payouts";
+    if (pathname.startsWith("/admin/treasury")) return "Treasury";
     if (pathname.startsWith("/admin/inquiries")) return "Inquiries";
     if (pathname.startsWith("/admin/messages")) return "Messages";
     if (pathname.startsWith("/admin/tasks")) return "Tasks";
@@ -522,7 +536,7 @@ const adminRailItems: Array<{
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
   { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
   { href: "/admin/block-requests", icon: <ClipboardText size={20} weight="duotone" />, label: "Reservations", matchPrefix: "/admin/block-requests", isBadged: true },
-  { href: "/admin/payouts", icon: <Wallet size={20} weight="duotone" />, label: "Payouts", matchPrefix: "/admin/payouts" },
+  { href: "/admin/treasury", icon: <Vault size={20} weight="duotone" />, label: "Treasury", matchPrefix: "/admin/treasury" },
   { href: "/admin/messages", icon: <ChatCircle size={20} weight="duotone" />, label: "Messages", matchPrefix: "/admin/messages" },
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
   { href: "/admin/timeline", icon: <ClockCounterClockwise size={20} weight="duotone" />, label: "Timeline", matchPrefix: "/admin/timeline" },
