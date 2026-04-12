@@ -32,6 +32,7 @@ import {
   Sparkle,
   Image as ImageIcon,
   UsersThree,
+  VideoCamera,
 } from "@phosphor-icons/react";
 import {
   createOwnerTask,
@@ -42,6 +43,7 @@ import {
   deleteNote,
   addTimelineEntry,
 } from "./hub-actions";
+import { MeetingsTab } from "./MeetingsTab";
 import {
   createReceipt,
   deleteReceipt,
@@ -190,6 +192,23 @@ type EntityInfo = {
   members: EntityMember[];
 };
 
+type Meeting = {
+  id: string;
+  title: string;
+  scheduled_at: string | null;
+  duration_minutes: number | null;
+  meet_link: string | null;
+  status: string;
+  transcript: string | null;
+  ai_summary: string | null;
+  action_items: Array<{ id: string; text: string; completed: boolean; assignedTo: string | null }>;
+  notes: string | null;
+  visibility: string;
+  property_id: string | null;
+  propertyLabel: string | null;
+  created_at: string;
+};
+
 type OwnerHubProps = {
   activeTab: string;
   ownerId: string;
@@ -205,6 +224,7 @@ type OwnerHubProps = {
   timeline: TimelineEntry[];
   documents: Document[];
   receipts: Receipt[];
+  meetings: Meeting[];
 };
 
 /* ─── Section definitions ─── */
@@ -213,9 +233,10 @@ const SECTIONS = [
   { key: "overview", label: "Overview", icon: ChartBar },
   { key: "members", label: "Members", icon: UsersThree },
   { key: "reserve", label: "Reserve", icon: CalendarCheck },
+  { key: "meetings", label: "Meetings", icon: VideoCamera },
   { key: "tasks", label: "Tasks", icon: ListChecks },
   { key: "timeline", label: "Timeline", icon: ClockCounterClockwise },
-  { key: "notes", label: "Meetings", icon: NotePencil },
+  { key: "notes", label: "Notes", icon: NotePencil },
   { key: "documents", label: "Documents", icon: FileText },
   { key: "financials", label: "Financials", icon: CurrencyDollar },
   { key: "properties", label: "Properties", icon: Buildings },
@@ -247,6 +268,7 @@ export function OwnerHubTabs({
   timeline,
   documents,
   receipts,
+  meetings,
 }: OwnerHubProps) {
   const searchParams = useSearchParams();
   const section = (searchParams.get("tab") as SectionKey) || activeTab || "overview";
@@ -486,6 +508,15 @@ export function OwnerHubTabs({
               notes={notes}
               properties={properties}
               ownerId={ownerId}
+            />
+          )}
+          {section === "meetings" && (
+            <MeetingsTab
+              ownerId={ownerId}
+              ownerFirstName={owner.fullName.split(" ")[0] ?? owner.fullName}
+              ownerEmail={owner.email}
+              meetings={meetings}
+              properties={properties.map((p) => ({ id: p.id, label: propertyLabel(p) }))}
             />
           )}
           {section === "reserve" && (

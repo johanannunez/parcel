@@ -70,6 +70,7 @@ export default async function OwnerHubPage({
     { data: timeline },
     { data: documents },
     { data: receipts },
+    { data: meetings },
   ] = await Promise.all([
     propertyIds.length > 0
       ? supabase
@@ -142,6 +143,13 @@ export default async function OwnerHubPage({
       .in("owner_id", memberIds)
       .order("purchase_date", { ascending: false })
       .limit(500),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("owner_meetings")
+      .select("id, owner_id, title, scheduled_at, duration_minutes, meet_link, status, transcript, ai_summary, action_items, notes, visibility, property_id, created_at")
+      .in("owner_id", memberIds)
+      .order("scheduled_at", { ascending: false, nullsFirst: false })
+      .limit(100),
   ]);
 
   // Build property label map for display
@@ -227,6 +235,14 @@ export default async function OwnerHubPage({
         ...r,
         propertyLabel: r.property_id
           ? propertyMap.get(r.property_id) ?? "Property"
+          : null,
+      }))}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      meetings={(meetings ?? []).map((m: any) => ({
+        ...m,
+        action_items: Array.isArray(m.action_items) ? m.action_items : [],
+        propertyLabel: m.property_id
+          ? propertyMap.get(m.property_id) ?? "Property"
           : null,
       }))}
     />
