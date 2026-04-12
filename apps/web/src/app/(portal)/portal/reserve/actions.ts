@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getPortalContext } from "@/lib/portal-context";
 import { propertyLabel } from "@/lib/address";
+import { logTimelineEvent } from "@/lib/timeline";
 
 async function notifyAdminOfBlockRequest(args: {
   ownerEmail: string;
@@ -165,6 +166,15 @@ export async function submitBlockRequest(
       description: `Block request submitted for ${parsed.data.startDate} to ${parsed.data.endDate}`,
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: userId,
+    eventType: "block_request_submitted",
+    category: "calendar",
+    title: `Block request for ${parsed.data.startDate} to ${parsed.data.endDate}`,
+    propertyId: parsed.data.propertyId,
+    metadata: { reason: parsed.data.reason ?? null },
+  });
 
   revalidatePath("/portal/reserve");
   return { ok: true };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useCallback, useMemo } from "react";
 import {
   MagnifyingGlass,
   Eye,
@@ -16,6 +16,10 @@ import {
   ChatsCircle,
   FolderOpen,
   UserCircle,
+  Export,
+  CheckSquare,
+  Square,
+  Lightning,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { formatMedium, formatRelative } from "@/lib/format";
@@ -83,6 +87,23 @@ const VISIBILITY_FILTERS = [
   { value: "owner", label: "Owner Visible" },
   { value: "admin_only", label: "Admin Only" },
 ] as const;
+
+const TEMPLATES = [
+  { label: "Welcome", eventType: "welcome", category: "account", title: "Welcome to Parcel", isPinned: true, visibility: "owner" },
+  { label: "Onboarding Complete", eventType: "onboarding_complete", category: "account", title: "Onboarding complete", isPinned: true, visibility: "owner" },
+  { label: "First Booking", eventType: "booking_created", category: "calendar", title: "First booking received", isPinned: true, visibility: "owner" },
+  { label: "First Payout", eventType: "payout_issued", category: "financial", title: "First payout sent", isPinned: true, visibility: "owner" },
+  { label: "Property Live", eventType: "property_updated", category: "property", title: "Property went live on Airbnb", isPinned: true, visibility: "owner" },
+  { label: "Agreement Signed", eventType: "agreement_signed", category: "document", title: "Management agreement signed", isPinned: true, visibility: "owner" },
+] as const;
+
+type TemplatePrefill = {
+  eventType: string;
+  category: string;
+  title: string;
+  isPinned: boolean;
+  visibility: string;
+};
 
 // ---------------------------------------------------------------------------
 // Category icon mapping (duotone, matches portal)
@@ -169,6 +190,50 @@ function timeLabel(dateStr: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// CSV export helper
+// ---------------------------------------------------------------------------
+
+function escapeCsvField(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function exportTimelineCsv(
+  entries: TimelineEntry[],
+  profileMap: Record<string, Profile>,
+  propertyMap: Record<string, string>,
+) {
+  const headers = ["Date", "Owner", "Email", "Category", "Title", "Body", "Property", "Visibility", "Pinned", "Status"];
+  const rows = entries.map((e) => {
+    const owner = profileMap[e.owner_id];
+    return [
+      new Date(e.created_at).toISOString(),
+      owner?.full_name || "Unknown",
+      owner?.email || "",
+      e.category,
+      e.title,
+      e.body || "",
+      e.property_id ? propertyMap[e.property_id] || "" : "",
+      e.visibility,
+      e.is_pinned ? "Yes" : "No",
+      e.deleted_at ? "deleted" : "active",
+    ].map(escapeCsvField);
+  });
+
+  const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const today = new Date().toISOString().split("T")[0];
+  link.href = url;
+  link.download = `parcel-timeline-export-${today}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -182,31 +247,147 @@ export function AdminTimelineView({
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [visibilityFilter, setVisibilityFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [templatePrefill, setTemplatePrefill] = useState<TemplatePrefill | null>(null);
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkPending, startBulkTransition] = useTransition();
 
   const lowerSearch = search.toLowerCase();
 
-  const filtered = entries.filter((e) => {
-    if (!showDeleted && e.deleted_at) return false;
-    if (categoryFilter !== "all" && e.category !== categoryFilter) return false;
-    if (visibilityFilter !== "all" && e.visibility !== visibilityFilter) return false;
-    if (lowerSearch) {
-      const matchTitle = e.title.toLowerCase().includes(lowerSearch);
-      const matchBody = e.body?.toLowerCase().includes(lowerSearch);
-      const ownerProfile = profileMap[e.owner_id];
-      const matchOwner =
-        ownerProfile?.full_name?.toLowerCase().includes(lowerSearch) ||
-        ownerProfile?.email?.toLowerCase().includes(lowerSearch);
-      if (!matchTitle && !matchBody && !matchOwner) return false;
-    }
-    return true;
-  });
+  const filtered = useMemo(() => {
+    return entries.filter((e) => {
+      if (!showDeleted && e.deleted_at) return false;
+      if (categoryFilter !== "all" && e.category !== categoryFilter) return false;
+      if (visibilityFilter !== "all" && e.visibility !== visibilityFilter) return false;
+      if (ownerFilter !== "all" && e.owner_id !== ownerFilter) return false;
+
+      // Date range filter
+      if (dateFrom) {
+        const entryDate = new Date(e.created_at);
+        const fromDate = new Date(dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        if (entryDate < fromDate) return false;
+      }
+      if (dateTo) {
+        const entryDate = new Date(e.created_at);
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        if (entryDate > toDate) return false;
+      }
+
+      if (lowerSearch) {
+        const matchTitle = e.title.toLowerCase().includes(lowerSearch);
+        const matchBody = e.body?.toLowerCase().includes(lowerSearch);
+        const ownerProfile = profileMap[e.owner_id];
+        const matchOwner =
+          ownerProfile?.full_name?.toLowerCase().includes(lowerSearch) ||
+          ownerProfile?.email?.toLowerCase().includes(lowerSearch);
+        if (!matchTitle && !matchBody && !matchOwner) return false;
+      }
+      return true;
+    });
+  }, [entries, showDeleted, categoryFilter, visibilityFilter, ownerFilter, dateFrom, dateTo, lowerSearch, profileMap]);
 
   const activeEntries = filtered.filter((e) => !e.deleted_at);
   const deletedEntries = filtered.filter((e) => e.deleted_at);
+
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === activeEntries.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(activeEntries.map((e) => e.id)));
+    }
+  }, [activeEntries, selectedIds.size]);
+
+  const handleBulkAction = useCallback(
+    (action: "pin" | "unpin" | "visible" | "admin_only" | "delete") => {
+      const ids = Array.from(selectedIds);
+      if (ids.length === 0) return;
+
+      startBulkTransition(async () => {
+        switch (action) {
+          case "pin":
+            await Promise.all(
+              ids.map((id) => {
+                const entry = entries.find((e) => e.id === id);
+                if (entry && !entry.is_pinned) return toggleTimelinePin(id);
+                return Promise.resolve();
+              }),
+            );
+            break;
+          case "unpin":
+            await Promise.all(
+              ids.map((id) => {
+                const entry = entries.find((e) => e.id === id);
+                if (entry && entry.is_pinned) return toggleTimelinePin(id);
+                return Promise.resolve();
+              }),
+            );
+            break;
+          case "visible":
+            await Promise.all(
+              ids.map((id) => {
+                const entry = entries.find((e) => e.id === id);
+                if (entry && entry.visibility !== "owner") return toggleTimelineVisibility(id);
+                return Promise.resolve();
+              }),
+            );
+            break;
+          case "admin_only":
+            await Promise.all(
+              ids.map((id) => {
+                const entry = entries.find((e) => e.id === id);
+                if (entry && entry.visibility !== "admin_only") return toggleTimelineVisibility(id);
+                return Promise.resolve();
+              }),
+            );
+            break;
+          case "delete":
+            await Promise.all(ids.map((id) => softDeleteTimelineEntry(id)));
+            break;
+        }
+        setSelectedIds(new Set());
+      });
+    },
+    [selectedIds, entries],
+  );
+
+  const handleTemplateClick = useCallback((template: typeof TEMPLATES[number]) => {
+    setTemplatePrefill({
+      eventType: template.eventType,
+      category: template.category,
+      title: template.title,
+      isPinned: template.isPinned,
+      visibility: template.visibility,
+    });
+    if (!showAddForm) {
+      setShowAddForm(true);
+    }
+  }, [showAddForm]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -237,9 +418,58 @@ export function AdminTimelineView({
             />
           </div>
 
+          {/* Owner filter */}
+          <select
+            value={ownerFilter}
+            onChange={(e) => setOwnerFilter(e.target.value)}
+            className="rounded-xl border py-2.5 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-white)",
+              color: "var(--color-text-secondary)",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+              minWidth: 160,
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-brand)"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = "var(--color-warm-gray-200)"; }}
+          >
+            <option value="all">All owners</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.full_name || p.email}
+              </option>
+            ))}
+          </select>
+
+          {/* Export button */}
+          <button
+            onClick={() => exportTimelineCsv(filtered, profileMap, propertyMap)}
+            className="flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-2"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-white)",
+              color: "var(--color-text-secondary)",
+              transition: "border-color 0.15s ease, opacity 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-brand)";
+              e.currentTarget.style.color = "var(--color-brand)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--color-warm-gray-200)";
+              e.currentTarget.style.color = "var(--color-text-secondary)";
+            }}
+          >
+            <Export size={14} weight="bold" />
+            Export
+          </button>
+
           {/* Add entry button */}
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              if (showAddForm) setTemplatePrefill(null);
+            }}
             className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-2"
             style={{
               background: "var(--color-brand-gradient)",
@@ -254,6 +484,63 @@ export function AdminTimelineView({
             {showAddForm ? <X size={14} weight="bold" /> : <Plus size={14} weight="bold" />}
             {showAddForm ? "Close" : "Add entry"}
           </button>
+        </div>
+
+        {/* Date range row */}
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className="text-xs font-medium"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            Date range
+          </span>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="rounded-xl border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-white)",
+              color: "var(--color-text-primary)",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-brand)"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = "var(--color-warm-gray-200)"; }}
+            placeholder="From"
+          />
+          <span
+            className="text-xs"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            to
+          </span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="rounded-xl border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
+            style={{
+              borderColor: "var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-white)",
+              color: "var(--color-text-primary)",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-brand)"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = "var(--color-warm-gray-200)"; }}
+            placeholder="To"
+          />
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => { setDateFrom(""); setDateTo(""); }}
+              className="rounded-lg px-2 py-1 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
+              style={{ color: "var(--color-text-tertiary)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--color-brand)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+            >
+              Clear dates
+            </button>
+          )}
         </div>
 
         {/* Filter row */}
@@ -330,7 +617,7 @@ export function AdminTimelineView({
         </div>
       </div>
 
-      {/* Add entry form */}
+      {/* Template chips + Add entry form */}
       <AnimatePresence>
         {showAddForm && (
           <motion.div
@@ -339,10 +626,52 @@ export function AdminTimelineView({
             exit={{ opacity: 0, height: 0 }}
             style={{ overflow: "hidden" }}
           >
+            {/* Template chips */}
+            <div className="mb-3">
+              <div
+                className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em]"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                Quick templates
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {TEMPLATES.map((template) => (
+                  <button
+                    key={template.label}
+                    onClick={() => handleTemplateClick(template)}
+                    className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
+                    style={{
+                      borderColor: "var(--color-warm-gray-200)",
+                      backgroundColor: "var(--color-white)",
+                      color: "var(--color-text-secondary)",
+                      transition: "border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--color-brand)";
+                      e.currentTarget.style.backgroundColor = "rgba(27, 119, 190, 0.06)";
+                      e.currentTarget.style.color = "var(--color-brand)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--color-warm-gray-200)";
+                      e.currentTarget.style.backgroundColor = "var(--color-white)";
+                      e.currentTarget.style.color = "var(--color-text-secondary)";
+                    }}
+                  >
+                    <Lightning size={12} weight="fill" />
+                    {template.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <AddEntryForm
               profiles={profiles}
               propertiesByOwner={propertiesByOwner}
-              onDone={() => setShowAddForm(false)}
+              onDone={() => {
+                setShowAddForm(false);
+                setTemplatePrefill(null);
+              }}
+              prefill={templatePrefill}
             />
           </motion.div>
         )}
@@ -361,6 +690,36 @@ export function AdminTimelineView({
         </div>
       ) : (
         <div className="flex flex-col gap-0">
+          {/* Select all row */}
+          {activeEntries.length > 0 && (
+            <div className="mb-2 flex items-center gap-2">
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
+                style={{ color: "var(--color-text-tertiary)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--color-brand)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+              >
+                {selectedIds.size === activeEntries.length && activeEntries.length > 0 ? (
+                  <CheckSquare size={14} weight="fill" style={{ color: "var(--color-brand)" }} />
+                ) : (
+                  <Square size={14} />
+                )}
+                {selectedIds.size === activeEntries.length && activeEntries.length > 0
+                  ? "Deselect all"
+                  : "Select all"}
+              </button>
+              {selectedIds.size > 0 && (
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  {selectedIds.size} selected
+                </span>
+              )}
+            </div>
+          )}
+
           {activeEntries.map((entry) => (
             <TimelineRow
               key={entry.id}
@@ -386,6 +745,8 @@ export function AdminTimelineView({
                   setConfirmDeleteId(null);
                 });
               }}
+              isSelected={selectedIds.has(entry.id)}
+              onToggleSelect={toggleSelection}
             />
           ))}
 
@@ -411,13 +772,126 @@ export function AdminTimelineView({
                   onTogglePin={() => {}}
                   onDelete={() => {}}
                   isDeleted
+                  isSelected={false}
+                  onToggleSelect={() => {}}
                 />
               ))}
             </>
           )}
         </div>
       )}
+
+      {/* Bulk actions bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed bottom-6 left-1/2 z-[900] flex -translate-x-1/2 items-center gap-3 rounded-2xl border px-5 py-3 shadow-xl"
+            style={{
+              backgroundColor: "var(--color-navy)",
+              borderColor: "var(--color-charcoal)",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)",
+            }}
+          >
+            <span className="text-sm font-semibold text-white">
+              {selectedIds.size} {selectedIds.size === 1 ? "entry" : "entries"} selected
+            </span>
+
+            <div
+              className="h-5 w-px"
+              style={{ backgroundColor: "var(--color-charcoal)" }}
+            />
+
+            <BulkActionButton
+              label="Pin"
+              onClick={() => handleBulkAction("pin")}
+              disabled={isBulkPending}
+            />
+            <BulkActionButton
+              label="Unpin"
+              onClick={() => handleBulkAction("unpin")}
+              disabled={isBulkPending}
+            />
+            <BulkActionButton
+              label="Make visible"
+              onClick={() => handleBulkAction("visible")}
+              disabled={isBulkPending}
+            />
+            <BulkActionButton
+              label="Admin only"
+              onClick={() => handleBulkAction("admin_only")}
+              disabled={isBulkPending}
+            />
+            <BulkActionButton
+              label="Delete"
+              onClick={() => handleBulkAction("delete")}
+              disabled={isBulkPending}
+              destructive
+            />
+
+            <div
+              className="h-5 w-px"
+              style={{ backgroundColor: "var(--color-charcoal)" }}
+            />
+
+            <button
+              onClick={clearSelection}
+              className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-white/60 outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--color-navy)]"
+              style={{ transition: "color 0.15s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "white"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}
+            >
+              <X size={12} weight="bold" />
+              Clear
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bulk action button
+// ---------------------------------------------------------------------------
+
+function BulkActionButton({
+  label,
+  onClick,
+  disabled,
+  destructive = false,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-lg px-3 py-1.5 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--color-navy)] disabled:opacity-50"
+      style={{
+        backgroundColor: destructive ? "rgba(220, 38, 38, 0.2)" : "var(--color-charcoal)",
+        color: destructive ? "rgb(248, 113, 113)" : "white",
+        transition: "background-color 0.15s ease, opacity 0.15s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = destructive
+          ? "rgba(220, 38, 38, 0.35)"
+          : "rgba(255, 255, 255, 0.15)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = destructive
+          ? "rgba(220, 38, 38, 0.2)"
+          : "var(--color-charcoal)";
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -436,6 +910,8 @@ function TimelineRow({
   onTogglePin,
   onDelete,
   isDeleted = false,
+  isSelected,
+  onToggleSelect,
 }: {
   entry: TimelineEntry;
   profileMap: Record<string, Profile>;
@@ -447,6 +923,8 @@ function TimelineRow({
   onTogglePin: (id: string) => void;
   onDelete: (id: string) => void;
   isDeleted?: boolean;
+  isSelected: boolean;
+  onToggleSelect: (id: string) => void;
 }) {
   const owner = profileMap[entry.owner_id];
   const deletedBy = entry.deleted_by ? profileMap[entry.deleted_by] : null;
@@ -455,70 +933,96 @@ function TimelineRow({
 
   return (
     <div
-      className="group flex items-start gap-4 rounded-xl border px-4 py-4"
+      className="group flex items-center gap-3 rounded-lg border px-3 py-2.5"
       style={{
-        borderColor: isDeleted ? "rgba(220, 38, 38, 0.15)" : "var(--color-warm-gray-200)",
-        backgroundColor: isDeleted ? "rgba(220, 38, 38, 0.03)" : "var(--color-white)",
+        borderColor: isSelected
+          ? "var(--color-brand)"
+          : isDeleted
+            ? "rgba(220, 38, 38, 0.15)"
+            : "var(--color-warm-gray-200)",
+        backgroundColor: isSelected
+          ? "rgba(27, 119, 190, 0.04)"
+          : isDeleted
+            ? "rgba(220, 38, 38, 0.03)"
+            : "var(--color-white)",
         opacity: isDeleted ? 0.7 : 1,
         boxShadow: isDeleted ? "none" : "var(--shadow-card)",
-        transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+        transition: "box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease",
       }}
       onMouseEnter={(e) => {
         if (!isDeleted) {
           e.currentTarget.style.boxShadow = "var(--shadow-md)";
-          e.currentTarget.style.borderColor = "var(--color-warm-gray-400)";
+          if (!isSelected) {
+            e.currentTarget.style.borderColor = "var(--color-warm-gray-400)";
+          }
         }
       }}
       onMouseLeave={(e) => {
         if (!isDeleted) {
           e.currentTarget.style.boxShadow = "var(--shadow-card)";
-          e.currentTarget.style.borderColor = "var(--color-warm-gray-200)";
+          if (!isSelected) {
+            e.currentTarget.style.borderColor = "var(--color-warm-gray-200)";
+          }
         }
       }}
     >
-      {/* Owner avatar */}
-      <div className="shrink-0 pt-0.5">
-        <OwnerAvatar profile={owner} size={32} />
-      </div>
+      {/* Selection checkbox */}
+      {!isDeleted && (
+        <button
+          onClick={() => onToggleSelect(entry.id)}
+          className="shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1 rounded"
+          aria-label={isSelected ? "Deselect entry" : "Select entry"}
+        >
+          {isSelected ? (
+            <CheckSquare size={18} weight="fill" style={{ color: "var(--color-brand)" }} />
+          ) : (
+            <Square
+              size={18}
+              className="opacity-0 group-hover:opacity-100"
+              style={{
+                color: "var(--color-text-tertiary)",
+                transition: "opacity 0.15s ease",
+              }}
+            />
+          )}
+        </button>
+      )}
 
-      {/* Category icon circle */}
-      <div
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border"
-        style={{
-          backgroundColor: "var(--color-white)",
-          borderColor: "var(--color-warm-gray-200)",
-        }}
-      >
-        <CategoryIcon category={entry.category} size={16} />
+      {/* Avatar with category dot */}
+      <div className="relative shrink-0">
+        <OwnerAvatar profile={owner} size={28} />
+        <span
+          className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border"
+          style={{ backgroundColor: "var(--color-white)", borderColor: "var(--color-warm-gray-200)" }}
+        >
+          <CategoryIcon category={entry.category} size={8} />
+        </span>
       </div>
 
       {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            {/* Owner name */}
-            <div
-              className="text-xs font-medium"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              {owner?.full_name || owner?.email || "Unknown owner"}
+            {/* Owner + Title on one line */}
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className="shrink-0 text-xs font-medium"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                {owner?.full_name || owner?.email || "Unknown"}
+              </span>
+              <span
+                className={`truncate text-sm font-semibold ${isDeleted ? "line-through" : ""}`}
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                {entry.title}
+              </span>
             </div>
 
-            {/* Title */}
-            <div
-              className="mt-0.5 text-sm font-semibold"
-              style={{
-                color: "var(--color-text-primary)",
-                textDecoration: isDeleted ? "line-through" : "none",
-              }}
-            >
-              {entry.title}
-            </div>
-
-            {/* Body preview */}
+            {/* Body preview (single line) */}
             {entry.body && (
               <div
-                className="mt-1 line-clamp-2 text-sm leading-relaxed"
+                className="mt-0.5 truncate text-xs leading-snug"
                 style={{ color: "var(--color-text-secondary)" }}
               >
                 {entry.body}
@@ -526,7 +1030,7 @@ function TimelineRow({
             )}
 
             {/* Meta row */}
-            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
               <span
                 className="text-xs"
                 style={{ color: "var(--color-text-tertiary)" }}
@@ -695,14 +1199,34 @@ function AddEntryForm({
   profiles,
   propertiesByOwner,
   onDone,
+  prefill,
 }: {
   profiles: Profile[];
   propertiesByOwner: Record<string, { id: string; label: string }[]>;
   onDone: () => void;
+  prefill: TemplatePrefill | null;
 }) {
   const [isPending, startTransition] = useTransition();
   const [selectedOwnerId, setSelectedOwnerId] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Track prefill values in state so template clicks update the form
+  const [eventType, setEventType] = useState(prefill?.eventType ?? "note");
+  const [title, setTitle] = useState(prefill?.title ?? "");
+  const [category, setCategory] = useState(prefill?.category ?? "account");
+  const [visibility, setVisibility] = useState(prefill?.visibility ?? "owner");
+
+  // Respond to new prefill selections
+  const lastPrefillRef = useRef(prefill);
+  if (prefill !== lastPrefillRef.current) {
+    lastPrefillRef.current = prefill;
+    if (prefill) {
+      setEventType(prefill.eventType);
+      setTitle(prefill.title);
+      setCategory(prefill.category);
+      setVisibility(prefill.visibility);
+    }
+  }
 
   const ownerProperties = selectedOwnerId
     ? propertiesByOwner[selectedOwnerId] ?? []
@@ -714,6 +1238,10 @@ function AddEntryForm({
       if (result.ok) {
         formRef.current?.reset();
         setSelectedOwnerId("");
+        setEventType("note");
+        setTitle("");
+        setCategory("account");
+        setVisibility("owner");
         onDone();
       }
     });
@@ -768,7 +1296,8 @@ function AddEntryForm({
 
             <select
               name="category"
-              defaultValue="account"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
               className="rounded-lg border px-3 py-2 text-sm outline-none"
               style={selectStyle}
             >
@@ -787,7 +1316,8 @@ function AddEntryForm({
               name="event_type"
               type="text"
               placeholder="Event type (e.g. note, email)"
-              defaultValue="note"
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value)}
               className="rounded-lg border px-3 py-2 text-sm outline-none"
               style={inputStyle}
             />
@@ -796,6 +1326,8 @@ function AddEntryForm({
               type="text"
               placeholder="Title"
               required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="rounded-lg border px-3 py-2 text-sm outline-none"
               style={inputStyle}
             />
@@ -827,7 +1359,8 @@ function AddEntryForm({
 
             <select
               name="visibility"
-              defaultValue="owner"
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value)}
               className="rounded-lg border px-3 py-2 text-sm outline-none"
               style={selectStyle}
             >

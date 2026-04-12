@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logTimelineEvent } from "@/lib/timeline";
 import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
@@ -133,6 +134,16 @@ export async function saveBasics(
       description: v.property_id ? "Property basics updated" : "New property created",
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: user.id,
+    eventType: "onboarding_step",
+    category: "account",
+    title: "Completed onboarding: Property basics",
+    propertyId: propertyId || undefined,
+    visibility: "admin_only",
+    metadata: { step: "basics" },
+  });
 
   // Record version history (no-op until migration runs)
   await recordVersion(supabase, {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { recordSessionLogin } from "@/lib/session-log";
+import { logTimelineEvent } from "@/lib/timeline";
 
 export type LoginState = {
   error?: string;
@@ -58,6 +59,15 @@ export async function login(
     const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? null;
     const ua = h.get("user-agent") ?? null;
     await recordSessionLogin({ userId: data.user.id, ipAddress: ip, userAgent: ua });
+
+    void logTimelineEvent({
+      ownerId: data.user.id,
+      eventType: "login",
+      category: "account",
+      title: "Logged in",
+      visibility: "admin_only",
+      metadata: { ip: ip ?? undefined, device: ua?.slice(0, 100) ?? undefined },
+    });
   }
 
   redirect(redirectTo);

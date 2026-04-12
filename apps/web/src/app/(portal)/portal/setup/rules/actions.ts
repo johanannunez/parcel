@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logTimelineEvent } from "@/lib/timeline";
 import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
@@ -88,6 +89,16 @@ export async function saveRules(
       description: "House rules and access details updated",
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: user.id,
+    eventType: "onboarding_step",
+    category: "account",
+    title: "Completed onboarding: House rules",
+    propertyId: v.property_id,
+    visibility: "admin_only",
+    metadata: { step: "rules" },
+  });
 
   await recordVersion(supabase, {
     userId: user.id,

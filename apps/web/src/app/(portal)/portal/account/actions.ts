@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logTimelineEvent } from "@/lib/timeline";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -66,6 +67,15 @@ export async function updateProfile(
       description: "Profile information updated",
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: user.id,
+    eventType: "profile_updated",
+    category: "account",
+    title: "Profile updated",
+    visibility: "admin_only",
+    metadata: { fields_changed: ["full_name", "preferred_name", "phone", "contact_method"] },
+  });
 
   revalidatePath("/portal/account");
   return { ok: true, message: "Profile updated." };

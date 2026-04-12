@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logTimelineEvent } from "@/lib/timeline";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -113,10 +114,14 @@ export async function createReceipt(
     return { ok: false, message: error.message };
   }
 
-  await insertTimelineEntry(supabase, ownerId, {
+  void logTimelineEvent({
+    ownerId,
     eventType: "receipt_added",
+    category: "financial",
     title: `Receipt added: ${formatCurrency(data.amount)} at ${data.vendor} (${data.category})`,
     propertyId: data.propertyId,
+    visibility: "owner",
+    metadata: { vendor: data.vendor, amount: data.amount, category: data.category },
   });
 
   revalidatePath(`/admin/owners/${ownerId}`);
@@ -194,12 +199,15 @@ export async function deleteReceipt(
   }
 
   if (receipt) {
-    await insertTimelineEntry(supabase, ownerId, {
+    void logTimelineEvent({
+      ownerId,
       eventType: "receipt_deleted",
+      category: "financial",
       title: `Receipt deleted: ${formatCurrency(
         Number(receipt.amount),
         receipt.currency ?? "USD",
       )} at ${receipt.vendor} (${receipt.category})`,
+      visibility: "admin_only",
     });
   }
 

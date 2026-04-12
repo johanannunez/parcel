@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logTimelineEvent } from "@/lib/timeline";
 import { recordVersion } from "@/lib/wizard/version-history";
 import type { Json } from "@/types/supabase";
 
@@ -100,6 +101,15 @@ export async function saveAccount(
       description: "Account details updated during setup",
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: user.id,
+    eventType: "onboarding_step",
+    category: "account",
+    title: "Completed onboarding: Account details",
+    visibility: "admin_only",
+    metadata: { step: "account" },
+  });
 
   await recordVersion(supabase, {
     userId: user.id,

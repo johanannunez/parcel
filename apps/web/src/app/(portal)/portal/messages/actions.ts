@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logTimelineEvent } from "@/lib/timeline";
+import type { Json } from "@/types/supabase";
 
 /**
  * Reply to a conversation as an owner.
@@ -11,6 +13,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 export async function replyToConversation(args: {
   conversationId: string;
   body: string;
+  metadata?: Record<string, unknown>;
 }) {
   const supabase = await createClient();
   const {
@@ -33,6 +36,7 @@ export async function replyToConversation(args: {
     sender_id: user.id,
     body: args.body,
     delivery_method: "portal",
+    ...(args.metadata ? { metadata: args.metadata as Json } : {}),
   });
 
   if (error) return { error: error.message };
@@ -49,6 +53,14 @@ export async function replyToConversation(args: {
       description: "Owner sent a message",
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: user.id,
+    eventType: "message_sent",
+    category: "communication",
+    title: "New message sent",
+    visibility: "admin_only",
+  });
 
   revalidatePath("/portal/messages");
   return { success: true };

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { formatRelative } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export default async function AdminOverviewPage() {
   const supabase = await createClient();
 
-  const [ownersResult, propertiesResult, inquiriesResult, blockResult, bookingsResult, payoutsResult] =
+  const [ownersResult, propertiesResult, inquiriesResult, blockResult, bookingsResult, payoutsResult, timelineResult, allProfilesResult] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -32,6 +33,17 @@ export default async function AdminOverviewPage() {
       supabase
         .from("payouts")
         .select("*", { count: "exact", head: true }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from("owner_timeline")
+        .select("id, owner_id, title, category, created_at")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("role", "owner"),
     ]);
 
   const stats = [
@@ -40,6 +52,19 @@ export default async function AdminOverviewPage() {
     { label: "Bookings", value: bookingsResult.count ?? 0, href: "/admin/calendar" },
     { label: "Payouts", value: payoutsResult.count ?? 0, href: "/admin/payouts" },
   ];
+
+  const timelineEntries = (timelineResult.data ?? []) as {
+    id: string;
+    owner_id: string;
+    title: string;
+    category: string;
+    created_at: string;
+  }[];
+
+  const profileMap = new Map<string, string>();
+  for (const p of (allProfilesResult.data ?? []) as { id: string; full_name: string | null }[]) {
+    profileMap.set(p.id, p.full_name || "Unknown");
+  }
 
   const actions = [
     {
@@ -132,6 +157,101 @@ export default async function AdminOverviewPage() {
           </div>
         </section>
       ) : null}
+
+      {/* Recent Activity */}
+      <section>
+        <h2
+          className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em]"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          Recent Activity
+        </h2>
+        <div
+          className="overflow-hidden rounded-xl border"
+          style={{ backgroundColor: "var(--color-white)" }}
+        >
+          {timelineEntries.length === 0 ? (
+            <div
+              className="px-5 py-8 text-center text-sm"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              No timeline activity yet
+            </div>
+          ) : (
+            <>
+              <ul className="divide-y" style={{ borderColor: "var(--color-warm-gray-100)" }}>
+                {timelineEntries.map((entry) => {
+                  const ownerName = profileMap.get(entry.owner_id) || "Unknown";
+                  const initials = ownerName
+                    .split(" ")
+                    .map((w) => w[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
+
+                  return (
+                    <li
+                      key={entry.id}
+                      className="flex items-center gap-3 px-5 py-3"
+                    >
+                      <span
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold"
+                        style={{
+                          backgroundColor: "rgba(27, 119, 190, 0.1)",
+                          color: "var(--color-brand)",
+                        }}
+                      >
+                        {initials}
+                      </span>
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <span
+                          className="shrink-0 text-xs font-medium"
+                          style={{ color: "var(--color-brand)" }}
+                        >
+                          {ownerName}
+                        </span>
+                        <span
+                          className="truncate text-sm font-medium"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {entry.title}
+                        </span>
+                      </div>
+                      <span
+                        className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
+                        style={{
+                          backgroundColor: "var(--color-warm-gray-100)",
+                          color: "var(--color-text-secondary)",
+                        }}
+                      >
+                        {entry.category}
+                      </span>
+                      <span
+                        className="shrink-0 text-xs"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      >
+                        {formatRelative(entry.created_at)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div
+                className="border-t px-5 py-3"
+                style={{ borderColor: "var(--color-warm-gray-100)" }}
+              >
+                <Link
+                  href="/admin/timeline"
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-brand)" }}
+                >
+                  View all
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
     </div>
     </div>
   );

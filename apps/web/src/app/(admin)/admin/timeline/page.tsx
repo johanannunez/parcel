@@ -21,7 +21,6 @@ export default async function AdminTimelinePage() {
     supabase
       .from("profiles")
       .select("id, full_name, email, avatar_url")
-      .eq("role", "owner")
       .limit(500),
     supabase
       .from("properties")

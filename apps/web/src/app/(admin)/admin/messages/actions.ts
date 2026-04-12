@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { buildMessageEmail, buildBroadcastEmail } from "@/lib/email-template";
 import { sendPushToOwner, sendPushToAllOwners } from "@/lib/push";
 import { createNotification, createNotificationForAllOwners } from "@/lib/notifications";
+import { logTimelineEvent } from "@/lib/timeline";
 
 /* ─── Helpers ─── */
 
@@ -172,6 +173,15 @@ export async function sendMessage(args: {
       description: `Message sent to owner via ${args.deliveryMethod ?? "portal"}`,
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: args.ownerId,
+    eventType: "message_received",
+    category: "communication",
+    title: "New message from Parcel",
+    body: args.body.replace(/<[^>]*>/g, "").slice(0, 120),
+    visibility: "admin_only",
+  });
 
   revalidatePath("/admin/messages");
   return { success: true, messageId: msg.id, conversationId };

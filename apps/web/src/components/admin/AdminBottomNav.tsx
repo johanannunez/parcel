@@ -69,6 +69,24 @@ export function AdminBottomNav({
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
+  const portalHref = (() => {
+    const map: Array<[string, string]> = [
+      ["/admin/properties", "/portal/properties"],
+      ["/admin/calendar", "/portal/calendar"],
+      ["/admin/payouts", "/portal/payouts"],
+      ["/admin/messages", "/portal/messages"],
+      ["/admin/tasks", "/portal/tasks"],
+      ["/admin/timeline", "/portal/timeline"],
+      ["/admin/block-requests", "/portal/calendar"],
+      ["/admin/account", "/portal/account"],
+      ["/admin/help", "/portal/help"],
+    ];
+    for (const [prefix, dest] of map) {
+      if (pathname?.startsWith(prefix)) return dest;
+    }
+    return "/portal/dashboard";
+  })();
+
   const isActive = useCallback(
     (item: NavItem) => {
       if (item.matchPrefix) return pathname?.startsWith(item.matchPrefix);
@@ -266,7 +284,7 @@ export function AdminBottomNav({
 
                 {/* Portal link */}
                 <Link
-                  href="/portal/dashboard"
+                  href={portalHref}
                   onClick={closeMore}
                   className="mb-1 flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold"
                   style={{

@@ -21,8 +21,14 @@ export type TimelineEntry = {
   metadata: Record<string, unknown> | null;
 };
 
-export default async function TimelinePage() {
+export default async function TimelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { userId, client } = await getPortalContext();
+  const params = await searchParams;
+  const propertyParam = typeof params.property === "string" ? params.property : undefined;
 
   const [entriesResult, { data: properties }] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,5 +67,12 @@ export default async function TimelinePage() {
     );
   }
 
-  return <TimelineView entries={entries} propertyMap={propertyMap} />;
+  return (
+    <TimelineView
+      entries={entries}
+      propertyMap={propertyMap}
+      userId={userId}
+      initialPropertyFilter={propertyParam}
+    />
+  );
 }

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { logTimelineEvent } from "@/lib/timeline";
 
 export type ResetPasswordState = {
   error?: string;
@@ -39,6 +40,14 @@ export async function updatePassword(
   if (error) {
     return { error: error.message };
   }
+
+  void logTimelineEvent({
+    ownerId: user.id,
+    eventType: "password_reset",
+    category: "account",
+    title: "Password was reset",
+    visibility: "admin_only",
+  });
 
   redirect("/portal/dashboard");
 }

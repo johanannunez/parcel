@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Sun,
   Moon,
@@ -9,6 +10,24 @@ import {
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+
+function getAdminUrl(pathname: string): string {
+  const map: Array<[string, string]> = [
+    ["/portal/properties", "/admin/properties"],
+    ["/portal/calendar", "/admin/calendar"],
+    ["/portal/payouts", "/admin/payouts"],
+    ["/portal/messages", "/admin/messages"],
+    ["/portal/tasks", "/admin/tasks"],
+    ["/portal/timeline", "/admin/timeline"],
+    ["/portal/reserve", "/admin/block-requests"],
+    ["/portal/account", "/admin/account"],
+    ["/portal/help", "/admin/help"],
+  ];
+  for (const [prefix, dest] of map) {
+    if (pathname.startsWith(prefix)) return dest;
+  }
+  return "/admin";
+}
 
 export function SidebarFooter({
   userName,
@@ -26,6 +45,8 @@ export function SidebarFooter({
   signOutSlot: ReactNode;
 }) {
   const { resolvedTheme, toggleTheme } = useTheme();
+  const pathname = usePathname();
+  const adminHref = getAdminUrl(pathname ?? "");
 
   return (
     <div
@@ -79,7 +100,7 @@ export function SidebarFooter({
 
         {isAdmin ? (
           <Link
-            href="/admin"
+            href={adminHref}
             className="my-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold"
             style={{
               background: "linear-gradient(135deg, #F6A825 0%, #D4860A 100%)",

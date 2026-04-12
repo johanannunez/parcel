@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { logTimelineEvent } from "@/lib/timeline";
 
 export type SignupState = {
   error?: string;
@@ -48,6 +49,15 @@ export async function signup(
   // to click a link before they can log in. Surface a friendly message
   // instead of redirecting.
   if (data.user && !data.session) {
+    void logTimelineEvent({
+      ownerId: data.user.id,
+      eventType: "welcome",
+      category: "account",
+      title: "Welcome to Parcel",
+      body: "Your owner account has been created. Welcome aboard.",
+      isPinned: true,
+    });
+
     return {
       message:
         "Check your email to confirm your account. Once confirmed, sign in.",

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logTimelineEvent } from "@/lib/timeline";
 
 const schema = z.object({
   name: z.string().trim().max(120).optional().or(z.literal("")),
@@ -77,6 +78,14 @@ export async function addProperty(
       description: "New property added during onboarding",
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: user.id,
+    eventType: "property_added",
+    category: "property",
+    title: `New property: ${v.address_line1}`,
+    metadata: { property_type: v.property_type, city: v.city, state: v.state },
+  });
 
   redirect("/portal/onboarding/complete");
 }

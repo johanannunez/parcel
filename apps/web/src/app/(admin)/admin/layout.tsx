@@ -48,7 +48,7 @@ export default async function AdminLayout({
 
   return (
     <div
-      className="flex min-h-screen overflow-x-hidden"
+      className="flex h-screen overflow-hidden"
       style={{ backgroundColor: "var(--color-navy)" }}
     >
       <AdminIconRail pendingBlockCount={pendingBlockCount ?? 0} />
@@ -61,9 +61,9 @@ export default async function AdminLayout({
         signOutSlot={<AdminSignOutButton />}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col" style={{ backgroundColor: "var(--color-off-white)", color: "var(--color-text-primary)" }}>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden" style={{ backgroundColor: "var(--color-off-white)", color: "var(--color-text-primary)" }}>
         <AdminTopBar userName={firstName} initials={initials} pendingBlockCount={pendingBlockCount ?? 0} />
-        <main className="flex-1 pb-20 md:pb-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
           <PullToRefresh>{children}</PullToRefresh>
         </main>
       </div>

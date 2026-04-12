@@ -10,6 +10,10 @@ import {
   ArrowLeft,
   ArrowDown,
   Plus,
+  Paperclip,
+  X,
+  FileText,
+  SpinnerGap,
 } from "@phosphor-icons/react";
 import { SafeHtml } from "@/components/messages/SafeHtml";
 import {
@@ -18,6 +22,7 @@ import {
   recordMessagesRead,
   createDirectConversation,
 } from "./actions";
+import { uploadMessageAttachment } from "./upload-actions";
 import { createClient } from "@/lib/supabase/client";
 
 /* ─── Parcel Company Avatar ─── */
@@ -74,6 +79,24 @@ type Message = {
   senderAvatarUrl?: string | null;
 };
 
+type StagedFile = {
+  id: string;
+  file: File;
+  previewUrl: string | null;
+  uploading: boolean;
+  error: string | null;
+};
+
+type AttachmentData = {
+  url: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  aiSummary: string | null;
+  documentType: string | null;
+  keyDetails: Record<string, string> | null;
+};
+
 type Tab = "messages" | "emails";
 
 /* ─── Component ─── */
@@ -97,6 +120,7 @@ export function PortalMessagesShell({
   const [messages, setMessages] = useState<Message[]>([]);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
   // Track conversations the user has opened this session (optimistic unread clear)
   const [readConvIds, setReadConvIds] = useState<Set<string>>(new Set());
 
@@ -174,16 +198,76 @@ export function PortalMessagesShell({
   }, [selectedConvId, currentUserId, loadConversation, router]);
 
   const handleReply = async () => {
-    if (!replyText.trim() || !selectedConvId) return;
+    if ((!replyText.trim() && stagedFiles.length === 0) || !selectedConvId) return;
     setSending(true);
+
+    // Upload staged files first
+    const attachments: AttachmentData[] = [];
+    for (const staged of stagedFiles) {
+      const formData = new FormData();
+      formData.set("file", staged.file);
+      formData.set("conversationId", selectedConvId);
+      const result = await uploadMessageAttachment(formData);
+      if (!result.error) {
+        attachments.push({
+          url: result.url,
+          fileName: result.fileName,
+          fileType: result.fileType,
+          fileSize: result.fileSize,
+          aiSummary: result.aiSummary,
+          documentType: result.documentType,
+          keyDetails: result.keyDetails,
+        });
+      }
+    }
+
+    // Build message body with inline attachments
+    let body = replyText.trim();
+    if (attachments.length > 0) {
+      const attachmentHtml = attachments.map((a) => {
+        if (a.fileType.startsWith("image/")) {
+          return `<img src="${a.url}" alt="${a.fileName}" width="300" />`;
+        }
+        return `<a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.fileName}</a>`;
+      }).join("<br/>");
+      body = body ? `${body}<br/>${attachmentHtml}` : attachmentHtml;
+    }
+
+    // Build metadata
+    const metadata = attachments.length > 0 ? { attachments } : undefined;
+
     const result = await replyToConversation({
       conversationId: selectedConvId,
-      body: replyText,
+      body,
+      metadata,
     });
     setSending(false);
     if (result.error) return;
     setReplyText("");
+    setStagedFiles([]);
     loadConversation(selectedConvId);
+  };
+
+  const handleFilesSelected = (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    const newStaged: StagedFile[] = fileArray
+      .filter((f) => f.size <= 10 * 1024 * 1024)
+      .map((f) => ({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        file: f,
+        previewUrl: f.type.startsWith("image/") ? URL.createObjectURL(f) : null,
+        uploading: false,
+        error: null,
+      }));
+    setStagedFiles((prev) => [...prev, ...newStaged]);
+  };
+
+  const removeStagedFile = (id: string) => {
+    setStagedFiles((prev) => {
+      const file = prev.find((f) => f.id === id);
+      if (file?.previewUrl) URL.revokeObjectURL(file.previewUrl);
+      return prev.filter((f) => f.id !== id);
+    });
   };
 
   const handleBack = () => {
@@ -304,6 +388,9 @@ export function PortalMessagesShell({
             onReply={handleReply}
             onBack={handleBack}
             messagesEndRef={messagesEndRef}
+            stagedFiles={stagedFiles}
+            onFilesSelected={handleFilesSelected}
+            onRemoveFile={removeStagedFile}
           />
         ) : (
           <EmptyState />
@@ -557,6 +644,9 @@ function ChatThread({
   onReply,
   onBack,
   messagesEndRef,
+  stagedFiles,
+  onFilesSelected,
+  onRemoveFile,
 }: {
   messages: Message[];
   currentUserId: string;
@@ -566,7 +656,12 @@ function ChatThread({
   onReply: () => void;
   onBack: () => void;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  stagedFiles: StagedFile[];
+  onFilesSelected: (files: FileList | File[]) => void;
+  onRemoveFile: (id: string) => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [newMsgCount, setNewMsgCount] = useState(0);
@@ -719,9 +814,16 @@ function ChatThread({
                     ) : null}
                     <SafeHtml
                       html={m.body}
-                      className="text-sm leading-relaxed [&_a]:underline [&_img]:rounded-lg"
+                      className="text-sm leading-relaxed [&_a]:underline [&_img]:max-w-[240px] [&_img]:rounded-lg"
                       style={{ color: isOwner ? "#ffffff" : "var(--color-text-primary)" }}
                     />
+                    {/* Attachment metadata rendering */}
+                    {(m.metadata as Record<string, unknown>)?.attachments ? (
+                      <MessageAttachments
+                        attachments={(m.metadata as { attachments: AttachmentData[] }).attachments}
+                        isOwner={isOwner}
+                      />
+                    ) : null}
                   </div>
                   <span
                     className={`mt-1 text-[10px] ${isOwner ? "text-right" : "text-left"}`}
@@ -770,14 +872,105 @@ function ChatThread({
 
       {/* Reply Input */}
       <div
-        className="shrink-0 border-t px-4 py-3 md:px-6"
+        className="relative shrink-0 border-t px-4 py-3 md:px-6"
         style={{
           borderColor: "var(--color-warm-gray-200)",
           backgroundColor: "var(--color-white)",
           paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))",
         }}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          if (e.dataTransfer.files.length > 0) {
+            onFilesSelected(e.dataTransfer.files);
+          }
+        }}
       >
+        {/* Drag overlay */}
+        {dragOver ? (
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed"
+            style={{
+              borderColor: "var(--color-brand)",
+              backgroundColor: "rgba(2, 170, 235, 0.06)",
+            }}
+          >
+            <p className="text-sm font-medium" style={{ color: "var(--color-brand)" }}>
+              Drop files here
+            </p>
+          </div>
+        ) : null}
+
+        {/* Staged file previews */}
+        {stagedFiles.length > 0 ? (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {stagedFiles.map((sf) => (
+              <div
+                key={sf.id}
+                className="relative flex items-center gap-2 rounded-lg border px-2.5 py-1.5"
+                style={{
+                  borderColor: "var(--color-warm-gray-200)",
+                  backgroundColor: "var(--color-warm-gray-50)",
+                }}
+              >
+                {sf.previewUrl ? (
+                  <img
+                    src={sf.previewUrl}
+                    alt={sf.file.name}
+                    className="h-9 w-9 rounded object-cover"
+                  />
+                ) : (
+                  <FileText size={20} style={{ color: "var(--color-text-tertiary)" }} />
+                )}
+                <span
+                  className="max-w-[120px] truncate text-xs"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  {sf.file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onRemoveFile(sf.id)}
+                  className="flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-[var(--color-warm-gray-200)]"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                  aria-label={`Remove ${sf.file.name}`}
+                >
+                  <X size={12} weight="bold" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
         <div className="flex items-end gap-2">
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                onFilesSelected(e.target.files);
+                e.target.value = "";
+              }
+            }}
+          />
+
+          {/* Attachment button */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--color-warm-gray-100)]"
+            style={{ color: "var(--color-text-tertiary)" }}
+            aria-label="Attach file"
+          >
+            <Paperclip size={18} />
+          </button>
+
           <div
             className="flex flex-1 items-center rounded-full border px-4 transition-colors focus-within:border-[var(--color-brand)]"
             style={{
@@ -803,15 +996,89 @@ function ChatThread({
           <button
             type="button"
             onClick={onReply}
-            disabled={sending || !replyText.trim()}
+            disabled={sending || (!replyText.trim() && stagedFiles.length === 0)}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition-opacity disabled:opacity-40"
             style={{ backgroundColor: "var(--color-brand)" }}
           >
-            <PaperPlaneTilt size={16} weight="bold" />
+            {sending ? (
+              <SpinnerGap size={16} weight="bold" className="animate-spin" />
+            ) : (
+              <PaperPlaneTilt size={16} weight="bold" />
+            )}
           </button>
         </div>
       </div>
     </>
+  );
+}
+
+/* ─── Message Attachments ─── */
+
+function MessageAttachments({
+  attachments,
+  isOwner,
+}: {
+  attachments: AttachmentData[];
+  isOwner: boolean;
+}) {
+  if (!attachments || attachments.length === 0) return null;
+
+  return (
+    <div className="mt-2 flex flex-col gap-2">
+      {attachments.map((att, idx) => (
+        <div key={idx}>
+          {att.fileType.startsWith("image/") ? (
+            <a href={att.url} target="_blank" rel="noopener noreferrer">
+              <img
+                src={att.url}
+                alt={att.fileName}
+                className="max-w-[240px] rounded-lg"
+              />
+            </a>
+          ) : (
+            <a
+              href={att.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors hover:opacity-80"
+              style={{
+                borderColor: isOwner ? "rgba(255,255,255,0.3)" : "var(--color-warm-gray-200)",
+                color: isOwner ? "#ffffff" : "var(--color-text-primary)",
+              }}
+            >
+              <FileText size={16} />
+              {att.fileName}
+            </a>
+          )}
+          {att.aiSummary ? (
+            <div
+              className="mt-1.5 rounded-lg px-3 py-2"
+              style={{
+                backgroundColor: isOwner ? "rgba(255,255,255,0.12)" : "var(--color-warm-gray-50)",
+              }}
+            >
+              {att.documentType ? (
+                <span
+                  className="mb-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
+                  style={{
+                    backgroundColor: isOwner ? "rgba(255,255,255,0.2)" : "var(--color-warm-gray-200)",
+                    color: isOwner ? "#ffffff" : "var(--color-text-secondary)",
+                  }}
+                >
+                  {att.documentType}
+                </span>
+              ) : null}
+              <p
+                className="text-xs leading-relaxed"
+                style={{ color: isOwner ? "rgba(255,255,255,0.85)" : "var(--color-text-secondary)" }}
+              >
+                {att.aiSummary}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
   );
 }
 

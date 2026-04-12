@@ -15,6 +15,7 @@ import {
   ChatCircle,
   ListChecks,
   ClockCounterClockwise,
+  BookOpenText,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
@@ -47,6 +48,7 @@ const communicationsNav: NavItem[] = [
   { href: "/admin/messages", label: "Messages", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/messages" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { href: "/admin/timeline", label: "Timeline", icon: <ClockCounterClockwise size={18} weight="duotone" />, matchPrefix: "/admin/timeline" },
+  { href: "/admin/help", label: "Help Articles", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
 /* ─── Token constants ─── */

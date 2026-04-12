@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logTimelineEvent } from "@/lib/timeline";
 import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
@@ -53,6 +54,14 @@ export async function submitForReview(
       description: "Property submitted for review",
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId: user.id,
+    eventType: "onboarding_complete",
+    category: "account",
+    title: "Onboarding complete",
+    isPinned: true,
+  });
 
   await recordVersion(supabase, {
     userId: user.id,

@@ -7,6 +7,18 @@ import {
   useState,
   useTransition,
 } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { useRouter } from "next/navigation";
 import {
   ArrowUp,
@@ -16,6 +28,7 @@ import {
   Circle,
   EnvelopeSimple,
   Flag,
+  PencilSimple,
   Phone,
   Plus,
   Rows,
@@ -2108,152 +2121,388 @@ function ListView({
 
 // ─── Board view ───────────────────────────────────────────────────────────────
 
+// ─── Draggable card wrapper ───────────────────────────────────────────────────
+
+function DraggableCard({
+  task,
+  owners,
+  properties,
+  onClick,
+  isDragging,
+}: {
+  task: TaskWithRelations;
+  owners: OwnerProfile[];
+  properties: PropertyOption[];
+  onClick: () => void;
+  isDragging?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: task.id,
+    data: { task },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.4 : 1,
+        cursor: "grab",
+        touchAction: "none",
+      }}
+    >
+      <TaskCard
+        task={task}
+        owners={owners}
+        properties={properties}
+        onClick={onClick}
+      />
+    </div>
+  );
+}
+
+// ─── Droppable column wrapper ─────────────────────────────────────────────────
+
+function DroppableColumn({
+  statusValue,
+  isOver,
+  children,
+}: {
+  statusValue: string;
+  isOver: boolean;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef } = useDroppable({ id: statusValue });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        padding: "10px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        flex: 1,
+        overflowY: "auto",
+        minHeight: 80,
+        transition: "background-color 150ms",
+        backgroundColor: isOver ? "rgba(2,170,235,0.06)" : "transparent",
+        borderRadius: "0 0 12px 12px",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─── Column label (inline rename) ─────────────────────────────────────────────
+
+const BOARD_LABELS_KEY = "parcel_board_col_labels";
+
+function loadStoredLabels(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(BOARD_LABELS_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+function ColumnLabel({
+  statusValue,
+  defaultLabel,
+  color,
+}: {
+  statusValue: string;
+  defaultLabel: string;
+  color: string;
+}) {
+  const [storedLabels, setStoredLabels] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setStoredLabels(loadStoredLabels());
+  }, []);
+
+  const displayLabel = storedLabels[statusValue] ?? defaultLabel;
+
+  function startEdit() {
+    setDraft(displayLabel);
+    setEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  }
+
+  function commit() {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== displayLabel) {
+      const next = { ...storedLabels, [statusValue]: trimmed };
+      setStoredLabels(next);
+      localStorage.setItem(BOARD_LABELS_KEY, JSON.stringify(next));
+    }
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          color: "var(--color-text-primary)",
+          background: "transparent",
+          border: "none",
+          outline: "none",
+          borderBottom: `1px solid ${color}`,
+          width: 100,
+          padding: "0 2px",
+        }}
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      title="Double-click to rename"
+      onDoubleClick={startEdit}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        background: "none",
+        border: "none",
+        padding: 0,
+        cursor: "default",
+        fontFamily: "inherit",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          color: "var(--color-text-primary)",
+        }}
+      >
+        {displayLabel}
+      </span>
+      <span
+        className="col-rename-hint"
+        style={{
+          opacity: 0,
+          color: "var(--color-text-tertiary)",
+          transition: "opacity 120ms",
+        }}
+      >
+        <PencilSimple size={10} weight="duotone" />
+      </span>
+      <style>{`.col-rename-hint { opacity: 0 } button:hover .col-rename-hint { opacity: 1 }`}</style>
+    </button>
+  );
+}
+
+// ─── BoardView ────────────────────────────────────────────────────────────────
+
 function BoardView({
   tasks,
   owners,
   properties,
   onTaskClick,
   onAddTask,
+  onStatusChange,
 }: {
   tasks: TaskWithRelations[];
   owners: OwnerProfile[];
   properties: PropertyOption[];
   onTaskClick: (task: TaskWithRelations) => void;
   onAddTask: (status: string) => void;
+  onStatusChange: (taskId: string, newStatus: string) => void;
 }) {
   const boardStatuses = STATUSES.filter((s) => s.value !== "cancelled");
+  const [activeTask, setActiveTask] = useState<TaskWithRelations | null>(null);
+  const [overColumn, setOverColumn] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  );
+
+  function handleDragStart(event: DragStartEvent) {
+    const task = tasks.find((t) => t.id === event.active.id);
+    if (task) setActiveTask(task);
+  }
+
+  function handleDragOver(event: { over: { id: string | number } | null }) {
+    setOverColumn(event.over ? String(event.over.id) : null);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveTask(null);
+    setOverColumn(null);
+    const { active, over } = event;
+    if (!over) return;
+    const targetStatus = String(over.id);
+    const task = tasks.find((t) => t.id === active.id);
+    if (!task || task.status === targetStatus) return;
+    onStatusChange(String(active.id), targetStatus);
+  }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        overflowX: "auto",
-        paddingBottom: 16,
-        alignItems: "flex-start",
-      }}
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
     >
-      {boardStatuses.map((s) => {
-        const colTasks = tasks.filter((t) => t.status === s.value);
-        return (
-          <div
-            key={s.value}
-            style={{
-              flexShrink: 0,
-              width: 260,
-              backgroundColor: "var(--color-warm-gray-100)",
-              borderRadius: 12,
-              overflow: "hidden",
-              border: "1px solid var(--color-warm-gray-200)",
-            }}
-          >
-            {/* Column header */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          overflowX: "auto",
+          overflowY: "hidden",
+          height: "calc(100vh - 230px)",
+          paddingBottom: 16,
+          alignItems: "stretch",
+        }}
+      >
+        {boardStatuses.map((s) => {
+          const colTasks = tasks.filter((t) => t.status === s.value);
+          const isOver = overColumn === s.value;
+          return (
             <div
+              key={s.value}
               style={{
-                padding: "12px 14px 10px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderBottom: "1px solid var(--color-warm-gray-200)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                }}
-              >
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    backgroundColor: s.color,
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    color: "var(--color-text-primary)",
-                  }}
-                >
-                  {s.label}
-                </span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: "0 5px",
-                    borderRadius: 999,
-                    backgroundColor: `${s.color}14`,
-                    color: s.color,
-                  }}
-                >
-                  {colTasks.length}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => onAddTask(s.value)}
-                title={`Add task to ${s.label}`}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 6,
-                  border: "1px solid var(--color-warm-gray-200)",
-                  backgroundColor: "transparent",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "var(--color-text-tertiary)",
-                }}
-              >
-                <Plus size={12} weight="bold" />
-              </button>
-            </div>
-
-            {/* Cards */}
-            <div
-              style={{
-                padding: "10px",
+                flexShrink: 0,
+                width: 270,
+                backgroundColor: "var(--color-warm-gray-100)",
+                borderRadius: 12,
+                border: isOver
+                  ? "1px solid var(--color-brand)"
+                  : "1px solid var(--color-warm-gray-200)",
                 display: "flex",
                 flexDirection: "column",
-                gap: 8,
-                minHeight: 80,
+                transition: "border-color 150ms",
               }}
             >
-              {colTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  owners={owners}
-                  properties={properties}
-                  onClick={() => onTaskClick(task)}
-                />
-              ))}
-              {colTasks.length === 0 && (
-                <div
+              {/* Column header */}
+              <div
+                style={{
+                  padding: "12px 14px 10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid var(--color-warm-gray-200)",
+                  flexShrink: 0,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: s.color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <ColumnLabel
+                    statusValue={s.value}
+                    defaultLabel={s.label}
+                    color={s.color}
+                  />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: "0 5px",
+                      borderRadius: 999,
+                      backgroundColor: `${s.color}20`,
+                      color: s.color,
+                    }}
+                  >
+                    {colTasks.length}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onAddTask(s.value)}
+                  title={`Add task`}
                   style={{
-                    fontSize: 12,
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    border: "1px solid var(--color-warm-gray-200)",
+                    backgroundColor: "transparent",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     color: "var(--color-text-tertiary)",
-                    textAlign: "center",
-                    padding: "20px 0",
                   }}
                 >
-                  No tasks
-                </div>
-              )}
+                  <Plus size={12} weight="bold" />
+                </button>
+              </div>
+
+              {/* Droppable card area */}
+              <DroppableColumn statusValue={s.value} isOver={isOver}>
+                {colTasks.map((task) => (
+                  <DraggableCard
+                    key={task.id}
+                    task={task}
+                    owners={owners}
+                    properties={properties}
+                    onClick={() => onTaskClick(task)}
+                    isDragging={activeTask?.id === task.id}
+                  />
+                ))}
+                {colTasks.length === 0 && !isOver && (
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--color-text-tertiary)",
+                      textAlign: "center",
+                      padding: "20px 0",
+                    }}
+                  >
+                    No tasks
+                  </div>
+                )}
+              </DroppableColumn>
             </div>
+          );
+        })}
+      </div>
+
+      {/* Drag overlay — ghost card while dragging */}
+      <DragOverlay>
+        {activeTask ? (
+          <div style={{ transform: "rotate(2deg)", opacity: 0.95 }}>
+            <TaskCard
+              task={activeTask}
+              owners={owners}
+              properties={properties}
+              onClick={() => {}}
+            />
           </div>
-        );
-      })}
-    </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }
 
@@ -2431,8 +2680,36 @@ export function AdminTasksShell({
     setShowNewTask(true);
   };
 
+  const [, startStatusTransition] = useTransition();
+  const handleStatusChange = useCallback(
+    (taskId: string, newStatus: string) => {
+      // Optimistic update
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
+      );
+      startStatusTransition(async () => {
+        const result = await updateTask(taskId, { status: newStatus });
+        if (result.error) {
+          // Rollback on failure
+          setTasks((prev) =>
+            prev.map((t) =>
+              t.id === taskId
+                ? { ...t, status: tasks.find((x) => x.id === taskId)?.status ?? t.status }
+                : t,
+            ),
+          );
+        }
+      });
+    },
+    [tasks],
+  );
+
   return (
-    <div>
+    <div
+      style={{
+        padding: "32px 40px 24px",
+      }}
+    >
       {/* Page header */}
       <div
         style={{
@@ -2585,6 +2862,7 @@ export function AdminTasksShell({
           properties={properties}
           onTaskClick={setSelectedTask}
           onAddTask={handleAddFromBoard}
+          onStatusChange={handleStatusChange}
         />
       )}
 

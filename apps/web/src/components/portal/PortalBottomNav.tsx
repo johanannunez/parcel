@@ -101,6 +101,24 @@ export function PortalBottomNav({
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string>(() => getActiveSection(pathname));
+
+  const adminHref = (() => {
+    const map: Array<[string, string]> = [
+      ["/portal/properties", "/admin/properties"],
+      ["/portal/calendar", "/admin/calendar"],
+      ["/portal/payouts", "/admin/payouts"],
+      ["/portal/messages", "/admin/messages"],
+      ["/portal/tasks", "/admin/tasks"],
+      ["/portal/timeline", "/admin/timeline"],
+      ["/portal/reserve", "/admin/block-requests"],
+      ["/portal/account", "/admin/account"],
+      ["/portal/help", "/admin/help"],
+    ];
+    for (const [prefix, dest] of map) {
+      if (pathname?.startsWith(prefix)) return dest;
+    }
+    return "/admin";
+  })();
   const { resolvedTheme, toggleTheme } = useTheme();
 
   // When sheet opens, snap to the section matching the active route.
@@ -384,7 +402,7 @@ export function PortalBottomNav({
               <div className="px-4 pb-2">
                 {isAdmin ? (
                   <Link
-                    href="/admin"
+                    href={adminHref}
                     onClick={closeMore}
                     className="mb-2 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold"
                     style={{

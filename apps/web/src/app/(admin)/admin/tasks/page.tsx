@@ -125,7 +125,7 @@ export default async function AdminTasksPage() {
   }));
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-10 lg:py-14">
+    <div className="w-full">
       <AdminTasksShell
         tasks={tasks}
         owners={owners}

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logTimelineEvent } from "@/lib/timeline";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -91,9 +92,12 @@ export async function createOwnerTask(
     return { ok: false, message: error.message };
   }
 
-  await insertTimelineEntry(supabase, ownerId, {
+  void logTimelineEvent({
+    ownerId,
     eventType: "task_created",
+    category: "account",
     title: `Task created: ${truncate(data.title, 50)}`,
+    visibility: "owner",
   });
 
   revalidatePath(`/admin/owners/${ownerId}`);
@@ -130,9 +134,12 @@ export async function toggleTaskStatus(
     return { ok: false, message: error.message };
   }
 
-  await insertTimelineEntry(supabase, ownerId, {
+  void logTimelineEvent({
+    ownerId,
     eventType: "task_status_changed",
+    category: "account",
     title: `Task ${newStatus === "done" ? "completed" : "reopened"}: ${truncate(task.title, 50)}`,
+    visibility: "owner",
   });
 
   revalidatePath(`/admin/owners/${ownerId}`);
@@ -163,9 +170,12 @@ export async function deleteTask(
     return { ok: false, message: error.message };
   }
 
-  await insertTimelineEntry(supabase, ownerId, {
+  void logTimelineEvent({
+    ownerId,
     eventType: "task_deleted",
+    category: "account",
     title: `Task deleted: ${truncate(task?.title ?? "Unknown", 50)}`,
+    visibility: "admin_only",
   });
 
   revalidatePath(`/admin/owners/${ownerId}`);
@@ -198,9 +208,12 @@ export async function createOwnerNote(
     return { ok: false, message: error.message };
   }
 
-  await insertTimelineEntry(supabase, ownerId, {
+  void logTimelineEvent({
+    ownerId,
     eventType: "note_added",
+    category: "account",
     title: `Note added: ${truncate(data.body, 50)}`,
+    visibility: "admin_only",
   });
 
   revalidatePath(`/admin/owners/${ownerId}`);
@@ -284,10 +297,18 @@ export async function addTimelineEntry(
   const { supabase, error: authError } = await requireAdmin();
   if (authError) return { ok: false, message: authError };
 
-  const timelineError = await insertTimelineEntry(supabase, ownerId, data);
+  const result = await logTimelineEvent({
+    ownerId,
+    eventType: data.eventType,
+    category: "account",
+    title: data.title,
+    body: data.body,
+    propertyId: data.propertyId,
+    visibility: "owner",
+  });
 
-  if (timelineError) {
-    return { ok: false, message: timelineError.message };
+  if (!result.ok) {
+    return { ok: false, message: result.error ?? "Failed to create entry." };
   }
 
   revalidatePath(`/admin/owners/${ownerId}`);
