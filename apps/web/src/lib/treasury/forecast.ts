@@ -4,10 +4,10 @@
 import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
 import { ALLOCATION_TARGETS } from "./types";
 
-// Treasury tables are not yet in the generated Supabase types. Cast to any.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function createServiceClient(): any {
-  return _createServiceClient();
+// Treasury tables are not yet in the generated Supabase types. Remove after types regen.
+function createServiceClient() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return _createServiceClient() as any;
 }
 
 // ---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ export async function generateForecast(
 
   const accounts: AccountRow[] = accountsData ?? [];
 
-  const rebalancingCategories = ["owners_comp", "tax", "emergency", "opex", "profit", "generosity"];
+  const rebalancingCategories = Object.keys(ALLOCATION_TARGETS);
   const relevantAccounts = accounts.filter(
     (a) => a.bucket_category && rebalancingCategories.includes(a.bucket_category),
   );

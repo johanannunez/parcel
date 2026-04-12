@@ -28,23 +28,30 @@ export type AlertType =
   | 'low_balance'
   | 'large_transaction'
   | 'sync_failed'
+  | 'connection_expiring'
   | 'allocation_drift'
-  | 'duplicate_detected';
+  | 'duplicate_detected'
+  | 'new_subscription'
+  | 'unusual_transaction'
+  | 'dedup_match'
+  | 'savings_milestone'
+  | 'rebalance_suggestion';
 
 export type AlertSeverity = 'info' | 'warning' | 'critical';
 
-export type ConnectionStatus = 'active' | 'error' | 'pending' | 'disconnected';
+export type ConnectionStatus = 'active' | 'stale' | 'error' | 'pending' | 'disconnected';
 
 export type AuditAction =
-  | 'view_balance'
-  | 'view_transactions'
-  | 'sync_triggered'
-  | 'allocation_updated'
-  | 'bucket_created'
-  | 'bucket_deleted'
-  | 'connection_added'
-  | 'connection_removed'
-  | 'token_rotated';
+  | 'page_view'
+  | 'data_sync'
+  | 'plaid_link_start'
+  | 'plaid_link_complete'
+  | 'account_disconnect'
+  | 'forecast_run'
+  | 'settings_change'
+  | 'reauth_success'
+  | 'reauth_failure'
+  | 'sync_triggered';
 
 // Profit-first allocation targets (percentages)
 export const ALLOCATION_TARGETS: Record<string, number> = {
@@ -56,8 +63,8 @@ export const ALLOCATION_TARGETS: Record<string, number> = {
   generosity: 4,
 };
 
-// Bucket categories visible in the active treasury UI
-export const ACTIVE_BUCKET_CATEGORIES: BucketCategory[] = [
+// All valid bucket categories (mirrors the DB CHECK constraint)
+export const ALL_BUCKET_CATEGORIES: BucketCategory[] = [
   'income',
   'owners_comp',
   'tax',
@@ -70,10 +77,17 @@ export const ACTIVE_BUCKET_CATEGORIES: BucketCategory[] = [
   'yearly',
   'disbursement',
   'deposits',
+  'uncategorized',
 ];
 
-// Deduplication confidence thresholds (0-100)
-export const DEDUP_THRESHOLD_AUTO = 65;
+// Bucket categories visible in the active treasury UI (excludes uncategorized)
+export const ACTIVE_BUCKET_CATEGORIES: BucketCategory[] = ALL_BUCKET_CATEGORIES.filter(
+  (c) => c !== 'uncategorized',
+);
+
+// Deduplication confidence thresholds (0-105 scale)
+// Auto: requires amount + date + at least one identifier signal (description, counterparty, etc.)
+export const DEDUP_THRESHOLD_AUTO = 80;
 export const DEDUP_THRESHOLD_PROBABLE = 40;
 
 // Treasury session timeout in minutes

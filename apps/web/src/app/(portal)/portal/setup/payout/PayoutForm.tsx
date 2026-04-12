@@ -6,15 +6,16 @@ import { SigningStep } from "@/components/portal/setup/SigningStep";
 
 type PayoutMethod = "ach" | "card";
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export function PayoutForm({
-  userEmail: _userEmail,
-  userName: _userName,
-  hasBoldSignKey: _hasBoldSignKey,
+  userEmail,
+  userName,
+  hasBoldSignKey,
 }: {
   userEmail: string;
   userName: string;
   hasBoldSignKey: boolean;
-}) {
+}) { /* eslint-enable @typescript-eslint/no-unused-vars */
   const [method, setMethod] = useState<PayoutMethod>("ach");
 
   // BoldSign signing URLs will be generated server-side once

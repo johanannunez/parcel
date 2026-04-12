@@ -79,7 +79,7 @@ export default async function AccountPage() {
       ) : null}
 
       {/* Two-column layout: sidebar nav + content */}
-      <div className="flex gap-10">
+      <div className="flex flex-col lg:flex-row lg:gap-10">
         <AccountNav />
 
         <div className="flex min-w-0 flex-1 flex-col gap-12 pb-[70vh]">

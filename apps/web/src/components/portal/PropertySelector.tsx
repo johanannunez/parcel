@@ -73,6 +73,17 @@ export function PropertySelector({
   const active = properties.find((p) => p.id === activeId) ?? properties[0];
   const showSearch = properties.length >= 5;
 
+  const select = useCallback((id: string) => {
+    setOpen(false);
+    setSearch("");
+    setFocusIdx(-1);
+    if (onChange) {
+      onChange(id);
+    } else if (hrefTemplate) {
+      router.push(hrefTemplate.replace("{id}", id));
+    }
+  }, [onChange, hrefTemplate, router]);
+
   const filtered =
     showSearch && search.trim()
       ? properties.filter((p) => {
@@ -113,17 +124,6 @@ export function PropertySelector({
         )}
       </div>
     );
-  }
-
-  function select(id: string) {
-    setOpen(false);
-    setSearch("");
-    setFocusIdx(-1);
-    if (onChange) {
-      onChange(id);
-    } else if (hrefTemplate) {
-      router.push(hrefTemplate.replace("{id}", id));
-    }
   }
 
   // Close on outside click

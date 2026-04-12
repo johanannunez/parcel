@@ -43,15 +43,14 @@ export async function POST(req: NextRequest) {
     const exchangeResponse = await plaid.itemPublicTokenExchange({ public_token });
     const { access_token, item_id } = exchangeResponse.data;
 
-    // Encrypt access token before storing
-    const encryptedToken = encrypt(access_token);
+    // Encrypt access token before storing (Base64 for consistent encoding)
+    const encryptedToken = encrypt(access_token).toString("base64");
 
     // Store connection in treasury_connections.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: connection, error: connectionError } = await (service as any)
       .from("treasury_connections")
       .insert({
-        user_id: user.id,
         plaid_item_id: item_id,
         access_token_encrypted: encryptedToken,
         institution_name: institution_name ?? null,
@@ -72,7 +71,7 @@ export async function POST(req: NextRequest) {
     const accountsResponse = await plaid.accountsGet({ access_token });
     const plaidAccounts = accountsResponse.data.accounts;
 
-    // Map and insert accounts
+    // Map and insert accounts (only columns that exist in the schema)
     const accountRows = plaidAccounts.map((acct) => {
       const accountType =
         acct.type === "depository" && acct.subtype === "savings" ? "savings" : "checking";
@@ -83,11 +82,9 @@ export async function POST(req: NextRequest) {
         name: acct.name,
         official_name: acct.official_name ?? null,
         type: accountType,
-        subtype: acct.subtype ?? null,
         mask: acct.mask ?? null,
         current_balance: acct.balances.current ?? null,
         available_balance: acct.balances.available ?? null,
-        iso_currency_code: acct.balances.iso_currency_code ?? "USD",
       };
     });
 

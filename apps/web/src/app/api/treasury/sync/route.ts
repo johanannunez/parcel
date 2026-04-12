@@ -63,11 +63,11 @@ export async function POST(request: NextRequest) {
   try {
     const result = await runTreasurySync();
 
-    // Audit log
+    // Audit log (user_id is nullable for cron-triggered syncs)
     const svc = createServiceClient();
     await svc.from("treasury_audit_log").insert({
       action: "sync_triggered",
-      actor_id: userId ?? null,
+      user_id: userId ?? null,
       metadata: {
         trigger: isCron ? "cron" : "manual",
         transactions_added: result.transactions_added,

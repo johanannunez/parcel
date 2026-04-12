@@ -54,7 +54,6 @@ export function CustomSelect({
   hasError,
   disabled,
   required,
-  "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedby,
 }: CustomSelectProps) {
   const isControlled = controlledValue !== undefined;

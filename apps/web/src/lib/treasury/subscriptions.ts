@@ -3,11 +3,9 @@
 
 import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
 
-// Treasury tables are not yet in the generated Supabase types. Cast the client
-// to `any` so we can query treasury_* tables without TS errors. Once the types
-// are regenerated after the treasury migration, remove this wrapper.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Treasury tables are not yet in the generated Supabase types. Remove after types regen.
 function createServiceClient() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return _createServiceClient() as any;
 }
 

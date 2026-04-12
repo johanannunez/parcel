@@ -11,7 +11,7 @@ create table public.treasury_connections (
   access_token_encrypted bytea not null,
   institution_name      text,
   institution_id        text,
-  status                text not null check (status in ('active', 'stale', 'disconnected')),
+  status                text not null check (status in ('active', 'stale', 'error', 'pending', 'disconnected')),
   last_synced_at        timestamptz,
   cursor                text,
   token_rotated_at      timestamptz,
@@ -77,7 +77,7 @@ create policy "treasury_accounts_admin_delete" on public.treasury_accounts
 
 create table public.treasury_transactions (
   id                    uuid primary key default gen_random_uuid(),
-  account_id            uuid not null references public.treasury_accounts (id) on delete cascade,
+  account_id            uuid references public.treasury_accounts (id) on delete cascade,
   plaid_transaction_id  text unique,
   stripe_charge_id      text unique,
   date                  date not null,
@@ -228,7 +228,8 @@ create table public.treasury_alerts (
   type             text not null check (type in (
                      'low_balance', 'allocation_drift', 'new_subscription',
                      'unusual_transaction', 'dedup_match', 'savings_milestone',
-                     'rebalance_suggestion'
+                     'rebalance_suggestion', 'sync_failed', 'connection_expiring',
+                     'duplicate_detected', 'large_transaction'
                    )),
   severity         text not null default 'info' check (severity in ('info', 'warning', 'critical')),
   title            text not null,
@@ -259,11 +260,11 @@ create policy "treasury_alerts_admin_delete" on public.treasury_alerts
 
 create table public.treasury_audit_log (
   id            uuid primary key default gen_random_uuid(),
-  user_id       uuid not null references public.profiles (id) on delete cascade,
+  user_id       uuid references public.profiles (id) on delete cascade,
   action        text not null check (action in (
                   'page_view', 'data_sync', 'plaid_link_start', 'plaid_link_complete',
                   'account_disconnect', 'forecast_run', 'settings_change',
-                  'reauth_success', 'reauth_failure'
+                  'reauth_success', 'reauth_failure', 'sync_triggered'
                 )),
   resource_type text,
   resource_id   uuid,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { verifyTreasuryAccess, type VerifyState } from "./actions";
 
 interface TreasuryVerifyFormProps {
@@ -12,7 +12,16 @@ const initialState: VerifyState = { error: null, lockedUntil: null };
 export function TreasuryVerifyForm({ redirectTo }: TreasuryVerifyFormProps) {
   const [state, action, isPending] = useActionState(verifyTreasuryAccess, initialState);
 
-  const isLocked = state.lockedUntil != null && state.lockedUntil > Date.now();
+  // Compute lock state outside render to satisfy React purity rules
+  const [now, setNow] = useState(() => Date.now());
+  const isLocked = state.lockedUntil != null && state.lockedUntil > now;
+
+  // Re-check lock expiry every second while locked
+  useEffect(() => {
+    if (!isLocked) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [isLocked]);
 
   return (
     <form action={action} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>

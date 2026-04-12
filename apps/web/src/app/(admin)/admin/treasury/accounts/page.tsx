@@ -14,7 +14,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getAccounts, getConnectionStatus } from "@/lib/treasury/queries";
 import { currency0 } from "@/lib/format";
 import { ACTIVE_BUCKET_CATEGORIES } from "@/lib/treasury/types";
-import type { BucketCategory } from "@/lib/treasury/types";
 import PlaidLinkButton from "./PlaidLinkButton";
 import AccountCategorizer from "./AccountCategorizer";
 import { disconnectBank } from "./actions";

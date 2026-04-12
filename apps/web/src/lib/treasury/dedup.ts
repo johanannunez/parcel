@@ -23,8 +23,8 @@ export type PlaidTransactionRecord = {
   amount: number; // dollars, positive = deposit
   date: string; // ISO date (YYYY-MM-DD)
   original_description?: string;
-  counterparties?: any[]; // jsonb from Plaid
-  payment_meta?: any; // jsonb from Plaid
+  counterparties?: Array<Record<string, unknown>>; // jsonb from Plaid
+  payment_meta?: Record<string, unknown>; // jsonb from Plaid
 };
 
 export type DedupMatch = {
@@ -132,8 +132,10 @@ function scorePair(
   // 4. Counterparties containing "Stripe" (+10)
   if (Array.isArray(plaid.counterparties)) {
     const hasStripe = plaid.counterparties.some((cp) => {
-      const name = typeof cp === "object" && cp !== null ? cp.name ?? "" : "";
-      return name.toLowerCase().includes("stripe");
+      const name = typeof cp === "object" && cp !== null
+        ? (cp as Record<string, unknown>).name ?? ""
+        : "";
+      return String(name).toLowerCase().includes("stripe");
     });
     if (hasStripe) {
       score += 10;

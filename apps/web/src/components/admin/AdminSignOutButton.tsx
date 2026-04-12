@@ -13,6 +13,7 @@ export function AdminSignOutButton() {
       disabled={pending}
       onClick={() => startTransition(() => signOut())}
       className="admin-footer-row admin-footer-signout"
+      data-admin-signout
     >
       <Power size={15} weight="regular" className="shrink-0" />
       {pending ? "Signing out..." : "Sign out"}

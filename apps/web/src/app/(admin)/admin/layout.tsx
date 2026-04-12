@@ -71,6 +71,10 @@ export default async function AdminLayout({
       <AdminBottomNav
         pendingBlockCount={pendingBlockCount ?? 0}
         signOutSlot={<AdminSignOutButton />}
+        userName={fullName}
+        userEmail={user.email ?? ""}
+        initials={initials}
+        avatarUrl={profile?.avatar_url ?? null}
       />
     </div>
   );

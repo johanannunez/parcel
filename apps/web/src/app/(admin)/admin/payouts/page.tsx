@@ -69,7 +69,7 @@ export default async function AdminPayoutsPage() {
       </div>
 
       {/* Summary */}
-      <section className="grid grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Gross revenue" value={`$${totalGross.toLocaleString()}`} />
         <StatCard label="Total fees" value={`$${totalFees.toLocaleString()}`} />
         <StatCard label="Net payouts" value={`$${totalNet.toLocaleString()}`} />
@@ -88,7 +88,7 @@ export default async function AdminPayoutsPage() {
         </div>
       ) : (
         <div
-          className="overflow-hidden rounded-xl border"
+          className="overflow-x-auto rounded-xl border"
           style={{ borderColor: "var(--color-warm-gray-200)" }}
         >
           <table className="w-full text-left text-sm">

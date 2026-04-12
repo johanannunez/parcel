@@ -6,7 +6,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import * as crypto from "crypto";
 import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
-import { getPlaidClient } from "@/lib/treasury/plaid";
 import { runTreasurySync } from "@/lib/treasury/sync";
 
 export const dynamic = "force-dynamic";
@@ -182,7 +181,7 @@ async function handlePendingExpiration(itemId: string): Promise<void> {
   const svc = createServiceClient();
 
   const { error } = await svc.from("treasury_alerts").insert({
-    type: "sync_failed",
+    type: "connection_expiring",
     severity: "warning",
     title: "Bank connection expiring soon",
     message: `The Plaid connection for item ${itemId} will expire soon. Please re-authenticate to keep transactions syncing.`,
@@ -228,20 +227,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     if (isSandbox) {
-      // In sandbox, Plaid may send verifiable JWTs, but key fetch failures
-      // are common. Attempt verification; fall back with a warning on error.
+      // In sandbox, attempt verification. Key fetch errors are common (return 500).
+      // Invalid signatures always reject, even in sandbox.
       try {
         const publicKey = await fetchPlaidPublicKey(kid);
         const valid = verifyPlaidJwt(verificationToken, publicKey, rawBody);
         if (!valid) {
-          console.warn(
-            "[Plaid webhook] Sandbox signature verification failed — proceeding anyway",
-          );
+          console.error("[Plaid webhook] Sandbox: signature verification failed");
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
       } catch (err) {
-        console.warn(
-          "[Plaid webhook] Sandbox: signature verification skipped due to key fetch error:",
+        console.error(
+          "[Plaid webhook] Sandbox: key fetch error (Plaid-side issue):",
           err instanceof Error ? err.message : String(err),
+        );
+        return NextResponse.json(
+          { error: "Webhook verification key fetch failed" },
+          { status: 500 },
         );
       }
     } else {
@@ -280,10 +282,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     `[Plaid webhook] Received ${webhook_type}/${webhook_code} for item: ${item_id}`,
   );
 
-  // 4. Respond 200 immediately, then do the heavy work
-  // waitUntil is not available in the standard Next.js edge/node handler, so
-  // we kick off a fire-and-forget Promise. The response is sent before the
-  // async work resolves.
+  // 4. Respond 200 immediately, then do the heavy work via waitUntil
   const work = (async () => {
     try {
       if (webhook_type === "TRANSACTIONS") {
@@ -307,17 +306,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
       }
 
-      // All other types: log and ignore
       console.log(
-        `[Plaid webhook] Unhandled event type — ignoring: ${webhook_type}/${webhook_code}`,
+        `[Plaid webhook] Unhandled event type: ${webhook_type}/${webhook_code}`,
       );
     } catch (err) {
       console.error("[Plaid webhook] Error processing event:", err);
     }
   })();
 
-  // Suppress unhandled rejection warning without blocking the response
-  work.catch(() => undefined);
+  // Next.js 16 after() keeps the function alive until the promise settles.
+  // Falls back to fire-and-forget if not available (local dev).
+  try {
+    const { after } = await import("next/server");
+    after(() => work);
+  } catch {
+    work.catch(() => undefined);
+  }
 
   return NextResponse.json({ received: true });
 }

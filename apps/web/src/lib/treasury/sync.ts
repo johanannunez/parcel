@@ -4,10 +4,9 @@
 import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
 
 // Treasury tables are not yet in the generated Supabase types. Cast the client
-// to `any` so we can query treasury_* tables without TS errors. Once the types
-// are regenerated after the treasury migration, remove this wrapper.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// so we can query treasury_* tables without TS errors. Remove after types regen.
 function createServiceClient() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return _createServiceClient() as any;
 }
 import { getPlaidClient } from "./plaid";
@@ -93,22 +92,35 @@ async function syncPlaidTransactions(
 
     const { added, modified, removed, next_cursor, has_more } = response.data;
 
+    // Build a map of plaid_account_id -> supabase UUID for FK resolution
+    const { data: accountRows } = await svc
+      .from("treasury_accounts")
+      .select("id, plaid_account_id")
+      .eq("connection_id", connectionId);
+
+    const accountIdMap = new Map<string, string>();
+    for (const row of (accountRows ?? []) as { id: string; plaid_account_id: string }[]) {
+      accountIdMap.set(row.plaid_account_id, row.id);
+    }
+
     // Process added transactions
     for (const tx of added) {
       // Plaid convention: positive = money out, negative = money in.
       // Our DB convention: positive = money in. So invert.
       const amount = -tx.amount;
 
+      // Resolve Plaid account ID to our Supabase UUID
+      const supabaseAccountId = accountIdMap.get(tx.account_id) ?? null;
+
       const { error: upsertError } = await svc
         .from("treasury_transactions")
         .upsert(
           {
-            connection_id: connectionId,
             plaid_transaction_id: tx.transaction_id,
-            account_id: tx.account_id,
+            account_id: supabaseAccountId,
             amount,
             date: tx.date,
-            name: tx.name ?? tx.merchant_name ?? "Unknown",
+            merchant_name: tx.name ?? tx.merchant_name ?? "Unknown",
             original_description: tx.original_description ?? null,
             category: "other",
             source: "plaid",
@@ -136,7 +148,7 @@ async function syncPlaidTransactions(
         .update({
           amount,
           date: tx.date,
-          name: tx.name ?? tx.merchant_name ?? "Unknown",
+          merchant_name: tx.name ?? tx.merchant_name ?? "Unknown",
           original_description: tx.original_description ?? null,
           counterparties: tx.counterparties ?? null,
           payment_meta: tx.payment_meta ?? null,
@@ -182,7 +194,7 @@ async function refreshBalances(
         .update({
           current_balance: account.balances.current ?? 0,
           available_balance: account.balances.available ?? null,
-          updated_at: new Date().toISOString(),
+          balance_updated_at: new Date().toISOString(),
         })
         .eq("plaid_account_id", account.account_id);
 
@@ -230,8 +242,10 @@ async function ingestStripePayouts(
       const arrivalDate = unixToISODate(payout.arrival_date);
 
       // Extract last4 from the expanded destination object
-      const destination = payout.destination as any;
-      const destinationLast4: string | undefined = destination?.last4;
+      const destination = payout.destination as Record<string, unknown> | null;
+      const destinationLast4 = typeof destination?.last4 === "string"
+        ? destination.last4
+        : undefined;
 
       // Build the record for dedup scoring later
       payoutRecords.push({
@@ -253,7 +267,8 @@ async function ingestStripePayouts(
             stripe_charge_id: payout.id,
             amount: amountDollars,
             date: arrivalDate,
-            name: `Stripe Payout ${payout.id}`,
+            merchant_name: "Stripe",
+            description: `Stripe Payout ${payout.id}`,
             category: "stripe_payout",
             source: "stripe",
             is_duplicate: false,
@@ -318,30 +333,31 @@ async function runDeduplication(
   }
 
   // Fetch account masks for the relevant accounts
-  const accountIds = [...new Set(plaidDeposits.map((d: any) => d.account_id))];
+  type DepositRow = Record<string, unknown>;
+  const accountIds = [...new Set((plaidDeposits as DepositRow[]).map((d) => d.account_id as string))];
   const { data: accounts } = await svc
     .from("treasury_accounts")
     .select("plaid_account_id, mask")
     .in("plaid_account_id", accountIds);
 
   const maskMap = new Map<string, string>();
-  for (const acct of (accounts ?? []) as any[]) {
+  for (const acct of (accounts ?? []) as Array<{ plaid_account_id: string; mask: string | null }>) {
     if (acct.plaid_account_id && acct.mask) {
       maskMap.set(acct.plaid_account_id, acct.mask);
     }
   }
 
   // Build PlaidTransactionRecord array
-  const plaidRecords: PlaidTransactionRecord[] = plaidDeposits.map((d: any) => ({
-    id: d.id,
-    plaid_transaction_id: d.plaid_transaction_id!,
-    account_id: d.account_id ?? "",
-    account_mask: maskMap.get(d.account_id ?? "") ?? undefined,
-    amount: d.amount,
-    date: d.date,
-    original_description: d.original_description ?? undefined,
-    counterparties: d.counterparties ?? undefined,
-    payment_meta: d.payment_meta ?? undefined,
+  const plaidRecords: PlaidTransactionRecord[] = (plaidDeposits as DepositRow[]).map((d) => ({
+    id: d.id as string,
+    plaid_transaction_id: d.plaid_transaction_id as string,
+    account_id: (d.account_id as string) ?? "",
+    account_mask: maskMap.get((d.account_id as string) ?? "") ?? undefined,
+    amount: d.amount as number,
+    date: d.date as string,
+    original_description: (d.original_description as string) ?? undefined,
+    counterparties: (d.counterparties as Array<Record<string, unknown>>) ?? undefined,
+    payment_meta: (d.payment_meta as Record<string, unknown>) ?? undefined,
   }));
 
   // Filter to only unmatched Stripe payouts (those whose treasury_transactions
@@ -355,7 +371,7 @@ async function runDeduplication(
     .not("stripe_charge_id", "is", null);
 
   const unmatchedStripeIds = new Set(
-    ((unmatchedStripeRows ?? []) as any[]).map((r) => r.stripe_charge_id),
+    ((unmatchedStripeRows ?? []) as Array<{ stripe_charge_id: string }>).map((r) => r.stripe_charge_id),
   );
   const unmatchedPayouts = stripePayouts.filter((sp) =>
     unmatchedStripeIds.has(sp.id),
@@ -441,6 +457,7 @@ async function checkTokenRotation(
     const newAccessToken = invalidateResponse.data.new_access_token;
     const encryptedToken = encrypt(newAccessToken);
 
+    // Store as Base64 string (consistent with exchange-token/route.ts)
     await svc
       .from("treasury_connections")
       .update({

@@ -183,10 +183,10 @@ export async function confirmDedupMatch(transactionId: string): Promise<void> {
   await svc
     .from("treasury_alerts")
     .insert({
-      alert_type: "duplicate_detected",
+      type: "duplicate_detected",
       severity: "info",
+      title: "Duplicate confirmed",
       message: `Transaction ${transactionId} confirmed as duplicate.`,
-      acknowledged_at: null,
     })
     .then(() => {}, () => {});
 }

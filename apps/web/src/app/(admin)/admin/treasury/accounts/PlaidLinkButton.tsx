@@ -6,7 +6,6 @@ import { Bank, CircleNotch } from "@phosphor-icons/react";
 
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Plaid?: { create: (config: PlaidLinkConfig) => PlaidLinkHandler };
   }
 }

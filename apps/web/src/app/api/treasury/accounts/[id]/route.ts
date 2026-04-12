@@ -5,25 +5,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { treasuryAdminGuard } from "@/lib/treasury/admin-guard";
 import { createServiceClient } from "@/lib/supabase/service";
-import type { BucketCategory } from "@/lib/treasury/types";
+import { ALL_BUCKET_CATEGORIES, type BucketCategory } from "@/lib/treasury/types";
 
 export const dynamic = "force-dynamic";
-
-const ALL_BUCKET_CATEGORIES: BucketCategory[] = [
-  "income",
-  "owners_comp",
-  "tax",
-  "emergency",
-  "opex",
-  "profit",
-  "generosity",
-  "growth",
-  "cleaners",
-  "yearly",
-  "disbursement",
-  "deposits",
-  "uncategorized",
-];
 
 export async function PATCH(
   req: NextRequest,

@@ -13,7 +13,11 @@ interface TreasuryVerifyPageProps {
 export default async function TreasuryVerifyPage({
   searchParams,
 }: TreasuryVerifyPageProps) {
-  const { redirect: redirectTo = "/admin/treasury" } = await searchParams;
+  const { redirect: rawRedirect = "/admin/treasury" } = await searchParams;
+  // Prevent open redirect: only allow internal treasury paths
+  const redirectTo = rawRedirect.startsWith("/admin/treasury")
+    ? rawRedirect
+    : "/admin/treasury";
 
   return (
     <div

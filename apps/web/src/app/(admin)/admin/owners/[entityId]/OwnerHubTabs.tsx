@@ -259,7 +259,8 @@ export function OwnerHubTabs({
   bookings,
   payouts,
   blockRequests,
-  setupData: _setupData,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setupData,
   tasks,
   notes,
   timeline,
@@ -284,9 +285,9 @@ export function OwnerHubTabs({
         minHeight: "calc(100vh - var(--admin-topbar-h, 0px))",
       }}
     >
-      {/* ─── Left sidebar ─── */}
+      {/* ─── Left sidebar (desktop only) ─── */}
       <nav
-        className="flex w-[240px] shrink-0 flex-col border-r"
+        className="hidden w-[240px] shrink-0 flex-col border-r lg:flex"
         style={{
           backgroundColor: "var(--color-white)",
           borderColor: "var(--color-warm-gray-200)",
@@ -441,6 +442,41 @@ export function OwnerHubTabs({
         className="flex min-w-0 flex-1 flex-col overflow-y-auto"
         style={{ backgroundColor: "var(--color-off-white)" }}
       >
+        {/* ─── Mobile tab bar (hidden on desktop) ─── */}
+        <div
+          className="-mx-0 flex gap-2 overflow-x-auto px-6 py-3 lg:hidden"
+          style={{
+            backgroundColor: "var(--color-white)",
+            borderBottom: "1px solid var(--color-warm-gray-200)",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          {SECTIONS.map((s) => {
+            const active = section === s.key;
+            const Icon = s.icon;
+            return (
+              <Link
+                key={s.key}
+                href={`/admin/owners/${ownerId}?tab=${s.key}`}
+                scroll={false}
+                className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors duration-150"
+                style={{
+                  backgroundColor: active
+                    ? "var(--color-brand)"
+                    : "var(--color-white)",
+                  color: active ? "#fff" : "var(--color-text-secondary)",
+                  border: active
+                    ? "1px solid var(--color-brand)"
+                    : "1px solid var(--color-warm-gray-200)",
+                }}
+              >
+                <Icon size={14} weight={active ? "fill" : "regular"} />
+                {s.label}
+              </Link>
+            );
+          })}
+        </div>
         {/* Top bar matching sidebar header height */}
         <div
           className="flex h-[120px] shrink-0 items-center justify-between border-b px-8"

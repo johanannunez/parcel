@@ -84,18 +84,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Treasury CSP headers
+  // Treasury CSP headers: Plaid Link requires 'unsafe-inline' for scripts
+  // and loads many hashed inline scripts from cdn.plaid.com. A strict
+  // script-src breaks the Link modal. Using a relaxed policy that still
+  // restricts connect-src and frame-src to known origins.
   if (pathname.startsWith("/admin/treasury")) {
     proxyResponse.headers.set(
       "Content-Security-Policy",
       [
         "default-src 'self'",
-        "script-src 'self' https://cdn.plaid.com",
-        "style-src 'self' 'unsafe-inline'", // needed for inline styles in React
+        "script-src 'self' 'unsafe-inline' https://cdn.plaid.com",
+        "style-src 'self' 'unsafe-inline'",
         "connect-src 'self' https://*.plaid.com https://api.stripe.com",
-        "frame-src https://cdn.plaid.com",
+        "frame-src 'self' https://cdn.plaid.com",
         "img-src 'self' data: https:",
-        "font-src 'self'",
+        "font-src 'self' data:",
       ].join("; ")
     );
   }

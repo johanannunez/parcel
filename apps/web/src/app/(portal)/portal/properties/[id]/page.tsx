@@ -166,7 +166,6 @@ export default async function PropertyDetailPage({
     { data: nextStay },
     { data: ytdBookings },
     { data: calendarBookings },
-    { data: monthBookings },
   ] = await Promise.all([
     supabase.from("properties").select("*").eq("id", id).maybeSingle(),
     supabase
@@ -197,13 +196,6 @@ export default async function PropertyDetailPage({
       .select("check_in, check_out")
       .eq("property_id", id)
       .gte("check_out", calMonthStart)
-      .lte("check_in", calMonthEnd)
-      .neq("status", "cancelled"),
-    supabase
-      .from("bookings")
-      .select("total_amount")
-      .eq("property_id", id)
-      .gte("check_in", calMonthStart)
       .lte("check_in", calMonthEnd)
       .neq("status", "cancelled"),
   ]);

@@ -38,7 +38,7 @@ export default async function AdminInquiriesPage() {
       </div>
 
       {/* Stats */}
-      <section className="grid grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Total inquiries" value={String((inquiries ?? []).length)} />
         <StatCard label="New (uncontacted)" value={String(newCount)} />
         <StatCard label="Contacted" value={String(contactedCount)} />
@@ -57,7 +57,7 @@ export default async function AdminInquiriesPage() {
         </div>
       ) : (
         <div
-          className="overflow-hidden rounded-xl border"
+          className="overflow-x-auto rounded-xl border"
           style={{ borderColor: "var(--color-warm-gray-200)" }}
         >
           <table className="w-full text-left text-sm">

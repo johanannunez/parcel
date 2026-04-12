@@ -13,6 +13,8 @@ import {
   UserSwitch,
   Wallet,
   Vault,
+  ArrowsLeftRight,
+  TrendUp,
   EnvelopeSimple,
   ClipboardText,
   ListChecks,
@@ -21,9 +23,12 @@ import {
   GearSix,
   CaretDown,
   X,
-  SignOut,
+  Power,
+  Sun,
+  Moon,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTheme } from "@/components/ThemeProvider";
 
 /* ── Types ── */
 
@@ -75,15 +80,24 @@ const navItems: NavItem[] = [
   },
 ];
 
-/* ── Sheet accordion section data ── */
+/* ── Sheet accordion section data (matches desktop sidebar exactly) ── */
 
-const managementItems = (pendingBlockCount: number): SheetNavItem[] => [
+const managementItems: SheetNavItem[] = [
   { href: "/admin", label: "Overview", icon: <House size={19} weight="duotone" /> },
   { href: "/admin/owners", label: "Owners", icon: <UsersThree size={19} weight="duotone" />, matchPrefix: "/admin/owners" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
+];
+
+const operationsItems = (pendingBlockCount: number): SheetNavItem[] => [
   { href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={19} weight="duotone" />, matchPrefix: "/admin/calendar" },
   { href: "/admin/block-requests", label: "Reservations", icon: <ClipboardText size={19} weight="duotone" />, matchPrefix: "/admin/block-requests", badge: pendingBlockCount },
-  { href: "/admin/treasury", label: "Treasury", icon: <Vault size={19} weight="duotone" />, matchPrefix: "/admin/treasury" },
+];
+
+const treasuryItems: SheetNavItem[] = [
+  { href: "/admin/treasury", label: "Overview", icon: <Vault size={19} weight="duotone" /> },
+  { href: "/admin/treasury/accounts", label: "Accounts", icon: <Wallet size={19} weight="duotone" />, matchPrefix: "/admin/treasury/accounts" },
+  { href: "/admin/treasury/transactions", label: "Transactions", icon: <ArrowsLeftRight size={19} weight="duotone" />, matchPrefix: "/admin/treasury/transactions" },
+  { href: "/admin/treasury/forecast", label: "Forecast", icon: <TrendUp size={19} weight="duotone" />, matchPrefix: "/admin/treasury/forecast" },
 ];
 
 const communicationsItems: SheetNavItem[] = [
@@ -91,11 +105,7 @@ const communicationsItems: SheetNavItem[] = [
   { href: "/admin/messages", label: "Messages", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/messages" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { href: "/admin/timeline", label: "Timeline", icon: <ClockCounterClockwise size={19} weight="duotone" />, matchPrefix: "/admin/timeline" },
-];
-
-const toolsItems: SheetNavItem[] = [
   { href: "/admin/help", label: "Help Articles", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
-  { href: "/admin/account", label: "Account", icon: <GearSix size={19} weight="duotone" />, matchPrefix: "/admin/account" },
 ];
 
 /* ── Helpers ── */
@@ -104,10 +114,11 @@ const mainNavPrefixes = ["/admin", "/admin/owners", "/admin/calendar", "/admin/m
 
 function getActiveSection(pathname: string | null, pendingBlockCount: number): string {
   if (!pathname) return "Management";
-  const mgmt = managementItems(pendingBlockCount);
-  if (mgmt.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Management";
+  if (managementItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Management";
+  const ops = operationsItems(pendingBlockCount);
+  if (ops.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Operations";
+  if (treasuryItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Treasury";
   if (communicationsItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Communications";
-  if (toolsItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Tools";
   return "Management";
 }
 
@@ -129,6 +140,7 @@ export function AdminBottomNav({
   avatarUrl?: string | null;
 }) {
   const pathname = usePathname();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const [moreOpen, setMoreOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string>(() =>
     getActiveSection(pathname, pendingBlockCount),
@@ -183,9 +195,10 @@ export function AdminBottomNav({
   }, [moreOpen, pathname, pendingBlockCount]);
 
   const sheetSections = [
-    { label: "Management", items: managementItems(pendingBlockCount) },
+    { label: "Management", items: managementItems },
+    { label: "Operations", items: operationsItems(pendingBlockCount) },
+    { label: "Treasury", items: treasuryItems },
     { label: "Communications", items: communicationsItems },
-    { label: "Tools", items: toolsItems },
   ];
 
   return (
@@ -492,12 +505,26 @@ export function AdminBottomNav({
                   Portal
                 </Link>
 
+                {/* Dark/light mode toggle */}
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors"
+                  style={{ color: "rgba(255,255,255,0.65)" }}
+                >
+                  {resolvedTheme === "dark" ? (
+                    <Sun size={18} weight="duotone" style={{ color: "rgba(255,255,255,0.4)" }} />
+                  ) : (
+                    <Moon size={18} weight="duotone" style={{ color: "rgba(255,255,255,0.4)" }} />
+                  )}
+                  {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
+                </button>
+
                 {/* Sign out */}
                 <button
                   type="button"
                   onClick={() => {
                     closeMore();
-                    // Trigger the sign out action from the slot
                     const btn = document.querySelector(
                       "[data-admin-signout]",
                     ) as HTMLButtonElement | null;
@@ -506,9 +533,9 @@ export function AdminBottomNav({
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors"
                   style={{ color: "rgba(239, 68, 68, 0.85)" }}
                 >
-                  <SignOut
+                  <Power
                     size={18}
-                    weight="regular"
+                    weight="duotone"
                     style={{ color: "rgba(239, 68, 68, 0.6)" }}
                   />
                   Sign out

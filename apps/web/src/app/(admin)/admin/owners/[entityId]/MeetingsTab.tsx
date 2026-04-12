@@ -486,6 +486,7 @@ type MeetingCardProps = {
   onDeleted: (id: string) => void;
 };
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 function MeetingCard({
   meeting,
   ownerId,
@@ -494,7 +495,7 @@ function MeetingCard({
   muted = false,
   onUpdated,
   onDeleted,
-}: MeetingCardProps) {
+}: MeetingCardProps) { /* eslint-enable @typescript-eslint/no-unused-vars */
   const [isPending, startTransition] = useTransition();
   const [actionPending, setActionPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
