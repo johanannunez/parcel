@@ -62,7 +62,6 @@ export default async function AdminPropertiesPage() {
     bookingCount: bookingCountMap.get(p.id) ?? 0,
   }));
 
-  const connected = rows.filter((r) => r.hospitableId);
   const unconnected = rows.filter((r) => !r.hospitableId);
 
   return (

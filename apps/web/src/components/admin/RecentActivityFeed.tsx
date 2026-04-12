@@ -125,6 +125,7 @@ export function RecentActivityFeed({
           >
             {/* Owner initials avatar */}
             {owner?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={owner.avatar_url}
                 alt=""

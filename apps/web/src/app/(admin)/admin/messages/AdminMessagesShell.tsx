@@ -150,6 +150,7 @@ export function AdminMessagesShell({
       const conv = initialConversations.find(
         (c) => c.ownerId === selectedOwnerId && c.type === "direct",
       );
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (conv) loadConversation(conv.id);
     }
   }, [selectedOwnerId, initialConversations, loadConversation]);
@@ -509,6 +510,7 @@ export function AdminMessagesShell({
                             <Megaphone size={12} weight="bold" />
                           </span>
                         ) : m.senderAvatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={m.senderAvatarUrl}
                             alt={m.senderName}

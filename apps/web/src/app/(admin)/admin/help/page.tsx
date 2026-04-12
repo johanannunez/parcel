@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase/service";
-import { formatMedium } from "@/lib/format";
 import { HelpArticleFilter } from "./HelpArticleFilter";
 
 export const metadata: Metadata = {

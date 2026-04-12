@@ -377,6 +377,7 @@ function TaskDrawer({
   useEffect(() => {
     if (prevId.current === task.id) return;
     prevId.current = task.id;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(task.title);
     setDescription(task.description ?? "");
     setTaskType(task.task_type);
@@ -2225,6 +2226,7 @@ function ColumnLabel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStoredLabels(loadStoredLabels());
   }, []);
 

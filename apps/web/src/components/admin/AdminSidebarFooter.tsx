@@ -58,6 +58,7 @@ export function AdminSidebarFooter({
         className="flex items-center gap-2.5 rounded-lg px-3 pb-1.5 pt-2.5 transition-colors hover:bg-[rgba(255,255,255,0.04)]"
       >
         {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={avatarUrl}
             alt={userName}

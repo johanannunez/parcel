@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck — tasks tables not yet in generated Supabase types
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
