@@ -61,10 +61,10 @@ type MemberColors = {
 function getMemberColors(name: string): MemberColors {
   if (name.toLowerCase().includes("elmira")) {
     return {
-      gradient: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)",
-      shadow: "0 2px 8px rgba(168, 85, 247, 0.22)",
-      shadowHover: "0 6px 24px rgba(168, 85, 247, 0.45)",
-      drawerBorder: "rgba(109, 40, 217, 0.30)",
+      gradient: "linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)",
+      shadow: "0 2px 8px rgba(109, 40, 217, 0.28)",
+      shadowHover: "0 6px 24px rgba(109, 40, 217, 0.50)",
+      drawerBorder: "rgba(76, 29, 149, 0.35)",
     };
   }
   return {
@@ -485,8 +485,8 @@ export function MembersShell({
                           <span
                             className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
                             style={{
-                              backgroundColor: "rgba(245, 158, 11, 0.45)",
-                              color: "#fef3c7",
+                              backgroundColor: "#D97706",
+                              color: "#ffffff",
                             }}
                           >
                             <Sparkle size={9} weight="fill" />
