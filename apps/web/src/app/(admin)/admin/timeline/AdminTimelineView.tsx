@@ -1128,10 +1128,11 @@ function TimelineRow({
                   <Trash size={15} />
                 </ActionButton>
               )}
-            </div>
-          )}
         </div>
-      </div>
+      )}
+
+      {/* Actions placeholder for deleted rows to maintain alignment */}
+      {isDeleted && <div className="w-[90px] shrink-0" />}
     </div>
   );
 }
