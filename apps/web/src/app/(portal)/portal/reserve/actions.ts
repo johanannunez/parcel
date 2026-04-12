@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal-context";
 import { propertyLabel } from "@/lib/address";
 
 async function notifyAdminOfBlockRequest(args: {
@@ -95,14 +96,10 @@ export async function submitBlockRequest(
     };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Not signed in." };
+  const { userId, client: supabase } = await getPortalContext();
 
   const { error } = await supabase.from("block_requests").insert({
-    owner_id: user.id,
+    owner_id: userId,
     property_id: parsed.data.propertyId,
     start_date: parsed.data.startDate,
     end_date: parsed.data.endDate,
@@ -133,7 +130,7 @@ export async function submitBlockRequest(
     supabase
       .from("profiles")
       .select("full_name, email")
-      .eq("id", user.id)
+      .eq("id", userId)
       .maybeSingle(),
     supabase
       .from("properties")
@@ -144,7 +141,7 @@ export async function submitBlockRequest(
 
   after(
     notifyAdminOfBlockRequest({
-      ownerEmail: profile?.email ?? user.email ?? "unknown",
+      ownerEmail: profile?.email ?? "unknown",
       ownerName: profile?.full_name ?? null,
       propertyLabel: propertyLabel(property ?? {}),
       startDate: parsed.data.startDate,
