@@ -1,14 +1,8 @@
 // Treasury sync engine: Plaid incremental sync, Stripe payout ingestion, and deduplication
 // SERVER-SIDE ONLY
 
-import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
-
-// Treasury tables are not yet in the generated Supabase types. Cast the client
-// so we can query treasury_* tables without TS errors. Remove after types regen.
-function createServiceClient() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return _createServiceClient() as any;
-}
+import { createServiceClient } from "@/lib/supabase/service";
+import type { Json } from "@/types/supabase";
 import { getPlaidClient } from "./plaid";
 import { getStripeClient } from "./stripe";
 import { decrypt, encrypt } from "./encryption";
@@ -57,7 +51,7 @@ async function createAlert(
     severity: opts.severity,
     title: opts.title,
     message: opts.message,
-    metadata: opts.metadata ?? {},
+    metadata: (opts.metadata ?? {}) as Json,
   });
 }
 
@@ -124,8 +118,8 @@ async function syncPlaidTransactions(
             original_description: tx.original_description ?? null,
             category: "other",
             source: "plaid",
-            counterparties: tx.counterparties ?? null,
-            payment_meta: tx.payment_meta ?? null,
+            counterparties: (tx.counterparties ?? null) as unknown as Json,
+            payment_meta: (tx.payment_meta ?? null) as unknown as Json,
             is_duplicate: false,
           },
           { onConflict: "plaid_transaction_id", ignoreDuplicates: true },
@@ -150,8 +144,8 @@ async function syncPlaidTransactions(
           date: tx.date,
           merchant_name: tx.name ?? tx.merchant_name ?? "Unknown",
           original_description: tx.original_description ?? null,
-          counterparties: tx.counterparties ?? null,
-          payment_meta: tx.payment_meta ?? null,
+          counterparties: (tx.counterparties ?? null) as unknown as Json,
+          payment_meta: (tx.payment_meta ?? null) as unknown as Json,
         })
         .eq("plaid_transaction_id", tx.transaction_id);
     }
@@ -276,7 +270,7 @@ async function ingestStripePayouts(
               stripe_status: payout.status,
               destination_last4: destinationLast4,
               trace_id: payout.metadata?.trace_id,
-            },
+            } as unknown as Json,
           },
           { onConflict: "stripe_charge_id", ignoreDuplicates: true },
         );

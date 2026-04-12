@@ -51,7 +51,9 @@ export type AuditAction =
   | 'settings_change'
   | 'reauth_success'
   | 'reauth_failure'
-  | 'sync_triggered';
+  | 'sync_triggered'
+  | 'mfa_enroll'
+  | 'mfa_verify';
 
 // Profit-first allocation targets (percentages)
 export const ALLOCATION_TARGETS: Record<string, number> = {

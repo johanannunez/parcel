@@ -1,10 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
+import { createServiceClient } from "@/lib/supabase/service";
 import { treasuryAdminGuard } from "@/lib/treasury/admin-guard";
-
-// Treasury tables not yet in generated Supabase types.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createServiceClient = () => _createServiceClient() as any;
 
 export const dynamic = "force-dynamic";
 

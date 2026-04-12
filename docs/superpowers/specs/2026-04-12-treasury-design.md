@@ -1,7 +1,7 @@
 # Treasury: Financial Intelligence Command Center
 
 **Date:** 2026-04-12
-**Status:** Design approved, pending implementation
+**Status:** Design approved, pending implementation. Revised 2026-04-12 to incorporate Plaid Compliance Center attestations (12 items, due 2026-10-13).
 **Location:** `/admin/treasury/*` (admin-only, never visible to owners)
 
 ## Overview
@@ -139,6 +139,19 @@ Cash flow projections and scenario modeling.
 
 **AI insights:** Claude Haiku-powered observations generated weekly. Examples: "Your OPEX spending has increased 12% over the last 3 months, primarily driven by software subscriptions." Stored in treasury_forecasts table, regenerated weekly.
 
+### 5. MFA Setup (`/admin/treasury/mfa-setup`)
+
+Required by Plaid Compliance Attestation 6. Shown only when admin has not yet enrolled in TOTP-based MFA.
+
+**Flow:**
+1. Admin navigates to Treasury for the first time (or after MFA is reset)
+2. Re-auth gate detects no MFA enrollment via Supabase Auth
+3. Redirect to `/admin/treasury/mfa-setup`
+4. Page displays: explanation of why MFA is required (Plaid compliance), QR code for TOTP enrollment (from Supabase Auth MFA API), text secret for manual entry, input field to verify first TOTP code, backup/recovery codes displayed once after successful enrollment
+5. After successful enrollment, redirect back to Treasury re-auth flow (now includes TOTP step)
+
+**Design:** Clean, single-column layout. No sidebar. Prominent lock icon. Step-by-step instructions. Works with any TOTP app (Google Authenticator, 1Password, Authy, etc.).
+
 ## Data Sync
 
 **Daily auto-sync (Vercel Cron Job):**
@@ -157,6 +170,14 @@ Cash flow projections and scenario modeling.
 - 5-minute cooldown between manual syncs
 - Shows spinner and "Syncing..." state during execution
 - Cooldown enforced server-side (not just UI)
+
+**Monthly data retention purge (Vercel Cron Job):**
+- Vercel Cron triggers `POST /api/treasury/purge` on the 1st of each month at 7:00 AM ET
+- Deletes `treasury_alerts` rows where `retention_expires_at < now()`
+- Deletes `treasury_forecasts` rows where `retention_expires_at < now()`
+- Deletes `treasury_subscriptions` rows where `is_active = false` and deactivated > 90 days ago
+- Logs purge action and row counts to `treasury_audit_log`
+- Required by Plaid Compliance Attestation 8 (Data Deletion and Retention Policy)
 
 **Plaid product usage:**
 - **Transactions:** incremental sync via `/transactions/sync` (cursor-based, efficient)
@@ -219,7 +240,7 @@ When a match is confirmed (auto or manual):
 
 **Layer 2: Admin layout.tsx double-check.** Server Component verifies `profile.role === 'admin'` on every render. Redirects non-admins even if proxy is bypassed. Already exists.
 
-**Layer 3: Re-authentication gate.** Entering Treasury requires password confirmation even with an active admin session. Sets a `treasury_verified_at` timestamp in a server-side httpOnly cookie (encrypted, SameSite=Strict). The cookie is checked on every Treasury page load and API call. Prevents "left my laptop open" exposure. Same pattern used by banks and GitHub for sensitive settings.
+**Layer 3: Re-authentication gate with MFA.** Entering Treasury requires password confirmation + TOTP verification even with an active admin session. Sets a `treasury_verified_at` timestamp in a server-side httpOnly cookie (encrypted, SameSite=Strict). The cookie is checked on every Treasury page load and API call. Prevents "left my laptop open" exposure. Same pattern used by banks and GitHub for sensitive settings. MFA is required by Plaid Compliance Attestation 6 (see Plaid Compliance section). If admin has not enrolled in MFA, they are redirected to `/admin/treasury/mfa-setup` before Treasury access is granted.
 
 **Layer 4: API route admin verification.** Every `/api/treasury/*` endpoint independently checks admin role + `treasury_verified` flag before returning any data.
 
@@ -331,6 +352,7 @@ Auto-detected recurring charges.
 | last_charged_at | date | |
 | next_expected_at | date | |
 | is_active | boolean | |
+| deactivated_at | timestamptz | nullable, set when is_active flips to false (purged 90 days after) |
 | total_annual_cost | numeric | Computed from amount * frequency |
 | created_at | timestamptz | |
 
@@ -363,6 +385,7 @@ Cached AI forecast snapshots.
 | account_projections | jsonb | Per-bucket forecasts |
 | insights | jsonb | AI-generated observations |
 | model_used | text | e.g. "claude-haiku-4-5" |
+| retention_expires_at | timestamptz | nullable, set on creation based on retention policy (1 year for forecasts) |
 | created_at | timestamptz | |
 
 ### treasury_alerts
@@ -377,6 +400,7 @@ Smart notifications.
 | message | text | |
 | metadata | jsonb | |
 | acknowledged_at | timestamptz | nullable |
+| retention_expires_at | timestamptz | nullable, set on creation based on retention policy (1 year for alerts) |
 | created_at | timestamptz | |
 
 ### treasury_audit_log
@@ -395,6 +419,204 @@ Immutable security log.
 | created_at | timestamptz | |
 
 **RLS:** Insert-only for admin. No UPDATE or DELETE policies.
+
+## Plaid Compliance (12 Required Attestations)
+
+Plaid's Compliance Center flagged 12 security remediation items on 2026-04-12. All are due **2026-10-13**. Each attestation below maps to either a code change in Treasury, an operational process, or a written policy document.
+
+### Attestation 1: Information Security Policy (ISP)
+
+**Type:** Documentation
+**Status:** Not started
+
+Write a formal ISP document covering data classification, acceptable use, incident response, and change management. Store in the `Parcel Co` Shared Drive under `00_Policies/`. Does not block Treasury launch but must exist before production Plaid access.
+
+**Action items:**
+- Draft ISP covering: data handling, encryption standards, access control, incident response, change management
+- Review and sign off
+- Upload to Shared Drive and link in this spec
+
+### Attestation 2: Zero Trust Access Architecture
+
+**Type:** Code + Operational
+**Status:** Mostly covered by Security Model Layers 1-4
+
+Treasury already implements defense-in-depth: proxy gate, layout double-check, re-authentication, API route verification. To formalize as zero trust:
+
+**Action items:**
+- Document the "never trust, always verify" model in the ISP (Attestation 1)
+- Ensure every API route independently verifies identity (already done in Layer 4)
+- No service-to-service calls trust network location alone (Supabase RLS enforces this)
+- Add explicit documentation of trust boundaries in the ISP
+
+### Attestation 3: Patch Vulnerabilities Within Defined SLA
+
+**Type:** Operational + CI
+**Status:** Not started
+
+**Action items:**
+- Enable GitHub Dependabot on the `parcel` repo (security updates + version updates)
+- Add `pnpm audit` step to CI (fail on critical/high vulnerabilities)
+- Define SLA in ISP: Critical = 48 hours, High = 7 days, Medium = 30 days, Low = next release
+- Review Dependabot PRs weekly
+
+### Attestation 4: Secure Tokens and Certificates for Authentication
+
+**Type:** Code
+**Status:** Covered
+
+Already implemented:
+- Layer 6: Plaid access tokens encrypted with AES-256-GCM via pgcrypto
+- Layer 8: Automatic token rotation every 30 days
+- Layer 12: Webhook JWT signature verification using Plaid's public key
+- Supabase Auth handles user session tokens (JWTs, httpOnly cookies)
+- No long-lived API keys stored client-side
+
+No additional action required.
+
+### Attestation 5: Periodic Access Reviews and Audits
+
+**Type:** Operational
+**Status:** Partially covered (Layer 9 audit log exists)
+
+**Action items:**
+- Schedule quarterly access review (calendar reminder on 1st of Jan/Apr/Jul/Oct)
+- Review checklist: who has access to Supabase, Vercel, GitHub, Doppler, Relay, Plaid Dashboard, Stripe Dashboard
+- Verify no stale invites, unused API keys, or orphaned service accounts
+- Log review completion in `treasury_audit_log` with action type `access_review`
+- Add `access_review` to the `action` enum in `treasury_audit_log`
+
+### Attestation 6: MFA on Consumer-Facing Application Where Plaid Link Is Deployed
+
+**Type:** Code
+**Status:** Not started - requires Supabase Auth MFA enrollment
+
+Plaid Link runs in the browser on the Treasury Accounts page. Even though Treasury is admin-only, Plaid considers any app that renders Plaid Link as "consumer-facing." MFA must be enforced before Plaid Link can be initialized.
+
+**Action items:**
+- Enable Supabase Auth MFA (TOTP) for the admin account via Supabase Dashboard (Authentication > Multi-Factor Authentication)
+- Add MFA enrollment check in the Treasury re-auth gate (Layer 3): if admin has not enrolled in MFA, redirect to MFA setup page before granting Treasury access
+- Add MFA verification step to the re-auth flow: after password confirmation, require TOTP code
+- Block Plaid Link initialization until MFA is verified in the current session
+- New page: `/admin/treasury/mfa-setup` for initial TOTP enrollment (QR code + backup codes)
+
+**Layer 3 revision (re-authentication gate):**
+1. Admin clicks into Treasury
+2. Prompt for password (existing)
+3. Prompt for TOTP code (new)
+4. Set `treasury_verified_at` cookie only after both pass
+5. If admin has no MFA enrolled, redirect to `/admin/treasury/mfa-setup` first
+
+### Attestation 7: Expanded Data Encryption Practices
+
+**Type:** Code
+**Status:** Covered
+
+Already implemented:
+- Layer 6: AES-256-GCM encryption for Plaid access tokens at rest
+- Layer 7: Data minimization (only masked account numbers stored)
+- Supabase enforces TLS for all connections (encryption in transit)
+- Vercel serves all pages over HTTPS (encryption in transit)
+
+No additional action required.
+
+### Attestation 8: Data Deletion and Retention Policy
+
+**Type:** Code + Documentation
+**Status:** Not started
+
+Treasury currently has no data lifecycle rules. Plaid requires a documented retention policy and the ability to delete consumer data.
+
+**Action items:**
+- Define retention periods:
+  - `treasury_transactions`: 7 years (tax/accounting requirement)
+  - `treasury_alerts`: 1 year (acknowledged alerts purged after 1 year)
+  - `treasury_audit_log`: 7 years (compliance requirement, never purged early)
+  - `treasury_forecasts`: 1 year (old forecasts have no ongoing value)
+  - `treasury_subscriptions`: retained while active, purged 90 days after `is_active = false`
+- Add `retention_expires_at` column to `treasury_alerts` and `treasury_forecasts`
+- Add a monthly cron job (`/api/treasury/purge`) that deletes expired rows
+- Document retention policy in ISP (Attestation 1)
+- Implement a "Delete All My Data" admin action that: revokes Plaid access tokens, deletes all treasury_* rows, logs the action to audit trail (audit log entry itself is retained per compliance)
+
+**Schema additions:**
+
+```sql
+-- treasury_alerts
+ALTER TABLE treasury_alerts ADD COLUMN retention_expires_at timestamptz;
+
+-- treasury_forecasts
+ALTER TABLE treasury_forecasts ADD COLUMN retention_expires_at timestamptz;
+```
+
+**Purge cron (vercel.json):**
+```json
+{ "path": "/api/treasury/purge", "schedule": "0 7 1 * *" }
+```
+
+### Attestation 9: Defined and Documented Access Control Policy
+
+**Type:** Documentation
+**Status:** Partially covered in Security Model section
+
+The 12-layer security model describes access control in code, but Plaid wants a standalone policy document.
+
+**Action items:**
+- Write an Access Control Policy document covering: role definitions (admin, owner), permission matrix, authentication requirements, session management, API authorization model
+- Store in `Parcel Co` Shared Drive under `00_Policies/`
+- Reference the Security Model (Layers 1-4) as the technical implementation
+
+### Attestation 10: Automated De-provisioning for Terminated/Transferred Employees
+
+**Type:** Operational
+**Status:** Not applicable today (single admin), but needs a plan
+
+**Action items:**
+- Document de-provisioning checklist in the Access Control Policy: Supabase Auth account disable, Vercel team removal, GitHub repo access revocation, Doppler access revocation, Relay bank access revocation, Plaid Dashboard removal, Stripe Dashboard removal
+- If/when team members are added: implement a single "revoke all access" script or runbook
+- For now, document that The Parcel Company is a single-operator business and the sole admin is the owner. Revisit when headcount changes.
+
+### Attestation 11: MFA on Internal Systems Storing Consumer Data
+
+**Type:** Operational
+**Status:** Not started
+
+Consumer data (bank transactions, account info) flows through several internal systems. Each must have MFA enabled.
+
+**Action items:**
+- Enable MFA on all of these accounts (check each, enable if not already on):
+  - [ ] Supabase Dashboard (supabase.com)
+  - [ ] Vercel Dashboard (vercel.com)
+  - [ ] GitHub (github.com)
+  - [ ] Doppler (doppler.com)
+  - [ ] Plaid Dashboard (dashboard.plaid.com)
+  - [ ] Stripe Dashboard (dashboard.stripe.com)
+  - [ ] Relay (relayfi.com)
+  - [ ] Google Workspace admin (hello@theparcelco.com)
+- Document MFA status for each system in the Access Control Policy
+- Re-verify quarterly during access reviews (Attestation 5)
+
+### Attestation 12: Vulnerability Scanning
+
+**Type:** Operational + CI
+**Status:** Not started
+
+**Action items:**
+- Enable GitHub code scanning (CodeQL) on the `parcel` repo via GitHub Actions
+- Enable GitHub secret scanning to detect accidentally committed credentials
+- Add `pnpm audit` to CI pipeline (overlaps with Attestation 3)
+- Run quarterly manual review of Supabase security advisors (`get_advisors` MCP tool)
+- Document scanning cadence in ISP: automated on every PR + quarterly manual review
+
+### Compliance Timeline
+
+All attestations due **2026-10-13**. Suggested phasing:
+
+**Phase A (with Treasury launch):** Attestations 4, 7 (already done), 6 (MFA gate), 8 (retention columns + purge cron)
+
+**Phase B (within 30 days of launch):** Attestations 2, 3, 5, 11, 12 (Dependabot, MFA on all systems, CodeQL, access review schedule)
+
+**Phase C (before 2026-10-13 deadline):** Attestations 1, 9, 10 (policy documents, de-provisioning plan)
 
 ## Payouts Page Deprecation
 

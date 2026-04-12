@@ -2,11 +2,7 @@
 // Supports two auth modes: Vercel Cron (Bearer CRON_SECRET) and manual admin trigger.
 
 import { NextResponse, type NextRequest } from "next/server";
-import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
-
-// Treasury tables not yet in generated Supabase types. See sync.ts for context.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createServiceClient = () => _createServiceClient() as any;
+import { createServiceClient } from "@/lib/supabase/service";
 import { treasuryAdminGuard } from "@/lib/treasury/admin-guard";
 import { runTreasurySync } from "@/lib/treasury/sync";
 import { SYNC_COOLDOWN_SECONDS } from "@/lib/treasury/types";

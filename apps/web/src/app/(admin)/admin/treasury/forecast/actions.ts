@@ -32,8 +32,7 @@ export async function generateForecastAction(
     } = await supabase.auth.getUser();
 
     if (user) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const svc = createServiceClient() as any;
+      const svc = createServiceClient();
       await svc.from("treasury_audit_log").insert({
         user_id: user.id,
         action: "forecast_run",
@@ -60,8 +59,7 @@ export async function generateForecastAction(
 
 export async function getLatestForecast(): Promise<StoredForecast | null> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const svc = createServiceClient() as any;
+    const svc = createServiceClient();
     const { data, error } = await svc
       .from("treasury_forecasts")
       .select("*")
@@ -78,7 +76,7 @@ export async function getLatestForecast(): Promise<StoredForecast | null> {
 
     return {
       id: data.id,
-      generated_at: data.generated_at,
+      generated_at: data.generated_at as string,
       period_days: data.period_days,
       confidence_level: data.confidence_level as ForecastResult["confidence_level"],
       data_months: data.data_months_available ?? 0,

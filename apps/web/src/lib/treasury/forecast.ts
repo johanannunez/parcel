@@ -1,14 +1,8 @@
 // Treasury forecast engine
 // SERVER-SIDE ONLY
 
-import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
+import { createServiceClient } from "@/lib/supabase/service";
 import { ALLOCATION_TARGETS } from "./types";
-
-// Treasury tables are not yet in the generated Supabase types. Remove after types regen.
-function createServiceClient() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return _createServiceClient() as any;
-}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -94,7 +88,7 @@ export async function generateForecast(
     console.error("[Forecast] Failed to fetch transactions:", txError);
   }
 
-  const transactions: Array<{ amount: number; date: string; category: string }> =
+  const transactions: Array<{ amount: number; date: string; category: string | null }> =
     txRows ?? [];
 
   // 2. Calculate data_months_available
@@ -163,8 +157,8 @@ export async function generateForecast(
   type GoalRow = {
     name: string;
     target_amount: number;
-    is_active: boolean;
-    treasury_accounts: { current_balance: number; name: string } | null;
+    is_active: boolean | null;
+    treasury_accounts: { current_balance: number | null; name: string | null } | null;
   };
 
   const goals: GoalRow[] = goalsData ?? [];
@@ -210,10 +204,11 @@ export async function generateForecast(
 
   type AccountRow = {
     id: string;
-    name: string;
+    name: string | null;
     bucket_category: string | null;
-    current_balance: number;
+    current_balance: number | null;
     allocation_target_pct: number | null;
+    is_active: boolean | null;
   };
 
   const accounts: AccountRow[] = accountsData ?? [];
@@ -223,7 +218,7 @@ export async function generateForecast(
     (a) => a.bucket_category && rebalancingCategories.includes(a.bucket_category),
   );
 
-  const totalCash = relevantAccounts.reduce((sum, a) => sum + a.current_balance, 0);
+  const totalCash = relevantAccounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
 
   const rebalancing: ForecastResult["rebalancing"] = [];
 
@@ -240,9 +235,10 @@ export async function generateForecast(
     const statuses: BucketStatus[] = relevantAccounts.map((account) => {
       const targetPct = account.allocation_target_pct
         ?? ALLOCATION_TARGETS[account.bucket_category ?? ""] ?? 0;
-      const actual = (account.current_balance / totalCash) * 100;
+      const balance = account.current_balance ?? 0;
+      const actual = (balance / totalCash) * 100;
       const targetBalance = (targetPct / 100) * totalCash;
-      const delta = account.current_balance - targetBalance;
+      const delta = balance - targetBalance;
       return { account, target: targetPct, actual, targetBalance, delta };
     });
 
@@ -263,11 +259,14 @@ export async function generateForecast(
       const targetPct = under.account.allocation_target_pct
         ?? ALLOCATION_TARGETS[under.account.bucket_category ?? ""] ?? 0;
 
+      const sourceName = source.account.name ?? "Unknown";
+      const underName = under.account.name ?? "Unknown";
+
       rebalancing.push({
-        from_account: source.account.name,
-        to_account: under.account.name,
+        from_account: sourceName,
+        to_account: underName,
         amount: rounded,
-        reason: `Move ${formatCurrencySimple(rounded)} from ${source.account.name} to reach ${targetPct}% target for ${under.account.name}`,
+        reason: `Move ${formatCurrencySimple(rounded)} from ${sourceName} to reach ${targetPct}% target for ${underName}`,
       });
 
       // Reduce source delta so it isn't used multiple times beyond capacity

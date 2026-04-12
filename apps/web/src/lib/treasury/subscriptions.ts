@@ -1,13 +1,8 @@
 // Treasury subscription detection engine
 // SERVER-SIDE ONLY
 
-import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
-
-// Treasury tables are not yet in the generated Supabase types. Remove after types regen.
-function createServiceClient() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return _createServiceClient() as any;
-}
+import { createServiceClient } from "@/lib/supabase/service";
+import type { Json } from "@/types/supabase";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -106,7 +101,7 @@ async function createAlert(
     severity: opts.severity,
     title: opts.title,
     message: opts.message,
-    metadata: opts.metadata ?? {},
+    metadata: (opts.metadata ?? {}) as Json,
   });
 }
 
@@ -142,7 +137,7 @@ export async function detectSubscriptions(): Promise<{
   const rows: Array<{
     id: string;
     account_id: string | null;
-    merchant_name: string;
+    merchant_name: string | null;
     amount: number;
     date: string;
   }> = transactions ?? [];
@@ -172,13 +167,14 @@ export async function detectSubscriptions(): Promise<{
     .select("id, account_id, merchant_name, is_active");
 
   // Build a set of existing subscription keys (account_id::normalizedMerchant)
-  const existingKeys = new Map<string, { id: string; is_active: boolean }>();
+  const existingKeys = new Map<string, { id: string; is_active: boolean | null }>();
   for (const row of (existingRows ?? []) as Array<{
     id: string;
-    account_id: string;
-    merchant_name: string;
-    is_active: boolean;
+    account_id: string | null;
+    merchant_name: string | null;
+    is_active: boolean | null;
   }>) {
+    if (!row.account_id || !row.merchant_name) continue;
     const key = `${row.account_id}::${normalizeMerchant(row.merchant_name)}`;
     existingKeys.set(key, { id: row.id, is_active: row.is_active });
   }
@@ -228,8 +224,9 @@ export async function detectSubscriptions(): Promise<{
     const nextExpectedAt = addDays(lastCharge.date, avgInterval);
 
     // Find the case-preserved merchant name from the first transaction in the group.
-    const originalName = rows.find((r) => r.id === charges[0].id)?.merchant_name
-      ?? charges[0].account_id;
+    // merchant_name is guaranteed non-null here because we filter nulls at line 153.
+    const originalName = (rows.find((r) => r.id === charges[0].id)?.merchant_name
+      ?? charges[0].account_id) as string;
 
     // f. Upsert into treasury_subscriptions (match on account_id + merchant_name).
     const { data: upserted, error: upsertError } = await svc
@@ -243,14 +240,14 @@ export async function detectSubscriptions(): Promise<{
           total_annual_cost: totalAnnualCost,
           next_expected_at: nextExpectedAt,
           is_active: true,
-          last_detected_at: new Date().toISOString(),
+          last_charged_at: new Date().toISOString(),
         },
         {
           onConflict: "account_id,merchant_name",
           ignoreDuplicates: false,
         },
       )
-      .select("id, created_at, updated_at")
+      .select("id, created_at")
       .single();
 
     if (upsertError) {
@@ -264,9 +261,9 @@ export async function detectSubscriptions(): Promise<{
     // g. If this is a newly inserted row (created_at == updated_at within a
     //    second tolerance), create a new_subscription alert.
     if (upserted) {
-      const createdAt = new Date(upserted.created_at).getTime();
-      const updatedAt = new Date(upserted.updated_at).getTime();
-      const isNew = Math.abs(createdAt - updatedAt) < 2000;
+      // Detect new insert: created_at within 2 seconds of now
+      const createdAt = new Date(upserted.created_at ?? "").getTime();
+      const isNew = Math.abs(Date.now() - createdAt) < 2000;
 
       if (isNew) {
         newCount++;

@@ -2290,6 +2290,401 @@ export type Database = {
           },
         ]
       }
+      treasury_accounts: {
+        Row: {
+          allocation_target_pct: number | null
+          available_balance: number | null
+          balance_updated_at: string | null
+          bucket_category: string | null
+          connection_id: string
+          created_at: string | null
+          current_balance: number | null
+          id: string
+          is_active: boolean | null
+          mask: string | null
+          name: string | null
+          official_name: string | null
+          plaid_account_id: string
+          type: string | null
+        }
+        Insert: {
+          allocation_target_pct?: number | null
+          available_balance?: number | null
+          balance_updated_at?: string | null
+          bucket_category?: string | null
+          connection_id: string
+          created_at?: string | null
+          current_balance?: number | null
+          id?: string
+          is_active?: boolean | null
+          mask?: string | null
+          name?: string | null
+          official_name?: string | null
+          plaid_account_id: string
+          type?: string | null
+        }
+        Update: {
+          allocation_target_pct?: number | null
+          available_balance?: number | null
+          balance_updated_at?: string | null
+          bucket_category?: string | null
+          connection_id?: string
+          created_at?: string | null
+          current_balance?: number | null
+          id?: string
+          is_active?: boolean | null
+          mask?: string | null
+          name?: string | null
+          official_name?: string | null
+          plaid_account_id?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_accounts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treasury_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          retention_expires_at: string | null
+          severity: string
+          title: string
+          type: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          retention_expires_at?: string | null
+          severity?: string
+          title: string
+          type: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          retention_expires_at?: string | null
+          severity?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      treasury_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treasury_connections: {
+        Row: {
+          access_token_encrypted: string
+          created_at: string | null
+          cursor: string | null
+          id: string
+          institution_id: string | null
+          institution_name: string | null
+          last_synced_at: string | null
+          plaid_item_id: string
+          status: string
+          token_rotated_at: string | null
+        }
+        Insert: {
+          access_token_encrypted: string
+          created_at?: string | null
+          cursor?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_name?: string | null
+          last_synced_at?: string | null
+          plaid_item_id: string
+          status: string
+          token_rotated_at?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string
+          created_at?: string | null
+          cursor?: string | null
+          id?: string
+          institution_id?: string | null
+          institution_name?: string | null
+          last_synced_at?: string | null
+          plaid_item_id?: string
+          status?: string
+          token_rotated_at?: string | null
+        }
+        Relationships: []
+      }
+      treasury_forecasts: {
+        Row: {
+          account_projections: Json | null
+          confidence_level: string
+          created_at: string | null
+          data_months_available: number | null
+          generated_at: string | null
+          id: string
+          insights: Json | null
+          model_used: string | null
+          period_days: number
+          projected_expenses: number | null
+          projected_income: number | null
+          projected_net: number | null
+          retention_expires_at: string | null
+        }
+        Insert: {
+          account_projections?: Json | null
+          confidence_level?: string
+          created_at?: string | null
+          data_months_available?: number | null
+          generated_at?: string | null
+          id?: string
+          insights?: Json | null
+          model_used?: string | null
+          period_days: number
+          projected_expenses?: number | null
+          projected_income?: number | null
+          projected_net?: number | null
+          retention_expires_at?: string | null
+        }
+        Update: {
+          account_projections?: Json | null
+          confidence_level?: string
+          created_at?: string | null
+          data_months_available?: number | null
+          generated_at?: string | null
+          id?: string
+          insights?: Json | null
+          model_used?: string | null
+          period_days?: number
+          projected_expenses?: number | null
+          projected_income?: number | null
+          projected_net?: number | null
+          retention_expires_at?: string | null
+        }
+        Relationships: []
+      }
+      treasury_savings_goals: {
+        Row: {
+          account_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          target_amount: number
+          target_date: string | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          target_amount: number
+          target_date?: string | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          target_amount?: number
+          target_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_savings_goals_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treasury_subscriptions: {
+        Row: {
+          account_id: string
+          created_at: string | null
+          deactivated_at: string | null
+          frequency: string | null
+          id: string
+          is_active: boolean | null
+          last_charged_at: string | null
+          merchant_name: string
+          next_expected_at: string | null
+          total_annual_cost: number | null
+          typical_amount: number | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string | null
+          deactivated_at?: string | null
+          frequency?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_charged_at?: string | null
+          merchant_name: string
+          next_expected_at?: string | null
+          total_annual_cost?: number | null
+          typical_amount?: number | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string | null
+          deactivated_at?: string | null
+          frequency?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_charged_at?: string | null
+          merchant_name?: string
+          next_expected_at?: string | null
+          total_annual_cost?: number | null
+          typical_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_subscriptions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treasury_transactions: {
+        Row: {
+          account_id: string | null
+          amount: number
+          category: string | null
+          counterparties: Json | null
+          created_at: string | null
+          date: string
+          dedup_score: number | null
+          description: string | null
+          duplicate_of: string | null
+          id: string
+          is_duplicate: boolean | null
+          merchant_name: string | null
+          original_description: string | null
+          payment_meta: Json | null
+          pending: boolean | null
+          plaid_category: string[] | null
+          plaid_transaction_id: string | null
+          source: string | null
+          stripe_charge_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          category?: string | null
+          counterparties?: Json | null
+          created_at?: string | null
+          date: string
+          dedup_score?: number | null
+          description?: string | null
+          duplicate_of?: string | null
+          id?: string
+          is_duplicate?: boolean | null
+          merchant_name?: string | null
+          original_description?: string | null
+          payment_meta?: Json | null
+          pending?: boolean | null
+          plaid_category?: string[] | null
+          plaid_transaction_id?: string | null
+          source?: string | null
+          stripe_charge_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category?: string | null
+          counterparties?: Json | null
+          created_at?: string | null
+          date?: string
+          dedup_score?: number | null
+          description?: string | null
+          duplicate_of?: string | null
+          id?: string
+          is_duplicate?: boolean | null
+          merchant_name?: string | null
+          original_description?: string | null
+          payment_meta?: Json | null
+          pending?: boolean | null
+          plaid_category?: string[] | null
+          plaid_transaction_id?: string | null
+          source?: string | null
+          stripe_charge_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treasury_transactions_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "treasury_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2301,6 +2696,10 @@ export type Database = {
           p_message_id: string
           p_reader_id: string
         }
+        Returns: undefined
+      }
+      insert_help_screenshot: {
+        Args: { article_slug: string; img_alt: string; img_url: string }
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
@@ -2514,3 +2913,4 @@ export const Constants = {
     },
   },
 } as const
+

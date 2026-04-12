@@ -5,13 +5,10 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import * as crypto from "crypto";
-import { createServiceClient as _createServiceClient } from "@/lib/supabase/service";
+import { createServiceClient } from "@/lib/supabase/service";
 import { runTreasurySync } from "@/lib/treasury/sync";
 
 export const dynamic = "force-dynamic";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createServiceClient = () => _createServiceClient() as any;
 
 // ---------------------------------------------------------------------------
 // Plaid webhook verification

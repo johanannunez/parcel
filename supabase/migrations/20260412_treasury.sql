@@ -139,6 +139,7 @@ create table public.treasury_subscriptions (
   last_charged_at     date,
   next_expected_at    date,
   is_active           boolean default true,
+  deactivated_at      timestamptz,
   total_annual_cost   numeric default 0,
   created_at          timestamptz default now()
 );
@@ -202,6 +203,7 @@ create table public.treasury_forecasts (
   account_projections     jsonb default '{}',
   insights                jsonb default '[]',
   model_used              text default 'claude-haiku-4-5',
+  retention_expires_at    timestamptz,
   created_at              timestamptz default now()
 );
 
@@ -235,8 +237,9 @@ create table public.treasury_alerts (
   title            text not null,
   message          text not null,
   metadata         jsonb default '{}',
-  acknowledged_at  timestamptz,
-  created_at       timestamptz default now()
+  acknowledged_at      timestamptz,
+  retention_expires_at timestamptz,
+  created_at           timestamptz default now()
 );
 
 alter table public.treasury_alerts enable row level security;
@@ -260,11 +263,12 @@ create policy "treasury_alerts_admin_delete" on public.treasury_alerts
 
 create table public.treasury_audit_log (
   id            uuid primary key default gen_random_uuid(),
-  user_id       uuid references public.profiles (id) on delete cascade,
+  user_id       uuid references public.profiles (id) on delete set null,
   action        text not null check (action in (
                   'page_view', 'data_sync', 'plaid_link_start', 'plaid_link_complete',
                   'account_disconnect', 'forecast_run', 'settings_change',
-                  'reauth_success', 'reauth_failure', 'sync_triggered'
+                  'reauth_success', 'reauth_failure', 'sync_triggered',
+                  'access_review', 'data_purge', 'mfa_enroll', 'mfa_verify'
                 )),
   resource_type text,
   resource_id   uuid,
@@ -286,3 +290,8 @@ create policy "treasury_audit_log_admin_select" on public.treasury_audit_log
 
 -- NO update policy — audit log rows are immutable
 -- NO delete policy — audit log rows are permanent
+
+-- ─── Plaid Compliance Notes ──────────────────────────────────────────────────
+-- retention_expires_at columns support Attestation 8 (Data Deletion & Retention Policy).
+-- deactivated_at on treasury_subscriptions supports 90-day inactive purge.
+-- Extended audit_log actions support Attestations 5 (Access Reviews), 6 (MFA), and 8 (Purge).
