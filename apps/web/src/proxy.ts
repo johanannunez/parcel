@@ -84,6 +84,22 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Treasury CSP headers
+  if (pathname.startsWith("/admin/treasury")) {
+    proxyResponse.headers.set(
+      "Content-Security-Policy",
+      [
+        "default-src 'self'",
+        "script-src 'self' https://cdn.plaid.com",
+        "style-src 'self' 'unsafe-inline'", // needed for inline styles in React
+        "connect-src 'self' https://*.plaid.com https://api.stripe.com",
+        "frame-src https://cdn.plaid.com",
+        "img-src 'self' data: https:",
+        "font-src 'self'",
+      ].join("; ")
+    );
+  }
+
   return proxyResponse;
 }
 
