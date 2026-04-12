@@ -408,7 +408,8 @@ export default async function ReservePage() {
           <CalendarCheck
             size={18}
             weight="duotone"
-            style={{ color: "var(--color-brand)", flexShrink: 0 }}
+            className="shrink-0"
+            style={{ color: "var(--color-brand)" }}
           />
           <p className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>
             No upcoming stays.{" "}
