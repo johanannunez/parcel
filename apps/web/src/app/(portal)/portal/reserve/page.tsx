@@ -396,6 +396,33 @@ export default async function ReservePage() {
         );
       })()}
 
+      {/* No upcoming stay hint */}
+      {!nextStayRaw && listRows.length > 0 ? (
+        <div
+          className="flex items-center gap-3 rounded-2xl border px-5 py-4"
+          style={{
+            backgroundColor: "rgba(2,170,235,0.04)",
+            borderColor: "rgba(2,170,235,0.15)",
+          }}
+        >
+          <CalendarCheck
+            size={18}
+            weight="duotone"
+            style={{ color: "var(--color-brand)", flexShrink: 0 }}
+          />
+          <p className="text-[13px]" style={{ color: "var(--color-text-secondary)" }}>
+            No upcoming stays.{" "}
+            <Link
+              href="/portal/reserve/new"
+              className="font-semibold"
+              style={{ color: "var(--color-brand)" }}
+            >
+              Reserve your next visit.
+            </Link>
+          </p>
+        </div>
+      ) : null}
+
       {/* ------------------------------------------------------------------ */}
       {/* 4. Flat reservations list                                            */}
       {/* ------------------------------------------------------------------ */}
