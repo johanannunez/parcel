@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// owner_timeline table is not yet in the generated Supabase types.
 import { createServiceClient } from "@/lib/supabase/service";
 
 type TimelineEventParams = {

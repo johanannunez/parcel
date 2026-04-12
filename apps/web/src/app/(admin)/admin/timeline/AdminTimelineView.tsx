@@ -3,10 +3,7 @@
 import { useState, useTransition, useRef, useCallback, useMemo } from "react";
 import {
   MagnifyingGlass,
-  Eye,
-  EyeSlash,
   PushPin,
-  Trash,
   Plus,
   X,
   CalendarCheck,
@@ -22,7 +19,7 @@ import {
   Lightning,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
-import { formatMedium, formatRelative } from "@/lib/format";
+import { formatMedium, formatRelativeShort } from "@/lib/format";
 import {
   toggleTimelineVisibility,
   toggleTimelinePin,
@@ -109,25 +106,16 @@ type TemplatePrefill = {
 // Category icon mapping (duotone, matches portal)
 // ---------------------------------------------------------------------------
 
-function CategoryIcon({ category, size }: { category: string; size: number }) {
-  const iconColor = "var(--color-text-tertiary)";
-  const props = { size, weight: "duotone" as const, style: { color: iconColor } };
 
+function getCategoryDotColor(category: string): string {
   switch (category) {
-    case "account":
-      return <UserCircle {...props} />;
-    case "property":
-      return <House {...props} />;
-    case "financial":
-      return <CurrencyDollar {...props} />;
-    case "calendar":
-      return <CalendarCheck {...props} />;
-    case "document":
-      return <FolderOpen {...props} />;
-    case "communication":
-      return <ChatsCircle {...props} />;
-    default:
-      return <Circle {...props} />;
+    case "account": return "var(--color-brand)";
+    case "property": return "#15803d";
+    case "financial": return "#15803d";
+    case "calendar": return "#b45309";
+    case "document": return "var(--color-text-secondary)";
+    case "communication": return "var(--color-brand)";
+    default: return "var(--color-text-tertiary)";
   }
 }
 
@@ -146,6 +134,7 @@ function OwnerAvatar({
 
   if (profile?.avatar_url) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={profile.avatar_url}
         alt=""
@@ -185,7 +174,7 @@ function timeLabel(dateStr: string): string {
   const date = new Date(dateStr);
   const diffMs = Date.now() - date.getTime();
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
-  if (diffMs < sevenDays) return formatRelative(dateStr);
+  if (diffMs < sevenDays) return formatRelativeShort(dateStr);
   return formatMedium(dateStr);
 }
 
@@ -677,6 +666,27 @@ export function AdminTimelineView({
         )}
       </AnimatePresence>
 
+      {/* Select all + count */}
+      {activeEntries.length > 0 && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {selectedIds.size === activeEntries.length && activeEntries.length > 0 ? (
+              <CheckSquare size={14} weight="fill" style={{ color: "var(--color-brand)" }} />
+            ) : (
+              <Square size={14} />
+            )}
+            {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
+          </button>
+          <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+            {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
+          </span>
+        </div>
+      )}
+
       {/* Timeline feed */}
       {activeEntries.length === 0 && deletedEntries.length === 0 ? (
         <div
@@ -689,54 +699,13 @@ export function AdminTimelineView({
           No timeline entries match your filters.
         </div>
       ) : (
-        <div
-          className="overflow-hidden rounded-xl border"
-          style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)" }}
-        >
-          {/* Table header */}
+        <>
+        <div className="relative">
+          {/* Vertical timeline line */}
           <div
-            className="flex items-center gap-0 border-b"
-            style={{ backgroundColor: "var(--color-warm-gray-50)", borderColor: "var(--color-warm-gray-200)" }}
-          >
-            <div className="flex w-10 shrink-0 items-center justify-center py-2">
-              <button
-                onClick={toggleSelectAll}
-                className="rounded outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
-                aria-label={selectedIds.size === activeEntries.length ? "Deselect all" : "Select all"}
-              >
-                {selectedIds.size === activeEntries.length && activeEntries.length > 0 ? (
-                  <CheckSquare size={14} weight="fill" style={{ color: "var(--color-brand)" }} />
-                ) : (
-                  <Square size={14} style={{ color: "var(--color-text-tertiary)" }} />
-                )}
-              </button>
-            </div>
-            <div className="w-[160px] shrink-0 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>
-              Owner
-            </div>
-            <div className="min-w-0 flex-1 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>
-              Event
-            </div>
-            <div className="hidden w-[120px] shrink-0 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em] sm:block" style={{ color: "var(--color-text-tertiary)" }}>
-              Visibility
-            </div>
-            <div className="hidden w-[100px] shrink-0 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em] md:block" style={{ color: "var(--color-text-tertiary)" }}>
-              When
-            </div>
-            <div className="w-[90px] shrink-0 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>
-              Actions
-            </div>
-          </div>
-          {selectedIds.size > 0 && (
-            <div
-              className="flex items-center gap-2 border-b px-3 py-1.5"
-              style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "rgba(27, 119, 190, 0.04)" }}
-            >
-              <span className="text-xs font-medium" style={{ color: "var(--color-brand)" }}>
-                {selectedIds.size} selected
-              </span>
-            </div>
-          )}
+            className="absolute bottom-0 left-[19px] top-0 w-px"
+            style={{ backgroundColor: "var(--color-warm-gray-200)" }}
+          />
 
           {activeEntries.map((entry) => (
             <TimelineRow
@@ -803,6 +772,7 @@ export function AdminTimelineView({
             </div>
           </div>
         )}
+        </>
       )}
 
       {/* Bulk actions bar */}
@@ -951,188 +921,176 @@ function TimelineRow({
   onToggleSelect: (id: string) => void;
 }) {
   const owner = profileMap[entry.owner_id];
-  const deletedBy = entry.deleted_by ? profileMap[entry.deleted_by] : null;
   const propertyName = entry.property_id ? propertyMap[entry.property_id] : null;
   const isConfirming = confirmDeleteId === entry.id;
 
   const ownerName = owner?.full_name || owner?.email?.split("@")[0] || "Unknown";
+  const streetAddress = propertyName?.split(",")[0] ?? null;
 
   return (
-    <div
-      className="group flex items-center gap-0 border-b"
-      style={{
-        backgroundColor: isSelected
-          ? "rgba(27, 119, 190, 0.04)"
-          : isDeleted
-            ? "rgba(220, 38, 38, 0.02)"
-            : "transparent",
-        borderColor: "var(--color-warm-gray-200)",
-        opacity: isDeleted ? 0.6 : 1,
-        transition: "background-color 0.15s ease",
-      }}
-      onMouseEnter={(e) => {
-        if (!isDeleted && !isSelected) {
-          e.currentTarget.style.backgroundColor = "var(--color-warm-gray-50)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isDeleted && !isSelected) {
-          e.currentTarget.style.backgroundColor = "transparent";
-        }
-      }}
-    >
-      {/* Checkbox */}
-      <div className="flex w-10 shrink-0 items-center justify-center">
+    <div className="relative flex gap-3 pb-1 pl-10">
+      {/* Category dot on the timeline line */}
+      <div
+        className="absolute left-[15px] top-3 z-10 h-[10px] w-[10px] rounded-full border-2"
+        style={{
+          borderColor: getCategoryDotColor(entry.category),
+          backgroundColor: isSelected ? getCategoryDotColor(entry.category) : "var(--color-white)",
+        }}
+      />
+
+      {/* Card */}
+      <div
+        className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl border px-3 py-2"
+        style={{
+          backgroundColor: isSelected
+            ? "rgba(27, 119, 190, 0.04)"
+            : isDeleted
+              ? "rgba(220, 38, 38, 0.02)"
+              : "var(--color-white)",
+          borderColor: isSelected
+            ? "var(--color-brand)"
+            : isDeleted
+              ? "rgba(220, 38, 38, 0.15)"
+              : "var(--color-warm-gray-200)",
+          opacity: isDeleted ? 0.6 : 1,
+          boxShadow: "var(--shadow-sm)",
+          transition: "border-color 0.15s ease, background-color 0.15s ease",
+        }}
+      >
+        {/* Checkbox */}
         {!isDeleted && (
           <button
             onClick={() => onToggleSelect(entry.id)}
-            className="rounded outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
+            className="shrink-0 rounded outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
             aria-label={isSelected ? "Deselect" : "Select"}
           >
             {isSelected ? (
-              <CheckSquare size={16} weight="fill" style={{ color: "var(--color-brand)" }} />
+              <CheckSquare size={15} weight="fill" style={{ color: "var(--color-brand)" }} />
             ) : (
-              <Square
-                size={16}
-                className="opacity-0 group-hover:opacity-100"
-                style={{ color: "var(--color-text-tertiary)", transition: "opacity 0.1s ease" }}
-              />
+              <Square size={15} style={{ color: "var(--color-warm-gray-400)" }} />
             )}
           </button>
         )}
-      </div>
 
-      {/* Avatar + Name (fixed width) */}
-      <div className="flex w-[160px] shrink-0 items-center gap-2.5 py-2.5 pr-3">
+        {/* Avatar */}
         <OwnerAvatar profile={owner} size={24} />
+
+        {/* Person name */}
         <span
-          className="truncate text-xs font-semibold"
+          className="w-[100px] shrink-0 truncate text-xs font-semibold"
           style={{ color: "var(--color-text-primary)" }}
         >
           {ownerName}
         </span>
-      </div>
 
-      {/* Event (flexible) */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 py-2.5 pr-3">
-        <CategoryIcon category={entry.category} size={14} />
+        {/* Event title */}
         <span
-          className={`truncate text-sm ${isDeleted ? "line-through" : ""}`}
+          className={`min-w-0 flex-1 truncate text-sm ${isDeleted ? "line-through" : ""}`}
           style={{ color: "var(--color-text-primary)" }}
         >
           {entry.title}
         </span>
+
+        {/* Property (street only) */}
+        {streetAddress && (
+          <span
+            className="hidden w-[110px] shrink-0 truncate text-xs lg:block"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            {streetAddress}
+          </span>
+        )}
+
+        {/* Visibility label */}
+        <span
+          className="hidden w-[80px] shrink-0 text-xs font-medium sm:block"
+          style={{ color: entry.visibility === "owner" ? "#15803d" : "#b45309" }}
+        >
+          {entry.visibility === "owner" ? "Owner" : "Admin only"}
+        </span>
+
+        {/* Pinned */}
         {entry.is_pinned && (
           <PushPin size={12} weight="fill" className="shrink-0" style={{ color: "#f59e0b" }} />
         )}
-      </div>
 
-      {/* Visibility (fixed width) */}
-      <div className="hidden w-[120px] shrink-0 items-center py-2.5 pr-3 sm:flex">
-        {entry.visibility === "owner" ? (
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-            style={{ backgroundColor: "rgba(22, 163, 74, 0.08)", color: "#15803d" }}
-          >
-            <Eye size={10} weight="bold" />
-            Owner
-          </span>
+        {/* When */}
+        <span
+          className="hidden w-[70px] shrink-0 text-right text-xs md:block"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
+          {timeLabel(entry.created_at)}
+        </span>
+
+        {/* Actions (always visible) */}
+        {!isDeleted ? (
+          <div className="flex shrink-0 items-center gap-0.5 pl-2">
+            <button
+              onClick={() => onToggleVisibility(entry.id)}
+              disabled={isPending}
+              className="rounded px-1.5 py-0.5 text-[11px] font-medium outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-brand)] disabled:opacity-50"
+              style={{
+                color: entry.visibility === "owner" ? "#b45309" : "#15803d",
+                transition: "background-color 0.1s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+            >
+              {entry.visibility === "owner" ? "Hide" : "Show"}
+            </button>
+            <button
+              onClick={() => onTogglePin(entry.id)}
+              disabled={isPending}
+              className="rounded px-1.5 py-0.5 text-[11px] font-medium outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-brand)] disabled:opacity-50"
+              style={{
+                color: entry.is_pinned ? "#f59e0b" : "var(--color-text-tertiary)",
+                transition: "background-color 0.1s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+            >
+              {entry.is_pinned ? "Unpin" : "Pin"}
+            </button>
+            {isConfirming ? (
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={() => onDelete(entry.id)}
+                  disabled={isPending}
+                  className="rounded px-1.5 py-0.5 text-[11px] font-semibold text-white disabled:opacity-50"
+                  style={{ backgroundColor: "#dc2626" }}
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => onConfirmDelete(null)}
+                  className="rounded px-1.5 py-0.5 text-[11px] font-medium"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => onConfirmDelete(entry.id)}
+                disabled={isPending}
+                className="rounded px-1.5 py-0.5 text-[11px] font-medium outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-brand)] disabled:opacity-50"
+                style={{ color: "var(--color-error)", transition: "background-color 0.1s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.06)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+              >
+                Delete
+              </button>
+            )}
+          </div>
         ) : (
           <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-            style={{ backgroundColor: "rgba(245, 158, 11, 0.08)", color: "#b45309" }}
-          >
-            <EyeSlash size={10} weight="bold" />
-            Admin
-          </span>
-        )}
-      </div>
-
-      {/* Time (fixed width) */}
-      <div
-        className="hidden w-[100px] shrink-0 py-2.5 pr-3 text-xs md:block"
-        style={{ color: "var(--color-text-tertiary)" }}
-      >
-        {timeLabel(entry.created_at)}
-      </div>
-
-      {/* Deleted info */}
-      {isDeleted && (
-        <div className="hidden w-[100px] shrink-0 py-2.5 pr-3 md:block">
-          <span
-            className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
-            style={{ backgroundColor: "rgba(220, 38, 38, 0.08)", color: "#dc2626" }}
+            className="text-[10px] font-medium"
+            style={{ color: "#dc2626" }}
           >
             Deleted
           </span>
-        </div>
-      )}
-
-      {/* Action buttons */}
-      {!isDeleted && (
-        <div className="flex w-[90px] shrink-0 items-center gap-0.5 py-2.5 opacity-0 group-hover:opacity-100" style={{ transition: "opacity 0.1s ease" }}>
-              <ActionButton
-                title={
-                  entry.visibility === "owner"
-                    ? "Make admin only"
-                    : "Make visible to owner"
-                }
-                onClick={() => onToggleVisibility(entry.id)}
-                disabled={isPending}
-              >
-                {entry.visibility === "owner" ? (
-                  <EyeSlash size={15} />
-                ) : (
-                  <Eye size={15} />
-                )}
-              </ActionButton>
-
-              <ActionButton
-                title={entry.is_pinned ? "Unpin" : "Pin"}
-                onClick={() => onTogglePin(entry.id)}
-                disabled={isPending}
-              >
-                <PushPin
-                  size={15}
-                  weight={entry.is_pinned ? "fill" : "regular"}
-                  style={
-                    entry.is_pinned ? { color: "rgb(217, 119, 6)" } : undefined
-                  }
-                />
-              </ActionButton>
-
-              {isConfirming ? (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => onDelete(entry.id)}
-                    disabled={isPending}
-                    className="rounded-md px-2 py-1 text-[11px] font-semibold text-white transition-colors duration-150 disabled:opacity-50"
-                    style={{ backgroundColor: "rgb(220, 38, 38)" }}
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() => onConfirmDelete(null)}
-                    className="rounded-md px-2 py-1 text-[11px] font-medium transition-colors duration-150"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <ActionButton
-                  title="Delete"
-                  onClick={() => onConfirmDelete(entry.id)}
-                  disabled={isPending}
-                >
-                  <Trash size={15} />
-                </ActionButton>
-              )}
-        </div>
-      )}
-
-      {/* Actions placeholder for deleted rows to maintain alignment */}
-      {isDeleted && <div className="w-[90px] shrink-0" />}
+        )}
+      </div>
     </div>
   );
 }
@@ -1164,7 +1122,9 @@ function AddEntryForm({
 
   // Respond to new prefill selections
   const lastPrefillRef = useRef(prefill);
+  // eslint-disable-next-line react-hooks/refs
   if (prefill !== lastPrefillRef.current) {
+    // eslint-disable-next-line react-hooks/refs
     lastPrefillRef.current = prefill;
     if (prefill) {
       setEventType(prefill.eventType);
@@ -1352,40 +1312,3 @@ function AddEntryForm({
 // Shared small components
 // ---------------------------------------------------------------------------
 
-function ActionButton({
-  children,
-  title,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode;
-  title: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      title={title}
-      onClick={onClick}
-      disabled={disabled}
-      className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 disabled:opacity-50"
-      style={{ color: "var(--color-text-tertiary)" }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = "var(--color-warm-gray-100)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = "transparent";
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Dot() {
-  return (
-    <span className="text-xs" style={{ color: "var(--color-warm-gray-200)" }}>
-      ·
-    </span>
-  );
-}

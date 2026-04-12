@@ -74,3 +74,21 @@ export function formatRelative(d: string | Date) {
   if (abs < 31557600) return rtf.format(Math.round(diffSec / 2629800), "month");
   return rtf.format(Math.round(diffSec / 31557600), "year");
 }
+
+const rtfShort = new Intl.RelativeTimeFormat("en-US", { numeric: "always", style: "narrow" });
+
+export function formatRelativeShort(d: string | Date) {
+  const date = typeof d === "string" ? new Date(d) : d;
+  const diffMs = date.getTime() - Date.now();
+  const diffSec = Math.round(diffMs / 1000);
+  const abs = Math.abs(diffSec);
+
+  if (abs < 60) return "just now";
+  if (abs < 3600) {
+    const mins = Math.round(Math.abs(diffSec) / 60);
+    return `${mins} min ago`;
+  }
+  if (abs < 86400) return rtfShort.format(Math.round(diffSec / 3600), "hour");
+  if (abs < 604800) return rtfShort.format(Math.round(diffSec / 86400), "day");
+  return formatShort(date);
+}
