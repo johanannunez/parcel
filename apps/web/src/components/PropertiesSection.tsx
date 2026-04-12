@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import PropertyCard, { type Property } from "./PropertyCard";
 import ScrollReveal from "./ScrollReveal";
@@ -135,12 +136,12 @@ export default function PropertiesSection() {
 
         {/* View All CTA */}
         <ScrollReveal delay={0.2} className="mt-12 text-center">
-          <a
+          <Link
             href="/properties"
             className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-warm-gray-200 px-8 py-3 text-sm font-semibold text-text-primary transition-all duration-300 hover:border-brand hover:text-brand"
           >
             View all properties
-          </a>
+          </Link>
         </ScrollReveal>
       </div>
     </section>

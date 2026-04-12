@@ -362,6 +362,7 @@ export function PortalIconRail() {
         className="mb-3 flex h-8 w-8 items-center justify-center"
         aria-label="Parcel Home"
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/logo-mark.png" alt="Parcel" width={24} height={24} />
       </Link>
 

@@ -352,6 +352,7 @@ function LiveClock() {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNow(new Date());
     const id = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(id);
@@ -836,6 +837,7 @@ function ViewAsModal({
                     }}
                   >
                     {owner.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={owner.avatar_url}
                         alt=""

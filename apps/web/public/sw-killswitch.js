@@ -35,7 +35,7 @@
         }
       });
     });
-  } catch (e) {
+  } catch {
     // Fail silently
   }
 })();

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "@phosphor-icons/react";
 import ScrollReveal from "./ScrollReveal";
@@ -19,20 +20,20 @@ export default function JournalSection() {
                 Stories from our properties
               </h2>
             </div>
-            <a
+            <Link
               href="/blog"
               className="hidden items-center gap-2 text-sm font-semibold text-brand transition-opacity duration-300 hover:opacity-80 md:flex"
             >
               View all
               <ArrowRight size={16} weight="bold" />
-            </a>
+            </Link>
           </div>
         </ScrollReveal>
 
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           {FEATURED_POSTS.map((post, i) => (
             <ScrollReveal key={post.slug} delay={i * 0.08}>
-              <a href={`/blog/${post.slug}`} className="group block">
+              <Link href={`/blog/${post.slug}`} className="group block">
                 <div className="relative aspect-[3/2] overflow-hidden rounded-[var(--radius-md)]">
                   <Image
                     src={post.image}
@@ -53,20 +54,20 @@ export default function JournalSection() {
                     {post.title}
                   </h3>
                 </div>
-              </a>
+              </Link>
             </ScrollReveal>
           ))}
         </div>
 
         {/* Mobile View All */}
         <div className="mt-10 text-center md:hidden">
-          <a
+          <Link
             href="/blog"
             className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-brand"
           >
             View all posts
             <ArrowRight size={16} weight="bold" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>

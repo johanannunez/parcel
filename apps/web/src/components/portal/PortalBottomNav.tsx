@@ -124,6 +124,7 @@ export function PortalBottomNav({
   // When sheet opens, snap to the section matching the active route.
   useEffect(() => {
     if (moreOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpenSection(getActiveSection(pathname));
     }
   }, [moreOpen, pathname]);
@@ -264,6 +265,7 @@ export function PortalBottomNav({
                 className="mx-4 mt-2 mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[var(--color-warm-gray-50)]"
               >
                 {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={avatarUrl}
                     alt={userName}

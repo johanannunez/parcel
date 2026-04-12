@@ -109,7 +109,6 @@ export function CustomSelect({
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedby}
         className="flex h-10 w-full items-center justify-between gap-2 rounded-lg border px-3 text-left text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
         style={{

@@ -4,7 +4,6 @@ import {
   PERIOD_LABELS,
   QUICK_KEYS,
   MONTH_LABELS,
-  type PeriodKey,
   type DashboardParams,
 } from "@/lib/periods";
 

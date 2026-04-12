@@ -36,7 +36,8 @@ function displayName(p: PropertyOption): string {
   return formatAddress(p) || "Property";
 }
 
-function displaySub(_p: PropertyOption): string {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function displaySub(_prop: PropertyOption): string {
   return "";
 }
 
@@ -197,7 +198,7 @@ export function PropertySelector({
           break;
       }
     },
-    [open, filtered, focusIdx],
+    [open, filtered, focusIdx, select],
   );
   /* eslint-enable react-hooks/rules-of-hooks */
 

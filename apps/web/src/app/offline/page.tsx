@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 export default function OfflinePage() {
   return (
     <div
@@ -15,7 +17,7 @@ export default function OfflinePage() {
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
       }}
     >
-      <img
+      <Image
         src="/brand/logo-mark.png"
         alt="Parcel"
         width={48}

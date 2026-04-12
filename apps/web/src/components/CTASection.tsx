@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react";
 import ScrollReveal from "./ScrollReveal";
 
@@ -31,13 +32,13 @@ export default function CTASection() {
                 Browse our full collection of vacation homes and furnished
                 residences.
               </p>
-              <a
+              <Link
                 href="/properties"
                 className="mt-8 inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] bg-gradient-to-r from-brand-light to-brand px-8 py-3.5 text-base font-semibold text-white transition-opacity duration-300 hover:opacity-90"
               >
                 View all properties
                 <ArrowRight size={18} weight="bold" />
-              </a>
+              </Link>
             </div>
           </div>
         </ScrollReveal>

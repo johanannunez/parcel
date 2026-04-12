@@ -132,7 +132,6 @@ export function SetPortalHeader({
     // and picks up the fresh subtitle from the ref. setOverride is a
     // permanently-stable reference from a non-updating setter context,
     // so including it in deps is safe.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setOverride, title, copyable]);
 
   return null;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { House, Buildings } from "@phosphor-icons/react";
 import ScrollReveal from "./ScrollReveal";
 
@@ -34,7 +35,7 @@ export default function CategoriesSection() {
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
           {CATEGORIES.map((cat, i) => (
             <ScrollReveal key={cat.title} delay={i * 0.1}>
-              <a
+              <Link
                 href="/properties"
                 className="group relative block overflow-hidden rounded-[var(--radius-xl)] bg-surface-elevated shadow-card transition-shadow duration-500 hover:shadow-lg"
               >
@@ -72,7 +73,7 @@ export default function CategoriesSection() {
                     {cat.description}
                   </p>
                 </div>
-              </a>
+              </Link>
             </ScrollReveal>
           ))}
         </div>

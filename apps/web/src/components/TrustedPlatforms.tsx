@@ -34,6 +34,7 @@ export default function TrustedPlatforms() {
 
       <Marquee speed={30} direction="left" pauseOnHover fadeEdges fadeWidth={80} gap={64}>
         {ROW_1.map((platform) => (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             key={platform.name}
             src={platform.src}
@@ -54,6 +55,7 @@ export default function TrustedPlatforms() {
 
       <Marquee speed={25} direction="right" pauseOnHover fadeEdges fadeWidth={80} gap={64}>
         {ROW_2.map((platform) => (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             key={platform.name}
             src={platform.src}

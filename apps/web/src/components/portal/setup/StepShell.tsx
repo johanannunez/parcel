@@ -28,6 +28,7 @@ export function StepShell({
   backHref?: string;
   children: ReactNode;
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const trackLabel = track === "property" ? "Property setup" : "Owner essentials";
   const trackNum = track === "property" ? "01" : "02";
 
