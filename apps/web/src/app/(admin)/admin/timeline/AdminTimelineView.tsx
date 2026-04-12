@@ -689,34 +689,52 @@ export function AdminTimelineView({
           No timeline entries match your filters.
         </div>
       ) : (
-        <div className="flex flex-col gap-0">
-          {/* Select all row */}
-          {activeEntries.length > 0 && (
-            <div className="mb-2 flex items-center gap-2">
+        <div
+          className="overflow-hidden rounded-xl border"
+          style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)" }}
+        >
+          {/* Table header */}
+          <div
+            className="flex items-center gap-0 border-b"
+            style={{ backgroundColor: "var(--color-warm-gray-50)", borderColor: "var(--color-warm-gray-200)" }}
+          >
+            <div className="flex w-10 shrink-0 items-center justify-center py-2">
               <button
                 onClick={toggleSelectAll}
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
-                style={{ color: "var(--color-text-tertiary)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--color-brand)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--color-text-tertiary)"; }}
+                className="rounded outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
+                aria-label={selectedIds.size === activeEntries.length ? "Deselect all" : "Select all"}
               >
                 {selectedIds.size === activeEntries.length && activeEntries.length > 0 ? (
                   <CheckSquare size={14} weight="fill" style={{ color: "var(--color-brand)" }} />
                 ) : (
-                  <Square size={14} />
+                  <Square size={14} style={{ color: "var(--color-text-tertiary)" }} />
                 )}
-                {selectedIds.size === activeEntries.length && activeEntries.length > 0
-                  ? "Deselect all"
-                  : "Select all"}
               </button>
-              {selectedIds.size > 0 && (
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: "var(--color-text-tertiary)" }}
-                >
-                  {selectedIds.size} selected
-                </span>
-              )}
+            </div>
+            <div className="w-[160px] shrink-0 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>
+              Owner
+            </div>
+            <div className="min-w-0 flex-1 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>
+              Event
+            </div>
+            <div className="hidden w-[120px] shrink-0 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em] sm:block" style={{ color: "var(--color-text-tertiary)" }}>
+              Visibility
+            </div>
+            <div className="hidden w-[100px] shrink-0 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em] md:block" style={{ color: "var(--color-text-tertiary)" }}>
+              When
+            </div>
+            <div className="w-[90px] shrink-0 py-2 pr-3 text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>
+              Actions
+            </div>
+          </div>
+          {selectedIds.size > 0 && (
+            <div
+              className="flex items-center gap-2 border-b px-3 py-1.5"
+              style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "rgba(27, 119, 190, 0.04)" }}
+            >
+              <span className="text-xs font-medium" style={{ color: "var(--color-brand)" }}>
+                {selectedIds.size} selected
+              </span>
             </div>
           )}
 
@@ -750,15 +768,21 @@ export function AdminTimelineView({
             />
           ))}
 
-          {/* Deleted entries section */}
-          {showDeleted && deletedEntries.length > 0 && (
-            <>
-              <div
-                className="mt-6 mb-3 text-[10px] font-semibold uppercase tracking-[0.12em]"
-                style={{ color: "var(--color-text-tertiary)" }}
-              >
-                Deleted entries
-              </div>
+        </div>
+
+        {/* Deleted entries section */}
+        {showDeleted && deletedEntries.length > 0 && (
+          <div className="mt-6">
+            <div
+              className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em]"
+              style={{ color: "var(--color-text-tertiary)" }}
+            >
+              Deleted entries
+            </div>
+            <div
+              className="overflow-hidden rounded-xl border"
+              style={{ borderColor: "rgba(220, 38, 38, 0.15)" }}
+            >
               {deletedEntries.map((entry) => (
                 <TimelineRow
                   key={entry.id}
@@ -776,9 +800,9 @@ export function AdminTimelineView({
                   onToggleSelect={() => {}}
                 />
               ))}
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       )}
 
       {/* Bulk actions bar */}
@@ -931,201 +955,122 @@ function TimelineRow({
   const propertyName = entry.property_id ? propertyMap[entry.property_id] : null;
   const isConfirming = confirmDeleteId === entry.id;
 
+  const ownerName = owner?.full_name || owner?.email?.split("@")[0] || "Unknown";
+
   return (
     <div
-      className="group flex items-center gap-3 rounded-lg border px-3 py-2.5"
+      className="group flex items-center gap-0 border-b"
       style={{
-        borderColor: isSelected
-          ? "var(--color-brand)"
-          : isDeleted
-            ? "rgba(220, 38, 38, 0.15)"
-            : "var(--color-warm-gray-200)",
         backgroundColor: isSelected
           ? "rgba(27, 119, 190, 0.04)"
           : isDeleted
-            ? "rgba(220, 38, 38, 0.03)"
-            : "var(--color-white)",
-        opacity: isDeleted ? 0.7 : 1,
-        boxShadow: isDeleted ? "none" : "var(--shadow-card)",
-        transition: "box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease",
+            ? "rgba(220, 38, 38, 0.02)"
+            : "transparent",
+        borderColor: "var(--color-warm-gray-200)",
+        opacity: isDeleted ? 0.6 : 1,
+        transition: "background-color 0.15s ease",
       }}
       onMouseEnter={(e) => {
-        if (!isDeleted) {
-          e.currentTarget.style.boxShadow = "var(--shadow-md)";
-          if (!isSelected) {
-            e.currentTarget.style.borderColor = "var(--color-warm-gray-400)";
-          }
+        if (!isDeleted && !isSelected) {
+          e.currentTarget.style.backgroundColor = "var(--color-warm-gray-50)";
         }
       }}
       onMouseLeave={(e) => {
-        if (!isDeleted) {
-          e.currentTarget.style.boxShadow = "var(--shadow-card)";
-          if (!isSelected) {
-            e.currentTarget.style.borderColor = "var(--color-warm-gray-200)";
-          }
+        if (!isDeleted && !isSelected) {
+          e.currentTarget.style.backgroundColor = "transparent";
         }
       }}
     >
-      {/* Selection checkbox */}
-      {!isDeleted && (
-        <button
-          onClick={() => onToggleSelect(entry.id)}
-          className="shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1 rounded"
-          aria-label={isSelected ? "Deselect entry" : "Select entry"}
-        >
-          {isSelected ? (
-            <CheckSquare size={18} weight="fill" style={{ color: "var(--color-brand)" }} />
-          ) : (
-            <Square
-              size={18}
-              className="opacity-0 group-hover:opacity-100"
-              style={{
-                color: "var(--color-text-tertiary)",
-                transition: "opacity 0.15s ease",
-              }}
-            />
-          )}
-        </button>
-      )}
+      {/* Checkbox */}
+      <div className="flex w-10 shrink-0 items-center justify-center">
+        {!isDeleted && (
+          <button
+            onClick={() => onToggleSelect(entry.id)}
+            className="rounded outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
+            aria-label={isSelected ? "Deselect" : "Select"}
+          >
+            {isSelected ? (
+              <CheckSquare size={16} weight="fill" style={{ color: "var(--color-brand)" }} />
+            ) : (
+              <Square
+                size={16}
+                className="opacity-0 group-hover:opacity-100"
+                style={{ color: "var(--color-text-tertiary)", transition: "opacity 0.1s ease" }}
+              />
+            )}
+          </button>
+        )}
+      </div>
 
-      {/* Avatar with category dot */}
-      <div className="relative shrink-0">
-        <OwnerAvatar profile={owner} size={28} />
+      {/* Avatar + Name (fixed width) */}
+      <div className="flex w-[160px] shrink-0 items-center gap-2.5 py-2.5 pr-3">
+        <OwnerAvatar profile={owner} size={24} />
         <span
-          className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border"
-          style={{ backgroundColor: "var(--color-white)", borderColor: "var(--color-warm-gray-200)" }}
+          className="truncate text-xs font-semibold"
+          style={{ color: "var(--color-text-primary)" }}
         >
-          <CategoryIcon category={entry.category} size={8} />
+          {ownerName}
         </span>
       </div>
 
-      {/* Content */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1">
-            {/* Owner + Title on one line */}
-            <div className="flex items-baseline gap-1.5">
-              <span
-                className="shrink-0 text-xs font-medium"
-                style={{ color: "var(--color-text-tertiary)" }}
-              >
-                {owner?.full_name || owner?.email || "Unknown"}
-              </span>
-              <span
-                className={`truncate text-sm font-semibold ${isDeleted ? "line-through" : ""}`}
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                {entry.title}
-              </span>
-            </div>
+      {/* Event (flexible) */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 py-2.5 pr-3">
+        <CategoryIcon category={entry.category} size={14} />
+        <span
+          className={`truncate text-sm ${isDeleted ? "line-through" : ""}`}
+          style={{ color: "var(--color-text-primary)" }}
+        >
+          {entry.title}
+        </span>
+        {entry.is_pinned && (
+          <PushPin size={12} weight="fill" className="shrink-0" style={{ color: "#f59e0b" }} />
+        )}
+      </div>
 
-            {/* Body preview (single line) */}
-            {entry.body && (
-              <div
-                className="mt-0.5 truncate text-xs leading-snug"
-                style={{ color: "var(--color-text-secondary)" }}
-              >
-                {entry.body}
-              </div>
-            )}
+      {/* Visibility (fixed width) */}
+      <div className="hidden w-[120px] shrink-0 items-center py-2.5 pr-3 sm:flex">
+        {entry.visibility === "owner" ? (
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+            style={{ backgroundColor: "rgba(22, 163, 74, 0.08)", color: "#15803d" }}
+          >
+            <Eye size={10} weight="bold" />
+            Owner
+          </span>
+        ) : (
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+            style={{ backgroundColor: "rgba(245, 158, 11, 0.08)", color: "#b45309" }}
+          >
+            <EyeSlash size={10} weight="bold" />
+            Admin
+          </span>
+        )}
+      </div>
 
-            {/* Meta row */}
-            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-              <span
-                className="text-xs"
-                style={{ color: "var(--color-text-tertiary)" }}
-              >
-                {timeLabel(entry.created_at)}
-              </span>
+      {/* Time (fixed width) */}
+      <div
+        className="hidden w-[100px] shrink-0 py-2.5 pr-3 text-xs md:block"
+        style={{ color: "var(--color-text-tertiary)" }}
+      >
+        {timeLabel(entry.created_at)}
+      </div>
 
-              {propertyName && (
-                <>
-                  <Dot />
-                  <span
-                    className="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                    style={{
-                      backgroundColor: "var(--color-warm-gray-100)",
-                      color: "var(--color-text-secondary)",
-                    }}
-                  >
-                    {propertyName}
-                  </span>
-                </>
-              )}
+      {/* Deleted info */}
+      {isDeleted && (
+        <div className="hidden w-[100px] shrink-0 py-2.5 pr-3 md:block">
+          <span
+            className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+            style={{ backgroundColor: "rgba(220, 38, 38, 0.08)", color: "#dc2626" }}
+          >
+            Deleted
+          </span>
+        </div>
+      )}
 
-              <Dot />
-
-              {/* Visibility badge */}
-              {entry.visibility === "owner" ? (
-                <span
-                  className="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                  style={{
-                    backgroundColor: "rgba(34, 197, 94, 0.1)",
-                    color: "rgb(22, 163, 74)",
-                  }}
-                >
-                  Visible
-                </span>
-              ) : (
-                <span
-                  className="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                  style={{
-                    backgroundColor: "rgba(245, 158, 11, 0.1)",
-                    color: "rgb(217, 119, 6)",
-                  }}
-                >
-                  Admin Only
-                </span>
-              )}
-
-              {/* Pinned indicator */}
-              {entry.is_pinned && (
-                <>
-                  <Dot />
-                  <span
-                    className="flex items-center gap-0.5 text-[11px] font-medium"
-                    style={{ color: "rgb(217, 119, 6)" }}
-                  >
-                    <PushPin size={11} weight="fill" />
-                    Pinned
-                  </span>
-                </>
-              )}
-
-              {/* Deleted badge */}
-              {isDeleted && (
-                <>
-                  <Dot />
-                  <span
-                    className="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                    style={{
-                      backgroundColor: "rgba(220, 38, 38, 0.1)",
-                      color: "rgb(220, 38, 38)",
-                    }}
-                  >
-                    Deleted
-                  </span>
-                </>
-              )}
-
-              {isDeleted && entry.deleted_at && (
-                <>
-                  <Dot />
-                  <span
-                    className="text-[11px]"
-                    style={{ color: "var(--color-text-tertiary)" }}
-                  >
-                    Deleted by {deletedBy?.full_name || deletedBy?.email || "admin"} on{" "}
-                    {formatMedium(entry.deleted_at)}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          {!isDeleted && (
-            <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+      {/* Action buttons */}
+      {!isDeleted && (
+        <div className="flex w-[90px] shrink-0 items-center gap-0.5 py-2.5 opacity-0 group-hover:opacity-100" style={{ transition: "opacity 0.1s ease" }}>
               <ActionButton
                 title={
                   entry.visibility === "owner"
