@@ -88,7 +88,7 @@ export default async function ReservePage() {
     client
       .from("block_requests")
       .select(
-        "id, property_id, start_date, end_date, status, created_at, check_in_time, check_out_time, is_owner_staying, adults, children",
+        "id, property_id, start_date, end_date, status, created_at, check_in_time, check_out_time, is_owner_staying, adults, children, pets, wants_cleaning",
       )
       .eq("owner_id", userId)
       .order("created_at", { ascending: false })
@@ -100,15 +100,18 @@ export default async function ReservePage() {
     id: string;
     name: string;
     unit: string | null;
+    cityLine: string; // e.g. "Kennewick, WA 99336"
   };
 
   const propertyMap = new Map<string, PropertyRow>();
   (rawProperties ?? []).forEach((p) => {
     const rawUnit = p.address_line2 as string | null | undefined;
+    const cityLine = [p.city, p.state, p.postal_code].filter(Boolean).join(", ");
     propertyMap.set(p.id, {
       id: p.id,
       name: p.address_line1?.trim() || "Property",
       unit: rawUnit ? normalizeUnit(rawUnit) : null,
+      cityLine,
     });
   });
 
@@ -401,8 +404,8 @@ export default async function ReservePage() {
         );
       })()}
 
-      {/* No upcoming stay hint */}
-      {!nextStayRaw && listRows.length > 0 ? (
+      {/* No upcoming stay hint — only show when nothing is pending or confirmed upcoming */}
+      {!nextStayRaw && underReviewCount === 0 && listRows.length > 0 ? (
         <div
           className="flex items-center gap-3 rounded-2xl border px-5 py-4"
           style={{
@@ -430,131 +433,144 @@ export default async function ReservePage() {
       ) : null}
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. Flat reservations list                                            */}
+      {/* 4. Reservations list — rich cards                                    */}
       {/* ------------------------------------------------------------------ */}
       {listRows.length > 0 && (
-        <div
-          className="rounded-2xl border overflow-hidden"
-          style={{
-            backgroundColor: "var(--color-white)",
-            borderColor: "var(--color-warm-gray-200)",
-          }}
-        >
-          {/* Table header */}
-          <div
-            className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 border-b px-5 py-3"
-            style={{ borderColor: "var(--color-warm-gray-100)" }}
-          >
+        <div className="flex flex-col gap-3">
+          {/* Section header */}
+          <div className="flex items-center justify-between px-1">
             <p
               className="text-[11px] font-semibold uppercase tracking-[0.13em]"
               style={{ color: "var(--color-text-tertiary)" }}
             >
-              Property
+              All reservations
             </p>
-            <p
-              className="text-[11px] font-semibold uppercase tracking-[0.13em]"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              Dates
-            </p>
-            <p
-              className="text-[11px] font-semibold uppercase tracking-[0.13em]"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              Type
-            </p>
-            <p
-              className="text-[11px] font-semibold uppercase tracking-[0.13em]"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              Status
-            </p>
-          </div>
-
-          {/* Rows */}
-          {listRows.map((r, idx) => {
-            const prop = propertyMap.get(r.property_id);
-            const visual =
-              blockStatusVisual[r.status as BlockRequestStatus] ??
-              blockStatusVisual["pending"];
-            const label = labelForBlockStatus(r.status);
-            const isLast = idx === listRows.length - 1;
-
-            return (
-              <div
-                key={r.id}
-                className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-3.5 transition-colors hover:bg-[var(--color-warm-gray-50)]"
-                style={
-                  isLast
-                    ? {}
-                    : { borderBottom: "1px solid var(--color-warm-gray-100)" }
-                }
-              >
-                {/* Property name + unit */}
-                <div className="min-w-0">
-                  <p
-                    className="truncate text-sm font-medium"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    {prop?.name ?? "Property"}
-                    {prop?.unit ? (
-                      <span
-                        className="ml-1"
-                        style={{ color: "var(--color-brand)" }}
-                      >
-                        {prop.unit}
-                      </span>
-                    ) : null}
-                  </p>
-                </div>
-
-                {/* Date range */}
-                <p
-                  className="whitespace-nowrap text-sm"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  {formatDateRange(r.start_date, r.end_date)}
-                </p>
-
-                {/* Stay type */}
-                <p
-                  className="whitespace-nowrap text-sm"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  {r.is_owner_staying ? "Owner staying" : "Guest staying"}
-                </p>
-
-                {/* Status pill */}
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                  style={{
-                    backgroundColor: visual.bg,
-                    color: visual.fg,
-                  }}
-                >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: visual.dot }}
-                  />
-                  {label}
-                </span>
-              </div>
-            );
-          })}
-
-          {/* Footer CTA */}
-          <div
-            className="border-t px-5 py-3.5"
-            style={{ borderColor: "var(--color-warm-gray-100)" }}
-          >
             <Link
               href="/portal/reserve/new"
-              className="text-sm font-semibold transition-opacity hover:opacity-70"
+              className="text-[12px] font-semibold transition-opacity hover:opacity-70"
               style={{ color: "var(--color-brand)" }}
             >
               + New reservation
             </Link>
           </div>
+
+          {listRows.map((r) => {
+            const prop = propertyMap.get(r.property_id);
+            const visual =
+              blockStatusVisual[r.status as BlockRequestStatus] ??
+              blockStatusVisual["pending"];
+            const label = labelForBlockStatus(r.status);
+
+            // Guest counts
+            const adults = (r.adults as number | null) ?? 0;
+            const children = (r.children as number | null) ?? 0;
+            const pets = (r as { pets?: number | null }).pets ?? 0;
+            const wantsCleaning = (r as { wants_cleaning?: boolean | null }).wants_cleaning ?? false;
+
+            const guestParts: string[] = [];
+            if (adults > 0) guestParts.push(`${adults} ${adults === 1 ? "adult" : "adults"}`);
+            if (children > 0) guestParts.push(`${children} ${children === 1 ? "child" : "children"}`);
+            if (pets > 0) guestParts.push(`${pets} ${pets === 1 ? "pet" : "pets"}`);
+
+            return (
+              <div
+                key={r.id}
+                className="rounded-2xl border p-5"
+                style={{
+                  backgroundColor: "var(--color-white)",
+                  borderColor: "var(--color-warm-gray-200)",
+                }}
+              >
+                {/* Top row: address + status pill */}
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <p
+                      className="text-[15px] font-semibold leading-tight"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      {prop?.name ?? "Property"}
+                      {prop?.unit ? (
+                        <span className="ml-1.5 font-semibold" style={{ color: "var(--color-brand)" }}>
+                          {prop.unit}
+                        </span>
+                      ) : null}
+                    </p>
+                    {prop?.cityLine ? (
+                      <p className="mt-0.5 text-[12px]" style={{ color: "var(--color-text-tertiary)" }}>
+                        {prop.cityLine}
+                      </p>
+                    ) : null}
+                  </div>
+                  <span
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                    style={{ backgroundColor: visual.bg, color: visual.fg }}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: visual.dot }} />
+                    {label}
+                  </span>
+                </div>
+
+                {/* Detail grid */}
+                <div
+                  className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-xl p-4 sm:grid-cols-4"
+                  style={{ backgroundColor: "var(--color-warm-gray-50)" }}
+                >
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
+                      Check-in
+                    </p>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
+                      {formatSingleDate(r.start_date)}
+                    </p>
+                    {r.check_in_time ? (
+                      <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+                        {formatTime(r.check_in_time)}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
+                      Check-out
+                    </p>
+                    <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
+                      {formatSingleDate(r.end_date)}
+                    </p>
+                    {r.check_out_time ? (
+                      <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+                        {formatTime(r.check_out_time)}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {guestParts.length > 0 ? (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
+                        Guests
+                      </p>
+                      <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
+                        {guestParts.join(" · ")}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-0.5" style={{ color: "#bbb" }}>
+                      Cleaning
+                    </p>
+                    <p className="text-[13px] font-medium" style={{ color: wantsCleaning ? "#15803d" : "var(--color-text-primary)" }}>
+                      {wantsCleaning ? "Yes, scheduled" : "Not requested"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stay type */}
+                <p className="mt-3 text-[12px]" style={{ color: "var(--color-text-tertiary)" }}>
+                  {r.is_owner_staying ? "Owner staying" : "Guest staying"}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
 

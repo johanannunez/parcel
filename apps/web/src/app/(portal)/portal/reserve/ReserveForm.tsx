@@ -1214,7 +1214,7 @@ export function ReserveForm({
                           : "var(--color-text-primary)",
                     }}
                   >
-                    {val ? "Yes" : "No"}
+                    {val ? "Yes, give me a new code." : "No, I will use my current code."}
                   </button>
                 ))}
               </div>
