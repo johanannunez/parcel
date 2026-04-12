@@ -10,7 +10,7 @@ import { getPortalContext } from "@/lib/portal-context";
 import { normalizeUnit } from "@/lib/address";
 import { EmptyState } from "@/components/portal/EmptyState";
 import { blockStatusVisual, labelForBlockStatus } from "@/lib/labels";
-import type { BlockRequestStatus } from "./types";
+import type { BlockRequestStatus } from "@/lib/labels";
 
 export const metadata: Metadata = { title: "Reserve" };
 export const dynamic = "force-dynamic";
@@ -19,19 +19,30 @@ export const dynamic = "force-dynamic";
 // Helpers
 // ---------------------------------------------------------------------------
 
+const DATE_OPTS: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+const DATE_YEAR_OPTS: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
+
+const _dateFmt = new Intl.DateTimeFormat("en-US", DATE_OPTS);
+const _dateYearFmt = new Intl.DateTimeFormat("en-US", DATE_YEAR_OPTS);
+
 function formatDateRange(start: string, end: string): string {
   const s = new Date(start + "T00:00:00");
   const e = new Date(end + "T00:00:00");
-  const monthFmt = new Intl.DateTimeFormat("en-US", { month: "short" });
-  const dayFmt = new Intl.DateTimeFormat("en-US", { day: "numeric" });
-  const yearFmt = new Intl.DateTimeFormat("en-US", { year: "numeric" });
 
-  const sMonth = monthFmt.format(s);
-  const sDay = dayFmt.format(s);
-  const sYear = yearFmt.format(s);
-  const eMonth = monthFmt.format(e);
-  const eDay = dayFmt.format(e);
-  const eYear = yearFmt.format(e);
+  const sParts = _dateFmt.formatToParts(s);
+  const eParts = _dateFmt.formatToParts(e);
+  const sYearParts = _dateYearFmt.formatToParts(s);
+  const eYearParts = _dateYearFmt.formatToParts(e);
+
+  const get = (parts: Intl.DateTimeFormatPart[], type: string) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+
+  const sMonth = get(sParts, "month");
+  const sDay = get(sParts, "day");
+  const sYear = get(sYearParts, "year");
+  const eMonth = get(eParts, "month");
+  const eDay = get(eParts, "day");
+  const eYear = get(eYearParts, "year");
 
   if (sYear !== eYear) {
     return `${sMonth} ${sDay}, ${sYear} – ${eMonth} ${eDay}, ${eYear}`;
