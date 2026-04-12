@@ -268,6 +268,7 @@ function FileUploadBox({
       >
         {hasExisting ? (
           <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={existingUrl} alt={label} className="h-16 w-auto rounded object-contain" />
             <span className="text-xs font-medium" style={{ color: "var(--color-brand)" }}>
               Uploaded. Click to replace.

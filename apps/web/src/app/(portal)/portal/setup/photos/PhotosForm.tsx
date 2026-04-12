@@ -174,6 +174,7 @@ export function PhotosForm({
                 boxShadow: photo.isPrimary ? "0 0 0 2px var(--color-brand)" : "none",
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.url}
                 alt=""

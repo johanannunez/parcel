@@ -203,6 +203,7 @@ export default function ProfileSection({ profile }: Props) {
           <div className="mb-6 flex items-center gap-4">
             <div className="group relative cursor-pointer">
               {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={avatarUrl}
                   alt={profile.full_name ?? "Avatar"}
