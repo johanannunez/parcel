@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// owner_timeline, block_requests, and related tables are not yet in the
+// generated Supabase types. Remove this disable once types are regenerated.
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -39,6 +42,7 @@ async function requireAdmin() {
   return { supabase, userId: user.id, error: null };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function insertTimelineEntry(
   supabase: Awaited<ReturnType<typeof createClient>>,
   ownerId: string,

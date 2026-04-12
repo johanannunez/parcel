@@ -106,18 +106,6 @@ function formatDateTime(iso: string | null): string {
   });
 }
 
-function formatDateOnly(iso: string | null): string {
-  if (!iso) return "";
-  return new Date(iso).toISOString().split("T")[0];
-}
-
-function formatTimeOnly(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
-}
 
 function durationLabel(mins: number | null): string {
   if (!mins) return "";

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useTransition, useRef, useState } from "react";
 import {
-  House,
   ChartBar,
   ListChecks,
   ClockCounterClockwise,
@@ -22,8 +21,6 @@ import {
   Circle,
   Trash,
   CaretRight,
-  Warning,
-  ArrowsClockwise,
   Receipt as ReceiptIcon,
   Invoice,
   ChartLineUp,
@@ -262,7 +259,7 @@ export function OwnerHubTabs({
   bookings,
   payouts,
   blockRequests,
-  setupData,
+  setupData: _setupData,
   tasks,
   notes,
   timeline,
@@ -567,8 +564,6 @@ function OverviewSection({
   ).length;
   const totalRevenue = payouts.reduce((sum, p) => sum + p.gross_revenue, 0);
   const pendingTasks = tasks.filter((t) => t.status !== "done").length;
-  const lastPayout = payouts.find((p) => p.paid_at);
-
   const stats = [
     { label: "Properties", value: String(properties.length) },
     { label: "Upcoming bookings", value: String(upcomingBookings) },
@@ -1155,7 +1150,7 @@ function TimelineSection({
             className="absolute left-[19px] top-4 bottom-4 w-px"
             style={{ backgroundColor: "var(--color-warm-gray-200)" }}
           />
-          {timeline.map((entry, i) => (
+          {timeline.map((entry) => (
             <div key={entry.id} className="relative flex items-start gap-4 py-3">
               {/* Icon circle */}
               <span
@@ -2629,6 +2624,7 @@ function MembersSection({ entity }: { entity: EntityInfo }) {
                   style={{ borderColor: "var(--color-warm-gray-100)" }}
                 >
                   {member.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={member.avatarUrl}
                       alt={displayName}
@@ -3401,9 +3397,6 @@ function formatDate(dateStr: string) {
   });
 }
 
-function formatDateRange(start: string, end: string) {
-  return `${formatDate(start)} - ${formatDate(end)}`;
-}
 
 function formatRelativeTime(dateStr: string): string {
   const now = Date.now();

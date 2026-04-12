@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// owner_timeline and related tables are not yet in the generated Supabase
+// types. Remove this disable once types are regenerated.
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -40,6 +43,7 @@ function truncate(text: string, max: number): string {
 // Timeline (shared insert used by tasks/notes and the public action)
 // ---------------------------------------------------------------------------
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function insertTimelineEntry(
   supabase: Awaited<ReturnType<typeof createClient>>,
   ownerId: string,
@@ -294,7 +298,7 @@ export async function addTimelineEntry(
     propertyId?: string;
   },
 ): Promise<{ ok: boolean; message: string }> {
-  const { supabase, error: authError } = await requireAdmin();
+  const { error: authError } = await requireAdmin();
   if (authError) return { ok: false, message: authError };
 
   const result = await logTimelineEvent({

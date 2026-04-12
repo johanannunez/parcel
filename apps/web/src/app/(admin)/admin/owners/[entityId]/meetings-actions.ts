@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// owner_timeline and related tables are not yet in the generated Supabase
+// types. Remove this disable once types are regenerated.
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
