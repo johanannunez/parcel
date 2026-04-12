@@ -182,9 +182,13 @@ function Row({ row, muted = false }: { row: ReservationRow; muted?: boolean }) {
 export function ReservationsTable({
   upcoming,
   past,
+  underReviewCount = 0,
+  completedCount = 0,
 }: {
   upcoming: ReservationRow[];
   past: ReservationRow[];
+  underReviewCount?: number;
+  completedCount?: number;
 }) {
   const [pastOpen, setPastOpen] = useState(false);
 
@@ -195,18 +199,36 @@ export function ReservationsTable({
     <div className="flex flex-col gap-3">
       {/* Section header */}
       <div
-        className="flex items-center justify-between border-b pb-3"
+        className="flex items-center justify-between gap-3 border-b pb-3"
         style={{ borderColor: "var(--color-warm-gray-200)" }}
       >
-        <h2
-          className="text-[13px] font-semibold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          All Reservations
-        </h2>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h2
+            className="text-[13px] font-semibold"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            All Reservations
+          </h2>
+          {underReviewCount > 0 && (
+            <span
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+              style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#b45309" }}
+            >
+              {underReviewCount} under review
+            </span>
+          )}
+          {completedCount > 0 && (
+            <span
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+              style={{ backgroundColor: "rgba(22,163,74,0.10)", color: "#15803d" }}
+            >
+              {completedCount} completed
+            </span>
+          )}
+        </div>
         <Link
           href="/portal/reserve/new"
-          className="text-[12px] font-semibold transition-opacity hover:opacity-70"
+          className="shrink-0 text-[12px] font-semibold transition-opacity hover:opacity-70"
           style={{ color: "var(--color-brand)" }}
         >
           + New reservation

@@ -3,8 +3,6 @@ import Link from "next/link";
 import {
   CalendarBlank,
   CalendarCheck,
-  CheckCircle,
-  Clock,
 } from "@phosphor-icons/react/dist/ssr";
 import { getPortalContext } from "@/lib/portal-context";
 import { normalizeUnit } from "@/lib/address";
@@ -166,30 +164,6 @@ export default async function ReservePage() {
         )
       : null;
 
-  // Stat-card sub-details
-  const nextPendingItem =
-    requests.find((r) => r.status === "pending") ?? null;
-
-  const nextPendingLine = nextPendingItem
-    ? formatDateRange(nextPendingItem.start_date, nextPendingItem.end_date)
-    : "None pending";
-
-  const lastCompletedItem =
-    [...requests]
-      .filter(
-        (r) =>
-          r.status === "approved" &&
-          typeof r.end_date === "string" &&
-          r.end_date < todayStr,
-      )
-      .sort((a, b) =>
-        (a.end_date as string) > (b.end_date as string) ? -1 : 1,
-      )[0] ?? null;
-
-  const lastCompletedLine = lastCompletedItem
-    ? `Last: ${formatSingleDate(lastCompletedItem.end_date)}`
-    : "None yet";
-
   // ---------------------------------------------------------------------------
   // Row serialisation
   // ---------------------------------------------------------------------------
@@ -296,180 +270,173 @@ export default async function ReservePage() {
           aria-hidden="true"
         />
 
-        <div className="relative z-10 flex items-stretch">
-          {/* CTA */}
-          <div className="flex-1 px-7 py-6">
-            <p
-              className="text-[10px] font-semibold uppercase tracking-[0.15em]"
-              style={{ color: "rgba(255,255,255,0.70)" }}
-            >
-              Owner stays &amp; holds
-            </p>
-            <h1
-              className="mt-1 text-xl font-bold tracking-tight"
-              style={{ color: "#fff" }}
-            >
-              Reserve time in your home
-            </h1>
-            <p
-              className="mt-1 text-[13px]"
-              style={{ color: "rgba(255,255,255,0.78)" }}
-            >
-              Pick your dates and we&apos;ll check for conflicts.
-            </p>
-            <Link
-              href="/portal/reserve/new"
-              className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#fff", color: "#1B77BE" }}
-            >
-              + New reservation
-            </Link>
-          </div>
-
-          {/* Next stay panel — only rendered when a confirmed upcoming stay exists */}
-          {nextStayRaw && nextStayDaysAway !== null && (
-            <>
-              {/* Divider */}
-              <span
-                className="my-5 w-px self-stretch"
-                style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
-                aria-hidden="true"
-              />
-              <div className="flex w-[200px] shrink-0 flex-col justify-center px-6 py-6">
+        <div className="relative z-10">
+          {nextStayRaw && nextStayDaysAway !== null ? (
+            /* ── COUNTDOWN HERO STATE ── */
+            <div className="flex flex-col md:flex-row md:items-stretch">
+              {/* Countdown (left on desktop, top on mobile) */}
+              <div className="flex-1 px-7 py-6">
+                {/* Label */}
                 <div className="flex items-center gap-1.5">
                   <CalendarCheck
-                    size={12}
+                    size={11}
                     weight="duotone"
-                    style={{ color: "rgba(255,255,255,0.65)" }}
+                    style={{ color: "rgba(255,255,255,0.60)" }}
                   />
                   <p
-                    className="text-[10px] font-semibold uppercase tracking-[0.13em]"
-                    style={{ color: "rgba(255,255,255,0.65)" }}
+                    className="text-[10px] font-semibold uppercase tracking-[0.15em]"
+                    style={{ color: "rgba(255,255,255,0.60)" }}
                   >
-                    Next stay
+                    Next confirmed stay
                   </p>
                 </div>
-                <p
-                  className="mt-1.5 text-[13px] font-semibold leading-snug"
-                  style={{ color: "#fff" }}
-                >
-                  {nextStayProp?.name ?? "Property"}
-                  {nextStayProp?.unit ? (
-                    <span style={{ opacity: 0.8 }}> {nextStayProp.unit}</span>
-                  ) : null}
-                </p>
-                <p
-                  className="mt-0.5 text-[12px]"
-                  style={{ color: "rgba(255,255,255,0.72)" }}
-                >
-                  {nextStayDateRange}
-                </p>
-                <div className="mt-3 flex items-baseline gap-1">
+
+                {/* Big countdown */}
+                <div className="mt-3 flex items-end gap-2.5">
                   <span
-                    className="text-2xl font-bold leading-none"
+                    className="font-bold leading-none"
+                    style={{
+                      color: "#fff",
+                      fontSize:
+                        nextStayDaysAway === 0 || nextStayDaysAway === 1
+                          ? "2.75rem"
+                          : "3.75rem",
+                      letterSpacing: "-0.03em",
+                    }}
+                  >
+                    {nextStayDaysAway === 0
+                      ? "Today"
+                      : nextStayDaysAway === 1
+                        ? "Tomorrow"
+                        : nextStayDaysAway}
+                  </span>
+                  {nextStayDaysAway > 1 && (
+                    <span
+                      className="mb-1.5 text-sm font-medium leading-tight"
+                      style={{ color: "rgba(255,255,255,0.70)" }}
+                    >
+                      days until<br />you&apos;re home
+                    </span>
+                  )}
+                </div>
+
+                {/* Property + date range */}
+                <div className="mt-3">
+                  <p
+                    className="text-[14px] font-semibold leading-snug"
                     style={{ color: "#fff" }}
                   >
-                    {nextStayDaysAway}
-                  </span>
-                  <span
-                    className="text-[11px] font-medium"
+                    {nextStayProp?.name ?? "Property"}
+                    {nextStayProp?.unit && (
+                      <span style={{ color: "rgba(255,255,255,0.70)" }}>
+                        {" "}{nextStayProp.unit}
+                      </span>
+                    )}
+                  </p>
+                  <p
+                    className="mt-0.5 text-[12px]"
                     style={{ color: "rgba(255,255,255,0.65)" }}
                   >
-                    {nextStayDaysAway === 1 ? "day away" : "days away"}
-                  </span>
+                    {nextStayDateRange}
+                  </p>
+                </div>
+
+                {/* Mobile-only bottom CTA row */}
+                <div
+                  className="mt-5 flex items-center justify-between border-t pt-4 md:hidden"
+                  style={{ borderColor: "rgba(255,255,255,0.18)" }}
+                >
+                  <Link
+                    href="/portal/reserve/new"
+                    className="inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-[13px] font-semibold transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: "rgba(255,255,255,0.18)", color: "#fff" }}
+                  >
+                    + New reservation
+                  </Link>
+                  <p
+                    className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
+                  >
+                    Owner stays &amp; holds
+                  </p>
                 </div>
               </div>
-            </>
+
+              {/* Desktop-only right CTA panel */}
+              <div
+                className="hidden md:flex md:w-[220px] md:shrink-0 md:flex-col md:justify-center md:border-l md:px-7 md:py-6"
+                style={{ borderColor: "rgba(255,255,255,0.18)" }}
+              >
+                <p
+                  className="text-[10px] font-semibold uppercase tracking-[0.15em]"
+                  style={{ color: "rgba(255,255,255,0.60)" }}
+                >
+                  Owner stays &amp; holds
+                </p>
+                <h2
+                  className="mt-1.5 text-[15px] font-bold leading-snug tracking-tight"
+                  style={{ color: "#fff" }}
+                >
+                  Reserve time in your home
+                </h2>
+                <p
+                  className="mt-1 text-[12px]"
+                  style={{ color: "rgba(255,255,255,0.72)" }}
+                >
+                  Pick your dates and we&apos;ll check for conflicts.
+                </p>
+                <Link
+                  href="/portal/reserve/new"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[13px] font-semibold transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: "#fff", color: "#1B77BE" }}
+                >
+                  + New reservation
+                </Link>
+              </div>
+            </div>
+          ) : (
+            /* ── DEFAULT CTA STATE (no confirmed upcoming stay) ── */
+            <div className="px-7 py-6">
+              <p
+                className="text-[10px] font-semibold uppercase tracking-[0.15em]"
+                style={{ color: "rgba(255,255,255,0.70)" }}
+              >
+                Owner stays &amp; holds
+              </p>
+              <h1
+                className="mt-1 text-xl font-bold tracking-tight"
+                style={{ color: "#fff" }}
+              >
+                Reserve time in your home
+              </h1>
+              <p
+                className="mt-1 text-[13px]"
+                style={{ color: "rgba(255,255,255,0.78)" }}
+              >
+                Pick your dates and we&apos;ll check for conflicts.
+              </p>
+              <Link
+                href="/portal/reserve/new"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#fff", color: "#1B77BE" }}
+              >
+                + New reservation
+              </Link>
+            </div>
           )}
         </div>
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 2. Stat cards — 2-col, with sub-detail to fill dead space            */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Under review */}
-        <div
-          className="rounded-2xl border px-5 py-4"
-          style={{
-            backgroundColor: "var(--color-white)",
-            borderColor: "var(--color-warm-gray-200)",
-          }}
-        >
-          <div className="flex items-center gap-2.5">
-            <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-              style={{ background: "rgba(245,158,11,0.12)" }}
-            >
-              <Clock size={15} weight="duotone" style={{ color: "#b45309" }} />
-            </span>
-            <p
-              className="text-[12px] font-medium"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Under review
-            </p>
-          </div>
-          <div className="mt-2 flex items-end justify-between gap-3">
-            <p
-              className="text-3xl font-bold tracking-tight leading-none"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              {underReviewCount}
-            </p>
-            <p
-              className="mb-0.5 text-[11px] text-right leading-snug"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              {nextPendingLine}
-            </p>
-          </div>
-        </div>
-
-        {/* Completed stays */}
-        <div
-          className="rounded-2xl border px-5 py-4"
-          style={{
-            backgroundColor: "var(--color-white)",
-            borderColor: "var(--color-warm-gray-200)",
-          }}
-        >
-          <div className="flex items-center gap-2.5">
-            <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-              style={{ background: "rgba(22,163,74,0.10)" }}
-            >
-              <CheckCircle size={15} weight="duotone" style={{ color: "#15803d" }} />
-            </span>
-            <p
-              className="text-[12px] font-medium"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Completed stays
-            </p>
-          </div>
-          <div className="mt-2 flex items-end justify-between gap-3">
-            <p
-              className="text-3xl font-bold tracking-tight leading-none"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              {completedCount}
-            </p>
-            <p
-              className="mb-0.5 text-[11px] text-right leading-snug"
-              style={{ color: "var(--color-text-tertiary)" }}
-            >
-              {lastCompletedLine}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* 3. Reservations table                                               */}
+      {/* 2. Reservations table (stats folded into header)                   */}
       {/* ------------------------------------------------------------------ */}
       {upcomingRows.length > 0 || pastRows.length > 0 ? (
-        <ReservationsTable upcoming={upcomingRows} past={pastRows} />
+        <ReservationsTable
+          upcoming={upcomingRows}
+          past={pastRows}
+          underReviewCount={underReviewCount}
+          completedCount={completedCount}
+        />
       ) : (
         <div
           className="rounded-2xl border px-8 py-10 text-center"
