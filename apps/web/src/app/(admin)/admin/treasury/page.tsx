@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { isTreasuryVerified } from "@/lib/treasury/auth";
 import { createClient } from "@/lib/supabase/server";
+import { AlertAcknowledgeButton } from "@/components/admin/treasury/AlertAcknowledgeButton";
 import {
   getAccounts,
   getConnectionStatus,
@@ -22,6 +23,7 @@ import {
   calculateAllocationHealth,
 } from "@/lib/treasury/queries";
 import { currency0 } from "@/lib/format";
+import { SyncButton } from "@/components/admin/treasury/SyncButton";
 
 export const metadata: Metadata = {
   title: "Treasury | Admin",
@@ -215,26 +217,7 @@ export default async function TreasuryOverviewPage() {
               </p>
             )}
           </div>
-          {/* Sync Now placeholder — wired up in a future task */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              border: "1.5px solid var(--color-warm-gray-200)",
-              backgroundColor: "var(--color-white)",
-              fontSize: "13px",
-              fontWeight: 600,
-              color: "var(--color-text-secondary)",
-              cursor: "default",
-              opacity: 0.6,
-            }}
-            aria-label="Sync Now (coming soon)"
-          >
-            Sync Now
-          </div>
+          <SyncButton lastSyncedAt={connection.last_synced_at ?? null} />
         </div>
 
         {/* Stat cards */}
@@ -710,9 +693,10 @@ export default async function TreasuryOverviewPage() {
                         size={16}
                         weight="duotone"
                         color={style.dot}
-                        style={{ flexShrink: 0, marginTop: "2px", marginLeft: "auto" }}
+                        style={{ flexShrink: 0, marginTop: "2px" }}
                       />
                     ) : null}
+                    <AlertAcknowledgeButton alertId={alert.id} />
                   </div>
                 );
               })}
