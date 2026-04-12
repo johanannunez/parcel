@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Reply to a conversation as an owner.
+ * Verifies the user owns the conversation before inserting.
  */
 export async function replyToConversation(args: {
   conversationId: string;
@@ -16,6 +17,16 @@ export async function replyToConversation(args: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+
+  // Verify ownership: RLS on conversations scopes to the authenticated user,
+  // so if the row comes back, the user owns it.
+  const { data: conv } = await supabase
+    .from("conversations")
+    .select("id")
+    .eq("id", args.conversationId)
+    .single();
+
+  if (!conv) return { error: "Conversation not found" };
 
   const { error } = await supabase.from("messages").insert({
     conversation_id: args.conversationId,
@@ -41,70 +52,6 @@ export async function replyToConversation(args: {
 
   revalidatePath("/portal/messages");
   return { success: true };
-}
-
-/**
- * Fetch all conversations for the current owner.
- */
-export async function getOwnerConversations() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { conversations: [], error: "Not authenticated" };
-
-  // Fetch direct + announcement conversations
-  const { data: conversations, error } = await supabase
-    .from("conversations")
-    .select("id, owner_id, subject, type, last_message_at, created_at")
-    .order("last_message_at", { ascending: false })
-    .limit(100);
-
-  if (error) return { conversations: [], error: error.message };
-
-  // Fetch last message for each conversation
-  const conversationIds = (conversations ?? []).map((c) => c.id);
-  const { data: messages } = conversationIds.length
-    ? await supabase
-        .from("messages")
-        .select("id, conversation_id, sender_id, body, delivery_method, is_system, created_at")
-        .in("conversation_id", conversationIds)
-        .order("created_at", { ascending: false })
-    : { data: [] };
-
-  const lastMessageMap = new Map<string, { body: string; senderId: string; createdAt: string; isSystem: boolean }>();
-  for (const m of messages ?? []) {
-    if (!lastMessageMap.has(m.conversation_id)) {
-      lastMessageMap.set(m.conversation_id, {
-        body: m.body,
-        senderId: m.sender_id,
-        createdAt: m.created_at,
-        isSystem: m.is_system,
-      });
-    }
-  }
-
-  // Count unread messages per conversation
-  const { data: reads } = await supabase
-    .from("message_reads")
-    .select("message_id")
-    .eq("reader_id", user.id);
-
-  const readMessageIds = new Set((reads ?? []).map((r) => r.message_id));
-  const unreadCounts = new Map<string, number>();
-  for (const m of messages ?? []) {
-    if (m.sender_id !== user.id && !readMessageIds.has(m.id)) {
-      unreadCounts.set(m.conversation_id, (unreadCounts.get(m.conversation_id) ?? 0) + 1);
-    }
-  }
-
-  const result = (conversations ?? []).map((c) => ({
-    ...c,
-    lastMessage: lastMessageMap.get(c.id) ?? null,
-    unreadCount: unreadCounts.get(c.id) ?? 0,
-  }));
-
-  return { conversations: result, error: null };
 }
 
 /**
@@ -152,7 +99,34 @@ export async function getConversationMessagesForOwner(conversationId: string) {
 }
 
 /**
- * Record a read receipt (called silently from the client).
+ * Record read receipts for multiple messages in one call.
+ * Replaces the old per-message recordMessageRead to avoid N+1 round-trips.
+ */
+export async function recordMessagesRead(args: {
+  messageIds: string[];
+  deviceInfo?: string;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !args.messageIds.length) return;
+
+  const rows = args.messageIds.map((id) => ({
+    message_id: id,
+    reader_id: user.id,
+    device_info: args.deviceInfo ?? null,
+  }));
+
+  // Bulk insert, ignore duplicates (unique constraint on message_id + reader_id)
+  await supabase.from("message_reads").upsert(rows, {
+    onConflict: "message_id,reader_id",
+    ignoreDuplicates: true,
+  });
+}
+
+/**
+ * Record a single read receipt (kept for backward compatibility).
  */
 export async function recordMessageRead(args: {
   messageId: string;
@@ -164,7 +138,6 @@ export async function recordMessageRead(args: {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  // Try insert first, then update if exists
   const { error: insertErr } = await supabase.from("message_reads").insert({
     message_id: args.messageId,
     reader_id: user.id,
@@ -172,7 +145,6 @@ export async function recordMessageRead(args: {
   });
 
   if (insertErr?.code === "23505") {
-    // Unique constraint violation: already exists, increment
     await supabase.rpc("increment_message_read", {
       p_message_id: args.messageId,
       p_reader_id: user.id,
@@ -192,7 +164,6 @@ export async function createDirectConversation() {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated", conversationId: null };
 
-  // Check if a direct conversation already exists
   const { data: existing } = await supabase
     .from("conversations")
     .select("id")
@@ -205,7 +176,6 @@ export async function createDirectConversation() {
     return { conversationId: existing.id, error: null };
   }
 
-  // Create a new direct conversation
   const { data: newConv, error } = await supabase
     .from("conversations")
     .insert({
@@ -220,41 +190,4 @@ export async function createDirectConversation() {
 
   revalidatePath("/portal/messages");
   return { conversationId: newConv.id, error: null };
-}
-
-/**
- * Get total unread message count for the current owner (for sidebar badge).
- */
-export async function getUnreadMessageCount() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return 0;
-
-  // Get all messages in the owner's conversations that aren't from them
-  const { data: conversations } = await supabase
-    .from("conversations")
-    .select("id");
-
-  if (!conversations?.length) return 0;
-
-  const convIds = conversations.map((c) => c.id);
-  const { data: messages } = await supabase
-    .from("messages")
-    .select("id")
-    .in("conversation_id", convIds)
-    .neq("sender_id", user.id);
-
-  if (!messages?.length) return 0;
-
-  const msgIds = messages.map((m) => m.id);
-  const { data: reads } = await supabase
-    .from("message_reads")
-    .select("message_id")
-    .eq("reader_id", user.id)
-    .in("message_id", msgIds);
-
-  const readIds = new Set((reads ?? []).map((r) => r.message_id));
-  return msgIds.filter((id) => !readIds.has(id)).length;
 }

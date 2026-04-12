@@ -32,6 +32,7 @@ export default async function TimelinePage() {
         "id, event_type, category, title, body, property_id, icon, is_pinned, created_at, metadata",
       )
       .eq("owner_id", userId)
+      .eq("visibility", "owner")
       .is("deleted_at", null)
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false }),

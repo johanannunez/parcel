@@ -60,7 +60,7 @@ export async function toggleTimelineVisibility(
 
   const { error } = await (supabase as any)
     .from("owner_timeline")
-    .update({ visibility: newVisibility, updated_at: new Date().toISOString() })
+    .update({ visibility: newVisibility })
     .eq("id", entryId);
 
   if (error) {
@@ -96,7 +96,7 @@ export async function toggleTimelinePin(
 
   const { error } = await (supabase as any)
     .from("owner_timeline")
-    .update({ is_pinned: !entry.is_pinned, updated_at: new Date().toISOString() })
+    .update({ is_pinned: !entry.is_pinned })
     .eq("id", entryId);
 
   if (error) {
@@ -125,7 +125,6 @@ export async function softDeleteTimelineEntry(
     .update({
       deleted_at: new Date().toISOString(),
       deleted_by: userId,
-      updated_at: new Date().toISOString(),
     })
     .eq("id", entryId);
 

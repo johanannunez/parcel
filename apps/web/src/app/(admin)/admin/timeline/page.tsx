@@ -20,10 +20,13 @@ export default async function AdminTimelinePage() {
       .limit(200),
     supabase
       .from("profiles")
-      .select("id, full_name, email, avatar_url"),
+      .select("id, full_name, email, avatar_url")
+      .eq("role", "owner")
+      .limit(500),
     supabase
       .from("properties")
-      .select("id, owner_id, address_line1, address_line2"),
+      .select("id, owner_id, address_line1, address_line2")
+      .limit(500),
   ]);
 
   type RawEntry = {

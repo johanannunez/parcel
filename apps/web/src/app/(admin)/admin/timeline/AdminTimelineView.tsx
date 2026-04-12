@@ -9,12 +9,7 @@ import {
   Trash,
   Plus,
   X,
-  Lightning,
-  EnvelopeSimple,
   CalendarCheck,
-  NotePencil,
-  ListChecks,
-  FileText,
   Circle,
   House,
   CurrencyDollar,
@@ -230,20 +225,31 @@ export function AdminTimelineView({
               placeholder="Search entries..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border py-2 pl-9 pr-3 text-sm outline-none transition-colors duration-150"
+              className="w-full rounded-xl border py-2.5 pl-9 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
               style={{
                 borderColor: "var(--color-warm-gray-200)",
                 backgroundColor: "var(--color-white)",
                 color: "var(--color-text-primary)",
+                transition: "border-color 0.15s ease, box-shadow 0.15s ease",
               }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-brand)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--color-warm-gray-200)"; }}
             />
           </div>
 
           {/* Add entry button */}
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors duration-150"
-            style={{ backgroundColor: "var(--color-brand)" }}
+            className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-2"
+            style={{
+              background: "var(--color-brand-gradient)",
+              boxShadow: "0 2px 8px rgba(27, 119, 190, 0.25)",
+              transition: "opacity 0.15s ease, transform 0.1s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
           >
             {showAddForm ? <X size={14} weight="bold" /> : <Plus size={14} weight="bold" />}
             {showAddForm ? "Close" : "Add entry"}
@@ -260,7 +266,7 @@ export function AdminTimelineView({
                 <button
                   key={cat.value}
                   onClick={() => setCategoryFilter(cat.value)}
-                  className="rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150"
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
                   style={{
                     backgroundColor: isActive
                       ? "var(--color-brand)"
@@ -288,7 +294,7 @@ export function AdminTimelineView({
                 <button
                   key={vis.value}
                   onClick={() => setVisibilityFilter(vis.value)}
-                  className="rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150"
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
                   style={{
                     backgroundColor: isActive
                       ? "var(--color-brand)"
@@ -449,11 +455,25 @@ function TimelineRow({
 
   return (
     <div
-      className="group flex items-start gap-4 rounded-xl border px-4 py-4 transition-colors duration-150"
+      className="group flex items-start gap-4 rounded-xl border px-4 py-4"
       style={{
-        borderColor: isDeleted ? "rgba(220, 38, 38, 0.15)" : "transparent",
-        backgroundColor: isDeleted ? "rgba(220, 38, 38, 0.03)" : "transparent",
+        borderColor: isDeleted ? "rgba(220, 38, 38, 0.15)" : "var(--color-warm-gray-200)",
+        backgroundColor: isDeleted ? "rgba(220, 38, 38, 0.03)" : "var(--color-white)",
         opacity: isDeleted ? 0.7 : 1,
+        boxShadow: isDeleted ? "none" : "var(--shadow-card)",
+        transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (!isDeleted) {
+          e.currentTarget.style.boxShadow = "var(--shadow-md)";
+          e.currentTarget.style.borderColor = "var(--color-warm-gray-400)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isDeleted) {
+          e.currentTarget.style.boxShadow = "var(--shadow-card)";
+          e.currentTarget.style.borderColor = "var(--color-warm-gray-200)";
+        }
       }}
     >
       {/* Owner avatar */}

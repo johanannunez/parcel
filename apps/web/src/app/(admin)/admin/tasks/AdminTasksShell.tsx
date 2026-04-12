@@ -33,6 +33,7 @@ import {
   parseISO,
   isThisWeek,
 } from "date-fns";
+import { motion, AnimatePresence } from "motion/react";
 import {
   addComment,
   addSubtask,
@@ -476,8 +477,12 @@ function TaskDrawer({
   return (
     <>
       {/* Backdrop */}
-      <div
+      <motion.div
         onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         style={{
           position: "fixed",
           inset: 0,
@@ -487,7 +492,11 @@ function TaskDrawer({
       />
 
       {/* Drawer */}
-      <div
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 300 }}
         style={{
           position: "fixed",
           top: 0,
@@ -1067,7 +1076,7 @@ function TaskDrawer({
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 }
@@ -1167,8 +1176,12 @@ function NewTaskDrawer({
 
   return (
     <>
-      <div
+      <motion.div
         onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         style={{
           position: "fixed",
           inset: 0,
@@ -1176,7 +1189,11 @@ function NewTaskDrawer({
           zIndex: 40,
         }}
       />
-      <div
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 300 }}
         style={{
           position: "fixed",
           top: 0,
@@ -1615,7 +1632,7 @@ function NewTaskDrawer({
             {pending ? "Creating..." : "Create task"}
           </button>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 }
@@ -2572,29 +2589,33 @@ export function AdminTasksShell({
       )}
 
       {/* Task drawer */}
-      {selectedTask && (
-        <TaskDrawer
-          task={selectedTask}
-          owners={owners}
-          properties={properties}
-          labels={labels}
-          allProfiles={allProfiles}
-          onClose={() => setSelectedTask(null)}
-          onDeleted={handleTaskDeleted}
-        />
-      )}
+      <AnimatePresence>
+        {selectedTask && (
+          <TaskDrawer
+            task={selectedTask}
+            owners={owners}
+            properties={properties}
+            labels={labels}
+            allProfiles={allProfiles}
+            onClose={() => setSelectedTask(null)}
+            onDeleted={handleTaskDeleted}
+          />
+        )}
+      </AnimatePresence>
 
       {/* New task drawer */}
-      {showNewTask && (
-        <NewTaskDrawer
-          owners={owners}
-          properties={properties}
-          labels={labels}
-          templates={templates}
-          defaultStatus={newTaskDefaultStatus}
-          onClose={() => setShowNewTask(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showNewTask && (
+          <NewTaskDrawer
+            owners={owners}
+            properties={properties}
+            labels={labels}
+            templates={templates}
+            defaultStatus={newTaskDefaultStatus}
+            onClose={() => setShowNewTask(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

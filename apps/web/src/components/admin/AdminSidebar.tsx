@@ -380,11 +380,10 @@ export function AdminSidebar({
 /* ─── AdminTopBar (mobile header) ─── */
 
 export function AdminTopBar({
-  userName: _userName,
   initials,
   pendingBlockCount = 0,
 }: {
-  userName: string;
+  userName: string; // accepted for API compatibility; not displayed
   initials: string;
   pendingBlockCount?: number;
 }) {
@@ -426,7 +425,7 @@ export function AdminTopBar({
           textDecoration: "none",
         }}
       >
-        <img
+        <Image
           src="/brand/logo-mark-white.png"
           alt="Parcel"
           width={26}
@@ -560,7 +559,7 @@ export function AdminIconRail({ pendingBlockCount = 0 }: { pendingBlockCount?: n
           textDecoration: "none",
         }}
       >
-        <img src="/brand/logo-mark-white.png" alt="Parcel" width={24} height={24} />
+        <Image src="/brand/logo-mark-white.png" alt="Parcel" width={24} height={24} />
       </Link>
 
       {/* Nav */}

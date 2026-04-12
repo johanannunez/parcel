@@ -217,7 +217,11 @@ export function TimelineView({ entries, propertyMap }: TimelineViewProps) {
               {/* Sticky day header */}
               <div
                 className="sticky top-0 z-20 mb-2 ml-10 pt-4 pb-1"
-                style={{ backgroundColor: "var(--color-off-white)" }}
+                style={{
+                  backgroundColor: "rgba(250, 250, 250, 0.85)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                }}
               >
                 <span
                   className="text-xs font-semibold uppercase tracking-wide"
@@ -263,7 +267,7 @@ function FilterBar({
             key={pill.key}
             type="button"
             onClick={() => onChange(pill.key)}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
+            className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-2"
             style={{
               backgroundColor: isActive
                 ? "var(--color-brand)"
@@ -271,8 +275,12 @@ function FilterBar({
               color: isActive
                 ? "var(--color-white)"
                 : "var(--color-text-secondary)",
-              transition: "background-color 0.15s ease, color 0.15s ease",
+              transition: "background-color 0.15s ease, color 0.15s ease, transform 0.1s ease",
+              boxShadow: isActive ? "0 2px 8px rgba(27, 119, 190, 0.25)" : "none",
             }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.96)"; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
           >
             <Icon size={14} weight="duotone" />
             {pill.label}
@@ -302,9 +310,10 @@ function PinnedCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.3,
-        delay: index < 10 ? index * 0.03 : 0,
-        ease: [0.25, 0.1, 0.25, 1],
+        type: "spring",
+        stiffness: 400,
+        damping: 30,
+        delay: index < 10 ? index * 0.04 : 0,
       }}
       className="relative rounded-2xl border p-4"
       style={{
@@ -312,6 +321,7 @@ function PinnedCard({
         borderColor: "var(--color-warm-gray-200)",
         borderLeftWidth: 3,
         borderLeftColor: "#f59e0b",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(245,158,11,0.06)",
       }}
     >
       <div
@@ -392,9 +402,10 @@ function TimelineEntryRow({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.3,
-        delay: index < 10 ? index * 0.03 : 0,
-        ease: [0.25, 0.1, 0.25, 1],
+        type: "spring",
+        stiffness: 400,
+        damping: 30,
+        delay: index < 10 ? index * 0.04 : 0,
       }}
       className="relative flex gap-4 pb-4"
     >
@@ -412,6 +423,16 @@ function TimelineEntryRow({
         style={{
           backgroundColor: "var(--color-white)",
           borderColor: "var(--color-warm-gray-200)",
+          boxShadow: "var(--shadow-card)",
+          transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = "var(--shadow-md)";
+          e.currentTarget.style.borderColor = "var(--color-warm-gray-400)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = "var(--shadow-card)";
+          e.currentTarget.style.borderColor = "var(--color-warm-gray-200)";
         }}
       >
         <div className="flex items-baseline justify-between gap-2">

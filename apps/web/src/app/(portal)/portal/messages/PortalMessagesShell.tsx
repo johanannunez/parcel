@@ -10,17 +10,12 @@ import {
   ArrowLeft,
   ArrowDown,
   Plus,
-  FileText,
-  CalendarCheck,
-  House,
-  Wallet,
-  CurrencyDollar,
 } from "@phosphor-icons/react";
 import { SafeHtml } from "@/components/messages/SafeHtml";
 import {
   replyToConversation,
   getConversationMessagesForOwner,
-  recordMessageRead,
+  recordMessagesRead,
   createDirectConversation,
 } from "./actions";
 import { createClient } from "@/lib/supabase/client";
@@ -79,15 +74,6 @@ type Message = {
   senderAvatarUrl?: string | null;
 };
 
-type ActivityEntry = {
-  id: string;
-  action: string;
-  entityType: string;
-  entityId: string | null;
-  createdAt: string;
-  metadata: Record<string, unknown>;
-};
-
 type Tab = "messages" | "emails";
 
 /* ─── Component ─── */
@@ -113,7 +99,6 @@ export function PortalMessagesShell({
   const [sending, setSending] = useState(false);
   // Track conversations the user has opened this session (optimistic unread clear)
   const [readConvIds, setReadConvIds] = useState<Set<string>>(new Set());
-  const [selectedActivity, setSelectedActivity] = useState<ActivityEntry | null>(null);
 
   const filtered = conversations.map((c) => ({
     ...c,
@@ -145,12 +130,13 @@ export function PortalMessagesShell({
       if (result.error) return;
       setMessages(result.messages as Message[]);
 
-      // Record reads silently
-      const device = typeof navigator !== "undefined" ? navigator.userAgent : null;
-      for (const m of result.messages ?? []) {
-        if (m.sender_id !== currentUserId) {
-          recordMessageRead({ messageId: m.id, deviceInfo: device ?? undefined });
-        }
+      // Record reads in a single bulk call (not N individual round-trips)
+      const unreadIds = (result.messages ?? [])
+        .filter((m) => m.sender_id !== currentUserId)
+        .map((m) => m.id);
+      if (unreadIds.length > 0) {
+        const device = typeof navigator !== "undefined" ? navigator.userAgent : null;
+        recordMessagesRead({ messageIds: unreadIds, deviceInfo: device ?? undefined });
       }
     },
     [currentUserId],
@@ -586,9 +572,20 @@ function ChatThread({
   const [newMsgCount, setNewMsgCount] = useState(0);
   const prevMessageCountRef = useRef(messages.length);
 
-  // Scroll to bottom on initial load and when new messages arrive while at bottom
+  // Scroll to bottom on initial load, or when new messages arrive and user is near bottom
   useLayoutEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    const container = scrollContainerRef.current;
+    if (!container) {
+      // First render: always snap to bottom
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      return;
+    }
+    const distFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    // Only auto-scroll if this is the first load or user is near the bottom
+    if (prevMessageCountRef.current === 0 || distFromBottom <= 150) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    }
   }, [messages, messagesEndRef]);
 
   // Track scroll position to show/hide the floating button
@@ -881,40 +878,4 @@ function formatRelative(dateStr: string) {
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d`;
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-function getActivityIcon(entityType: string) {
-  switch (entityType) {
-    case "document":
-      return <FileText size={18} weight="duotone" />;
-    case "property":
-      return <House size={18} weight="duotone" />;
-    case "block_request":
-      return <CalendarCheck size={18} weight="duotone" />;
-    case "payout":
-      return <CurrencyDollar size={18} weight="duotone" />;
-    default:
-      return <ChatCircle size={18} weight="duotone" />;
-  }
-}
-
-function formatActivityAction(action: string) {
-  return action
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function formatActivityDescription(entry: ActivityEntry): string {
-  const meta = entry.metadata;
-  if (meta.description && typeof meta.description === "string") return meta.description;
-  if (meta.property_name && typeof meta.property_name === "string") {
-    return `${meta.property_name}`;
-  }
-  return entry.entityType.replace(/_/g, " ");
-}
-
-function formatLabel(key: string) {
-  return key
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
