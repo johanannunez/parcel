@@ -16,22 +16,8 @@ export function PropertiesView({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Page header row */}
-      <div className="flex items-end justify-between gap-4">
-        <div className="flex flex-col gap-0.5">
-          <h1
-            className="text-[22px] font-semibold leading-tight tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Your properties
-          </h1>
-          <p className="text-[13px]" style={{ color: "var(--color-text-tertiary)" }}>
-            {properties.length}{" "}
-            {properties.length === 1 ? "property" : "properties"} under Parcel
-            management
-          </p>
-        </div>
-
+      {/* View toggle */}
+      <div className="flex items-center justify-end gap-4">
         {/* Gallery / Table toggle pill */}
         <div
           className="flex items-center rounded-lg p-0.5"

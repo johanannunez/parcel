@@ -222,7 +222,7 @@ export function PortalAppBar({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h1
-                className="min-w-0 truncate text-[19px] font-semibold leading-tight tracking-[-0.012em] sm:text-[22px]"
+                className="min-w-0 truncate text-[22px] font-semibold leading-tight tracking-[-0.012em]"
                 style={{ color: "#ffffff" }}
               >
                 {header.title}
@@ -233,7 +233,7 @@ export function PortalAppBar({
             </div>
             {header.subtitle ? (
               <div
-                className="mt-1 max-w-[640px] overflow-hidden text-[12.5px] leading-snug sm:text-[13px]"
+                className="mt-1 hidden max-w-[640px] overflow-hidden text-[13px] leading-snug sm:block"
                 style={{ color: "rgba(255, 255, 255, 0.82)" }}
               >
                 {header.subtitle}

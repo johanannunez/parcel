@@ -204,8 +204,115 @@ export function PropertyTable({ properties }: { properties: PropertyRowData[] })
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Mobile table — address + status only, no controls */}
+      <div
+        className="overflow-hidden rounded-xl sm:hidden"
+        style={{ border: "1px solid var(--color-warm-gray-200)" }}
+      >
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr
+              style={{
+                borderBottom: "1px solid var(--color-warm-gray-200)",
+                backgroundColor: "var(--color-warm-gray-50)",
+              }}
+            >
+              <th
+                className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.10em]"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                Address
+              </th>
+              <th
+                className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.10em]"
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {properties.map((p, i) => (
+              <tr
+                key={p.id}
+                className="group transition-colors hover:bg-[var(--color-warm-gray-50)]"
+                style={{
+                  borderBottom:
+                    i < properties.length - 1
+                      ? "1px solid var(--color-warm-gray-100)"
+                      : "none",
+                }}
+              >
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/portal/properties/${p.id}`}
+                    className="flex items-center gap-3 focus-visible:outline-none"
+                  >
+                    <Thumbnail property={p} />
+                    <div className="min-w-0">
+                      <p
+                        className="truncate text-[13px] font-semibold leading-tight group-hover:underline"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {p.address}
+                      </p>
+                      {(p.city || p.state) && (
+                        <p
+                          className="mt-0.5 truncate text-[11px]"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          {[p.city, p.state].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                    style={{
+                      backgroundColor: p.active
+                        ? "rgba(22, 163, 74, 0.12)"
+                        : "rgba(100, 116, 139, 0.10)",
+                      color: p.active ? "#15803d" : "#4b4948",
+                    }}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: p.active ? "#16a34a" : "#94a3b8" }}
+                    />
+                    {p.active ? "Active" : "Paused"}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            <tr
+              className="group transition-colors hover:bg-[var(--color-warm-gray-50)]"
+              style={{ borderTop: "1px solid var(--color-warm-gray-100)" }}
+            >
+              <td className="px-4 py-3" colSpan={2}>
+                <Link
+                  href="/portal/setup/basics"
+                  className="inline-flex items-center gap-2 text-[13px] font-medium transition-colors"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  <span
+                    className="flex h-6 w-6 items-center justify-center rounded-full transition-colors group-hover:bg-[rgba(2,170,235,0.1)]"
+                    style={{ backgroundColor: "var(--color-warm-gray-100)" }}
+                  >
+                    <Plus size={12} weight="bold" className="group-hover:text-[var(--color-brand)]" />
+                  </span>
+                  <span className="group-hover:text-[var(--color-brand)]">Add property</span>
+                </Link>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Desktop table — full features */}
       {/* Toolbar */}
-      <div className="flex items-center justify-end">
+      <div className="hidden sm:flex items-center justify-end">
         <button
           type="button"
           onClick={() => setPanelOpen((v) => !v)}
@@ -223,10 +330,10 @@ export function PropertyTable({ properties }: { properties: PropertyRowData[] })
         </button>
       </div>
 
-      {/* Column customization panel */}
+      {/* Column customization panel — desktop only */}
       {panelOpen && (
         <div
-          className="flex flex-col gap-0 overflow-hidden rounded-xl"
+          className="hidden flex-col gap-0 overflow-hidden rounded-xl sm:flex"
           style={{ border: "1px solid var(--color-warm-gray-200)" }}
         >
           <div
@@ -330,7 +437,7 @@ export function PropertyTable({ properties }: { properties: PropertyRowData[] })
 
       {/* Table */}
       <div
-        className="overflow-hidden rounded-xl"
+        className="hidden overflow-hidden rounded-xl sm:block"
         style={{ border: "1px solid var(--color-warm-gray-200)" }}
       >
         <div className="overflow-x-auto">
