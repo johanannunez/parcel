@@ -21,6 +21,7 @@ export type ReservationRow = {
   guestLine: string;     // e.g. "2 adults · 1 pet"
   cleaning: boolean;
   isOwnerStaying: boolean;
+  daysAway: number | null; // null for past rows
 };
 
 // ---------------------------------------------------------------------------
@@ -107,6 +108,31 @@ function Row({ row, muted = false }: { row: ReservationRow; muted?: boolean }) {
           <p className="mt-0.5 text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
             {row.checkInTime}
           </p>
+        )}
+        {row.daysAway !== null && (
+          <span
+            className="mt-1.5 inline-block rounded-full px-1.5 py-px text-[10px] font-semibold"
+            style={{
+              backgroundColor:
+                row.daysAway === 0
+                  ? "rgba(22,163,74,0.12)"
+                  : row.daysAway <= 7
+                    ? "rgba(245,158,11,0.12)"
+                    : "rgba(2,170,235,0.10)",
+              color:
+                row.daysAway === 0
+                  ? "#15803d"
+                  : row.daysAway <= 7
+                    ? "#92400e"
+                    : "var(--color-brand)",
+            }}
+          >
+            {row.daysAway === 0
+              ? "Today"
+              : row.daysAway === 1
+                ? "Tomorrow"
+                : `${row.daysAway} days`}
+          </span>
         )}
       </td>
 
