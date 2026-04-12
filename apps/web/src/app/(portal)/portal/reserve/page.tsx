@@ -53,6 +53,11 @@ function formatDateRange(start: string, end: string): string {
   return `${sMonth} ${sDay} – ${eMonth} ${eDay}, ${eYear}`;
 }
 
+function formatSingleDate(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return _dateFmt.format(d);
+}
+
 function formatTime(raw: string | null): string {
   if (!raw) return "";
   const [hStr, mStr] = raw.split(":");
@@ -354,7 +359,7 @@ export default async function ReservePage() {
                   className="mt-0.5 text-sm font-medium"
                   style={{ color: "var(--color-text-primary)" }}
                 >
-                  {formatDateRange(nextStayRaw.start_date, nextStayRaw.start_date).replace(/ –.*/, "")}
+                  {formatSingleDate(nextStayRaw.start_date)}
                   {nextStayRaw.check_in_time
                     ? `, ${formatTime(nextStayRaw.check_in_time)}`
                     : ""}
@@ -371,7 +376,7 @@ export default async function ReservePage() {
                   className="mt-0.5 text-sm font-medium"
                   style={{ color: "var(--color-text-primary)" }}
                 >
-                  {formatDateRange(nextStayRaw.end_date, nextStayRaw.end_date).replace(/ –.*/, "")}
+                  {formatSingleDate(nextStayRaw.end_date)}
                   {nextStayRaw.check_out_time
                     ? `, ${formatTime(nextStayRaw.check_out_time)}`
                     : ""}
