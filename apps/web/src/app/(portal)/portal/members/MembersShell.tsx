@@ -13,6 +13,8 @@ import {
   Translate,
   Star,
   CalendarBlank,
+  Sparkle,
+  Globe,
 } from "@phosphor-icons/react";
 
 type ParcelTeamMember = {
@@ -29,6 +31,8 @@ type ParcelTeamMember = {
   member_since: string | null;
   languages: string[] | null;
   specialties: string[] | null;
+  founding_member: boolean | null;
+  website_url: string | null;
 };
 
 type OwnerMember = {
@@ -204,7 +208,21 @@ function ParcelCard({
         >
           {member.name}
         </div>
-        <div className="mt-2">
+        {member.founding_member && (
+          <div className="mt-1.5">
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{
+                backgroundColor: "rgba(251, 191, 36, 0.22)",
+                color: "#fbbf24",
+              }}
+            >
+              <Sparkle size={10} weight="fill" />
+              Founding team
+            </span>
+          </div>
+        )}
+        <div className="mt-1.5">
           <span
             className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium"
             style={{
@@ -217,10 +235,11 @@ function ParcelCard({
         </div>
         {member.location && (
           <div
-            className="mt-2 text-[12px]"
+            className="mt-2 flex items-center gap-1 text-[12px]"
             style={{ color: "rgba(255,255,255,0.65)" }}
           >
-            · {member.location}
+            <MapPin size={11} />
+            {member.location}
           </div>
         )}
       </div>
@@ -431,6 +450,20 @@ export function MembersShell({
                     >
                       {drawer.data.name}
                     </div>
+                    {drawer.data.founding_member && (
+                      <div className="mt-2">
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+                          style={{
+                            backgroundColor: "rgba(251, 191, 36, 0.22)",
+                            color: "#fbbf24",
+                          }}
+                        >
+                          <Sparkle size={10} weight="fill" />
+                          Founding team
+                        </span>
+                      </div>
+                    )}
                     <div className="mt-2">
                       <span
                         className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium"
@@ -530,6 +563,14 @@ export function MembersShell({
                         href={drawer.data.instagram_url ?? null}
                         external
                       />
+                      {drawer.data.website_url && (
+                        <DrawerContactRow
+                          icon={<Globe size={15} />}
+                          label={drawer.data.website_url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                          href={drawer.data.website_url}
+                          external
+                        />
+                      )}
                     </div>
 
                     <div

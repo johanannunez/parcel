@@ -19,6 +19,8 @@ type ParcelTeamMember = {
   member_since: string | null;
   languages: string[] | null;
   specialties: string[] | null;
+  founding_member: boolean | null;
+  website_url: string | null;
 };
 
 type OwnerMember = {
@@ -43,7 +45,7 @@ export default async function MembersPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (client as any)
       .from("parcel_team")
-      .select("id, name, role, location, avatar_url, sort_order, email, phone, linkedin_url, instagram_url, bio, member_since, languages, specialties")
+      .select("id, name, role, location, avatar_url, sort_order, email, phone, linkedin_url, instagram_url, bio, member_since, languages, specialties, founding_member, website_url")
       .eq("active", true)
       .order("sort_order", { ascending: true }),
   ]);
