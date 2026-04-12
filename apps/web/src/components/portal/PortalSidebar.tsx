@@ -114,10 +114,12 @@ function NavSection({
   label,
   items,
   isActive,
+  badges,
 }: {
   label: string;
   items: NavItem[];
   isActive: (item: NavItem) => boolean | undefined;
+  badges?: Record<string, number>;
 }) {
   return (
     <div className="mb-4">
@@ -130,6 +132,7 @@ function NavSection({
       <ul className="flex flex-col gap-0.5">
         {items.map((item) => {
           const active = isActive(item);
+          const badgeCount = badges?.[item.href] ?? 0;
           return (
             <li key={item.href}>
               <Link
@@ -163,6 +166,14 @@ function NavSection({
                   {item.icon}
                 </span>
                 {item.label}
+                {badgeCount > 0 ? (
+                  <span
+                    className="ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
+                    style={{ backgroundColor: "var(--color-brand)", color: "#ffffff" }}
+                  >
+                    {badgeCount > 99 ? "99+" : badgeCount}
+                  </span>
+                ) : null}
               </Link>
             </li>
           );
@@ -180,6 +191,7 @@ export function PortalSidebar({
   isAdmin = false,
   setupIncomplete = false,
   signOutSlot,
+  unreadMessageCount = 0,
 }: {
   userName: string;
   userEmail: string;
@@ -188,6 +200,7 @@ export function PortalSidebar({
   isAdmin?: boolean;
   setupIncomplete?: boolean;
   signOutSlot: ReactNode;
+  unreadMessageCount?: number;
 }) {
   const pathname = usePathname();
   const { resolvedTheme } = useTheme();
@@ -275,7 +288,12 @@ export function PortalSidebar({
           </div>
         )}
 
-        <NavSection label="Activity" items={activityNav} isActive={isActive} />
+        <NavSection
+          label="Activity"
+          items={activityNav}
+          isActive={isActive}
+          badges={{ "/portal/messages": unreadMessageCount }}
+        />
         <NavSection label="Resources" items={resourcesNav} isActive={isActive} />
       </nav>
 

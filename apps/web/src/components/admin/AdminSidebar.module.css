@@ -1,0 +1,54 @@
+/* Responsive visibility — cannot be expressed as inline styles */
+.sidebar {
+  display: none;
+  flex-direction: column;
+}
+@media (min-width: 1024px) {
+  .sidebar {
+    display: flex;
+  }
+}
+
+.rail {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+@media (min-width: 768px) {
+  .rail {
+    display: flex;
+  }
+}
+@media (min-width: 1024px) {
+  .rail {
+    display: none;
+  }
+}
+
+.topBar {
+  display: flex;
+}
+@media (min-width: 768px) {
+  .topBar {
+    display: none;
+  }
+}
+
+/* Focus rings — can't be done in inline styles */
+.navLink:focus-visible {
+  outline: 2px solid var(--color-brand-light, #4cc9f0);
+  outline-offset: 2px;
+  border-radius: 9px;
+}
+
+.railLink:focus-visible {
+  outline: 2px solid var(--color-brand-light, #4cc9f0);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.logoLink:focus-visible {
+  outline: 2px solid var(--color-brand-light, #4cc9f0);
+  outline-offset: 4px;
+  border-radius: 4px;
+}

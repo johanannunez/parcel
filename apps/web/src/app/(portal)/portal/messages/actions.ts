@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Reply to a conversation as an owner.
@@ -24,6 +25,19 @@ export async function replyToConversation(args: {
   });
 
   if (error) return { error: error.message };
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "message_sent",
+    entity_type: "message",
+    entity_id: args.conversationId,
+    actor_id: user.id,
+    metadata: {
+      conversation_id: args.conversationId,
+      description: "Owner sent a message",
+    },
+  }).then(() => {}, () => {});
 
   revalidatePath("/portal/messages");
   return { success: true };
@@ -165,6 +179,47 @@ export async function recordMessageRead(args: {
       p_device_info: args.deviceInfo ?? undefined,
     });
   }
+}
+
+/**
+ * Create a direct conversation with Parcel for the current owner.
+ * If one already exists, returns its ID.
+ */
+export async function createDirectConversation() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated", conversationId: null };
+
+  // Check if a direct conversation already exists
+  const { data: existing } = await supabase
+    .from("conversations")
+    .select("id")
+    .eq("type", "direct")
+    .eq("owner_id", user.id)
+    .limit(1)
+    .single();
+
+  if (existing) {
+    return { conversationId: existing.id, error: null };
+  }
+
+  // Create a new direct conversation
+  const { data: newConv, error } = await supabase
+    .from("conversations")
+    .insert({
+      owner_id: user.id,
+      type: "direct",
+      subject: null,
+    })
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message, conversationId: null };
+
+  revalidatePath("/portal/messages");
+  return { conversationId: newConv.id, error: null };
 }
 
 /**

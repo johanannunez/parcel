@@ -77,6 +77,18 @@ export async function inviteOwner(
 
   const inviteLink = linkData?.properties?.action_link ?? null;
 
+  // Log activity (fire-and-forget)
+  serviceClient.from("activity_log").insert({
+    action: "owner_invited",
+    entity_type: "profile",
+    entity_id: ownerId,
+    actor_id: user.id,
+    metadata: {
+      invited_email: realEmail,
+      description: `Owner invited with email ${realEmail}`,
+    },
+  }).then(() => {}, () => {});
+
   revalidatePath("/admin/owners");
 
   return {

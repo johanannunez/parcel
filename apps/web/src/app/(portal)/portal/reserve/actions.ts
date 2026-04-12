@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getPortalContext } from "@/lib/portal-context";
 import { propertyLabel } from "@/lib/address";
 
@@ -150,6 +151,21 @@ export async function submitBlockRequest(
     }),
   );
 
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "block_request_submitted",
+    entity_type: "block_request",
+    entity_id: null,
+    actor_id: userId,
+    metadata: {
+      property_name: propertyLabel(property ?? {}),
+      dates: `${parsed.data.startDate} to ${parsed.data.endDate}`,
+      reason: parsed.data.reason ?? null,
+      description: `Block request submitted for ${parsed.data.startDate} to ${parsed.data.endDate}`,
+    },
+  }).then(() => {}, () => {});
+
   revalidatePath("/portal/reserve");
   return { ok: true };
 }
@@ -224,6 +240,23 @@ export async function decideBlockRequest(
     }).catch(() => {});
   }
 
+  // Log activity (fire-and-forget)
+  const svcLog = createServiceClient();
+  const actionName = parsed.data.decision === "approved"
+    ? "block_request_confirmed"
+    : "block_request_conflict";
+  svcLog.from("activity_log").insert({
+    action: actionName,
+    entity_type: "block_request",
+    entity_id: parsed.data.id,
+    actor_id: user.id,
+    metadata: {
+      decision: parsed.data.decision,
+      dates: updated ? `${updated.start_date} to ${updated.end_date}` : null,
+      description: `Block request ${parsed.data.decision}`,
+    },
+  }).then(() => {}, () => {});
+
   revalidatePath("/admin/block-requests");
   revalidatePath("/portal/reserve");
   return { ok: true };
@@ -263,6 +296,18 @@ export async function cancelBlockRequest(
   if (!data || data.length === 0)
     return { ok: false, error: "Request not found or already processed." };
 
+  // Log activity (fire-and-forget)
+  const svcCancel = createServiceClient();
+  svcCancel.from("activity_log").insert({
+    action: "block_request_cancelled",
+    entity_type: "block_request",
+    entity_id: parsed.data.id,
+    actor_id: user.id,
+    metadata: {
+      description: "Block request cancelled by owner",
+    },
+  }).then(() => {}, () => {});
+
   revalidatePath("/portal/reserve");
   return { ok: true };
 }
@@ -301,6 +346,18 @@ export async function reopenBlockRequest(
   if (error) return { ok: false, error: error.message };
   if (!data || data.length === 0)
     return { ok: false, error: "Request not found or not in a reopenable state." };
+
+  // Log activity (fire-and-forget)
+  const svcReopen = createServiceClient();
+  svcReopen.from("activity_log").insert({
+    action: "block_request_reopened",
+    entity_type: "block_request",
+    entity_id: parsed.data.id,
+    actor_id: user.id,
+    metadata: {
+      description: "Block request reopened by admin",
+    },
+  }).then(() => {}, () => {});
 
   revalidatePath("/admin/block-requests");
   revalidatePath("/portal/reserve");

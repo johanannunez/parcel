@@ -14,6 +14,8 @@ import {
   Wallet,
   EnvelopeSimple,
   ClipboardText,
+  ListChecks,
+  ClockCounterClockwise,
   X,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
@@ -79,7 +81,9 @@ export function AdminBottomNav({
     pathname?.startsWith("/admin/properties") ||
     pathname?.startsWith("/admin/payouts") ||
     pathname?.startsWith("/admin/inquiries") ||
-    pathname?.startsWith("/admin/block-requests");
+    pathname?.startsWith("/admin/tasks") ||
+    pathname?.startsWith("/admin/block-requests") ||
+    pathname?.startsWith("/admin/timeline");
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
 
@@ -225,11 +229,32 @@ export function AdminBottomNav({
                   onClick={closeMore}
                 />
                 <AdminMoreLink
+                  href="/admin/messages"
+                  icon={<ChatCircle size={20} weight="duotone" />}
+                  label="Messages"
+                  active={pathname?.startsWith("/admin/messages")}
+                  onClick={closeMore}
+                />
+                <AdminMoreLink
+                  href="/admin/tasks"
+                  icon={<ListChecks size={20} weight="duotone" />}
+                  label="Tasks"
+                  active={pathname?.startsWith("/admin/tasks")}
+                  onClick={closeMore}
+                />
+                <AdminMoreLink
                   href="/admin/block-requests"
                   icon={<ClipboardText size={20} weight="duotone" />}
                   label="Reservations"
                   active={pathname?.startsWith("/admin/block-requests")}
                   badge={pendingBlockCount}
+                  onClick={closeMore}
+                />
+                <AdminMoreLink
+                  href="/admin/timeline"
+                  icon={<ClockCounterClockwise size={20} weight="duotone" />}
+                  label="Timeline"
+                  active={pathname?.startsWith("/admin/timeline")}
                   onClick={closeMore}
                 />
 

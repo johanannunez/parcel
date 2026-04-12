@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const Schema = z.object({
   propertyId: z.string().uuid(),
@@ -52,6 +53,21 @@ export async function saveHospitableConnection(
     .eq("id", parsed.data.propertyId);
 
   if (error) return { ok: false, error: error.message };
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "property_updated",
+    entity_type: "property",
+    entity_id: parsed.data.propertyId,
+    actor_id: user.id,
+    metadata: {
+      field_name: "hospitable_connection",
+      hospitable_id: parsed.data.hospitableId,
+      ical_url: parsed.data.icalUrl,
+      description: "Hospitable connection updated",
+    },
+  }).then(() => {}, () => {});
 
   revalidatePath("/admin/properties");
   revalidatePath("/portal/reserve");

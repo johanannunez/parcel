@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
@@ -113,6 +114,19 @@ export async function saveIdentity(
       .insert(kycPayload);
     if (error) return { error: error.message };
   }
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "identity_verified",
+    entity_type: "profile",
+    entity_id: user.id,
+    actor_id: user.id,
+    metadata: {
+      issuing_state: v.issuing_state,
+      description: "Identity verification submitted",
+    },
+  }).then(() => {}, () => {});
 
   await recordVersion(supabase, {
     userId: user.id,

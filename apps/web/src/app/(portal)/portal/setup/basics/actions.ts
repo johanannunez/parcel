@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
@@ -118,6 +119,20 @@ export async function saveBasics(
     if (error) return { error: error.message };
     propertyId = inserted.id;
   }
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "property_updated",
+    entity_type: "property",
+    entity_id: propertyId || null,
+    actor_id: user.id,
+    metadata: {
+      field_name: "basics",
+      property_name: v.name || `${v.address_line1}, ${v.city}`,
+      description: v.property_id ? "Property basics updated" : "New property created",
+    },
+  }).then(() => {}, () => {});
 
   // Record version history (no-op until migration runs)
   await recordVersion(supabase, {

@@ -159,6 +159,20 @@ export async function sendMessage(args: {
     url: "/portal/messages",
   }).catch(() => {});
 
+  // Log activity (fire-and-forget)
+  svc.from("activity_log").insert({
+    action: "message_sent",
+    entity_type: "message",
+    entity_id: msg.id,
+    actor_id: user.id,
+    metadata: {
+      recipient_id: args.ownerId,
+      delivery_method: args.deliveryMethod ?? "portal",
+      subject: args.subject ?? null,
+      description: `Message sent to owner via ${args.deliveryMethod ?? "portal"}`,
+    },
+  }).then(() => {}, () => {});
+
   revalidatePath("/admin/messages");
   return { success: true, messageId: msg.id, conversationId };
 }
@@ -249,6 +263,19 @@ export async function sendBroadcast(args: {
     body: args.body,
     url: "/portal/messages",
   }).catch(() => {});
+
+  // Log activity (fire-and-forget)
+  svc.from("activity_log").insert({
+    action: "broadcast_sent",
+    entity_type: "message",
+    entity_id: conv.id,
+    actor_id: user.id,
+    metadata: {
+      subject: args.subject,
+      delivery_method: args.deliveryMethod,
+      description: `Broadcast announcement sent: ${args.subject}`,
+    },
+  }).then(() => {}, () => {});
 
   revalidatePath("/admin/messages");
   return { success: true, conversationId: conv.id, ownerCount: 0 };

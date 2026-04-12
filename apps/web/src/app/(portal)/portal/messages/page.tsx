@@ -59,51 +59,27 @@ export default async function PortalMessagesPage() {
     }
   }
 
-  // Separate conversations by type
-  const directConversations = (conversations ?? [])
-    .filter((c) => c.type === "direct")
-    .map((c) => ({
-      id: c.id,
-      subject: c.subject,
-      type: c.type as "direct",
-      lastMessageAt: c.last_message_at,
-      lastMessage: lastMessageMap.get(c.id) ?? null,
-      unreadCount: unreadCounts.get(c.id) ?? 0,
-    }));
+  const allConversations = (conversations ?? []).map((c) => ({
+    id: c.id,
+    subject: c.subject,
+    type: c.type as "direct" | "announcement" | "email_log",
+    lastMessageAt: c.last_message_at,
+    lastMessage: lastMessageMap.get(c.id) ?? null,
+    unreadCount: unreadCounts.get(c.id) ?? 0,
+  }));
 
-  // Alerts: announcements + email logs (for the top strip)
-  const alerts = (conversations ?? [])
-    .filter((c) => c.type === "announcement" || c.type === "email_log")
-    .map((c) => ({
-      id: c.id,
-      subject: c.subject,
-      type: c.type as "announcement" | "email_log",
-      lastMessageAt: c.last_message_at,
-      lastMessage: lastMessageMap.get(c.id) ?? null,
-      unreadCount: unreadCounts.get(c.id) ?? 0,
-    }));
-
-  // Fetch recent notifications for the active owner.
-  const { data: notifications } = await client
-    .from("notifications")
-    .select("id, type, title, body, link, read, created_at")
-    .eq("owner_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  // Split conversations: direct messages vs email logs
+  const directConversations = allConversations.filter(
+    (c) => c.type === "direct" || c.type === "announcement",
+  );
+  const emailConversations = allConversations.filter(
+    (c) => c.type === "email_log",
+  );
 
   return (
     <PortalMessagesShell
       conversations={directConversations}
-      alerts={alerts}
-      notifications={(notifications ?? []).map((n) => ({
-        id: n.id,
-        type: n.type,
-        title: n.title,
-        body: n.body,
-        link: n.link,
-        read: n.read,
-        createdAt: n.created_at,
-      }))}
+      emailConversations={emailConversations}
       currentUserId={realUserId}
     />
   );

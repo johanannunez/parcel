@@ -1,6 +1,7 @@
 "use server";
 
 import { getPortalContext } from "@/lib/portal-context";
+import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 
 export type ImageSource = "aerial" | "street" | "photo";
@@ -24,6 +25,21 @@ export async function updatePropertyImageSource(
     .eq("owner_id", userId);
 
   if (error) return { ok: false, error: error.message };
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "property_updated",
+    entity_type: "property",
+    entity_id: propertyId,
+    actor_id: userId,
+    metadata: {
+      field_name: "image_source",
+      new_value: source,
+      description: `Property image source changed to ${source}`,
+    },
+  }).then(() => {}, () => {});
+
   revalidatePath("/portal/properties");
   return { ok: true };
 }
@@ -45,6 +61,20 @@ export async function updatePropertyCoverPhoto(
     .eq("owner_id", userId);
 
   if (error) return { ok: false, error: error.message };
+
+  // Log activity (fire-and-forget)
+  const svcPhoto = createServiceClient();
+  svcPhoto.from("activity_log").insert({
+    action: "property_updated",
+    entity_type: "property",
+    entity_id: propertyId,
+    actor_id: userId,
+    metadata: {
+      field_name: "cover_photo",
+      description: "Cover photo uploaded",
+    },
+  }).then(() => {}, () => {});
+
   revalidatePath("/portal/properties");
   return { ok: true };
 }

@@ -10,12 +10,40 @@ import {
 import { PortalAppBar, type OwnerOption } from "@/components/portal/PortalAppBar";
 import { PortalHeaderProvider } from "@/components/portal/PortalHeaderContext";
 import { PortalBottomNav } from "@/components/portal/PortalBottomNav";
-import { PullToRefresh } from "@/components/portal/PullToRefresh";
 import { CommandPalette } from "@/components/portal/CommandPalette";
 import { NotificationsProvider } from "@/components/portal/NotificationsProvider";
 import { ServiceWorkerRegistration } from "@/components/portal/ServiceWorkerRegistration";
 import { ImpersonationBanner } from "@/components/portal/ImpersonationBanner";
+import { PortalMain } from "@/components/portal/PortalMainContent";
 import { SignOutButton } from "./SignOutButton";
+
+/** Inline unread count query (cannot call "use server" actions from server components) */
+async function getUnreadCount(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<number> {
+  const { data: conversations } = await supabase
+    .from("conversations")
+    .select("id");
+
+  if (!conversations?.length) return 0;
+
+  const convIds = conversations.map((c) => c.id);
+  const { data: messages } = await supabase
+    .from("messages")
+    .select("id")
+    .in("conversation_id", convIds)
+    .neq("sender_id", userId);
+
+  if (!messages?.length) return 0;
+
+  const msgIds = messages.map((m) => m.id);
+  const { data: reads } = await supabase
+    .from("message_reads")
+    .select("message_id")
+    .eq("reader_id", userId)
+    .in("message_id", msgIds);
+
+  const readIds = new Set((reads ?? []).map((r) => r.message_id));
+  return msgIds.filter((id) => !readIds.has(id)).length;
+}
 
 /**
  * Portal shell — wraps every /portal/* page.
@@ -131,6 +159,9 @@ export default async function PortalLayout({
         p.guest_capacity === null,
     );
 
+  // Fetch unread message count for sidebar badge
+  const unreadMessageCount = await getUnreadCount(supabase, activeUserId);
+
   // Fetch owners for the admin switcher dropdown (admin only, one query).
   let owners: OwnerOption[] = [];
   if (isAdmin) {
@@ -164,6 +195,7 @@ export default async function PortalLayout({
             isAdmin={isAdmin}
             setupIncomplete={setupIncomplete}
             signOutSlot={<SignOutButton />}
+            unreadMessageCount={unreadMessageCount}
           />
 
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -177,13 +209,9 @@ export default async function PortalLayout({
                 ownerName={ownerProfile.full_name?.trim() || ownerProfile.email}
               />
             ) : null}
-            <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
-              <PullToRefresh>
-                <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
-                  {children}
-                </div>
-              </PullToRefresh>
-            </main>
+            <PortalMain>
+              {children}
+            </PortalMain>
             <CommandPalette />
           </div>
 
@@ -194,6 +222,7 @@ export default async function PortalLayout({
             userEmail={displayEmail}
             initials={initials}
             avatarUrl={displayAvatar}
+            unreadMessageCount={unreadMessageCount}
           />
           <ServiceWorkerRegistration />
         </div>

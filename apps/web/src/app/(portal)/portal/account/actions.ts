@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -52,6 +53,19 @@ export async function updateProfile(
   if (error) {
     return { ok: false, message: error.message };
   }
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "profile_updated",
+    entity_type: "profile",
+    entity_id: user.id,
+    actor_id: user.id,
+    metadata: {
+      field_name: "profile",
+      description: "Profile information updated",
+    },
+  }).then(() => {}, () => {});
 
   revalidatePath("/portal/account");
   return { ok: true, message: "Profile updated." };
@@ -142,6 +156,18 @@ export async function updatePassword(
   if (error) {
     return { ok: false, message: error.message };
   }
+
+  // Log activity (fire-and-forget)
+  const svcPw = createServiceClient();
+  svcPw.from("activity_log").insert({
+    action: "password_changed",
+    entity_type: "profile",
+    entity_id: user.id,
+    actor_id: user.id,
+    metadata: {
+      description: "Password changed",
+    },
+  }).then(() => {}, () => {});
 
   return { ok: true, message: "Password updated successfully." };
 }
@@ -344,6 +370,18 @@ export async function requestAccountDeletion(
   if (error) {
     return { ok: false, message: error.message };
   }
+
+  // Log activity (fire-and-forget)
+  const svcDel = createServiceClient();
+  svcDel.from("activity_log").insert({
+    action: "account_deletion_requested",
+    entity_type: "profile",
+    entity_id: user.id,
+    actor_id: user.id,
+    metadata: {
+      description: "Account deletion requested (30-day grace period)",
+    },
+  }).then(() => {}, () => {});
 
   await supabase.auth.signOut();
   redirect("/login");

@@ -88,6 +88,7 @@ export function PortalBottomNav({
   userEmail,
   initials,
   avatarUrl = null,
+  unreadMessageCount = 0,
 }: {
   isAdmin?: boolean;
   signOutSlot: ReactNode;
@@ -95,6 +96,7 @@ export function PortalBottomNav({
   userEmail: string;
   initials: string;
   avatarUrl?: string | null;
+  unreadMessageCount?: number;
 }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -145,15 +147,26 @@ export function PortalBottomNav({
         <div className="flex h-16 items-stretch">
           {mainNavItems.map((item) => {
             const active = isTabActive(item);
+            const showBadge = item.label === "Messages" && unreadMessageCount > 0;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={closeMore}
-                className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
+                className="relative flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
                 style={{ color: active ? "var(--color-brand)" : "var(--color-text-tertiary)" }}
               >
-                {active ? item.activeIcon : item.icon}
+                <span className="relative">
+                  {active ? item.activeIcon : item.icon}
+                  {showBadge ? (
+                    <span
+                      className="absolute -right-2 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-0.5 text-[9px] font-bold"
+                      style={{ backgroundColor: "var(--color-brand)", color: "#ffffff" }}
+                    >
+                      {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                    </span>
+                  ) : null}
+                </span>
                 <span
                   className="text-[10px] font-semibold leading-none"
                   style={{ color: active ? "var(--color-brand)" : "var(--color-text-tertiary)" }}

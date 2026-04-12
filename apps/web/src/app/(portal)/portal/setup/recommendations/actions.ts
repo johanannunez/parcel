@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { recordVersion } from "@/lib/wizard/version-history";
 
 const spotSchema = z.object({
@@ -61,6 +62,20 @@ export async function saveRecommendations(
     .eq("owner_id", user.id);
 
   if (error) return { error: error.message };
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "property_updated",
+    entity_type: "property",
+    entity_id: v.property_id,
+    actor_id: user.id,
+    metadata: {
+      field_name: "recommendations",
+      spot_count: spots.length,
+      description: `Local recommendations updated (${spots.length} spots)`,
+    },
+  }).then(() => {}, () => {});
 
   await recordVersion(supabase, {
     userId: user.id,

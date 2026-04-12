@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { recordVersion } from "@/lib/wizard/version-history";
 
 const schema = z.object({
@@ -40,6 +41,18 @@ export async function submitForReview(
     .eq("owner_id", user.id);
 
   if (error) return { error: error.message };
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "property_submitted_for_review",
+    entity_type: "property",
+    entity_id: v.property_id,
+    actor_id: user.id,
+    metadata: {
+      description: "Property submitted for review",
+    },
+  }).then(() => {}, () => {});
 
   await recordVersion(supabase, {
     userId: user.id,

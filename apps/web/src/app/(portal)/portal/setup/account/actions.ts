@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { recordVersion } from "@/lib/wizard/version-history";
 import type { Json } from "@/types/supabase";
 
@@ -86,6 +87,19 @@ export async function saveAccount(
     .eq("id", user.id);
 
   if (error) return { error: error.message };
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "profile_updated",
+    entity_type: "profile",
+    entity_id: user.id,
+    actor_id: user.id,
+    metadata: {
+      field_name: "account",
+      description: "Account details updated during setup",
+    },
+  }).then(() => {}, () => {});
 
   await recordVersion(supabase, {
     userId: user.id,

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const schema = z.object({
   name: z.string().trim().max(120).optional().or(z.literal("")),
@@ -62,6 +63,20 @@ export async function addProperty(
   });
 
   if (error) return { error: error.message };
+
+  // Log activity (fire-and-forget)
+  const svc = createServiceClient();
+  svc.from("activity_log").insert({
+    action: "property_created",
+    entity_type: "property",
+    entity_id: null,
+    actor_id: user.id,
+    metadata: {
+      property_name: v.name || `${v.address_line1}, ${v.city}`,
+      property_type: v.property_type,
+      description: "New property added during onboarding",
+    },
+  }).then(() => {}, () => {});
 
   redirect("/portal/onboarding/complete");
 }
