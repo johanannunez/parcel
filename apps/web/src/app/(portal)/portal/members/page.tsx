@@ -31,6 +31,7 @@ type OwnerMember = {
   phone: string | null;
   avatar_url: string | null;
   responsibility: string | null;
+  location: string | null;
 };
 
 export default async function MembersPage() {
@@ -40,7 +41,7 @@ export default async function MembersPage() {
     client
       .from("profiles")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .select("id, full_name, email, phone, avatar_url" as any)
+      .select("id, full_name, email, phone, avatar_url, location" as any)
       .eq("id", userId)
       .single(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,12 +61,15 @@ export default async function MembersPage() {
   const entityId = profileAny?.entity_id ?? null;
 
   if (entityId) {
-    const { data: members } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: membersRaw } = await (client as any)
       .from("profiles")
-      .select("id, full_name, email, phone, avatar_url")
+      .select("id, full_name, email, phone, avatar_url, location")
       .eq("entity_id", entityId)
       .eq("role", "owner")
       .order("created_at", { ascending: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const members: any[] = membersRaw ?? [];
 
     ownerMembers = (members ?? []).map((m) => ({
       id: m.id,
@@ -75,6 +79,8 @@ export default async function MembersPage() {
       avatar_url: m.avatar_url,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       responsibility: (m as any).responsibility ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      location: (m as any).location ?? null,
     }));
   } else {
     ownerMembers = profile
@@ -86,6 +92,7 @@ export default async function MembersPage() {
             phone: profileAny.phone,
             avatar_url: profileAny.avatar_url,
             responsibility: profileAny.responsibility ?? null,
+            location: profileAny.location ?? null,
           },
         ]
       : [];

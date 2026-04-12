@@ -17,6 +17,7 @@ import {
   Sparkle,
   Globe,
   ChatCircle,
+  User,
 } from "@phosphor-icons/react";
 
 type ParcelTeamMember = {
@@ -45,6 +46,7 @@ type OwnerMember = {
   phone: string | null;
   avatar_url: string | null;
   responsibility: string | null;
+  location: string | null;
 };
 
 type DrawerItem =
@@ -87,7 +89,6 @@ function getInitials(name: string | null, email: string): string {
 function Avatar({
   src,
   name,
-  email,
   size = 52,
   theme = "light",
 }: {
@@ -97,24 +98,24 @@ function Avatar({
   size?: number;
   theme?: "light" | "blue";
 }) {
-  const initials = getInitials(name ?? null, email ?? "");
-
-  const initialsStyle =
+  const placeholderStyle =
     theme === "blue"
-      ? {
-          backgroundColor: "rgba(255,255,255,0.20)",
-          color: "rgba(255,255,255,0.95)",
-        }
-      : {
-          background:
-            "linear-gradient(135deg, rgba(2, 170, 235, 0.14) 0%, rgba(27, 119, 190, 0.22) 100%)",
-          color: "var(--color-brand)",
-        };
+      ? { backgroundColor: "rgba(255,255,255,0.20)", color: "rgba(255,255,255,0.70)" }
+      : { background: "linear-gradient(135deg, rgba(2,170,235,0.10) 0%, rgba(27,119,190,0.16) 100%)", color: "rgba(2,170,235,0.55)" };
 
   const photoRing =
     theme === "blue"
       ? "0 0 0 2.5px rgba(255,255,255,0.55)"
       : "0 0 0 2px #fff, 0 0 0 3.5px rgba(2, 170, 235, 0.28)";
+
+  const Placeholder = (
+    <div
+      className="flex shrink-0 items-center justify-center rounded-full"
+      style={{ ...placeholderStyle, width: size, height: size }}
+    >
+      <User size={size * 0.46} weight="regular" />
+    </div>
+  );
 
   if (src) {
     return (
@@ -137,37 +138,16 @@ function Avatar({
         />
         <div
           data-fallback
-          className="hidden items-center justify-center rounded-full font-semibold"
-          style={{
-            ...initialsStyle,
-            width: size,
-            height: size,
-            fontSize: size * 0.3,
-            letterSpacing: "0.02em",
-            position: "absolute",
-            inset: 0,
-          }}
+          className="absolute inset-0 hidden items-center justify-center rounded-full"
+          style={placeholderStyle}
         >
-          {initials}
+          <User size={size * 0.46} weight="regular" />
         </div>
       </div>
     );
   }
 
-  return (
-    <div
-      className="flex shrink-0 items-center justify-center rounded-full font-semibold"
-      style={{
-        ...initialsStyle,
-        width: size,
-        height: size,
-        fontSize: size * 0.3,
-        letterSpacing: "0.02em",
-      }}
-    >
-      {initials}
-    </div>
-  );
+  return Placeholder;
 }
 
 function SectionHeader({ title, count }: { title: string; count: number }) {
@@ -217,6 +197,7 @@ function ParcelCard({
       style={{
         background: colors.gradient,
         boxShadow: colors.shadow,
+        minHeight: 148,
         transition: "box-shadow 150ms ease, transform 150ms ease",
       }}
       onMouseEnter={(e) => {
@@ -300,6 +281,7 @@ function OwnerCard({
       style={{
         backgroundColor: "var(--color-white)",
         borderColor: "var(--color-warm-gray-200)",
+        minHeight: 148,
         transition: "border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease",
       }}
       onMouseEnter={(e) => {
@@ -351,6 +333,15 @@ function OwnerCard({
             {responsibility}
           </span>
         </div>
+        {member.location && (
+          <div
+            className="mt-2 flex items-center gap-1 text-[12px]"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
+            <MapPin size={11} />
+            {member.location}
+          </div>
+        )}
       </div>
     </motion.button>
   );
@@ -369,12 +360,12 @@ export function MembersShell({
   const closeDrawer = () => setDrawer(null);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex max-w-2xl flex-col gap-8">
       {/* Owner section — always first */}
       {ownerMembers.length > 0 && (
         <section className="flex flex-col gap-4">
           <SectionHeader title="Owner" count={ownerMembers.length} />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {ownerMembers.map((member, i) => (
               <OwnerCard
                 key={member.id}
@@ -396,7 +387,7 @@ export function MembersShell({
             Your Parcel team members will appear here.
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {parcelTeam.map((member, i) => (
               <ParcelCard
                 key={member.id}
