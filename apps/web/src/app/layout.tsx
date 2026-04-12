@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import Script from "next/script";
 import ThemeProvider from "@/components/ThemeProvider";
+import PostHogProvider from "@/components/PostHogProvider";
 import "./globals.css";
 
 const generalSans = localFont({
@@ -140,7 +141,7 @@ export default function RootLayout({
       <head>
         {/* Kill-switch for stale service worker caches from older versions.
             Runs synchronously before any Next.js chunks are fetched. */}
-        <script src="/sw-killswitch.js" />
+        <Script src="/sw-killswitch.js" strategy="beforeInteractive" />
         <link
           rel="apple-touch-icon"
           href="/brand/app-icon-light-180.png"
@@ -164,9 +165,11 @@ export default function RootLayout({
             __html: JSON.stringify([organizationSchema, websiteSchema, serviceSchema]),
           }}
         />
-        <ThemeProvider>
-        {children}
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </PostHogProvider>
         {process.env.NEXT_PUBLIC_GA4_ID && (
           <>
             <Script
