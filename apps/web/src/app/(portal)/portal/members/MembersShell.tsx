@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import {
   X,
@@ -15,6 +16,7 @@ import {
   CalendarBlank,
   Sparkle,
   Globe,
+  ChatCircle,
 } from "@phosphor-icons/react";
 
 type ParcelTeamMember = {
@@ -33,6 +35,7 @@ type ParcelTeamMember = {
   specialties: string[] | null;
   founding_member: boolean | null;
   website_url: string | null;
+  is_messageable: boolean | null;
 };
 
 type OwnerMember = {
@@ -213,8 +216,8 @@ function ParcelCard({
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
               style={{
-                backgroundColor: "rgba(251, 191, 36, 0.22)",
-                color: "#fbbf24",
+                backgroundColor: "rgba(245, 158, 11, 0.45)",
+                color: "#fef3c7",
               }}
             >
               <Sparkle size={10} weight="fill" />
@@ -428,70 +431,69 @@ export function MembersShell({
               </div>
 
               <div className="flex-1 overflow-y-auto">
-                {/* Profile zone */}
+                {/* Horizontal hero zone */}
                 {drawer.type === "parcel" ? (
-                  /* Blue hero zone for Parcel team */
                   <div
-                    className="flex flex-col items-center px-6 py-8"
+                    className="flex items-center gap-4 px-5 py-5"
                     style={{
-                      background: "linear-gradient(160deg, #02AAEB 0%, #1B77BE 100%)",
+                      background: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
                       borderBottom: "1px solid rgba(27,119,190,0.3)",
                     }}
                   >
                     <Avatar
                       src={drawer.data.avatar_url}
                       name={drawer.data.name}
-                      size={72}
+                      size={60}
                       theme="blue"
                     />
-                    <div
-                      className="mt-4 text-center text-[17px] font-semibold leading-tight"
-                      style={{ color: "rgba(255,255,255,0.97)" }}
-                    >
-                      {drawer.data.name}
-                    </div>
-                    {drawer.data.founding_member && (
-                      <div className="mt-2">
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="truncate text-[15px] font-semibold leading-tight"
+                        style={{ color: "rgba(255,255,255,0.97)" }}
+                      >
+                        {drawer.data.name}
+                      </div>
+                      {drawer.data.founding_member && (
+                        <div className="mt-1">
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            style={{
+                              backgroundColor: "rgba(245, 158, 11, 0.45)",
+                              color: "#fef3c7",
+                            }}
+                          >
+                            <Sparkle size={9} weight="fill" />
+                            Founding team
+                          </span>
+                        </div>
+                      )}
+                      <div className="mt-1.5">
                         <span
-                          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+                          className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium"
                           style={{
-                            backgroundColor: "rgba(251, 191, 36, 0.22)",
-                            color: "#fbbf24",
+                            backgroundColor: "rgba(255,255,255,0.18)",
+                            color: "rgba(255,255,255,0.95)",
                           }}
                         >
-                          <Sparkle size={10} weight="fill" />
-                          Founding team
+                          {drawer.data.role}
                         </span>
                       </div>
-                    )}
-                    <div className="mt-2">
-                      <span
-                        className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium"
-                        style={{
-                          backgroundColor: "rgba(255,255,255,0.18)",
-                          color: "rgba(255,255,255,0.95)",
-                        }}
-                      >
-                        {drawer.data.role}
-                      </span>
+                      {drawer.data.location && (
+                        <div
+                          className="mt-1.5 flex items-center gap-1 text-[11px]"
+                          style={{ color: "rgba(255,255,255,0.60)" }}
+                        >
+                          <MapPin size={10} />
+                          {drawer.data.location}
+                        </div>
+                      )}
                     </div>
-                    {drawer.data.location && (
-                      <div
-                        className="mt-2 flex items-center gap-1.5 text-[12px]"
-                        style={{ color: "rgba(255,255,255,0.65)" }}
-                      >
-                        <MapPin size={12} />
-                        {drawer.data.location}
-                      </div>
-                    )}
                   </div>
                 ) : (
-                  /* Warm gray hero zone for owners */
                   <div
-                    className="flex flex-col items-center px-6 py-8"
+                    className="flex items-center gap-4 px-5 py-5"
                     style={{
-                      background:
-                        "linear-gradient(180deg, var(--color-warm-gray-50) 0%, var(--color-white) 100%)",
+                      background: "linear-gradient(180deg, var(--color-warm-gray-50) 0%, var(--color-white) 100%)",
                       borderBottom: "1px solid var(--color-warm-gray-200)",
                     }}
                   >
@@ -499,25 +501,27 @@ export function MembersShell({
                       src={drawer.data.avatar_url}
                       name={drawer.data.full_name}
                       email={drawer.data.email}
-                      size={72}
+                      size={60}
                       theme="light"
                     />
-                    <div
-                      className="mt-4 text-center text-[17px] font-semibold leading-tight"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      {drawer.data.full_name?.trim() || drawer.data.email}
-                    </div>
-                    <div className="mt-2">
-                      <span
-                        className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium"
-                        style={{
-                          backgroundColor: "rgba(2, 170, 235, 0.08)",
-                          color: "var(--color-brand)",
-                        }}
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="truncate text-[15px] font-semibold leading-tight"
+                        style={{ color: "var(--color-text-primary)" }}
                       >
-                        {drawer.data.responsibility?.trim() || "Owner"}
-                      </span>
+                        {drawer.data.full_name?.trim() || drawer.data.email}
+                      </div>
+                      <div className="mt-1.5">
+                        <span
+                          className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+                          style={{
+                            backgroundColor: "rgba(2, 170, 235, 0.08)",
+                            color: "var(--color-brand)",
+                          }}
+                        >
+                          {drawer.data.responsibility?.trim() || "Owner"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -539,30 +543,38 @@ export function MembersShell({
                       style={{ borderColor: "var(--color-warm-gray-200)" }}
                     />
 
-                    {/* Contact */}
+                    {/* Contact — only render rows with data */}
                     <div className="flex flex-col gap-1 px-5 py-3">
-                      <DrawerContactRow
-                        icon={<EnvelopeSimple size={15} />}
-                        label={drawer.data.email ?? null}
-                        href={drawer.data.email ? `mailto:${drawer.data.email}` : null}
-                      />
-                      <DrawerContactRow
-                        icon={<Phone size={15} />}
-                        label={drawer.data.phone ?? null}
-                        href={drawer.data.phone ? `tel:${drawer.data.phone}` : null}
-                      />
-                      <DrawerContactRow
-                        icon={<LinkedinLogo size={15} />}
-                        label={drawer.data.linkedin_url ? "LinkedIn" : null}
-                        href={drawer.data.linkedin_url ?? null}
-                        external
-                      />
-                      <DrawerContactRow
-                        icon={<InstagramLogo size={15} />}
-                        label={drawer.data.instagram_url ? "Instagram" : null}
-                        href={drawer.data.instagram_url ?? null}
-                        external
-                      />
+                      {drawer.data.email && (
+                        <DrawerContactRow
+                          icon={<EnvelopeSimple size={15} />}
+                          label={drawer.data.email}
+                          href={`mailto:${drawer.data.email}`}
+                        />
+                      )}
+                      {drawer.data.phone && (
+                        <DrawerContactRow
+                          icon={<Phone size={15} />}
+                          label={drawer.data.phone}
+                          href={`tel:${drawer.data.phone}`}
+                        />
+                      )}
+                      {drawer.data.linkedin_url && (
+                        <DrawerContactRow
+                          icon={<LinkedinLogo size={15} />}
+                          label="LinkedIn"
+                          href={drawer.data.linkedin_url}
+                          external
+                        />
+                      )}
+                      {drawer.data.instagram_url && (
+                        <DrawerContactRow
+                          icon={<InstagramLogo size={15} />}
+                          label="Instagram"
+                          href={drawer.data.instagram_url}
+                          external
+                        />
+                      )}
                       {drawer.data.website_url && (
                         <DrawerContactRow
                           icon={<Globe size={15} />}
@@ -572,6 +584,26 @@ export function MembersShell({
                         />
                       )}
                     </div>
+
+                    {/* Message button — only for messageable members */}
+                    {drawer.data.is_messageable && (
+                      <div className="px-5 pb-4">
+                        <Link
+                          href="/portal/messages"
+                          onClick={closeDrawer}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold"
+                          style={{
+                            background: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
+                            color: "#fff",
+                            textDecoration: "none",
+                            boxShadow: "0 2px 8px rgba(2,170,235,0.25)",
+                          }}
+                        >
+                          <ChatCircle size={15} weight="fill" />
+                          Send a message
+                        </Link>
+                      </div>
+                    )}
 
                     <div
                       className="mx-5 border-t"
@@ -608,11 +640,13 @@ export function MembersShell({
                 ) : (
                   /* Owner contact */
                   <div className="flex flex-col gap-1 px-5 py-3">
-                    <DrawerContactRow
-                      icon={<EnvelopeSimple size={15} />}
-                      label={drawer.data.email}
-                      href={`mailto:${drawer.data.email}`}
-                    />
+                    {drawer.data.email && (
+                      <DrawerContactRow
+                        icon={<EnvelopeSimple size={15} />}
+                        label={drawer.data.email}
+                        href={`mailto:${drawer.data.email}`}
+                      />
+                    )}
                     {drawer.data.phone && (
                       <DrawerContactRow
                         icon={<Phone size={15} />}
@@ -733,24 +767,10 @@ function DrawerContactRow({
   external = false,
 }: {
   icon: React.ReactNode;
-  label: string | null;
-  href: string | null;
+  label: string;
+  href: string;
   external?: boolean;
 }) {
-  const isEmpty = !label || !href;
-
-  if (isEmpty) {
-    return (
-      <div
-        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px]"
-        style={{ color: "var(--color-text-tertiary)", opacity: 0.45 }}
-      >
-        <span style={{ flexShrink: 0 }}>{icon}</span>
-        <span className="min-w-0 flex-1 truncate">–</span>
-      </div>
-    );
-  }
-
   return (
     <a
       href={href}
