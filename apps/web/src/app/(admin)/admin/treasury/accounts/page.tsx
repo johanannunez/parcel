@@ -16,6 +16,7 @@ import { currency0 } from "@/lib/format";
 import { ACTIVE_BUCKET_CATEGORIES } from "@/lib/treasury/types";
 import type { BucketCategory } from "@/lib/treasury/types";
 import PlaidLinkButton from "./PlaidLinkButton";
+import AccountCategorizer from "./AccountCategorizer";
 import { disconnectBank } from "./actions";
 
 export const metadata: Metadata = {
@@ -106,12 +107,18 @@ export default async function TreasuryAccountsPage() {
 
   const accounts = rawAccounts as AccountRow[];
 
-  // Split into active buckets vs other
+  // Split into active buckets vs uncategorized vs other
   const activeBuckets = accounts.filter(
     (a) => a.bucket_category && ACTIVE_BUCKET_SET.has(a.bucket_category)
   );
+  const uncategorizedAccounts = accounts.filter(
+    (a) => !a.bucket_category || a.bucket_category === "uncategorized"
+  );
   const otherAccounts = accounts.filter(
-    (a) => !a.bucket_category || !ACTIVE_BUCKET_SET.has(a.bucket_category)
+    (a) =>
+      a.bucket_category &&
+      a.bucket_category !== "uncategorized" &&
+      !ACTIVE_BUCKET_SET.has(a.bucket_category)
   );
 
   const totalBalance = accounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
@@ -292,6 +299,18 @@ export default async function TreasuryAccountsPage() {
 
             <PlaidLinkButton />
           </div>
+        )}
+
+        {/* Categorization banner + controls for uncategorized accounts */}
+        {uncategorizedAccounts.length > 0 && (
+          <AccountCategorizer
+            accounts={uncategorizedAccounts.map((a) => ({
+              id: a.id,
+              name: a.name,
+              mask: a.mask,
+              type: a.type,
+            }))}
+          />
         )}
 
         {/* Active Buckets */}
