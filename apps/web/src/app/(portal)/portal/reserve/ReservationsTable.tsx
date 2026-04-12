@@ -63,7 +63,7 @@ function Row({ row, muted = false }: { row: ReservationRow; muted?: boolean }) {
       <td className="p-0 w-[4px]" style={{ backgroundColor: accent }} />
 
       {/* Property */}
-      <td className="px-4 py-3 min-w-[140px]">
+      <td className="px-4 py-2 min-w-[140px]">
         <p
           className="text-[13px] font-semibold leading-tight"
           style={{ color: "var(--color-text-primary)" }}
@@ -83,7 +83,7 @@ function Row({ row, muted = false }: { row: ReservationRow; muted?: boolean }) {
       </td>
 
       {/* Status badge */}
-      <td className="px-4 py-3 whitespace-nowrap">
+      <td className="px-4 py-2 whitespace-nowrap">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
           style={{
@@ -99,19 +99,19 @@ function Row({ row, muted = false }: { row: ReservationRow; muted?: boolean }) {
         </span>
       </td>
 
-      {/* Check-in */}
-      <td className="px-4 py-3 whitespace-nowrap">
+      {/* Check-in — date + time on one line, days-away badge below */}
+      <td className="px-4 py-2 whitespace-nowrap">
         <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
           {row.checkInDate}
+          {row.checkInTime && (
+            <span className="ml-1.5 font-normal text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+              {row.checkInTime}
+            </span>
+          )}
         </p>
-        {row.checkInTime && (
-          <p className="mt-0.5 text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
-            {row.checkInTime}
-          </p>
-        )}
         {row.daysAway !== null && (
           <span
-            className="mt-1.5 inline-block rounded-full px-1.5 py-px text-[10px] font-semibold"
+            className="mt-1 inline-block rounded-full px-1.5 py-px text-[10px] font-semibold"
             style={{
               backgroundColor:
                 row.daysAway === 0
@@ -136,37 +136,37 @@ function Row({ row, muted = false }: { row: ReservationRow; muted?: boolean }) {
         )}
       </td>
 
-      {/* Check-out */}
-      <td className="px-4 py-3 whitespace-nowrap">
+      {/* Check-out — date + time on one line */}
+      <td className="px-4 py-2 whitespace-nowrap">
         <p className="text-[13px] font-medium" style={{ color: "var(--color-text-primary)" }}>
           {row.checkOutDate}
+          {row.checkOutTime && (
+            <span className="ml-1.5 font-normal text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
+              {row.checkOutTime}
+            </span>
+          )}
         </p>
-        {row.checkOutTime && (
-          <p className="mt-0.5 text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
-            {row.checkOutTime}
-          </p>
-        )}
       </td>
 
       {/* Guests */}
-      <td className="hidden sm:table-cell px-4 py-3 whitespace-nowrap">
+      <td className="hidden sm:table-cell px-4 py-2 whitespace-nowrap">
         <p className="text-[12px]" style={{ color: "var(--color-text-secondary)" }}>
           {row.guestLine || "—"}
         </p>
       </td>
 
       {/* Cleaning */}
-      <td className="hidden sm:table-cell px-4 py-3 whitespace-nowrap">
+      <td className="hidden sm:table-cell px-4 py-2 whitespace-nowrap">
         <p
           className="text-[12px] font-medium"
-          style={{ color: row.cleaning ? "#15803d" : "var(--color-text-tertiary)" }}
+          style={{ color: row.cleaning ? "#15803d" : "#64748b" }}
         >
-          {row.cleaning ? "Scheduled" : "None"}
+          {row.cleaning ? "Parcel cleans" : "Owner cleans"}
         </p>
       </td>
 
       {/* Stay type */}
-      <td className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+      <td className="hidden md:table-cell px-4 py-2 whitespace-nowrap">
         <p className="text-[11px]" style={{ color: "var(--color-text-tertiary)" }}>
           {row.isOwnerStaying ? "Owner" : "Guest"}
         </p>
@@ -226,7 +226,7 @@ export function ReservationsTable({
               {(["Property", "Status", "Check-in", "Check-out"] as const).map((h) => (
                 <th
                   key={h}
-                  className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em]"
+                  className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.1em]"
                   style={{ color: "var(--color-text-tertiary)" }}
                 >
                   {h}
