@@ -57,7 +57,7 @@
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.2.4",
     "playwright": "^1.59.1",
     "sharp": "^0.34.5",
     "tsx": "^4.21.0",
