@@ -15,6 +15,7 @@ const PAPERCLIP_BASE = "http://srv1536024.hstgr.cloud:44387";
 
 // Brand Account routine IDs (from /BA/routines/{id} URLs in Paperclip dashboard)
 const ROUTINES = {
+  contentStrategy: "7e641e20-bfd4-4378-a912-7ce52d09a55d",
   writeCopy: "20004e105-67af-4a13-bed6-9aa52e3977eb",
   checkInterviews: "4a18c8bb-6d26-45cd-a7d7-c7f8019987cf",
   createVisuals: "1a0162be-7566-407a-95ca-74701d0be9f3",
@@ -25,9 +26,11 @@ const ROUTINES = {
 
 // Notion status value → routines to trigger
 const STATUS_MAP: Record<string, string[]> = {
+  Strategy: [ROUTINES.contentStrategy],
   "Copy Writing": [ROUTINES.writeCopy, ROUTINES.checkInterviews],
   Visuals: [ROUTINES.createVisuals, ROUTINES.buildNewsletter],
   "Copy Review": [ROUTINES.qualityGate],
+  "Visuals Review": [ROUTINES.qualityGate],
   "Ready to Schedule": [ROUTINES.schedulePublish],
 };
 
