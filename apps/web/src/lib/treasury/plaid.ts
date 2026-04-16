@@ -11,17 +11,30 @@ let plaidClient: PlaidApi | null = null;
 
 /**
  * Returns a singleton Plaid API client.
- * Reads PLAID_CLIENT_ID, PLAID_SB_SECRET, and PLAID_ENV (default: 'sandbox') from env.
+ *
+ * Env vars:
+ *   PLAID_CLIENT_ID   — your Plaid client ID (same for all environments)
+ *   PLAID_ENV         — "sandbox" | "production" (default: "sandbox")
+ *   PLAID_SB_SECRET   — secret for sandbox
+ *   PLAID_PROD_SECRET — secret for production
  */
 export function getPlaidClient(): PlaidApi {
   if (plaidClient) return plaidClient;
 
   const clientId = process.env.PLAID_CLIENT_ID;
-  const secret = process.env.PLAID_SB_SECRET;
   const env = (process.env.PLAID_ENV ?? 'sandbox') as keyof typeof PlaidEnvironments;
+  const secret = env === 'production'
+    ? process.env.PLAID_PROD_SECRET
+    : process.env.PLAID_SB_SECRET;
 
   if (!clientId) throw new Error('PLAID_CLIENT_ID is not set');
-  if (!secret) throw new Error('PLAID_SB_SECRET is not set');
+  if (!secret) {
+    throw new Error(
+      env === 'production'
+        ? 'PLAID_PROD_SECRET is not set'
+        : 'PLAID_SB_SECRET is not set',
+    );
+  }
 
   const config = new Configuration({
     basePath: PlaidEnvironments[env],

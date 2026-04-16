@@ -22,6 +22,15 @@ export async function getConnectionStatus(supabase: SupabaseClient) {
   return data;
 }
 
+export async function getAllConnections(supabase: SupabaseClient) {
+  const { data } = await supabase
+    .from("treasury_connections")
+    .select("id, institution_name, status, last_synced_at")
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
 export async function getAlerts(supabase: SupabaseClient, limit = 10) {
   const { data } = await supabase
     .from("treasury_alerts")

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Bank, CircleNotch } from "@phosphor-icons/react";
+import { Plus, CircleNotch } from "@phosphor-icons/react";
 
 declare global {
   interface Window {
@@ -149,26 +149,26 @@ export default function PlaidLinkButton() {
   }, [router]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
       <button
         onClick={handleConnect}
         disabled={loading}
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: "8px",
-          padding: "12px 28px",
+          gap: "6px",
+          padding: "9px 18px",
           borderRadius: "10px",
           background: loading
             ? "rgba(2,170,235,0.5)"
             : "linear-gradient(135deg, #02AAEB, #1B77BE)",
           color: "#fff",
-          fontSize: "14px",
+          fontSize: "13px",
           fontWeight: 600,
           letterSpacing: "-0.01em",
           border: "none",
           cursor: loading ? "not-allowed" : "pointer",
-          boxShadow: loading ? "none" : "0 4px 14px rgba(2,170,235,0.35)",
+          boxShadow: loading ? "none" : "0 3px 12px rgba(2,170,235,0.3)",
           transition: "opacity 0.15s ease, box-shadow 0.15s ease",
           outline: "none",
         }}
@@ -176,7 +176,7 @@ export default function PlaidLinkButton() {
         {loading ? (
           <>
             <CircleNotch
-              size={16}
+              size={14}
               weight="bold"
               style={{ animation: "spin 0.8s linear infinite" }}
             />
@@ -184,8 +184,8 @@ export default function PlaidLinkButton() {
           </>
         ) : (
           <>
-            <Bank size={16} weight="bold" />
-            Connect Bank Account
+            <Plus size={14} weight="bold" />
+            Add Account
           </>
         )}
       </button>
@@ -194,10 +194,10 @@ export default function PlaidLinkButton() {
         <p
           style={{
             margin: 0,
-            fontSize: "13px",
+            fontSize: "12px",
             color: "#dc2626",
-            textAlign: "center",
-            maxWidth: "320px",
+            textAlign: "right",
+            maxWidth: "280px",
           }}
         >
           {error}

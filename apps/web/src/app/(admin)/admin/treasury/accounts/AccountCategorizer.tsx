@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Warning } from "@phosphor-icons/react";
 import type { BucketCategory } from "@/lib/treasury/types";
+import ConfirmModal from "@/components/admin/ConfirmModal";
+import { removeAccount } from "./actions";
 
 const ALL_BUCKET_OPTIONS: { value: BucketCategory; label: string }[] = [
   { value: "income", label: "Income" },
@@ -21,16 +23,6 @@ const ALL_BUCKET_OPTIONS: { value: BucketCategory; label: string }[] = [
   { value: "uncategorized", label: "Uncategorized" },
 ];
 
-// Only these 6 buckets use an allocation target pct
-const ALLOCATION_BUCKET_SET = new Set<BucketCategory>([
-  "owners_comp",
-  "tax",
-  "emergency",
-  "opex",
-  "profit",
-  "generosity",
-]);
-
 type UncategorizedAccount = {
   id: string;
   name: string;
@@ -40,50 +32,33 @@ type UncategorizedAccount = {
 
 function AccountCategorizerCard({ account }: { account: UncategorizedAccount }) {
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState<BucketCategory | "">("");
-  const [allocationPct, setAllocationPct] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
-  const showAllocationInput =
-    selectedCategory !== "" && ALLOCATION_BUCKET_SET.has(selectedCategory as BucketCategory);
+  async function handleConfirmRemove() {
+    setConfirmOpen(false);
+    setRemoving(true);
+    try {
+      await removeAccount(account.id);
+      router.refresh();
+    } catch {
+      setRemoving(false);
+    }
+  }
 
   async function handleCategoryChange(value: BucketCategory | "") {
-    setSelectedCategory(value);
     setError(null);
-    if (!ALLOCATION_BUCKET_SET.has(value as BucketCategory)) {
-      // Auto-save for non-allocation buckets on category select
-      if (value === "") return;
-      await save(value as BucketCategory, null);
-    }
-  }
+    if (value === "") return;
 
-  async function handleSave() {
-    if (!selectedCategory) return;
-    const pct = allocationPct !== "" ? parseFloat(allocationPct) : null;
-    if (pct !== null && (isNaN(pct) || pct < 0 || pct > 100)) {
-      setError("Allocation must be between 0 and 100");
-      return;
-    }
-    await save(selectedCategory as BucketCategory, pct);
-  }
-
-  async function save(category: BucketCategory, pct: number | null) {
     setSaving(true);
-    setError(null);
     try {
-      const body: { bucket_category: BucketCategory; allocation_target_pct?: number | null } = {
-        bucket_category: category,
-      };
-      if (ALLOCATION_BUCKET_SET.has(category)) {
-        body.allocation_target_pct = pct;
-      }
-
       const res = await fetch(`/api/treasury/accounts/${account.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ bucket_category: value }),
       });
 
       if (!res.ok) {
@@ -103,76 +78,75 @@ function AccountCategorizerCard({ account }: { account: UncategorizedAccount }) 
   if (saved) return null;
 
   return (
-    <div
-      style={{
-        backgroundColor: "var(--color-white)",
-        border: "1.5px solid rgba(245,158,11,0.25)",
-        borderRadius: "14px",
-        padding: "16px 20px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-      }}
-    >
-      {/* Account identity */}
-      <div>
-        <div
-          style={{
-            fontSize: "14px",
-            fontWeight: 600,
-            color: "var(--color-text-primary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {account.name}
-        </div>
-        {account.mask && (
-          <div style={{ fontSize: "12px", color: "var(--color-text-tertiary)" }}>
-            ···· {account.mask}
+    <>
+      <div
+        style={{
+          backgroundColor: "var(--color-white)",
+          border: "1.5px solid rgba(245,158,11,0.25)",
+          borderRadius: "14px",
+          padding: "16px 20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          opacity: removing ? 0.5 : 1,
+          transition: "opacity 0.15s ease",
+        }}
+      >
+        {/* Account identity + remove */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
+          <div>
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "var(--color-text-primary)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {account.name}
+            </div>
+            {account.mask && (
+              <div style={{ fontSize: "12px", color: "var(--color-text-tertiary)" }}>
+                ···· {account.mask}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+          <button
+            onClick={() => setConfirmOpen(true)}
+            disabled={removing || saving}
+            title={`Remove ${account.name}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "3px",
+              padding: "3px 7px",
+              borderRadius: "6px",
+              border: "1px solid transparent",
+              backgroundColor: "transparent",
+              color: "var(--color-text-tertiary)",
+              fontSize: "11px",
+              fontWeight: 500,
+              cursor: removing || saving ? "not-allowed" : "pointer",
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              if (!removing && !saving) {
+                e.currentTarget.style.color = "#b91c1c";
+                e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.06)";
+                e.currentTarget.style.borderColor = "rgba(220,38,38,0.15)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--color-text-tertiary)";
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
+          >
+            Remove
+          </button>
+        </div>
 
-      {/* Category select */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <label
-          style={{
-            fontSize: "11px",
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            color: "var(--color-text-tertiary)",
-          }}
-        >
-          Bucket
-        </label>
-        <select
-          value={selectedCategory}
-          onChange={(e) => handleCategoryChange(e.target.value as BucketCategory | "")}
-          disabled={saving}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "8px",
-            border: "1.5px solid var(--color-warm-gray-200)",
-            backgroundColor: "var(--color-white)",
-            fontSize: "13px",
-            color: selectedCategory ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
-            cursor: saving ? "not-allowed" : "pointer",
-            outline: "none",
-            width: "100%",
-          }}
-        >
-          <option value="">Select a bucket...</option>
-          {ALL_BUCKET_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Allocation target — only shown for the 6 allocation buckets */}
-      {showAllocationInput && (
+        {/* Category select — auto-saves on change */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
             style={{
@@ -183,54 +157,53 @@ function AccountCategorizerCard({ account }: { account: UncategorizedAccount }) 
               color: "var(--color-text-tertiary)",
             }}
           >
-            Allocation Target %
+            Bucket
           </label>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              step={0.1}
-              placeholder="e.g. 50"
-              value={allocationPct}
-              onChange={(e) => setAllocationPct(e.target.value)}
-              disabled={saving}
-              style={{
-                flex: 1,
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "1.5px solid var(--color-warm-gray-200)",
-                backgroundColor: "var(--color-white)",
-                fontSize: "13px",
-                color: "var(--color-text-primary)",
-                outline: "none",
-              }}
-            />
-            <button
-              onClick={handleSave}
-              disabled={saving || !selectedCategory}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "8px",
-                background: saving ? "rgba(2,170,235,0.4)" : "linear-gradient(135deg, #02AAEB, #1B77BE)",
-                color: "#fff",
-                fontSize: "12px",
-                fontWeight: 600,
-                border: "none",
-                cursor: saving || !selectedCategory ? "not-allowed" : "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </div>
+          <select
+            defaultValue=""
+            onChange={(e) => handleCategoryChange(e.target.value as BucketCategory | "")}
+            disabled={saving || removing}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "8px",
+              border: "1.5px solid var(--color-warm-gray-200)",
+              backgroundColor: "var(--color-white)",
+              fontSize: "13px",
+              color: "var(--color-text-tertiary)",
+              cursor: saving || removing ? "not-allowed" : "pointer",
+              outline: "none",
+              width: "100%",
+            }}
+          >
+            <option value="">Select a bucket...</option>
+            {ALL_BUCKET_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
 
-      {error && (
-        <p style={{ margin: 0, fontSize: "12px", color: "#dc2626" }}>{error}</p>
-      )}
-    </div>
+        {saving && (
+          <p style={{ margin: 0, fontSize: "12px", color: "var(--color-text-tertiary)" }}>Saving...</p>
+        )}
+
+        {error && (
+          <p style={{ margin: 0, fontSize: "12px", color: "#dc2626" }}>{error}</p>
+        )}
+      </div>
+
+      <ConfirmModal
+        open={confirmOpen}
+        variant="danger"
+        title={`Remove ${account.name}?`}
+        description="This account will be removed from Treasury. You can re-add it by disconnecting and reconnecting the bank."
+        confirmLabel="Remove"
+        cancelLabel="Keep"
+        onConfirm={handleConfirmRemove}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 }
 

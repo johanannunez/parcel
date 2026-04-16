@@ -469,6 +469,142 @@ async function checkTokenRotation(
 }
 
 // ---------------------------------------------------------------------------
+// Daily balance snapshot
+// ---------------------------------------------------------------------------
+
+async function recordBalanceSnapshot(
+  svc: ReturnType<typeof createServiceClient>,
+): Promise<void> {
+  const today = new Date().toISOString().split("T")[0];
+
+  // Sum all active account balances
+  const { data: accounts } = await svc
+    .from("treasury_accounts")
+    .select("id, current_balance");
+
+  const totalBalance = (accounts ?? []).reduce(
+    (sum, a) => sum + Number((a as { current_balance: number }).current_balance ?? 0),
+    0,
+  );
+
+  // Build per-account breakdown
+  const accountBalances: Record<string, number> = {};
+  for (const a of (accounts ?? []) as Array<{ id: string; current_balance: number }>) {
+    accountBalances[a.id] = Number(a.current_balance ?? 0);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (svc as any)
+    .from("treasury_balance_snapshots")
+    .upsert(
+      {
+        date: today,
+        total_balance: totalBalance,
+        account_balances: accountBalances,
+      },
+      { onConflict: "date" },
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Backfill balance history from transaction data
+// Works backwards from current balance using daily transaction sums.
+// Only runs when we have transactions but fewer than 7 snapshots (first sync).
+// ---------------------------------------------------------------------------
+
+async function backfillBalanceHistory(
+  svc: ReturnType<typeof createServiceClient>,
+): Promise<void> {
+  // Check if we already have enough snapshots (skip if chart is populated)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existingSnapshots } = await (svc as any)
+    .from("treasury_balance_snapshots")
+    .select("id")
+    .limit(10) as { data: Array<{ id: string }> | null };
+
+  if ((existingSnapshots ?? []).length >= 7) return; // Already backfilled
+
+  // Get all Plaid transactions grouped by date
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: transactions } = await (svc as any)
+    .from("treasury_transactions")
+    .select("date, amount, account_id")
+    .eq("source", "plaid")
+    .eq("is_duplicate", false)
+    .order("date", { ascending: false }) as {
+    data: Array<{ date: string; amount: number; account_id: string | null }> | null;
+  };
+
+  if (!transactions || transactions.length === 0) return;
+
+  // Get current balances per account
+  const { data: accounts } = await svc
+    .from("treasury_accounts")
+    .select("id, current_balance");
+
+  if (!accounts || accounts.length === 0) return;
+
+  const accountBalances = new Map<string, number>();
+  let totalBalance = 0;
+  for (const a of accounts as Array<{ id: string; current_balance: number }>) {
+    const bal = Number(a.current_balance ?? 0);
+    accountBalances.set(a.id, bal);
+    totalBalance += bal;
+  }
+
+  // Group transactions by date (newest first)
+  const txByDate = new Map<string, Array<{ amount: number; account_id: string | null }>>();
+  for (const tx of transactions) {
+    if (!txByDate.has(tx.date)) txByDate.set(tx.date, []);
+    txByDate.get(tx.date)!.push({ amount: tx.amount, account_id: tx.account_id });
+  }
+
+  // Build daily snapshots working backwards from today
+  const today = new Date().toISOString().split("T")[0];
+  const dates = [...txByDate.keys()].sort().reverse(); // newest first
+
+  // Start from today's known balance and subtract each day's transactions
+  let runningTotal = totalBalance;
+  const runningAccounts = new Map(accountBalances);
+  const snapshots: Array<{ date: string; total_balance: number; account_balances: Record<string, number> }> = [];
+
+  // Today is already recorded; work backwards through transaction dates
+  for (const date of dates) {
+    if (date >= today) continue; // Skip today (already have it)
+
+    const dayTxs = txByDate.get(date) ?? [];
+
+    // Subtract this day's transactions to get the balance BEFORE these transactions
+    for (const tx of dayTxs) {
+      runningTotal -= tx.amount;
+      if (tx.account_id) {
+        const prev = runningAccounts.get(tx.account_id) ?? 0;
+        runningAccounts.set(tx.account_id, prev - tx.amount);
+      }
+    }
+
+    const balObj: Record<string, number> = {};
+    for (const [id, bal] of runningAccounts) {
+      balObj[id] = Math.round(bal * 100) / 100;
+    }
+
+    snapshots.push({
+      date,
+      total_balance: Math.round(runningTotal * 100) / 100,
+      account_balances: balObj,
+    });
+  }
+
+  if (snapshots.length === 0) return;
+
+  // Batch upsert all historical snapshots
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (svc as any)
+    .from("treasury_balance_snapshots")
+    .upsert(snapshots, { onConflict: "date", ignoreDuplicates: true });
+}
+
+// ---------------------------------------------------------------------------
 // Main sync orchestrator
 // ---------------------------------------------------------------------------
 
@@ -555,7 +691,11 @@ export async function runTreasurySync(): Promise<SyncResult> {
   result.dedup_matches = dedup.matchCount;
   result.errors.push(...dedup.errors);
 
-  // 9. Log sync errors as alerts if any occurred
+  // 9. Record daily balance snapshot + backfill history from transactions
+  await recordBalanceSnapshot(svc);
+  await backfillBalanceHistory(svc);
+
+  // 10. Log sync errors as alerts if any occurred
   if (result.errors.length > 0) {
     await createAlert(svc, {
       type: "sync_failed",

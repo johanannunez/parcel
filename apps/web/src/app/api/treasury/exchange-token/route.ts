@@ -71,22 +71,33 @@ export async function POST(req: NextRequest) {
     const accountsResponse = await plaid.accountsGet({ access_token });
     const plaidAccounts = accountsResponse.data.accounts;
 
-    // Map and insert accounts (only columns that exist in the schema)
-    const accountRows = plaidAccounts.map((acct) => {
-      const accountType =
-        acct.type === "depository" && acct.subtype === "savings" ? "savings" : "checking";
+    // Map Plaid account types to our categories
+    function mapAccountType(plaidType: string, plaidSubtype: string | null | undefined): string {
+      switch (plaidType) {
+        case "depository":
+          return plaidSubtype === "savings" ? "savings" : "checking";
+        case "credit":
+          return "credit_card";
+        case "investment":
+          return "investment";
+        case "loan":
+          return "loan";
+        default:
+          return "checking";
+      }
+    }
 
-      return {
-        connection_id: connection.id,
-        plaid_account_id: acct.account_id,
-        name: acct.name,
-        official_name: acct.official_name ?? null,
-        type: accountType,
-        mask: acct.mask ?? null,
-        current_balance: acct.balances.current ?? null,
-        available_balance: acct.balances.available ?? null,
-      };
-    });
+    // Map and insert accounts
+    const accountRows = plaidAccounts.map((acct) => ({
+      connection_id: connection.id,
+      plaid_account_id: acct.account_id,
+      name: acct.name,
+      official_name: acct.official_name ?? null,
+      type: mapAccountType(acct.type, acct.subtype),
+      mask: acct.mask ?? null,
+      current_balance: acct.balances.current ?? null,
+      available_balance: acct.balances.available ?? null,
+    }));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: accountsError } = await (service as any)

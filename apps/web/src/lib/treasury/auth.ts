@@ -34,7 +34,7 @@ export async function setTreasuryVerified(): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    path: "/admin/treasury",
+    path: "/",
     maxAge: MAX_AGE_SECONDS,
   });
 }

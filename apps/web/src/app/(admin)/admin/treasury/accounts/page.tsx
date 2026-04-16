@@ -2,27 +2,25 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import {
   Bank,
-  CheckCircle,
-  ArrowRight,
   Buildings,
-  CreditCard,
+  CreditCard as CreditCardIcon,
   PiggyBank,
-  Plugs,
+  ChartLine,
 } from "@phosphor-icons/react/dist/ssr";
 import { isTreasuryVerified } from "@/lib/treasury/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getAccounts, getConnectionStatus } from "@/lib/treasury/queries";
+import { getAccounts, getAllConnections } from "@/lib/treasury/queries";
 import { currency0 } from "@/lib/format";
-import { ACTIVE_BUCKET_CATEGORIES } from "@/lib/treasury/types";
 import PlaidLinkButton from "./PlaidLinkButton";
 import AccountCategorizer from "./AccountCategorizer";
-import { disconnectBank } from "./actions";
+import RemoveAccountButton from "./RemoveAccountButton";
+import BalanceChartLoader from "@/components/admin/treasury/BalanceChartLoader";
+import { SyncButton } from "@/components/admin/treasury/SyncButton";
+import CollapsibleSection from "./CollapsibleSection";
 
 export const metadata: Metadata = {
   title: "Accounts | Treasury | Admin",
 };
-
-const ACTIVE_BUCKET_SET = new Set<string>(ACTIVE_BUCKET_CATEGORIES);
 
 const BUCKET_LABELS: Record<string, string> = {
   income: "Income",
@@ -40,6 +38,52 @@ const BUCKET_LABELS: Record<string, string> = {
   uncategorized: "Uncategorized",
 };
 
+const ACCOUNT_TYPE_CONFIG: Record<string, {
+  label: string;
+  icon: React.ReactNode;
+  iconSmall: React.ReactNode;
+  color: string;
+  isLiability: boolean;
+}> = {
+  checking: {
+    label: "Cash",
+    icon: <Buildings size={14} weight="duotone" color="#1B77BE" />,
+    iconSmall: <Buildings size={12} weight="duotone" color="#1B77BE" />,
+    color: "#16a34a",
+    isLiability: false,
+  },
+  savings: {
+    label: "Savings",
+    icon: <PiggyBank size={14} weight="duotone" color="#d97706" />,
+    iconSmall: <PiggyBank size={12} weight="duotone" color="#d97706" />,
+    color: "#60a5fa",
+    isLiability: false,
+  },
+  credit_card: {
+    label: "Credit Cards",
+    icon: <CreditCardIcon size={14} weight="duotone" color="#dc2626" />,
+    iconSmall: <CreditCardIcon size={12} weight="duotone" color="#dc2626" />,
+    color: "#dc2626",
+    isLiability: true,
+  },
+  investment: {
+    label: "Investments",
+    icon: <ChartLine size={14} weight="duotone" color="#7c3aed" />,
+    iconSmall: <ChartLine size={12} weight="duotone" color="#7c3aed" />,
+    color: "#7c3aed",
+    isLiability: false,
+  },
+  loan: {
+    label: "Loans",
+    icon: <Bank size={14} weight="duotone" color="#dc2626" />,
+    iconSmall: <Bank size={12} weight="duotone" color="#dc2626" />,
+    color: "#f87171",
+    isLiability: true,
+  },
+};
+
+const CATEGORY_ORDER = ["checking", "savings", "investment", "credit_card", "loan"];
+
 type AccountRow = {
   id: string;
   name: string;
@@ -50,6 +94,7 @@ type AccountRow = {
   allocation_target_pct: number | null;
   is_active: boolean;
   mask: string | null;
+  connection_id: string | null;
 };
 
 type ConnectionRow = {
@@ -59,37 +104,6 @@ type ConnectionRow = {
   last_synced_at: string | null;
 };
 
-async function getStripeMonthlyTotals(supabase: ReturnType<typeof createClient> extends Promise<infer T> ? T : never) {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-  const endDate =
-    month === 12
-      ? `${year + 1}-01-01`
-      : `${year}-${String(month + 1).padStart(2, "0")}-01`;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (supabase as any)
-    .from("treasury_transactions")
-    .select("amount, category")
-    .gte("date", startDate)
-    .lt("date", endDate)
-    .eq("source", "stripe")
-    .in("category", ["stripe_fee", "stripe_payout"])
-    .eq("is_duplicate", false) as { data: Array<{ amount: number; category: string }> | null };
-
-  const rows = data ?? [];
-  const techFee = rows
-    .filter((r) => r.category === "stripe_fee")
-    .reduce((sum, r) => sum + Math.abs(r.amount), 0);
-  const payout = rows
-    .filter((r) => r.category === "stripe_payout")
-    .reduce((sum, r) => sum + Math.abs(r.amount), 0);
-
-  return { techFee, payout };
-}
-
 export default async function TreasuryAccountsPage() {
   const verified = await isTreasuryVerified();
   if (!verified) {
@@ -98,394 +112,181 @@ export default async function TreasuryAccountsPage() {
 
   const supabase = await createClient();
 
-  const [rawAccounts, connection, stripe] = await Promise.all([
+  const [rawAccounts, connections] = await Promise.all([
     getAccounts(supabase),
-    getConnectionStatus(supabase) as Promise<ConnectionRow | null>,
-    getStripeMonthlyTotals(supabase),
+    getAllConnections(supabase) as Promise<ConnectionRow[]>,
   ]);
 
   const accounts = rawAccounts as AccountRow[];
+  const hasConnections = connections.length > 0;
 
-  // Split into active buckets vs uncategorized vs other
-  const activeBuckets = accounts.filter(
-    (a) => a.bucket_category && ACTIVE_BUCKET_SET.has(a.bucket_category)
-  );
-  const uncategorizedAccounts = accounts.filter(
-    (a) => !a.bucket_category || a.bucket_category === "uncategorized"
-  );
-  const otherAccounts = accounts.filter(
-    (a) =>
-      a.bucket_category &&
-      a.bucket_category !== "uncategorized" &&
-      !ACTIVE_BUCKET_SET.has(a.bucket_category)
-  );
+  const latestSync = connections.reduce<string | null>((latest, conn) => {
+    if (!conn.last_synced_at) return latest;
+    if (!latest) return conn.last_synced_at;
+    return conn.last_synced_at > latest ? conn.last_synced_at : latest;
+  }, null);
+
+  // Group accounts by type
+  const accountsByType = new Map<string, AccountRow[]>();
+  const uncategorizedAccounts: AccountRow[] = [];
+
+  for (const account of accounts) {
+    if (!account.bucket_category || account.bucket_category === "uncategorized") {
+      uncategorizedAccounts.push(account);
+    }
+    const typeKey = account.type ?? "checking";
+    if (!accountsByType.has(typeKey)) accountsByType.set(typeKey, []);
+    accountsByType.get(typeKey)!.push(account);
+  }
 
   const totalBalance = accounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
 
-  const syncedAt = connection?.last_synced_at
-    ? new Date(connection.last_synced_at).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : null;
+  // Category totals for summary
+  const categoryTotals: Array<{
+    type: string; label: string; total: number; count: number; color: string; isLiability: boolean;
+  }> = [];
+  for (const typeKey of CATEGORY_ORDER) {
+    const typeAccounts = accountsByType.get(typeKey);
+    if (!typeAccounts || typeAccounts.length === 0) continue;
+    const config = ACCOUNT_TYPE_CONFIG[typeKey] ?? ACCOUNT_TYPE_CONFIG.checking;
+    const total = typeAccounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
+    categoryTotals.push({
+      type: typeKey, label: config.label, total, count: typeAccounts.length,
+      color: config.color, isLiability: config.isLiability,
+    });
+  }
 
-  const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" });
+  const totalAssets = categoryTotals.filter((c) => !c.isLiability).reduce((sum, c) => sum + c.total, 0);
+  const totalLiabilities = categoryTotals.filter((c) => c.isLiability).reduce((sum, c) => sum + Math.abs(c.total), 0);
+
+  // Connection map
+  const connectionMap = new Map<string, ConnectionRow>();
+  for (const conn of connections) connectionMap.set(conn.id, conn);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
-      <div style={{ display: "flex", flexDirection: "column", gap: "36px" }}>
+    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "20px 24px 40px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-        {/* Page header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: "16px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                margin: 0,
-                fontSize: "28px",
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              Accounts
-            </h1>
-            <p
-              style={{
-                margin: "4px 0 0",
-                fontSize: "13px",
-                color: "var(--color-text-tertiary)",
-              }}
-            >
-              {accounts.length > 0
-                ? `${accounts.length} account${accounts.length !== 1 ? "s" : ""} · ${currency0.format(totalBalance)} total`
-                : "No accounts linked yet"}
-            </p>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+          <h1 style={{
+            margin: 0, fontSize: "18px", fontWeight: 700,
+            letterSpacing: "-0.02em", color: "var(--color-text-primary)",
+          }}>
+            Accounts
+          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {hasConnections && <SyncButton lastSyncedAt={latestSync} />}
+            <PlaidLinkButton />
           </div>
-
-          {/* Connection status badge */}
-          {connection ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "10px 16px",
-                borderRadius: "10px",
-                border: "1.5px solid rgba(22,163,74,0.2)",
-                backgroundColor: "rgba(22,163,74,0.06)",
-              }}
-            >
-              <CheckCircle size={16} weight="fill" color="#16a34a" />
-              <div>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "var(--color-text-primary)",
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {connection.institution_name ?? "Bank connected"}
-                </div>
-                {syncedAt && (
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "var(--color-text-tertiary)",
-                    }}
-                  >
-                    Synced {syncedAt}
-                  </div>
-                )}
-              </div>
-              <form
-                action={async () => {
-                  "use server";
-                  await disconnectBank(connection.id);
-                  redirect("/admin/treasury/accounts");
-                }}
-                style={{ marginLeft: "8px" }}
-              >
-                <button
-                  type="submit"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "5px 10px",
-                    borderRadius: "7px",
-                    border: "1.5px solid rgba(220,38,38,0.2)",
-                    backgroundColor: "rgba(220,38,38,0.06)",
-                    color: "#b91c1c",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Plugs size={13} weight="bold" />
-                  Disconnect
-                </button>
-              </form>
-            </div>
-          ) : null}
         </div>
 
-        {/* No connection — empty state with Plaid Link */}
-        {!connection && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "24px",
-              padding: "64px 24px",
-              textAlign: "center",
-              borderRadius: "20px",
-              border: "1.5px dashed rgba(2,170,235,0.3)",
-              backgroundColor: "rgba(2,170,235,0.03)",
-            }}
-          >
-            <div
-              style={{
-                width: "72px",
-                height: "72px",
-                borderRadius: "20px",
-                background: "linear-gradient(135deg, rgba(2,170,235,0.12), rgba(27,119,190,0.12))",
-                border: "1.5px solid rgba(2,170,235,0.25)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Bank size={36} weight="duotone" color="#1B77BE" />
-            </div>
+        {/* Chart */}
+        {hasConnections && <BalanceChartLoader currentBalance={totalBalance} />}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  letterSpacing: "-0.02em",
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                No bank connected
-              </h2>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "14px",
-                  lineHeight: "1.6",
-                  color: "var(--color-text-secondary)",
-                  maxWidth: "360px",
-                }}
-              >
-                Connect a bank account via Plaid to start syncing balances and
-                transactions across your treasury buckets.
+        {/* Empty state */}
+        {!hasConnections && (
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: "20px",
+            padding: "48px 24px", textAlign: "center", borderRadius: "10px",
+            border: "1px dashed rgba(2,170,235,0.3)", backgroundColor: "rgba(2,170,235,0.03)",
+          }}>
+            <div style={{
+              width: "56px", height: "56px", borderRadius: "14px",
+              background: "linear-gradient(135deg, rgba(2,170,235,0.12), rgba(27,119,190,0.12))",
+              border: "1px solid rgba(2,170,235,0.25)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Bank size={28} weight="duotone" color="#1B77BE" />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <h2 style={{
+                margin: 0, fontSize: "16px", fontWeight: 700,
+                letterSpacing: "-0.02em", color: "var(--color-text-primary)",
+              }}>No bank connected</h2>
+              <p style={{
+                margin: 0, fontSize: "13px", lineHeight: "1.5",
+                color: "var(--color-text-secondary)", maxWidth: "320px",
+              }}>
+                Connect a bank account via Plaid to start syncing balances and transactions.
               </p>
             </div>
-
             <PlaidLinkButton />
           </div>
         )}
 
-        {/* Categorization banner + controls for uncategorized accounts */}
+        {/* Uncategorized banner */}
         {uncategorizedAccounts.length > 0 && (
-          <AccountCategorizer
-            accounts={uncategorizedAccounts.map((a) => ({
-              id: a.id,
-              name: a.name,
-              mask: a.mask,
-              type: a.type,
-            }))}
-          />
+          <AccountCategorizer accounts={uncategorizedAccounts.map((a) => ({
+            id: a.id, name: a.name, mask: a.mask, type: a.type,
+          }))} />
         )}
 
-        {/* Active Buckets */}
-        {activeBuckets.length > 0 && (
-          <section style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "10px",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--color-text-tertiary)",
-              }}
-            >
-              Active Buckets
-            </h2>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: "16px",
-              }}
-              className="treasury-accounts-grid"
-            >
-              {activeBuckets.map((account) => (
-                <AccountCard key={account.id} account={account} />
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Two-column layout: categories left, summary right */}
+        {hasConnections && (
+          <div className="treasury-two-col">
+            {/* Left: account categories */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {CATEGORY_ORDER.map((typeKey) => {
+                const typeAccounts = accountsByType.get(typeKey);
+                if (!typeAccounts || typeAccounts.length === 0) return null;
+                const config = ACCOUNT_TYPE_CONFIG[typeKey] ?? ACCOUNT_TYPE_CONFIG.checking;
+                const typeTotal = typeAccounts.reduce((sum, a) => sum + (a.current_balance ?? 0), 0);
 
-        {/* Other Accounts */}
-        {otherAccounts.length > 0 && (
-          <section style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "10px",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--color-text-tertiary)",
-              }}
-            >
-              Other Accounts
-            </h2>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: "16px",
-                opacity: 0.72,
-              }}
-              className="treasury-accounts-grid"
-            >
-              {otherAccounts.map((account) => (
-                <AccountCard key={account.id} account={account} dimmed />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Stripe Revenue section */}
-        {connection && (
-          <section
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-            }}
-          >
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "10px",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--color-text-tertiary)",
-              }}
-            >
-              Stripe Revenue · {monthLabel}
-            </h2>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: "16px",
-              }}
-            >
-              {[
-                {
-                  label: "Tech Fee Collected",
-                  value: currency0.format(stripe.techFee),
-                  icon: <CreditCard size={20} weight="duotone" color="#1B77BE" />,
-                  accent: "rgba(2,170,235,0.07)",
-                  border: "rgba(2,170,235,0.18)",
-                },
-                {
-                  label: "Stripe Payouts",
-                  value: currency0.format(stripe.payout),
-                  icon: <ArrowRight size={20} weight="duotone" color="#16a34a" />,
-                  accent: "rgba(22,163,74,0.07)",
-                  border: "rgba(22,163,74,0.18)",
-                },
-              ].map((card) => (
-                <div
-                  key={card.label}
-                  style={{
-                    backgroundColor: card.accent,
-                    border: `1.5px solid ${card.border}`,
-                    borderRadius: "14px",
-                    padding: "20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "14px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "9px",
-                      backgroundColor: "var(--color-white)",
-                      border: `1px solid ${card.border}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                return (
+                  <CollapsibleSection
+                    key={typeKey}
+                    label={config.label}
+                    total={currency0.format(Math.abs(typeTotal))}
+                    isLiability={config.isLiability}
                   >
-                    {card.icon}
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "10px",
-                        fontWeight: 600,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: "var(--color-text-tertiary)",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      {card.label}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "24px",
-                        fontWeight: 700,
-                        letterSpacing: "-0.02em",
-                        color: "var(--color-text-primary)",
-                      }}
-                    >
-                      {card.value}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                    {typeAccounts.map((account, idx) => {
+                      const conn = account.connection_id ? connectionMap.get(account.connection_id) : null;
+                      return (
+                        <AccountListRow
+                          key={account.id}
+                          account={account}
+                          institutionName={conn?.institution_name ?? null}
+                          isFirst={idx === 0}
+                          isLast={idx === typeAccounts.length - 1}
+                          isLiability={config.isLiability}
+                        />
+                      );
+                    })}
+                  </CollapsibleSection>
+                );
+              })}
             </div>
-          </section>
-        )}
 
+            {/* Right: sticky summary */}
+            <div className="treasury-summary-col">
+              <SummarySidebar
+                categoryTotals={categoryTotals}
+                totalAssets={totalAssets}
+                totalLiabilities={totalLiabilities}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Responsive grid override */}
       <style>{`
-        @media (max-width: 1024px) {
-          .treasury-accounts-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
+        .treasury-two-col {
+          display: grid;
+          grid-template-columns: 1fr 280px;
+          gap: 16px;
+          align-items: start;
         }
-        @media (max-width: 640px) {
-          .treasury-accounts-grid {
-            grid-template-columns: 1fr !important;
+        .treasury-summary-col {
+          position: sticky;
+          top: 72px;
+        }
+        @media (max-width: 1024px) {
+          .treasury-two-col {
+            grid-template-columns: 1fr;
+          }
+          .treasury-summary-col {
+            position: static;
           }
         }
       `}</style>
@@ -493,188 +294,255 @@ export default async function TreasuryAccountsPage() {
   );
 }
 
-function AccountCard({
+/* ------------------------------------------------------------------ */
+/* Summary Sidebar                                                     */
+/* ------------------------------------------------------------------ */
+
+function SummarySidebar({
+  categoryTotals,
+  totalAssets,
+  totalLiabilities,
+}: {
+  categoryTotals: Array<{ type: string; label: string; total: number; color: string; isLiability: boolean }>;
+  totalAssets: number;
+  totalLiabilities: number;
+}) {
+  const assetCategories = categoryTotals.filter((c) => !c.isLiability);
+  const liabilityCategories = categoryTotals.filter((c) => c.isLiability);
+
+  return (
+    <div style={{
+      backgroundColor: "var(--color-white)",
+      border: "1px solid var(--color-warm-gray-200)",
+      borderRadius: "8px",
+      overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "12px 16px", borderBottom: "1px solid var(--color-warm-gray-100)",
+      }}>
+        <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text-primary)" }}>
+          Summary
+        </span>
+        <div style={{ display: "flex", gap: "0px" }}>
+          <span style={{
+            fontSize: "11px", fontWeight: 600, padding: "3px 8px", borderRadius: "4px",
+            backgroundColor: "var(--color-warm-gray-100)", color: "var(--color-text-primary)",
+          }}>Totals</span>
+          <span style={{
+            fontSize: "11px", fontWeight: 500, padding: "3px 8px",
+            color: "var(--color-text-tertiary)",
+          }}>Percent</span>
+        </div>
+      </div>
+
+      {/* Assets */}
+      {totalAssets > 0 && (
+        <div style={{ padding: "12px 16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-primary)" }}>Assets</span>
+            <span style={{
+              fontSize: "13px", fontWeight: 700, color: "var(--color-text-primary)",
+              fontVariantNumeric: "tabular-nums",
+            }}>{currency0.format(totalAssets)}</span>
+          </div>
+
+          {/* Stacked bar */}
+          <div style={{
+            display: "flex", height: "6px", borderRadius: "3px", overflow: "hidden",
+            backgroundColor: "var(--color-warm-gray-100)", marginBottom: "10px",
+          }}>
+            {assetCategories.map((cat) => (
+              <div key={cat.type} style={{
+                width: `${totalAssets > 0 ? (cat.total / totalAssets) * 100 : 0}%`,
+                backgroundColor: cat.color,
+                minWidth: "2px",
+              }} />
+            ))}
+          </div>
+
+          {/* Category rows */}
+          {assetCategories.map((cat) => (
+            <div key={cat.type} style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "4px 0",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{
+                  width: "7px", height: "7px", borderRadius: "50%",
+                  backgroundColor: cat.color, flexShrink: 0,
+                }} />
+                <span style={{ fontSize: "12px", color: "var(--color-text-secondary)" }}>
+                  {cat.label}
+                </span>
+              </div>
+              <span style={{
+                fontSize: "12px", fontWeight: 600, color: "var(--color-text-primary)",
+                fontVariantNumeric: "tabular-nums",
+              }}>{currency0.format(cat.total)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Liabilities */}
+      {totalLiabilities > 0 && (
+        <div style={{
+          padding: "12px 16px",
+          borderTop: "1px solid var(--color-warm-gray-100)",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-primary)" }}>Liabilities</span>
+            <span style={{
+              fontSize: "13px", fontWeight: 700, color: "#dc2626",
+              fontVariantNumeric: "tabular-nums",
+            }}>{currency0.format(totalLiabilities)}</span>
+          </div>
+
+          {/* Red bar */}
+          <div style={{
+            height: "6px", borderRadius: "3px", overflow: "hidden",
+            backgroundColor: "var(--color-warm-gray-100)", marginBottom: "10px",
+          }}>
+            <div style={{ width: "100%", height: "100%", backgroundColor: "#dc2626" }} />
+          </div>
+
+          {liabilityCategories.map((cat) => (
+            <div key={cat.type} style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "4px 0",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{
+                  width: "7px", height: "7px", borderRadius: "50%",
+                  backgroundColor: cat.color, flexShrink: 0,
+                }} />
+                <span style={{ fontSize: "12px", color: "var(--color-text-secondary)" }}>
+                  {cat.label}
+                </span>
+              </div>
+              <span style={{
+                fontSize: "12px", fontWeight: 600, color: "#dc2626",
+                fontVariantNumeric: "tabular-nums",
+              }}>{currency0.format(Math.abs(cat.total))}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Download CSV */}
+      <div style={{
+        padding: "10px 16px",
+        borderTop: "1px solid var(--color-warm-gray-100)",
+      }}>
+        <span style={{ fontSize: "12px", fontWeight: 600, color: "#02AAEB", cursor: "pointer" }}>
+          Download CSV
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Account list row — tightened to match Monarch                       */
+/* ------------------------------------------------------------------ */
+
+function AccountListRow({
   account,
-  dimmed = false,
+  institutionName,
+  isFirst,
+  isLast,
+  isLiability,
 }: {
   account: AccountRow;
-  dimmed?: boolean;
+  institutionName: string | null;
+  isFirst: boolean;
+  isLast: boolean;
+  isLiability: boolean;
 }) {
-  const isSavings = account.type === "savings";
+  const config = ACCOUNT_TYPE_CONFIG[account.type] ?? ACCOUNT_TYPE_CONFIG.checking;
   const bucketLabel = account.bucket_category
     ? (BUCKET_LABELS[account.bucket_category] ?? account.bucket_category)
     : null;
 
   return (
-    <div
-      style={{
-        backgroundColor: "var(--color-white)",
-        border: "1.5px solid var(--color-warm-gray-200)",
-        borderRadius: "16px",
-        padding: "20px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-        transition: "box-shadow 0.15s ease",
-      }}
-    >
-      {/* Header row: account icon + type badge */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "8px",
-        }}
-      >
-        <div
-          style={{
-            width: "38px",
-            height: "38px",
-            borderRadius: "10px",
-            background: dimmed
-              ? "rgba(0,0,0,0.04)"
-              : "linear-gradient(135deg, rgba(2,170,235,0.1), rgba(27,119,190,0.1))",
-            border: dimmed ? "1px solid rgba(0,0,0,0.07)" : "1px solid rgba(2,170,235,0.2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          {isSavings ? (
-            <PiggyBank size={18} weight="duotone" color={dimmed ? "var(--color-warm-gray-400)" : "#1B77BE"} />
-          ) : (
-            <Buildings size={18} weight="duotone" color={dimmed ? "var(--color-warm-gray-400)" : "#1B77BE"} />
-          )}
-        </div>
-
-        {/* Type badge */}
-        <span
-          style={{
-            fontSize: "10px",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            padding: "3px 8px",
-            borderRadius: "20px",
-            backgroundColor: isSavings ? "rgba(217,119,6,0.08)" : "rgba(2,170,235,0.08)",
-            color: isSavings ? "#b45309" : "#1B77BE",
-            border: `1px solid ${isSavings ? "rgba(217,119,6,0.15)" : "rgba(2,170,235,0.15)"}`,
-          }}
-        >
-          {isSavings ? "Savings" : "Checking"}
-        </span>
+    <div style={{
+      backgroundColor: "var(--color-white)",
+      border: "1px solid var(--color-warm-gray-200)",
+      borderTop: isFirst ? undefined : "none",
+      borderRadius: isFirst && isLast ? "0 0 8px 8px"
+        : isFirst ? "0"
+        : isLast ? "0 0 8px 8px"
+        : "0",
+      padding: "10px 14px",
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+    }}>
+      {/* Icon */}
+      <div style={{
+        width: "28px", height: "28px", borderRadius: "7px",
+        background: `${config.color}10`,
+        border: `1px solid ${config.color}20`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0,
+      }}>
+        {config.icon}
       </div>
 
-      {/* Account name + mask */}
-      <div>
-        <div
-          style={{
-            fontSize: "14px",
-            fontWeight: 600,
-            letterSpacing: "-0.01em",
-            color: "var(--color-text-primary)",
-            lineHeight: 1.3,
-            marginBottom: "2px",
-          }}
-        >
+      {/* Name + meta */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: "13px", fontWeight: 600, color: "var(--color-text-primary)",
+          letterSpacing: "-0.01em", lineHeight: 1.3,
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>
           {account.name}
         </div>
-        {account.mask && (
-          <div
-            style={{
-              fontSize: "12px",
-              color: "var(--color-text-tertiary)",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            ···· {account.mask}
-          </div>
-        )}
-      </div>
-
-      {/* Balance — large number */}
-      <div>
-        <div
-          style={{
-            fontSize: "10px",
-            fontWeight: 600,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--color-text-tertiary)",
-            marginBottom: "4px",
-          }}
-        >
-          Current Balance
-        </div>
-        <div
-          style={{
-            fontSize: "26px",
-            fontWeight: 700,
-            letterSpacing: "-0.03em",
-            color: "var(--color-text-primary)",
-            lineHeight: 1,
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {currency0.format(account.current_balance ?? 0)}
-        </div>
-        {account.available_balance !== null &&
-          account.available_balance !== account.current_balance && (
-            <div
-              style={{
-                fontSize: "11px",
-                color: "var(--color-text-tertiary)",
-                marginTop: "3px",
-              }}
-            >
-              {currency0.format(account.available_balance)} available
-            </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "1px" }}>
+          {institutionName && (
+            <span style={{ fontSize: "11px", color: "var(--color-text-tertiary)" }}>
+              {institutionName}
+            </span>
           )}
-      </div>
-
-      {/* Footer: bucket label + allocation target */}
-      {(bucketLabel || account.allocation_target_pct !== null) && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "8px",
-            paddingTop: "12px",
-            borderTop: "1px solid var(--color-warm-gray-100)",
-          }}
-        >
+          {account.mask && (
+            <>
+              {institutionName && <span style={{ fontSize: "11px", color: "var(--color-warm-gray-300)" }}>·</span>}
+              <span style={{
+                fontSize: "11px", color: "var(--color-text-tertiary)",
+                fontVariantNumeric: "tabular-nums",
+              }}>
+                ···{account.mask}
+              </span>
+            </>
+          )}
           {bucketLabel && (
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color: dimmed ? "var(--color-text-tertiary)" : "var(--color-text-secondary)",
-              }}
-            >
-              {bucketLabel}
-            </span>
-          )}
-          {account.allocation_target_pct !== null && (
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                padding: "2px 8px",
-                borderRadius: "20px",
-                backgroundColor: "rgba(2,170,235,0.08)",
-                color: "#1B77BE",
-                marginLeft: "auto",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {account.allocation_target_pct}% target
-            </span>
+            <>
+              <span style={{ fontSize: "11px", color: "var(--color-warm-gray-300)" }}>·</span>
+              <span style={{
+                fontSize: "10px", fontWeight: 600, padding: "0px 5px",
+                borderRadius: "3px", backgroundColor: "rgba(2,170,235,0.08)", color: "#1B77BE",
+              }}>{bucketLabel}</span>
+            </>
           )}
         </div>
-      )}
+      </div>
+
+      {/* Balance */}
+      <div style={{ textAlign: "right", flexShrink: 0 }}>
+        <div style={{
+          fontSize: "14px", fontWeight: 700, letterSpacing: "-0.02em",
+          color: isLiability ? "#dc2626" : "var(--color-text-primary)",
+          fontVariantNumeric: "tabular-nums", lineHeight: 1,
+        }}>
+          {isLiability && account.current_balance > 0 ? "-" : ""}
+          {currency0.format(Math.abs(account.current_balance ?? 0))}
+        </div>
+      </div>
+
+      {/* Remove (compact) */}
+      <RemoveAccountButton accountId={account.id} accountName={account.name} />
     </div>
   );
 }
