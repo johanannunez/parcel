@@ -67,6 +67,7 @@ async function invokeHeartbeat(agentShortname: string, sessionCookie: string): P
     headers: {
       "Content-Type": "application/json",
       Cookie: sessionCookie,
+      Origin: PAPERCLIP_BASE,
     },
   });
 
