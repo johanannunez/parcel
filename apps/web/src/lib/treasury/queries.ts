@@ -74,7 +74,8 @@ export async function getMonthlyTotals(supabase: SupabaseClient, year: number, m
     .select("amount, category, source, is_duplicate")
     .gte("date", startDate)
     .lt("date", endDate)
-    .eq("is_duplicate", false);
+    .eq("is_duplicate", false)
+    .neq("category", "internal_transfer");
 
   const transactions = data ?? [];
   const income = transactions.filter((t) => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);

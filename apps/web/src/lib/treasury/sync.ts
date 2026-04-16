@@ -605,6 +605,90 @@ async function backfillBalanceHistory(
 }
 
 // ---------------------------------------------------------------------------
+// Internal transfer detection
+// Finds matching transaction pairs (same date, same absolute amount, opposite
+// signs, different accounts) and marks both sides as "internal_transfer".
+// Also catches keyword-based transfers that may not have a matching pair
+// (e.g., one side was on a removed account).
+// ---------------------------------------------------------------------------
+
+const TRANSFER_KEYWORDS = [
+  "transfer automation",
+  "automatic transfer",
+  "internet transfer",
+  "profit first rule",
+  "backup account to cover",
+];
+
+async function detectInternalTransfers(
+  svc: ReturnType<typeof createServiceClient>,
+): Promise<void> {
+  // Fetch all Plaid transactions not yet marked as internal_transfer
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: transactions } = await (svc as any)
+    .from("treasury_transactions")
+    .select("id, date, amount, account_id, merchant_name, category")
+    .eq("source", "plaid")
+    .eq("is_duplicate", false)
+    .neq("category", "internal_transfer") as {
+    data: Array<{
+      id: string; date: string; amount: number;
+      account_id: string | null; merchant_name: string | null; category: string;
+    }> | null;
+  };
+
+  if (!transactions || transactions.length === 0) return;
+
+  const idsToMark = new Set<string>();
+
+  // Pass 1: Matching pairs (same date, same |amount|, opposite signs)
+  // Group by date + absolute amount for efficient lookup
+  const buckets = new Map<string, typeof transactions>();
+  for (const tx of transactions) {
+    const key = `${tx.date}|${Math.abs(tx.amount).toFixed(2)}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key)!.push(tx);
+  }
+
+  for (const group of buckets.values()) {
+    if (group.length < 2) continue;
+    const positives = group.filter((t) => t.amount > 0);
+    const negatives = group.filter((t) => t.amount < 0);
+
+    for (const pos of positives) {
+      for (const neg of negatives) {
+        // Must be different accounts (or at least one null = removed account)
+        if (pos.account_id && neg.account_id && pos.account_id === neg.account_id) continue;
+        idsToMark.add(pos.id);
+        idsToMark.add(neg.id);
+      }
+    }
+  }
+
+  // Pass 2: Keyword matching for orphaned transfers (pair's other side was removed)
+  for (const tx of transactions) {
+    if (idsToMark.has(tx.id)) continue;
+    const name = (tx.merchant_name ?? "").toLowerCase();
+    if (TRANSFER_KEYWORDS.some((kw) => name.includes(kw))) {
+      idsToMark.add(tx.id);
+    }
+  }
+
+  if (idsToMark.size === 0) return;
+
+  // Batch update in chunks of 100
+  const ids = [...idsToMark];
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (svc as any)
+      .from("treasury_transactions")
+      .update({ category: "internal_transfer" })
+      .in("id", chunk);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main sync orchestrator
 // ---------------------------------------------------------------------------
 
@@ -691,11 +775,14 @@ export async function runTreasurySync(): Promise<SyncResult> {
   result.dedup_matches = dedup.matchCount;
   result.errors.push(...dedup.errors);
 
-  // 9. Record daily balance snapshot + backfill history from transactions
+  // 9. Detect internal transfers (must run before snapshot for accurate totals)
+  await detectInternalTransfers(svc);
+
+  // 10. Record daily balance snapshot + backfill history from transactions
   await recordBalanceSnapshot(svc);
   await backfillBalanceHistory(svc);
 
-  // 10. Log sync errors as alerts if any occurred
+  // 11. Log sync errors as alerts if any occurred
   if (result.errors.length > 0) {
     await createAlert(svc, {
       type: "sync_failed",
