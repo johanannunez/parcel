@@ -25,9 +25,9 @@ const ROUTINES = {
 
 // Notion status value → routines to trigger
 const STATUS_MAP: Record<string, string[]> = {
-  Writing: [ROUTINES.writeCopy, ROUTINES.checkInterviews],
+  "Copy Writing": [ROUTINES.writeCopy, ROUTINES.checkInterviews],
   Visuals: [ROUTINES.createVisuals, ROUTINES.buildNewsletter],
-  "Team Review": [ROUTINES.qualityGate],
+  "Copy Review": [ROUTINES.qualityGate],
   "Ready to Schedule": [ROUTINES.schedulePublish],
 };
 
