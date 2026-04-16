@@ -18,7 +18,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@phosphor-icons/react": "^2.1.10",
     "@react-email/components": "^1.0.12",
-    "@supabase/ssr": "^0.10.0",
+    "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.102.1",
     "@tailwindcss/postcss": "^4.2.2",
     "@tiptap/extension-color": "^3.22.3",
