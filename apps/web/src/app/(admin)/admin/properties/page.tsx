@@ -1,33 +1,57 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { hasHospitable } from "@/lib/hospitable";
-import { formatStreet } from "@/lib/address";
-import { PropertyRow } from "./PropertyRow";
-import { SyncButton } from "./SyncButton";
+import { normalizeUnit, shortenStreet } from "@/lib/address";
+import { getChecklistItemsForProperties, type ChecklistItem } from "@/lib/checklist";
+import { LaunchpadView } from "./LaunchpadView";
+import { GridViewPage } from "./GridViewPage";
+import { PropertiesPageHeader } from "./PropertiesPageHeader";
 
 export const metadata: Metadata = { title: "Properties (Admin)" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminPropertiesPage() {
+export default async function AdminPropertiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  // URL routing:
+  //   ?view=launchpad  → the spreadsheet-style Launchpad. Default view.
+  //   ?view=details    → per-property card view. Placeholder for the new photo-based Details.
+  const view = params.view === "details" ? "details" : "launchpad";
   const supabase = await createClient();
 
-  const [{ data: properties }, { data: bookings }] = await Promise.all([
+  const [{ data: properties }, { data: propertyOwnersData }] = await Promise.all([
     supabase
       .from("properties")
       .select(
-        "id, address_line1, address_line2, city, state, postal_code, owner_id, hospitable_property_id, ical_url, active, created_at",
+        "id, address_line1, address_line2, city, state, postal_code, owner_id, created_at",
       )
       .order("created_at", { ascending: true }),
     supabase
-      .from("bookings")
-      .select("property_id"),
+      .from("property_owners")
+      .select("property_id, owner_id"),
   ]);
 
+  // Build property_id → Set of owner_ids, including legacy properties.owner_id
+  const ownersByPropertyId = new Map<string, Set<string>>();
+  for (const p of properties ?? []) {
+    const set = new Set<string>();
+    if (p.owner_id) set.add(p.owner_id);
+    ownersByPropertyId.set(p.id, set);
+  }
+  for (const row of propertyOwnersData ?? []) {
+    ownersByPropertyId.get(row.property_id)?.add(row.owner_id);
+  }
+
+  // Collect all unique owner IDs across all properties
   const ownerIds = Array.from(
-    new Set((properties ?? []).map((p) => p.owner_id)),
+    new Set(
+      Array.from(ownersByPropertyId.values()).flatMap((s) => Array.from(s)),
+    ),
   );
 
-  const [{ data: owners }] = await Promise.all([
+  const [{ data: ownersProfiles }] = await Promise.all([
     ownerIds.length
       ? supabase
           .from("profiles")
@@ -36,111 +60,87 @@ export default async function AdminPropertiesPage() {
       : Promise.resolve({ data: [] as { id: string; full_name: string | null; email: string }[] }),
   ]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const typedOwnersProfiles = (ownersProfiles ?? []) as any[];
   const ownerMap = new Map(
-    (owners ?? []).map((o) => [
-      o.id,
-      { name: o.full_name ?? null, email: o.email },
-    ]),
+    typedOwnersProfiles.map((o) => {
+      const fullName = (o.full_name as string | null) ?? null;
+      // In admin, always derive short name from the first word of full_name.
+      // preferred_name is reserved for the owner's own portal experience.
+      const shortName = fullName ? fullName.split(/\s+/)[0] : null;
+      return [
+        o.id as string,
+        { name: fullName, shortName, email: o.email as string },
+      ];
+    }),
   );
 
-  // Booking count map: property_id -> count
-  const bookingCountMap = new Map<string, number>();
-  for (const b of bookings ?? []) {
-    bookingCountMap.set(b.property_id, (bookingCountMap.get(b.property_id) ?? 0) + 1);
+  const rows = (properties ?? []).map((p) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const line2 = (p as any).address_line2 as string | null;
+
+    // All owners for this property, primary first (from properties.owner_id)
+    const ownerIdSet = ownersByPropertyId.get(p.id) ?? new Set<string>();
+    const allOwnerIds = Array.from(ownerIdSet);
+    const orderedOwnerIds = p.owner_id
+      ? [p.owner_id, ...allOwnerIds.filter((id) => id !== p.owner_id)]
+      : allOwnerIds;
+    const ownersList = orderedOwnerIds.map((id) => ({
+      id,
+      name: ownerMap.get(id)?.name ?? null,
+      shortName: ownerMap.get(id)?.shortName ?? null,
+    }));
+
+    return {
+      id: p.id,
+      street: shortenStreet(p.address_line1),
+      unit: line2 ? normalizeUnit(line2) : null,
+      location: `${p.city}, ${p.state} ${p.postal_code ?? ""}`.trim(),
+      owners: ownersList,
+    };
+  });
+
+  // Fetch checklist items for both views
+  const propertyIds = rows.map((r) => r.id);
+  const checklistItems: ChecklistItem[] =
+    propertyIds.length > 0
+      ? await getChecklistItemsForProperties(supabase, propertyIds)
+      : [];
+
+  if (view === "launchpad") {
+    return (
+      <GridViewPage
+        properties={rows.map((r) => ({
+          id: r.id,
+          street: r.street,
+          unit: r.unit,
+          location: r.location,
+          owners: r.owners,
+        }))}
+        checklistItems={checklistItems}
+        owners={(ownersProfiles ?? []).map((o) => ({ id: o.id, name: o.full_name }))}
+      />
+    );
   }
 
-  const rows = (properties ?? []).map((p) => ({
-    id: p.id,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    address: formatStreet({ address_line1: p.address_line1, address_line2: (p as any).address_line2 }),
-    location: `${p.city}, ${p.state} ${p.postal_code ?? ""}`.trim(),
-    ownerName: ownerMap.get(p.owner_id)?.name ?? null,
-    ownerEmail: ownerMap.get(p.owner_id)?.email ?? "Unknown",
-    hospitableId: p.hospitable_property_id,
-    icalUrl: p.ical_url,
-    active: p.active,
-    bookingCount: bookingCountMap.get(p.id) ?? 0,
-  }));
-
-  const unconnected = rows.filter((r) => !r.hospitableId);
-
+  // Default/other: Details view (placeholder using existing card-style LaunchpadView)
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
-    <div className="flex flex-col gap-10">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-          Properties
-        </h1>
-        <p
-          className="mt-2 max-w-2xl text-sm"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Connect each property to Hospitable by pasting its Hospitable
-          property ID and iCal feed URL. Once connected, hit Sync to pull
-          bookings and calendar data into the portal.
-        </p>
+    <div className="mx-auto w-full max-w-6xl px-6 py-8 lg:px-10 lg:py-10">
+      <div className="flex flex-col gap-6">
+        <PropertiesPageHeader activeView={view} total={rows.length} />
+        <LaunchpadView
+          properties={rows.map((r) => ({
+            id: r.id,
+            street: r.street,
+            unit: r.unit,
+            location: r.location,
+            owners: r.owners,
+          }))}
+          checklistItems={checklistItems}
+          owners={(ownersProfiles ?? []).map((o) => ({ id: o.id, name: o.full_name }))}
+        />
       </div>
-
-      {hasHospitable() ? <SyncButton /> : (
-        <div
-          className="rounded-xl border px-4 py-3 text-sm"
-          style={{
-            backgroundColor: "rgba(248, 113, 113, 0.06)",
-            borderColor: "rgba(248, 113, 113, 0.2)",
-            color: "#fca5a5",
-          }}
-        >
-          HOSPITABLE_API is not set. Add it to Doppler to enable syncing.
-        </div>
-      )}
-
-      {unconnected.length > 0 ? (
-        <Section
-          title="Needs connection"
-          count={unconnected.length}
-        >
-          {unconnected.map((r) => (
-            <PropertyRow key={r.id} row={r} />
-          ))}
-        </Section>
-      ) : null}
-
-      <Section title="All properties" count={rows.length}>
-        {rows.map((r) => (
-          <PropertyRow key={r.id} row={r} />
-        ))}
-      </Section>
-    </div>
     </div>
   );
 }
 
-function Section({
-  title,
-  count,
-  children,
-}: {
-  title: string;
-  count: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <section>
-      <div className="mb-3 flex items-center gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--color-text-primary)" }}>
-          {title}
-        </h2>
-        <span
-          className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-          style={{
-            backgroundColor: "var(--color-warm-gray-100)",
-            color: "var(--color-text-secondary)",
-          }}
-        >
-          {count}
-        </span>
-      </div>
-      <div className="flex flex-col gap-3">{children}</div>
-    </section>
-  );
-}
