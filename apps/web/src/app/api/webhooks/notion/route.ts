@@ -4,44 +4,75 @@ import { NextRequest, NextResponse } from "next/server";
  * Notion → Paperclip webhook relay.
  *
  * Notion Database Automations POST here when a content card's Status changes.
- * This route maps the new status to one or more Paperclip routine IDs and
- * triggers each one via POST /api/routines/{id}/trigger.
+ * This route authenticates with Paperclip, then invokes the heartbeat for
+ * each agent responsible for handling that pipeline stage.
  *
- * Security: requests must include the NOTION_WEBHOOK_SECRET either as a
- * query param (?secret=...) or in the x-webhook-secret header.
+ * Security: requests must include NOTION_WEBHOOK_SECRET as a query param
+ * (?secret=...) or in the x-webhook-secret header.
  */
 
-const PAPERCLIP_BASE = "http://srv1536024.hstgr.cloud:44387";
+const PAPERCLIP_BASE = "https://paperclip-9qhd.srv1536024.hstgr.cloud";
+const COMPANY_ID = "73cd2007-5fa9-4894-b66e-31cf0a0fa0f9";
 
-// Brand Account routine IDs (from /BA/routines/{id} URLs in Paperclip dashboard)
-const ROUTINES = {
-  contentStrategy: "7e641e20-bfd4-4378-a912-7ce52d09a55d",
-  writeCopy: "20004e105-67af-4a13-bed6-9aa52e3977eb",
-  checkInterviews: "4a18c8bb-6d26-45cd-a7d7-c7f8019987cf",
-  createVisuals: "1a0162be-7566-407a-95ca-74701d0be9f3",
-  buildNewsletter: "cd9b5e41-32c2-4a8d-a336-2dcb1557844a",
-  qualityGate: "97def236-88d1-43fe-a12a-6737be4bf947",
-  schedulePublish: "dbb337e8-9f61-4784-b27f-590fb9b6ed3",
-} as const;
-
-// Notion status value → routines to trigger
+// Notion status value → agent shortnames to wake up
 const STATUS_MAP: Record<string, string[]> = {
-  Strategy: [ROUTINES.contentStrategy],
-  "Copy Writing": [ROUTINES.writeCopy, ROUTINES.checkInterviews],
-  Visuals: [ROUTINES.createVisuals, ROUTINES.buildNewsletter],
-  "Copy Review": [ROUTINES.qualityGate],
-  "Visuals Review": [ROUTINES.qualityGate],
-  "Ready to Schedule": [ROUTINES.schedulePublish],
+  Strategy: ["content-strategist"],
+  "Copy Writing": ["copywriter", "interviewer"],
+  Visuals: ["visual-creator", "newsletter-designer"],
+  "Copy Review": ["creative-director"],
+  "Visuals Review": ["creative-director"],
+  "Ready to Schedule": ["content-strategist"],
 };
 
-async function triggerRoutine(routineId: string): Promise<void> {
-  const res = await fetch(`${PAPERCLIP_BASE}/api/routines/${routineId}/trigger`, {
+async function getPaperclipSession(): Promise<string> {
+  const email = process.env.PAPERCLIP_EMAIL;
+  const password = process.env.PAPERCLIP_PASSWORD;
+
+  if (!email || !password) {
+    throw new Error("PAPERCLIP_EMAIL or PAPERCLIP_PASSWORD not configured");
+  }
+
+  const res = await fetch(`${PAPERCLIP_BASE}/api/auth/sign-in/email`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Origin: PAPERCLIP_BASE,
+    },
+    body: JSON.stringify({ email, password }),
   });
+
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Routine ${routineId} returned ${res.status}: ${body}`);
+    throw new Error(`Paperclip login failed (${res.status}): ${body}`);
+  }
+
+  const setCookie = res.headers.get("set-cookie");
+  if (!setCookie) {
+    throw new Error("Paperclip login succeeded but no session cookie returned");
+  }
+
+  // Extract just the cookie name=value pairs (strip attributes like Path, HttpOnly, etc.)
+  const cookies = setCookie
+    .split(/,(?=[^ ]+ *=)/)
+    .map((c) => c.split(";")[0].trim())
+    .join("; ");
+
+  return cookies;
+}
+
+async function invokeHeartbeat(agentShortname: string, sessionCookie: string): Promise<void> {
+  const url = `${PAPERCLIP_BASE}/api/agents/${agentShortname}/heartbeat/invoke?companyId=${COMPANY_ID}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: sessionCookie,
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Agent ${agentShortname} heartbeat returned ${res.status}: ${body}`);
   }
 }
 
@@ -62,12 +93,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Notion sends the new property values under data.properties
-  // Status can be a select or status property type
-  const properties = (body as Record<string, unknown> | null)?.data as
+  const data = (body as Record<string, unknown> | null)?.data as
     | Record<string, unknown>
     | undefined;
 
-  const statusProp = (properties?.properties as Record<string, unknown> | undefined)?.Status as
+  const statusProp = (data?.properties as Record<string, unknown> | undefined)?.Status as
     | Record<string, unknown>
     | undefined;
 
@@ -80,21 +110,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, skipped: "no_status_change" });
   }
 
-  const routineIds = STATUS_MAP[status];
-  if (!routineIds?.length) {
+  const agents = STATUS_MAP[status];
+  if (!agents?.length) {
     return NextResponse.json({ ok: true, skipped: "untracked_status", status });
   }
 
-  const results = await Promise.allSettled(routineIds.map(triggerRoutine));
+  let sessionCookie: string;
+  try {
+    sessionCookie = await getPaperclipSession();
+  } catch (err) {
+    const message = (err as Error).message;
+    console.error("[Notion webhook] Paperclip login failed:", message);
+    return NextResponse.json({ ok: false, error: "paperclip_auth_failed", detail: message }, { status: 502 });
+  }
+
+  const results = await Promise.allSettled(
+    agents.map((agent) => invokeHeartbeat(agent, sessionCookie)),
+  );
   const failures = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
 
   if (failures.length > 0) {
     const messages = failures.map((f) => (f.reason as Error).message);
-    console.error("[Notion webhook] routine trigger failures:", messages);
+    console.error("[Notion webhook] heartbeat failures:", messages);
     return NextResponse.json(
       {
         ok: false,
-        triggered: routineIds.length - failures.length,
+        triggered: agents.length - failures.length,
         failed: failures.length,
         errors: messages,
       },
@@ -102,5 +143,5 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true, triggered: routineIds.length, status });
+  return NextResponse.json({ ok: true, triggered: agents.length, status });
 }
