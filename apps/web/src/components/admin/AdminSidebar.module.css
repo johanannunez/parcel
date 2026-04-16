@@ -34,11 +34,6 @@
   }
 }
 
-/* Section toggle hover */
-.sectionToggle:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
 /* Focus rings — can't be done in inline styles */
 .navLink:focus-visible {
   outline: 2px solid var(--color-brand-light, #4cc9f0);
