@@ -10,6 +10,7 @@ import {
   CurrencyDollar,
   UserCircle,
   Target,
+  Kanban,
 } from "@phosphor-icons/react";
 import styles from "./CreateMenu.module.css";
 
@@ -21,7 +22,8 @@ export type CreateKind =
   | "property"
   | "invoice"
   | "owner"
-  | "lead";
+  | "lead"
+  | "project";
 
 const CONTEXTUAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
   { kind: "task",     label: "Task",     icon: <CheckSquare size={13} weight="duotone" />,     kbd: "T" },
@@ -33,8 +35,9 @@ const CONTEXTUAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode
 ];
 
 const GLOBAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
-  { kind: "owner", label: "Owner", icon: <UserCircle size={13} weight="duotone" />, kbd: "O" },
-  { kind: "lead",  label: "Lead",  icon: <Target size={13} weight="duotone" />,     kbd: "L" },
+  { kind: "owner",   label: "Owner",   icon: <UserCircle size={13} weight="duotone" />, kbd: "O" },
+  { kind: "lead",    label: "Lead",    icon: <Target size={13} weight="duotone" />,     kbd: "L" },
+  { kind: "project", label: "Project", icon: <Kanban size={13} weight="duotone" />,     kbd: "J" },
 ];
 
 export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | "topbar" } = {}) {
@@ -53,7 +56,7 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
     if (!open) return;
     const keyMap: Record<string, CreateKind> = {
       t: "task", e: "email", m: "meeting", n: "note",
-      p: "property", i: "invoice", o: "owner", l: "lead",
+      p: "property", i: "invoice", o: "owner", l: "lead", j: "project",
     };
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useCreateScope } from "./CreateScopeContext";
 import { ScopePicker } from "./ScopePicker";
 import type { CreateKind } from "./CreateMenu";
+import { ProjectForm } from "./create-forms/ProjectForm";
 import styles from "./CreateModal.module.css";
 
 const KIND_TITLES: Record<CreateKind, string> = {
@@ -15,10 +16,11 @@ const KIND_TITLES: Record<CreateKind, string> = {
   invoice: "New invoice",
   owner: "New owner",
   lead: "New lead",
+  project: "New project",
 };
 
 // Kinds that are always global (no scope chip).
-const GLOBAL_KINDS = new Set<CreateKind>(["owner", "lead"]);
+const GLOBAL_KINDS = new Set<CreateKind>(["owner", "lead", "project"]);
 
 export function CreateModal() {
   const { target, setTarget } = useCreateScope();
@@ -130,11 +132,15 @@ export function CreateModal() {
             />
           ) : null}
 
-          <div className={styles.placeholder}>
-            <strong>{KIND_TITLES[kind]}</strong>
-            Form coming in the next plan — this chrome is ready. When the form for &ldquo;{kind}&rdquo;
-            ships, it will open here with the scope chip already filled in.
-          </div>
+          {kind === "project" ? (
+            <ProjectForm onClose={() => setKind(null)} />
+          ) : (
+            <div className={styles.placeholder}>
+              <strong>{KIND_TITLES[kind]}</strong>
+              Form coming in the next plan — this chrome is ready. When the form for &ldquo;{kind}&rdquo;
+              ships, it will open here with the scope chip already filled in.
+            </div>
+          )}
         </div>
 
         <div className={styles.footer}>
