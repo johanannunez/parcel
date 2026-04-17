@@ -5,13 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { PageTitle } from "@/components/admin/chrome/PageTitle";
 import styles from "./PropertyDetailShell.module.css";
 
-type TabKey = "overview" | "tasks";
+type TabKey = "overview" | "tasks" | "maintenance";
 
-const TAB_ORDER: TabKey[] = ["overview", "tasks"];
+const TAB_ORDER: TabKey[] = ["overview", "tasks", "maintenance"];
 
 const TAB_LABEL: Record<TabKey, string> = {
   overview: "Overview",
   tasks: "Tasks",
+  maintenance: "Maintenance",
 };
 
 export function PropertyDetailShell({

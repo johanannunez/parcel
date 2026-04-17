@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { propertyLabel } from "@/lib/address";
 import { TasksTab } from "@/components/admin/tasks/TasksTab";
+import { MaintenanceTemplatesPanelServer } from "@/components/admin/properties/MaintenanceTemplatesPanelServer";
 import { PropertyDetailShell } from "./PropertyDetailShell";
 
 export const metadata: Metadata = { title: "Property" };
 export const dynamic = "force-dynamic";
 
-type TabKey = "overview" | "tasks";
-const KNOWN_TABS: readonly TabKey[] = ["overview", "tasks"];
+type TabKey = "overview" | "tasks" | "maintenance";
+const KNOWN_TABS: readonly TabKey[] = ["overview", "tasks", "maintenance"];
 
 export default async function PropertyDetailPage({
   params,
@@ -46,6 +47,10 @@ export default async function PropertyDetailPage({
     >
       {tab === "tasks" ? (
         <TasksTab parentType="property" parentId={property.id} />
+      ) : tab === "maintenance" ? (
+        <div style={{ padding: "24px" }}>
+          <MaintenanceTemplatesPanelServer propertyId={property.id} />
+        </div>
       ) : (
         <div style={{ padding: "24px 20px", color: "#6b7280", fontSize: 13 }}>
           Overview coming soon.
