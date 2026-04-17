@@ -55,6 +55,95 @@ export type Database = {
           },
         ]
       }
+      ai_insights: {
+        Row: {
+          action_label: string | null
+          action_payload: Json | null
+          agent_key: string
+          body: string
+          created_at: string
+          dismissed_at: string | null
+          expires_at: string | null
+          id: string
+          parent_id: string
+          parent_type: string
+          severity: string
+          title: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_payload?: Json | null
+          agent_key: string
+          body: string
+          created_at?: string
+          dismissed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          parent_id: string
+          parent_type: string
+          severity?: string
+          title: string
+        }
+        Update: {
+          action_label?: string | null
+          action_payload?: Json | null
+          agent_key?: string
+          body?: string
+          created_at?: string
+          dismissed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          parent_id?: string
+          parent_type?: string
+          severity?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      attachments: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          mime_type: string | null
+          parent_id: string
+          parent_type: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          mime_type?: string | null
+          parent_id: string
+          parent_type: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          parent_id?: string
+          parent_type?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       block_requests: {
         Row: {
           adults: number
@@ -910,6 +999,47 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          parent_id: string
+          parent_type: string
+          pinned: boolean
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          parent_id: string
+          parent_type: string
+          pinned?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          parent_id?: string
+          parent_type?: string
+          pinned?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -1301,7 +1431,7 @@ export type Database = {
           },
         ]
       }
-      owner_tasks: {
+      owner_tasks_legacy: {
         Row: {
           assigned_to: string | null
           completed_at: string | null
@@ -1624,6 +1754,79 @@ export type Database = {
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          archived_at: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          emoji: string | null
+          id: string
+          linked_contact_id: string | null
+          linked_property_id: string | null
+          name: string
+          owner_user_id: string | null
+          project_type: string
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          name: string
+          owner_user_id?: string | null
+          project_type: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          name?: string
+          owner_user_id?: string | null
+          project_type?: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_linked_property_id_fkey"
+            columns: ["linked_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2088,6 +2291,58 @@ export type Database = {
           },
         ]
       }
+      property_task_templates: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          is_active: boolean
+          last_spawned_at: string | null
+          next_due_at: string | null
+          property_id: string
+          template_id: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          is_active?: boolean
+          last_spawned_at?: string | null
+          next_due_at?: string | null
+          property_id: string
+          template_id: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          is_active?: boolean
+          last_spawned_at?: string | null
+          next_due_at?: string | null
+          property_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_task_templates_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_task_templates_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_task_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_team: {
         Row: {
           created_at: string
@@ -2477,7 +2732,7 @@ export type Database = {
           },
         ]
       }
-      task_assignees: {
+      task_assignees_legacy: {
         Row: {
           created_at: string
           id: string
@@ -2508,12 +2763,12 @@ export type Database = {
             foreignKeyName: "task_assignees_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_comments: {
+      task_comments_legacy: {
         Row: {
           author_id: string
           content: string
@@ -2550,12 +2805,12 @@ export type Database = {
             foreignKeyName: "task_comments_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_label_map: {
+      task_label_map_legacy: {
         Row: {
           label_id: string
           task_id: string
@@ -2573,19 +2828,19 @@ export type Database = {
             foreignKeyName: "task_label_map_label_id_fkey"
             columns: ["label_id"]
             isOneToOne: false
-            referencedRelation: "task_labels"
+            referencedRelation: "task_labels_legacy"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "task_label_map_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_labels: {
+      task_labels_legacy: {
         Row: {
           color: string
           created_at: string
@@ -2606,7 +2861,7 @@ export type Database = {
         }
         Relationships: []
       }
-      task_subtasks: {
+      task_subtasks_legacy: {
         Row: {
           completed: boolean
           completed_at: string | null
@@ -2639,12 +2894,68 @@ export type Database = {
             foreignKeyName: "task_subtasks_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
       task_templates: {
+        Row: {
+          applies_to: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          is_active: boolean
+          name: string
+          pre_notify_hours: number | null
+          recurrence_rule: Json
+          tags: string[]
+          task_type: Database["public"]["Enums"]["task_kind"]
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          pre_notify_hours?: number | null
+          recurrence_rule: Json
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_templates_legacy: {
         Row: {
           category: string | null
           created_at: string
@@ -2684,6 +2995,127 @@ export type Database = {
         Relationships: []
       }
       tasks: {
+        Row: {
+          assignee_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_at: string | null
+          estimated_minutes: number | null
+          id: string
+          linked_contact_id: string | null
+          linked_property_id: string | null
+          metadata: Json
+          next_spawn_at: string | null
+          parent_id: string | null
+          parent_task_id: string | null
+          parent_type: string | null
+          pre_notify_hours: number | null
+          recurrence_rule: Json | null
+          spawned_from_task_id: string | null
+          status: string
+          tags: string[]
+          task_type: Database["public"]["Enums"]["task_kind"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          metadata?: Json
+          next_spawn_at?: string | null
+          parent_id?: string | null
+          parent_task_id?: string | null
+          parent_type?: string | null
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json | null
+          spawned_from_task_id?: string | null
+          status?: string
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          metadata?: Json
+          next_spawn_at?: string | null
+          parent_id?: string | null
+          parent_task_id?: string | null
+          parent_type?: string | null
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json | null
+          spawned_from_task_id?: string | null
+          status?: string
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_created_by_fkey1"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_linked_property_id_fkey"
+            columns: ["linked_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_spawned_from_task_id_fkey"
+            columns: ["spawned_from_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks_legacy: {
         Row: {
           completed_at: string | null
           created_at: string
@@ -3261,6 +3693,7 @@ export type Database = {
         | "trialing"
         | "unpaid"
         | "paused"
+      task_kind: "todo" | "call" | "meeting" | "email" | "milestone"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status:
         | "backlog"
@@ -3459,6 +3892,7 @@ export const Constants = {
         "unpaid",
         "paused",
       ],
+      task_kind: ["todo", "call", "meeting", "email", "milestone"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: [
         "backlog",

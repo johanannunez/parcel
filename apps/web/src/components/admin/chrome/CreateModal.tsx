@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useCreateScope } from "./CreateScopeContext";
 import { ScopePicker } from "./ScopePicker";
 import type { CreateKind } from "./CreateMenu";
+import { TaskForm } from "./create-forms/TaskForm";
 import styles from "./CreateModal.module.css";
 
 const KIND_TITLES: Record<CreateKind, string> = {
@@ -130,26 +131,32 @@ export function CreateModal() {
             />
           ) : null}
 
-          <div className={styles.placeholder}>
-            <strong>{KIND_TITLES[kind]}</strong>
-            Form coming in the next plan — this chrome is ready. When the form for &ldquo;{kind}&rdquo;
-            ships, it will open here with the scope chip already filled in.
-          </div>
+          {kind === "task" ? (
+            <TaskForm onClose={() => setKind(null)} />
+          ) : (
+            <div className={styles.placeholder}>
+              <strong>{KIND_TITLES[kind]}</strong>
+              Form coming in the next plan — this chrome is ready. When the form for &ldquo;{kind}&rdquo;
+              ships, it will open here with the scope chip already filled in.
+            </div>
+          )}
         </div>
 
         <div className={styles.footer}>
           <span>
             <kbd>Esc</kbd>to close
           </span>
-          <div className={styles.footerActions}>
-            <button
-              type="button"
-              className={styles.btn}
-              onClick={() => setKind(null)}
-            >
-              Done
-            </button>
-          </div>
+          {kind !== "task" ? (
+            <div className={styles.footerActions}>
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => setKind(null)}
+              >
+                Done
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

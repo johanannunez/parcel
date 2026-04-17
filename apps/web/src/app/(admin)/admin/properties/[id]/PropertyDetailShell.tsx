@@ -20,31 +20,31 @@ type PropertyRow = {
   created_at: string;
 };
 
-type TabKey = "overview" | "settings";
-const TAB_ORDER: TabKey[] = ["overview", "settings"];
+type TabKey = "overview" | "tasks" | "maintenance" | "activity" | "files" | "settings";
+const TAB_ORDER: TabKey[] = ["overview", "tasks", "maintenance", "activity", "files", "settings"];
 const TAB_LABEL: Record<TabKey, string> = {
   overview: "Overview",
+  tasks: "Tasks",
+  maintenance: "Maintenance",
+  activity: "Activity",
+  files: "Files",
   settings: "Settings",
 };
 
-function addressLabel(p: PropertyRow): string {
-  const parts: string[] = [];
-  if (p.address_line1) parts.push(p.address_line1);
-  if (p.city) parts.push(p.city);
-  if (p.state) parts.push(p.state);
-  return parts.join(", ") || "Property";
-}
-
 export function PropertyDetailShell({
   property,
+  label,
   activeTab: rawTab,
   initialRailEvents,
   realtimeId,
+  children,
 }: {
   property: PropertyRow;
+  label: string;
   activeTab: string;
   initialRailEvents: RailEvent[];
   realtimeId: string;
+  children: React.ReactNode;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,8 +65,10 @@ export function PropertyDetailShell({
     });
   }
 
-  const title = property.address_line1 ?? "Property";
+  const title = property.address_line1 ?? label ?? "Property";
   const subtitle = [property.city, property.state].filter(Boolean).join(", ");
+
+  const showRail = activeTab !== "settings";
 
   return (
     <div className={styles.root}>
@@ -92,26 +94,11 @@ export function PropertyDetailShell({
         ))}
       </nav>
 
-      <div
-        className={
-          activeTab === "settings" ? styles.content : styles.contentWithRail
-        }
-      >
+      <div className={showRail ? styles.contentWithRail : styles.content}>
         <div className={styles.mainCol}>
-          {activeTab === "overview" ? (
-            <div className={styles.overviewPlaceholder}>
-              <p className={styles.placeholderText}>
-                Full property detail view is being built. The right rail is
-                live now.
-              </p>
-            </div>
-          ) : (
-            <div className={styles.overviewPlaceholder}>
-              <p className={styles.placeholderText}>Settings coming soon.</p>
-            </div>
-          )}
+          {children}
         </div>
-        {activeTab !== "settings" ? (
+        {showRail ? (
           <DetailRightRail
             parentType="property"
             realtimeId={realtimeId}
