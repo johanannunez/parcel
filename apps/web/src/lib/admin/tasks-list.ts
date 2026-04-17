@@ -105,61 +105,67 @@ export async function fetchAdminTasksList(
 
   const parentMap: Record<string, { label: string; contactProfileId?: string | null }> = {};
 
-  if (byType.contact.length > 0) {
-    const { data: rows } = await supabase
-      .from('contacts')
-      .select('id, full_name, company_name, profile_id')
-      .in('id', Array.from(new Set(byType.contact)));
-    for (const r of rows ?? []) {
-      parentMap[`contact:${r.id}`] = {
-        label: r.full_name || r.company_name || 'Contact',
-        contactProfileId: r.profile_id,
-      };
-    }
-  }
-  if (byType.property.length > 0) {
-    const { data: rows } = await supabase
-      .from('properties')
-      .select('id, name, address_line1')
-      .in('id', Array.from(new Set(byType.property)));
-    for (const r of rows ?? []) {
-      const label = r.name ?? r.address_line1 ?? 'Property';
-      parentMap[`property:${r.id}`] = { label };
-    }
-  }
-  if (byType.project.length > 0) {
-    try {
-      // Cast to `any` so TypeScript does not reject the table name.
-      // The projects table ships in Plan C; until then this no-ops at runtime.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: rows } = await (supabase as any)
-        .from('projects')
-        .select('id, name')
-        .in('id', Array.from(new Set(byType.project)));
-      for (const r of (rows ?? []) as { id: string; name?: string }[]) {
-        parentMap[`project:${r.id}`] = { label: r.name ?? 'Project' };
-      }
-    } catch {
-      // projects table may not exist yet (Plan C ships it). Skip silently.
-    }
-  }
-
-  // Subtask counts for parent tasks in this view
+  // Collect subtask parent IDs in parallel with the parent-label queries
   const parentTaskIds = (data ?? [])
     .filter((t) => t.parent_task_id === null)
     .map((t) => t.id);
+
+  const [contactRows, propertyRows, projectRows, subsData] = await Promise.all([
+    byType.contact.length > 0
+      ? supabase
+          .from('contacts')
+          .select('id, full_name, company_name, profile_id')
+          .in('id', Array.from(new Set(byType.contact)))
+          .then((r) => r.data ?? [])
+      : Promise.resolve([]),
+    byType.property.length > 0
+      ? supabase
+          .from('properties')
+          .select('id, name, address_line1')
+          .in('id', Array.from(new Set(byType.property)))
+          .then((r) => r.data ?? [])
+      : Promise.resolve([]),
+    byType.project.length > 0
+      // Cast to `any` so TypeScript does not reject the table name.
+      // The projects table ships in Plan C; until then this no-ops at runtime.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (supabase as any)
+          .from('projects')
+          .select('id, name')
+          .in('id', Array.from(new Set(byType.project)))
+          .then((r: { data?: { id: string; name?: string }[] }) => r.data ?? [])
+          .catch(() => [])
+      : Promise.resolve([]),
+    parentTaskIds.length > 0
+      ? supabase
+          .from('tasks')
+          .select('parent_task_id, status')
+          .in('parent_task_id', parentTaskIds)
+          .then((r) => r.data ?? [])
+      : Promise.resolve([]),
+  ]);
+
+  for (const r of contactRows as { id: string; full_name?: string | null; company_name?: string | null; profile_id?: string | null }[]) {
+    parentMap[`contact:${r.id}`] = {
+      label: r.full_name || r.company_name || 'Contact',
+      contactProfileId: r.profile_id,
+    };
+  }
+  for (const r of propertyRows as { id: string; name?: string | null; address_line1?: string | null }[]) {
+    const label = r.name ?? r.address_line1 ?? 'Property';
+    parentMap[`property:${r.id}`] = { label };
+  }
+  for (const r of projectRows as { id: string; name?: string }[]) {
+    parentMap[`project:${r.id}`] = { label: r.name ?? 'Project' };
+  }
+
+  // Subtask counts for parent tasks in this view
   const subtaskCounts: Record<string, { total: number; done: number }> = {};
-  if (parentTaskIds.length > 0) {
-    const { data: subs } = await supabase
-      .from('tasks')
-      .select('parent_task_id, status')
-      .in('parent_task_id', parentTaskIds);
-    for (const s of subs ?? []) {
-      const key = s.parent_task_id as string;
-      if (!subtaskCounts[key]) subtaskCounts[key] = { total: 0, done: 0 };
-      subtaskCounts[key].total += 1;
-      if (s.status === 'done') subtaskCounts[key].done += 1;
-    }
+  for (const s of subsData as { parent_task_id: string | null; status: string }[]) {
+    const key = s.parent_task_id as string;
+    if (!subtaskCounts[key]) subtaskCounts[key] = { total: 0, done: 0 };
+    subtaskCounts[key].total += 1;
+    if (s.status === 'done') subtaskCounts[key].done += 1;
   }
 
   const tasks: Task[] = (data ?? []).map((t) => {
@@ -215,35 +221,39 @@ export async function fetchAdminTasksList(
     .map((b) => ({ bucket: b, tasks: groups[b] }))
     .filter((g) => g.tasks.length > 0);
 
-  // Per-view counts (mirror the active-view filters per key)
-  for (const v of views) {
-    let cq = supabase.from('tasks').select('*', { count: 'exact', head: true });
-    switch (v.key) {
-      case 'my-tasks':
-        cq = cq.eq('assignee_id', user.id).neq('status', 'done');
-        break;
-      case 'overdue':
-        cq = cq.lt('due_at', new Date().toISOString()).neq('status', 'done');
-        break;
-      case 'this-week': {
-        const now = new Date();
-        const dow = now.getDay();
-        const endOfWeek = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate() + (7 - dow),
-        );
-        cq = cq.lte('due_at', endOfWeek.toISOString()).neq('status', 'done');
-        break;
+  // Per-view counts (mirror the active-view filters per key) — run all concurrently
+  const viewCounts = await Promise.all(
+    views.map((v) => {
+      let cq = supabase.from('tasks').select('*', { count: 'exact', head: true });
+      switch (v.key) {
+        case 'my-tasks':
+          cq = cq.eq('assignee_id', user.id).neq('status', 'done');
+          break;
+        case 'overdue':
+          cq = cq.lt('due_at', new Date().toISOString()).neq('status', 'done');
+          break;
+        case 'this-week': {
+          const now = new Date();
+          const dow = now.getDay();
+          const endOfWeek = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() + (7 - dow),
+          );
+          cq = cq.lte('due_at', endOfWeek.toISOString()).neq('status', 'done');
+          break;
+        }
+        case 'unassigned':
+          cq = cq.is('assignee_id', null).neq('status', 'done');
+          break;
+        default:
+          cq = cq.neq('status', 'done');
       }
-      case 'unassigned':
-        cq = cq.is('assignee_id', null).neq('status', 'done');
-        break;
-      default:
-        cq = cq.neq('status', 'done');
-    }
-    const { count } = await cq;
-    v.count = count ?? 0;
+      return cq.then(({ count }) => count ?? 0);
+    }),
+  );
+  for (let i = 0; i < views.length; i++) {
+    views[i].count = viewCounts[i];
   }
 
   const totalCount = tasks.filter((t) => t.parentTaskId === null).length;
