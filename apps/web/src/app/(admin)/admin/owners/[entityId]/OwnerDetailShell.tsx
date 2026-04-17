@@ -11,6 +11,8 @@ import type {
 } from "@/lib/admin/owner-detail-types";
 import { formatMonthYear } from "@/lib/admin/owner-detail-types";
 import type { OwnerStatus } from "@/lib/admin/owners-list";
+import type { RailEvent } from "@/lib/admin/detail-rail";
+import { DetailRightRail } from "@/components/admin/detail/DetailRightRail";
 import styles from "./OwnerDetailShell.module.css";
 
 type TabKey =
@@ -80,9 +82,13 @@ function initials(name: string): string {
 export function OwnerDetailShell({
   data,
   children,
+  initialRailEvents = [],
+  realtimeId,
 }: {
   data: OwnerDetailData;
   children: ReactNode;
+  initialRailEvents?: RailEvent[];
+  realtimeId?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -166,7 +172,29 @@ export function OwnerDetailShell({
         })}
       </nav>
 
-      <div className={styles.content}>{children}</div>
+      <div
+        className={
+          activeTab === "settings" || !realtimeId
+            ? styles.content
+            : styles.contentWithRail
+        }
+      >
+        <div className={styles.mainCol}>{children}</div>
+        {activeTab !== "settings" && realtimeId ? (
+          <DetailRightRail
+            parentType="contact"
+            realtimeId={realtimeId}
+            initialEvents={initialRailEvents}
+            metadata={[
+              ...(data.source ? [{ label: "Source", value: data.source }] : []),
+              ...(data.assignedToName
+                ? [{ label: "Owner", value: data.assignedToName }]
+                : []),
+              { label: "Created", value: formatMonthYear(data.entity.createdAt) },
+            ]}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

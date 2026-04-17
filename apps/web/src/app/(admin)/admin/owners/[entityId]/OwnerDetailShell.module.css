@@ -376,6 +376,25 @@
   min-width: 0;
 }
 
+/* Two-column layout: main tab area + right rail */
+.contentWithRail {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 18px;
+  padding: 18px 24px 32px;
+  align-items: start;
+}
+
+.mainCol {
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .contentWithRail {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* --- Placeholder card for unbuilt tabs -------------------------------- */
 
 .placeholder {
