@@ -1,0 +1,79 @@
+.wrap { position: relative; flex-shrink: 0; }
+
+.btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  border: 0;
+  box-shadow: 0 6px 14px -6px rgba(2,170,235,0.55);
+  font-family: inherit;
+  line-height: 1;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.5);
+  outline-offset: 2px;
+}
+
+.menu {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 0;
+  width: 210px;
+  background: #fff;
+  border: 1px solid #E6ECF2;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px -10px rgba(11,27,43,0.28);
+  padding: 6px;
+  color: #0B1B2B;
+  z-index: 60;
+}
+
+.item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #3C5266;
+  cursor: pointer;
+  width: 100%;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: inherit;
+}
+.item:hover, .item.highlight { background: #F6F8FB; }
+
+.icon {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: #F6F8FB; color: #647689;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.kbd {
+  margin-left: auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: #8A9AAB;
+  padding: 1px 5px;
+  border: 1px solid #E6ECF2;
+  border-radius: 3px;
+}
+
+.divider { height: 1px; background: #E6ECF2; margin: 6px 4px; }
+
+/* On narrower sidebars (tablet/mobile) the menu flips to pop downward */
+@media (max-width: 900px) {
+  .menu {
+    left: auto;
+    right: 0;
+    top: calc(100% + 8px);
+  }
+}
