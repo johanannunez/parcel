@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CheckSquare,
   EnvelopeSimple,
@@ -39,11 +40,41 @@ const GLOBAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kb
 
 export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | "topbar" } = {}) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => setMounted(true), []);
+
+  useLayoutEffect(() => {
+    if (!open || !btnRef.current) return;
+    const updatePosition = () => {
+      const rect = btnRef.current!.getBoundingClientRect();
+      const menuWidth = 210;
+      const gap = 8;
+      if (placement === "sidebar") {
+        setCoords({ top: rect.top, left: rect.right + gap });
+      } else {
+        setCoords({ top: rect.bottom + gap, left: rect.right - menuWidth });
+      }
+    };
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open, placement]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (wrapRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setOpen(false);
     };
     if (open) window.addEventListener("mousedown", handler);
     return () => window.removeEventListener("mousedown", handler);
@@ -77,12 +108,47 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
 
   const wrapClass =
     placement === "topbar" ? `${styles.wrap} ${styles.wrapTopbar}` : styles.wrap;
-  const menuClass =
-    placement === "topbar" ? `${styles.menu} ${styles.menuTopbar}` : styles.menu;
+
+  const menu =
+    open && coords ? (
+      <div
+        ref={menuRef}
+        className={styles.menu}
+        role="menu"
+        style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 1000 }}
+      >
+        {CONTEXTUAL.map((it) => (
+          <button
+            key={it.kind}
+            type="button"
+            className={styles.item}
+            onClick={() => dispatch(it.kind)}
+          >
+            <span className={styles.icon}>{it.icon}</span>
+            <span>{it.label}</span>
+            <span className={styles.kbd}>{it.kbd}</span>
+          </button>
+        ))}
+        <div className={styles.divider} />
+        {GLOBAL.map((it) => (
+          <button
+            key={it.kind}
+            type="button"
+            className={styles.item}
+            onClick={() => dispatch(it.kind)}
+          >
+            <span className={styles.icon}>{it.icon}</span>
+            <span>{it.label}</span>
+            <span className={styles.kbd}>{it.kbd}</span>
+          </button>
+        ))}
+      </div>
+    ) : null;
 
   return (
     <div className={wrapClass} ref={wrapRef}>
       <button
+        ref={btnRef}
         type="button"
         className={styles.btn}
         aria-label="Create new"
@@ -91,35 +157,7 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
       >
         +
       </button>
-      {open ? (
-        <div className={menuClass} role="menu">
-          {CONTEXTUAL.map((it) => (
-            <button
-              key={it.kind}
-              type="button"
-              className={styles.item}
-              onClick={() => dispatch(it.kind)}
-            >
-              <span className={styles.icon}>{it.icon}</span>
-              <span>{it.label}</span>
-              <span className={styles.kbd}>{it.kbd}</span>
-            </button>
-          ))}
-          <div className={styles.divider} />
-          {GLOBAL.map((it) => (
-            <button
-              key={it.kind}
-              type="button"
-              className={styles.item}
-              onClick={() => dispatch(it.kind)}
-            >
-              <span className={styles.icon}>{it.icon}</span>
-              <span>{it.label}</span>
-              <span className={styles.kbd}>{it.kbd}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+      {mounted && menu ? createPortal(menu, document.body) : null}
     </div>
   );
 }

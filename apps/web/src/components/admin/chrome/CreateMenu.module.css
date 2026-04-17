@@ -21,9 +21,6 @@
 }
 
 .menu {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 0;
   width: 210px;
   background: #fff;
   border: 1px solid #E6ECF2;
@@ -31,7 +28,6 @@
   box-shadow: 0 20px 50px -10px rgba(11,27,43,0.28);
   padding: 6px;
   color: #0B1B2B;
-  z-index: 60;
 }
 
 .item {
@@ -69,19 +65,4 @@
 
 .divider { height: 1px; background: #E6ECF2; margin: 6px 4px; }
 
-/* On narrower sidebars (tablet/mobile) the menu flips to pop downward */
-@media (max-width: 900px) {
-  .menu {
-    left: auto;
-    right: 0;
-    top: calc(100% + 8px);
-  }
-}
-
-/* Top-bar placement: always drop down from the button, right-aligned. */
 .wrapTopbar { }
-.menuTopbar {
-  left: auto;
-  right: 0;
-  top: calc(100% + 8px);
-}
