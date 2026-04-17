@@ -13,6 +13,7 @@ import {
   ChatCircle,
   ListChecks,
   BookOpenText,
+  Kanban,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
@@ -37,6 +38,7 @@ const navItems: NavItem[] = [
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { href: "/admin/contacts", label: "Contacts", icon: <UsersThree size={18} weight="duotone" />, matchPrefix: "/admin/contacts" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
+  { href: "/admin/projects", label: "Projects", icon: <Kanban size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
@@ -337,6 +339,7 @@ export function AdminTopBar({
     if (pathname.startsWith("/admin/properties")) return "Properties";
     if (pathname.startsWith("/admin/inbox")) return "Inbox";
     if (pathname.startsWith("/admin/tasks")) return "Tasks";
+    if (pathname.startsWith("/admin/projects")) return "Projects";
     if (pathname.startsWith("/admin/help")) return "Help Center";
     if (pathname.startsWith("/admin/treasury")) return "Treasury";
     if (pathname.startsWith("/admin/calendar")) return "Calendar";
@@ -438,6 +441,7 @@ const adminRailItems: Array<{
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
   { href: "/admin/contacts", icon: <UsersThree size={20} weight="duotone" />, label: "Contacts", matchPrefix: "/admin/contacts" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
+  { href: "/admin/projects", icon: <Kanban size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
 

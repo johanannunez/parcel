@@ -5,6 +5,7 @@ import { useCreateScope } from "./CreateScopeContext";
 import { ScopePicker } from "./ScopePicker";
 import type { CreateKind } from "./CreateMenu";
 import { TaskForm } from "./create-forms/TaskForm";
+import { ProjectForm } from "./create-forms/ProjectForm";
 import styles from "./CreateModal.module.css";
 
 const KIND_TITLES: Record<CreateKind, string> = {
@@ -16,10 +17,11 @@ const KIND_TITLES: Record<CreateKind, string> = {
   invoice: "New invoice",
   owner: "New owner",
   lead: "New lead",
+  project: "New project",
 };
 
 // Kinds that are always global (no scope chip).
-const GLOBAL_KINDS = new Set<CreateKind>(["owner", "lead"]);
+const GLOBAL_KINDS = new Set<CreateKind>(["owner", "lead", "project"]);
 
 export function CreateModal() {
   const { target, setTarget } = useCreateScope();
@@ -133,6 +135,8 @@ export function CreateModal() {
 
           {kind === "task" ? (
             <TaskForm onClose={() => setKind(null)} />
+          ) : kind === "project" ? (
+            <ProjectForm onClose={() => setKind(null)} />
           ) : (
             <div className={styles.placeholder}>
               <strong>{KIND_TITLES[kind]}</strong>
@@ -146,7 +150,7 @@ export function CreateModal() {
           <span>
             <kbd>Esc</kbd>to close
           </span>
-          {kind !== "task" ? (
+          {kind !== "task" && kind !== "project" ? (
             <div className={styles.footerActions}>
               <button
                 type="button"

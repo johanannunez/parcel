@@ -14,6 +14,7 @@ const STATIC_ROUTES: Array<{ prefix: string; title: string; subtitle?: string }>
   { prefix: "/admin/treasury", title: "Treasury", subtitle: "Cash, accounts, and financial health." },
   { prefix: "/admin/calendar", title: "Calendar", subtitle: "Bookings, blocks, and scheduling." },
   { prefix: "/admin/timeline", title: "Timeline", subtitle: "Activity across every owner and property." },
+  { prefix: "/admin/projects", title: "Projects", subtitle: "Internal initiatives, onboardings, and ideas." },
 ];
 
 export function derivePageTitle(pathname: string): PageTitleInfo {
