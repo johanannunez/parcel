@@ -1,0 +1,163 @@
+.page {
+  padding: 20px 24px 32px;
+  background: #F4F5F7;
+  min-height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.search {
+  flex: 1;
+  max-width: 360px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #111827;
+}
+
+.search:focus {
+  outline: none;
+  border-color: rgba(2, 170, 235, 0.5);
+  box-shadow: 0 0 0 3px rgba(2, 170, 235, 0.14);
+}
+
+.toolbarMeta {
+  color: #6b7280;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.tableWrap {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.rowHead,
+.row {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) minmax(200px, 1.4fr) minmax(130px, 1fr) minmax(130px, 0.9fr) 110px 130px 24px;
+  align-items: center;
+  padding: 0 18px;
+}
+
+.rowHead {
+  height: 40px;
+  color: #6b7280;
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafbfc;
+}
+
+.row {
+  height: 62px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111827;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 120ms ease;
+}
+
+.row:hover {
+  background: #fafbfc;
+}
+
+.row:last-child { border-bottom: none; }
+
+.cellContact {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.avatar,
+.avatarFallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.avatarFallback {
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.name { min-width: 0; }
+.nameText {
+  color: #0F3B6B;
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.company {
+  color: #6b7280;
+  font-size: 11.5px;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cellMono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.numCol {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #374151;
+}
+
+.pill {
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.pillLead { background: rgba(2, 170, 235, 0.14); color: #02AAEB; }
+.pillOnboarding { background: rgba(139, 92, 246, 0.14); color: #8B5CF6; }
+.pillActive { background: rgba(16, 185, 129, 0.14); color: #047857; }
+.pillDormant { background: rgba(107, 114, 128, 0.14); color: #374151; }
+
+.chevron {
+  color: #9ca3af;
+  font-size: 18px;
+  text-align: right;
+}
+
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+}
