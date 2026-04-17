@@ -1,0 +1,542 @@
+/*
+ * Styles for the Overview tab — shared by both onboarding and operating
+ * states. Two-column grid below the hero, launchpad rollup, relationship
+ * health card, alerts row, properties snapshot.
+ */
+
+/* --- Panel shell (shared) -------------------------------------------- */
+
+.panel {
+  background: #FFFFFF;
+  border: 1px solid #E6ECF2;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04);
+}
+
+.panelPad {
+  padding: 18px 20px;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #E6ECF2;
+}
+
+.panelTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0B1B2B;
+  letter-spacing: -0.005em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panelLink {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1B77BE;
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+.panelLink:hover { color: #02AAEB; }
+
+/* --- Launchpad hero (onboarding) ------------------------------------- */
+
+.launchpad {
+  background: #FFFFFF;
+  border: 1px solid #E6ECF2;
+  border-radius: 14px;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04),
+    0 20px 40px -24px rgba(11, 27, 43, 0.1);
+}
+
+.launchpadHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #E6ECF2;
+}
+.launchpadHeadLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.launchpadHeadTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0B1B2B;
+  letter-spacing: -0.005em;
+}
+
+.launchpadBody {
+  padding: 20px 22px 22px;
+}
+
+.headline {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.headlinePct {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0B1B2B;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.headlineText {
+  font-size: 12.5px;
+  color: #647689;
+  line-height: 1.45;
+}
+
+.segBar {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  background: #EEF2F6;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+.segDone { background: #12824A; }
+.segProgress { background: #B45309; }
+.segStuck { background: #B3261E; }
+.segIdle { background: #8A9AAB; }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #647689;
+}
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* --- Per-property launchpad rows ------------------------------------- */
+
+.launchpadList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.propRow {
+  border: 1px solid #E6ECF2;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #FCFDFE;
+}
+.propRowHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.propThumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.propText {
+  min-width: 0;
+  flex: 1;
+}
+.propAddr {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0B1B2B;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.propSub {
+  font-size: 11.5px;
+  color: #8A9AAB;
+  margin-top: 2px;
+}
+.propFrac {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0B1B2B;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.propLink {
+  font-size: 12px;
+  color: #1B77BE;
+  text-decoration: none;
+  margin-left: 14px;
+  white-space: nowrap;
+}
+.propLink:hover { color: #02AAEB; }
+
+.phaseGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+@media (max-width: 760px) {
+  .phaseGrid { grid-template-columns: 1fr; }
+}
+
+.phaseCard {
+  border: 1px solid #E6ECF2;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #FFFFFF;
+}
+.phaseHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.phaseName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0B1B2B;
+}
+.phaseFrac {
+  font-size: 11.5px;
+  color: #647689;
+  font-variant-numeric: tabular-nums;
+}
+.phaseBar {
+  width: 100%;
+  height: 4px;
+  background: #EEF2F6;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.phaseFill {
+  height: 100%;
+  background: #B45309;
+}
+.phaseStatus {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #F6F8FB;
+  color: #647689;
+}
+
+/* --- Relationship health (operating) --------------------------------- */
+
+.health {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 95% -30%, rgba(2, 170, 235, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #FAF9FF 0%, #FFFFFF 100%);
+  border: 1px solid #E6ECF2;
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04),
+    0 20px 40px -22px rgba(11, 27, 43, 0.1);
+}
+.healthHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.healthTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0B1B2B;
+  letter-spacing: -0.005em;
+}
+.healthSub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #647689;
+  line-height: 1.55;
+  max-width: 640px;
+}
+
+.healthMetrics {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid rgba(11, 27, 43, 0.06);
+  padding-top: 18px;
+}
+@media (max-width: 820px) {
+  .healthMetrics { grid-template-columns: repeat(2, 1fr); gap: 18px 0; }
+}
+.healthMetric {
+  padding: 0 20px;
+  border-right: 1px solid rgba(11, 27, 43, 0.06);
+}
+.healthMetric:first-child { padding-left: 0; }
+.healthMetric:last-child { border-right: 0; padding-right: 0; }
+@media (max-width: 820px) {
+  .healthMetric:nth-child(2n) { border-right: 0; }
+}
+.healthMetricLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8A9AAB;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.healthMetricValue {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0B1B2B;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.healthMetricSub {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: #647689;
+  line-height: 1.4;
+}
+
+/* --- Alerts row ------------------------------------------------------ */
+
+.alertsGrid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 820px) {
+  .alertsGrid { grid-template-columns: 1fr; }
+}
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #FEE6C7;
+  background: #FEFBF5;
+  border-radius: 10px;
+}
+.alertIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #FEF3E2;
+  color: #B45309;
+  flex-shrink: 0;
+}
+.alertText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.alertTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0B1B2B;
+  line-height: 1.3;
+}
+.alertSub {
+  font-size: 11.5px;
+  color: #647689;
+  line-height: 1.4;
+}
+.alertLink {
+  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #1B77BE;
+  text-decoration: none;
+}
+.alertLink:hover { color: #02AAEB; }
+
+/* --- Collapsed launchpad line (operating) ---------------------------- */
+
+.launchpadCollapsed {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #FFFFFF;
+  border: 1px solid #E6ECF2;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04);
+}
+.launchpadCheck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #E7F7EE;
+  color: #12824A;
+  flex-shrink: 0;
+}
+.launchpadCollapsedText {
+  flex: 1;
+  font-size: 12.5px;
+  color: #0B1B2B;
+  line-height: 1.4;
+}
+.launchpadCollapsedText strong {
+  font-weight: 600;
+}
+
+/* --- Two-column activity + tasks ------------------------------------- */
+
+.twoCol {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 900px) {
+  .twoCol { grid-template-columns: 1fr; }
+}
+
+.activityList {
+  padding: 12px 8px;
+}
+.activityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background 120ms ease;
+}
+.activityItem:hover { background: #F6F8FB; }
+.activityDot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+.activityMain {
+  min-width: 0;
+  flex: 1;
+}
+.activityText {
+  font-size: 12.5px;
+  color: #0B1B2B;
+  line-height: 1.45;
+}
+.activityMeta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #8A9AAB;
+}
+.activityTime {
+  font-size: 11px;
+  color: #8A9AAB;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.emptyBlock {
+  padding: 28px 18px;
+  text-align: center;
+  font-size: 12.5px;
+  color: #8A9AAB;
+  line-height: 1.5;
+}
+
+/* --- Properties snapshot --------------------------------------------- */
+
+.propSnapshot {
+  margin-top: 18px;
+}
+.propSnapshotList {
+  display: flex;
+  flex-direction: column;
+}
+.propSnapshotRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  border-top: 1px solid #F0F3F7;
+}
+.propSnapshotRow:first-child { border-top: 0; }
+.propSnapshotThumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.propSnapshotText {
+  flex: 1;
+  min-width: 0;
+}
+.propSnapshotName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0B1B2B;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.propSnapshotMeta {
+  font-size: 11.5px;
+  color: #647689;
+  margin-top: 2px;
+}
+
+.healthPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.healthPill .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.healthActive { background: #E7F7EE; color: #12824A; }
+.healthPaused { background: #FEF3E2; color: #9A5B10; }
+.healthDraft { background: #F3E8FF; color: #6D28D9; }
