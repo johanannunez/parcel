@@ -1,0 +1,110 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8A9AAB;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #D7DFE8;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0B1B2B;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.input:focus {
+  border-color: #02AAEB;
+  box-shadow: 0 0 0 3px rgba(2, 170, 235, 0.12);
+}
+.input:disabled {
+  background: #F6F8FB;
+  color: #8A9AAB;
+}
+
+.textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #D7DFE8;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0B1B2B;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.textarea:focus {
+  border-color: #02AAEB;
+  box-shadow: 0 0 0 3px rgba(2, 170, 235, 0.12);
+}
+.textarea:disabled {
+  background: #F6F8FB;
+  color: #8A9AAB;
+}
+
+.error {
+  font-size: 12px;
+  color: #E53935;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.btnCancel {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #D7DFE8;
+  background: #fff;
+  color: #3C5266;
+  font-family: inherit;
+}
+.btnCancel:hover:not(:disabled) { background: #F6F8FB; }
+.btnCancel:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnSubmit {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #02AAEB;
+  color: #fff;
+  font-family: inherit;
+  transition: background 120ms ease;
+}
+.btnSubmit:hover:not(:disabled) { background: #0198D4; }
+.btnSubmit:disabled { opacity: 0.5; cursor: not-allowed; }
