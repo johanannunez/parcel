@@ -3178,6 +3178,51 @@ export type Database = {
           },
         ]
       }
+      ai_insights: {
+        Row: {
+          id: string
+          parent_type: 'contact' | 'property' | 'project'
+          parent_id: string
+          agent_key: string
+          severity: 'info' | 'recommendation' | 'warning' | 'success'
+          title: string
+          body: string
+          action_label: string | null
+          action_payload: Json | null
+          dismissed_at: string | null
+          expires_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          parent_type: 'contact' | 'property' | 'project'
+          parent_id: string
+          agent_key: string
+          severity?: 'info' | 'recommendation' | 'warning' | 'success'
+          title: string
+          body: string
+          action_label?: string | null
+          action_payload?: Json | null
+          dismissed_at?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          parent_type?: 'contact' | 'property' | 'project'
+          parent_id?: string
+          agent_key?: string
+          severity?: 'info' | 'recommendation' | 'warning' | 'success'
+          title?: string
+          body?: string
+          action_label?: string | null
+          action_payload?: Json | null
+          dismissed_at?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

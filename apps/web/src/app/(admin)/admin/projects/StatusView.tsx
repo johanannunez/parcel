@@ -10,7 +10,11 @@ import {
 async function fetchProjectStatusRows(): Promise<ProjectStatusRow[]> {
   const supabase = await createClient();
   try {
-    const { data, error } = await supabase
+    // Cast to `any` because the `projects` table is not in the generated types yet
+    // (Plan C has not landed). This is intentional — when Plan C merges it will
+    // regenerate types and this cast can be removed.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from('projects')
       .select('id, name, status, type, color, emoji, assignee_name, due_date, created_at')
       .order('created_at', { ascending: false });
@@ -19,7 +23,8 @@ async function fetchProjectStatusRows(): Promise<ProjectStatusRow[]> {
       if (error.code === '42P01') return []; // relation does not exist
       throw error;
     }
-    return (data ?? []).map((r) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ((data as any[]) ?? []).map((r) => ({
       id: r.id,
       name: r.name,
       status: r.status ?? 'not_started',
