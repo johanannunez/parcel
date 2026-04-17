@@ -5,6 +5,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { ParentType, TaskStatus, TaskType } from './task-types';
+import type { RecurrenceRule } from './recurrence';
+import { nextOccurrence } from './recurrence';
 
 export type CreateTaskInput = {
   title: string;
@@ -17,12 +19,20 @@ export type CreateTaskInput = {
   taskType?: TaskType | null;
   tags?: string[];
   estimatedMinutes?: number | null;
+  recurrenceRule?: RecurrenceRule | null;
+  preNotifyHours?: number | null;
 };
 
 export async function createTask(input: CreateTaskInput): Promise<{ id: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('not authenticated');
+
+  // Compute next_spawn_at when creating a recurring task
+  let next_spawn_at: string | null = null;
+  if (input.recurrenceRule && input.dueAt) {
+    next_spawn_at = nextOccurrence(new Date(input.dueAt), input.recurrenceRule)?.toISOString() ?? null;
+  }
 
   const row = {
     title: input.title.trim(),
@@ -36,6 +46,9 @@ export async function createTask(input: CreateTaskInput): Promise<{ id: string }
     task_type: input.taskType ?? null,
     tags: input.tags && input.tags.length > 0 ? input.tags : null,
     estimated_minutes: input.estimatedMinutes ?? null,
+    recurrence_rule: input.recurrenceRule ?? null,
+    pre_notify_hours: input.preNotifyHours ?? null,
+    next_spawn_at,
   };
 
   const { data, error } = await supabase
@@ -84,7 +97,55 @@ export async function updateTask(
 }
 
 export async function completeTask(id: string): Promise<void> {
-  await updateTask(id, { status: 'done' });
+  const supabase = await createClient();
+
+  // Fetch the task first so we know if it's recurring
+  const { data: task, error: fetchError } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (fetchError) throw fetchError;
+
+  // Mark done
+  const { error: updateError } = await supabase
+    .from('tasks')
+    .update({ status: 'done' })
+    .eq('id', id);
+  if (updateError) throw updateError;
+
+  // Spawn next occurrence if recurring
+  if (task.recurrence_rule && task.due_at) {
+    const rule = task.recurrence_rule as RecurrenceRule;
+    const next = nextOccurrence(new Date(task.due_at), rule);
+    if (next) {
+      const nextDue = next.toISOString();
+      // Compute the spawn after THAT one so next_spawn_at is always one step ahead
+      const afterNext = nextOccurrence(next, rule)?.toISOString() ?? null;
+
+      await supabase.from('tasks').insert({
+        title: task.title,
+        description: task.description,
+        parent_type: task.parent_type,
+        parent_id: task.parent_id,
+        assignee_id: task.assignee_id,
+        created_by: task.created_by,
+        task_type: task.task_type,
+        tags: task.tags,
+        estimated_minutes: task.estimated_minutes,
+        linked_contact_id: task.linked_contact_id,
+        linked_property_id: task.linked_property_id,
+        recurrence_rule: task.recurrence_rule,
+        pre_notify_hours: task.pre_notify_hours,
+        spawned_from_task_id: task.id,
+        due_at: nextDue,
+        next_spawn_at: afterNext,
+        status: 'todo',
+      });
+    }
+  }
+
+  revalidatePath('/admin/tasks');
 }
 
 export async function uncompleteTask(id: string): Promise<void> {
