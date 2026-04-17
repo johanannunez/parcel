@@ -1,0 +1,279 @@
+/* Shared chrome for Settings sub-sections beyond Personal info. */
+
+.select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #D7DFE8;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #0B1B2B;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8A9AAB 50%),
+    linear-gradient(135deg, #8A9AAB 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 53%,
+    calc(100% - 13px) 53%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.select:focus {
+  outline: none;
+  border-color: #1B77BE;
+  box-shadow: 0 0 0 3px rgba(2, 170, 235, 0.16);
+}
+
+/* --- Switch / toggle ------------------------------------------------- */
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.switchTrack {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: #D7DFE8;
+  transition: background 140ms ease;
+}
+.switch input:checked + .switchTrack {
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+}
+.switchThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.18);
+  transition: transform 140ms ease;
+}
+.switch input:checked ~ .switchThumb {
+  transform: translateX(16px);
+}
+
+/* --- List rows ------------------------------------------------------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 22px;
+  border-top: 1px solid #E6ECF2;
+}
+.listItem:first-child {
+  border-top: 0;
+}
+.listItemMain {
+  flex: 1;
+  min-width: 0;
+}
+.listItemTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0B1B2B;
+  letter-spacing: -0.005em;
+}
+.listItemSub {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: #647689;
+  line-height: 1.4;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.listItemIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #F6F8FB;
+  color: #3C5266;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.listItemAction {
+  flex-shrink: 0;
+}
+
+/* --- Status / meta pills -------------------------------------------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 500;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.pillGreen {
+  background: #E7F7EE;
+  color: #12824A;
+}
+.pillAmber {
+  background: #FEF3E2;
+  color: #9A5B10;
+}
+.pillRed {
+  background: rgba(179, 38, 30, 0.08);
+  color: #B3261E;
+}
+.pillSlate {
+  background: #F6F8FB;
+  color: #647689;
+}
+.pillBlue {
+  background: rgba(2, 170, 235, 0.1);
+  color: #1B77BE;
+}
+
+/* --- Metric card used in payouts / data export --------------------- */
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.metricCard {
+  background: #F9FBFD;
+  border: 1px solid #E6ECF2;
+  border-radius: 10px;
+  padding: 14px;
+}
+.metricLabel {
+  font-size: 11px;
+  color: #647689;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.metricValue {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #0B1B2B;
+  letter-spacing: -0.01em;
+}
+.metricSub {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: #8A9AAB;
+}
+
+/* --- Danger zone ---------------------------------------------------- */
+
+.dangerCard {
+  background: #FFFFFF;
+  border: 1px solid rgba(179, 38, 30, 0.25);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04);
+}
+.dangerCard + .dangerCard {
+  margin-top: 16px;
+}
+.dangerHeader {
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.dangerTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #B3261E;
+  letter-spacing: -0.005em;
+}
+.dangerBody {
+  padding: 0 22px 18px;
+  font-size: 12.5px;
+  color: #647689;
+  line-height: 1.5;
+}
+.btnDanger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid rgba(179, 38, 30, 0.4);
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #B3261E;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease;
+  flex-shrink: 0;
+}
+.btnDanger:hover {
+  background: rgba(179, 38, 30, 0.06);
+}
+
+/* --- Shortcuts table ------------------------------------------------ */
+
+.shortcutList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+}
+.shortcutItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 22px;
+  border-top: 1px solid #E6ECF2;
+}
+.shortcutItem:first-child { border-top: 0; }
+.shortcutLabel { color: #0B1B2B; }
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 6px;
+  background: #F6F8FB;
+  border: 1px solid #E6ECF2;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: #3C5266;
+}
+.kbdRow { display: inline-flex; gap: 4px; align-items: center; }
+.kbdPlus { color: #8A9AAB; font-size: 11px; }

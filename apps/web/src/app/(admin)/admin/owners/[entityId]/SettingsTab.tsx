@@ -4,22 +4,26 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { OwnerDetailData } from "@/lib/admin/owner-detail-types";
 import { ImpersonationBanner } from "./settings/ImpersonationBanner";
 import { PersonalInfoSection } from "./settings/PersonalInfoSection";
-import { SectionPlaceholder } from "./settings/SectionPlaceholder";
+import {
+  AccountSecuritySection,
+  type SessionRow,
+} from "./settings/AccountSecuritySection";
+import { BusinessEntitySection } from "./settings/BusinessEntitySection";
+import { NotificationsSection } from "./settings/NotificationsSection";
+import { PaymentsPayoutSection } from "./settings/PaymentsPayoutSection";
+import { PropertyDefaultsSection } from "./settings/PropertyDefaultsSection";
+import { RegionLanguageSection } from "./settings/RegionLanguageSection";
+import { AppPreferencesSection } from "./settings/AppPreferencesSection";
+import {
+  DataPrivacySection,
+  type ConnectionRow,
+} from "./settings/DataPrivacySection";
+import { DangerZoneSection } from "./settings/DangerZoneSection";
 import styles from "./SettingsTab.module.css";
+import { SETTINGS_SECTIONS, type SettingsSection } from "./settings-sections";
 
-export const SETTINGS_SECTIONS = [
-  "personal",
-  "account",
-  "business",
-  "notifications",
-  "payments",
-  "property_defaults",
-  "region",
-  "preferences",
-  "privacy",
-  "danger",
-] as const;
-export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+export { SETTINGS_SECTIONS };
+export type { SettingsSection };
 
 const SECTION_LABEL: Record<SettingsSection, string> = {
   personal: "Personal info",
@@ -68,7 +72,7 @@ function gradientFor(id: string): string {
 export type SettingsTabProps = {
   data: OwnerDetailData;
   activeSection: SettingsSection;
-  /** Extended profile fields needed by Personal info, served from the page. */
+  /** Extended profile fields needed by several sections, served from the page. */
   profileExtras: {
     preferredName: string | null;
     contactMethod:
@@ -77,11 +81,21 @@ export type SettingsTabProps = {
       | "phone"
       | "whatsapp"
       | null;
+    timezone: string | null;
   };
   internalNote: {
     text: string;
     updatedAt: string;
     createdByName: string | null;
+  } | null;
+  sessions: SessionRow[];
+  connections: ConnectionRow[];
+  entityDetail: {
+    id: string;
+    name: string;
+    type: string | null;
+    ein: string | null;
+    notes: string | null;
   } | null;
 };
 
@@ -90,6 +104,9 @@ export function SettingsTab({
   activeSection,
   profileExtras,
   internalNote,
+  sessions,
+  connections,
+  entityDetail,
 }: SettingsTabProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -135,7 +152,7 @@ export function SettingsTab({
       <div className={styles.content}>
         <ImpersonationBanner ownerName={primaryMember.fullName} />
 
-        {activeSection === "personal" ? (
+        {activeSection === "personal" && (
           <PersonalInfoSection
             profile={{
               id: primaryMember.id,
@@ -149,39 +166,74 @@ export function SettingsTab({
             internalNote={internalNote}
             gradient={gradientFor(primaryMember.id)}
           />
-        ) : (
-          <SectionPlaceholder
-            title={SECTION_LABEL[activeSection]}
-            subtitle={sectionSubtitle(activeSection)}
-            teaser={PLACEHOLDER_TEASERS[activeSection]}
+        )}
+
+        {activeSection === "account" && (
+          <AccountSecuritySection
+            email={primaryMember.email}
+            twoFactorEnabled={false}
+            lastPasswordChangeAt={null}
+            sessions={sessions}
           />
+        )}
+
+        {activeSection === "business" && (
+          <BusinessEntitySection
+            entity={
+              entityDetail ?? {
+                id: entity.id,
+                name: entity.name,
+                type: null,
+                ein: null,
+                notes: null,
+              }
+            }
+            coOwners={data.members.map((m) => ({
+              id: m.id,
+              fullName: m.fullName,
+              email: m.email,
+              role: m.id === primaryMember.id ? "primary" : "member",
+            }))}
+          />
+        )}
+
+        {activeSection === "notifications" && <NotificationsSection />}
+
+        {activeSection === "payments" && (
+          <PaymentsPayoutSection
+            hasBankOnFile={false}
+            bankLast4={null}
+            bankName={null}
+            w9OnFile={false}
+            ytdGrossCents={596500}
+            ytdNetCents={417700}
+            nextPayoutDate="2026-05-15"
+          />
+        )}
+
+        {activeSection === "property_defaults" && (
+          <PropertyDefaultsSection propertyCount={data.propertyCount} />
+        )}
+
+        {activeSection === "region" && (
+          <RegionLanguageSection
+            profileId={primaryMember.id}
+            timezone={profileExtras.timezone}
+          />
+        )}
+
+        {activeSection === "preferences" && <AppPreferencesSection />}
+
+        {activeSection === "privacy" && (
+          <DataPrivacySection connections={connections} />
+        )}
+
+        {activeSection === "danger" && (
+          <DangerZoneSection ownerName={primaryMember.fullName} />
         )}
       </div>
     </div>
   );
-}
-
-function sectionSubtitle(section: Exclude<SettingsSection, "personal">): string {
-  switch (section) {
-    case "account":
-      return "Sign in and account protection.";
-    case "business":
-      return "Legal entity and tax setup.";
-    case "notifications":
-      return "When and how the owner hears from us.";
-    case "payments":
-      return "Where and when money moves.";
-    case "property_defaults":
-      return "Settings that apply across all properties.";
-    case "region":
-      return "Location, language, and currency.";
-    case "preferences":
-      return "Personal app behavior.";
-    case "privacy":
-      return "Who sees what, and what leaves.";
-    case "danger":
-      return "Destructive actions.";
-  }
 }
 
 function renderNavItem(
