@@ -55,6 +55,51 @@ export type Database = {
           },
         ]
       }
+      ai_insights: {
+        Row: {
+          action_label: string | null
+          action_payload: Json | null
+          agent_key: string
+          body: string
+          created_at: string
+          dismissed_at: string | null
+          expires_at: string | null
+          id: string
+          parent_id: string
+          parent_type: string
+          severity: string
+          title: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_payload?: Json | null
+          agent_key: string
+          body: string
+          created_at?: string
+          dismissed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          parent_id: string
+          parent_type: string
+          severity?: string
+          title: string
+        }
+        Update: {
+          action_label?: string | null
+          action_payload?: Json | null
+          agent_key?: string
+          body?: string
+          created_at?: string
+          dismissed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          parent_id?: string
+          parent_type?: string
+          severity?: string
+          title?: string
+        }
+        Relationships: []
+      }
       attachments: {
         Row: {
           created_at: string
@@ -1709,6 +1754,79 @@ export type Database = {
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          archived_at: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          emoji: string | null
+          id: string
+          linked_contact_id: string | null
+          linked_property_id: string | null
+          name: string
+          owner_user_id: string | null
+          project_type: string
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          name: string
+          owner_user_id?: string | null
+          project_type: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          name?: string
+          owner_user_id?: string | null
+          project_type?: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_linked_property_id_fkey"
+            columns: ["linked_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
