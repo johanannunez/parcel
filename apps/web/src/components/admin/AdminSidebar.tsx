@@ -19,6 +19,7 @@ import type { ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
 import { SidebarSearch } from "@/components/admin/chrome/SidebarSearch";
 import { CreateMenu } from "@/components/admin/chrome/CreateMenu";
+import { TopBarSearch } from "@/components/admin/chrome/TopBarSearch";
 import css from "./AdminSidebar.module.css";
 
 type NavItem = {
@@ -403,6 +404,8 @@ export function AdminTopBar({
       ) : null}
 
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <TopBarSearch />
+        <CreateMenu placement="topbar" />
         <span
           style={{
             display: "flex",

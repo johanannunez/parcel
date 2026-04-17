@@ -76,6 +76,17 @@
   box-shadow: 0 0 0 3px rgba(74,222,128,0.22);
 }
 
+/* Compact Search + Create cluster. Visible on tablet/mobile; hidden on desktop
+ * where the sidebar hosts the full SidebarSearch + CreateMenu row. */
+.compactUtils {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+@media (min-width: 1024px) {
+  .compactUtils { display: none; }
+}
+
 @media (max-width: 768px) {
   .root { padding: 14px 16px; gap: 12px; }
   .right { gap: 6px; }

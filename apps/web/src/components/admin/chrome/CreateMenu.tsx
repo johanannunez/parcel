@@ -37,7 +37,7 @@ const GLOBAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kb
   { kind: "lead",  label: "Lead",  icon: <Target size={13} weight="duotone" />,     kbd: "L" },
 ];
 
-export function CreateMenu() {
+export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | "topbar" } = {}) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -75,8 +75,13 @@ export function CreateMenu() {
     setOpen(false);
   }
 
+  const wrapClass =
+    placement === "topbar" ? `${styles.wrap} ${styles.wrapTopbar}` : styles.wrap;
+  const menuClass =
+    placement === "topbar" ? `${styles.menu} ${styles.menuTopbar}` : styles.menu;
+
   return (
-    <div className={styles.wrap} ref={wrapRef}>
+    <div className={wrapClass} ref={wrapRef}>
       <button
         type="button"
         className={styles.btn}
@@ -87,7 +92,7 @@ export function CreateMenu() {
         +
       </button>
       {open ? (
-        <div className={styles.menu} role="menu">
+        <div className={menuClass} role="menu">
           {CONTEXTUAL.map((it) => (
             <button
               key={it.kind}

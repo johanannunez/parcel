@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Question, Bell } from "@phosphor-icons/react";
 import { derivePageTitle, type PageTitleInfo } from "@/lib/admin/derive-page-title";
+import { TopBarSearch } from "./TopBarSearch";
+import { CreateMenu } from "./CreateMenu";
 import styles from "./AdminTopBar.module.css";
 
 type Props = { notificationCount?: number };
@@ -54,6 +56,12 @@ export function AdminTopBar({ notificationCount = 0 }: Props) {
       </div>
 
       <div className={styles.right}>
+        {/* Search + Create — only visible below 1024px (desktop has them in the sidebar). */}
+        <div className={styles.compactUtils}>
+          <TopBarSearch />
+          <CreateMenu placement="topbar" />
+        </div>
+
         <button
           type="button"
           className={styles.iconBtn}
