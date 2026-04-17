@@ -1,0 +1,86 @@
+.sortControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.sortLabel {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+.sortSelect {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sortSelect select {
+  appearance: none;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 8px;
+  padding: 6px 24px 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.sortSelect > svg {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+.sortDir {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.sortDir:hover {
+  background-color: var(--color-warm-gray-50);
+  border-color: var(--color-warm-gray-400);
+}
+
+.galleryList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+}
+
+@media (max-width: 1200px) {
+  .galleryList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .galleryList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

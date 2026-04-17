@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PropertiesPageHeader } from "./PropertiesPageHeader";
+import { HomesPageChrome } from "./HomesPageChrome";
+import { HomesViewSwitcher } from "./HomesViewSwitcher";
 import { PropertyFilterPopover, type FilterSelection } from "./PropertyFilterPopover";
 import { GridView } from "./GridView";
 import type { ChecklistItem } from "@/lib/checklist";
@@ -17,9 +18,8 @@ type Property = {
 };
 
 /**
- * Client wrapper for the Grid view. Owns the filter selection so we can
- * render the filter button in the page header's right slot while the grid
- * reads the same selection state.
+ * Status view (formerly Launchpad). Shares the same HomesPageChrome + view
+ * switcher used by the Homes Gallery/Table views so navigation feels cohesive.
  */
 export function GridViewPage({
   properties,
@@ -44,28 +44,52 @@ export function GridViewPage({
     });
   }, [properties, selection]);
 
+  const total = properties.length;
+  const subtitle = `${total} ${total === 1 ? "home" : "homes"} under Parcel management`;
+
   return (
-    <div className="flex w-full flex-col">
-      <PropertiesPageHeader
-        activeView="grid"
-        total={properties.length}
-        rightSlot={
-          <PropertyFilterPopover
-            owners={owners.map((o) => ({ id: o.id, name: o.name }))}
-            properties={properties}
-            selection={selection}
-            onChange={setSelection}
-            totalVisible={visibleProperties.length}
-            totalAll={properties.length}
-          />
-        }
-      />
+    <HomesPageChrome
+      title="Properties"
+      subtitle={subtitle}
+      toolbarLeft={
+        <HomesViewSwitcher
+          activeKey="status"
+          tabs={[
+            {
+              key: "status",
+              label: "Status",
+              href: "/admin/properties?view=launchpad",
+            },
+            {
+              key: "gallery",
+              label: "Gallery",
+              href: "/admin/properties?view=details&mode=gallery",
+            },
+            {
+              key: "table",
+              label: "Table",
+              href: "/admin/properties?view=details&mode=table",
+            },
+          ]}
+        />
+      }
+      toolbarRight={
+        <PropertyFilterPopover
+          owners={owners.map((o) => ({ id: o.id, name: o.name }))}
+          properties={properties}
+          selection={selection}
+          onChange={setSelection}
+          totalVisible={visibleProperties.length}
+          totalAll={properties.length}
+        />
+      }
+    >
       <GridView
         properties={properties}
         visibleProperties={visibleProperties}
         checklistItems={checklistItems}
         owners={owners}
       />
-    </div>
+    </HomesPageChrome>
   );
 }

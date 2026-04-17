@@ -1,0 +1,119 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.card {
+  padding: 5px 12px 5px 10px;
+  font-size: 12px;
+}
+
+.row {
+  padding: 3px 9px 3px 7px;
+  font-size: 11px;
+}
+
+.label {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.separator {
+  opacity: 0.45;
+  font-weight: 400;
+}
+
+.meta {
+  font-weight: 500;
+  opacity: 0.88;
+}
+
+.dot,
+.arrow {
+  flex-shrink: 0;
+}
+
+.occupied {
+  background: linear-gradient(180deg, rgba(2, 170, 235, 0.1) 0%, rgba(27, 119, 190, 0.08) 100%);
+  color: #0a4a76;
+  border-color: rgba(27, 119, 190, 0.22);
+}
+.occupied .dot {
+  color: #02aaeb;
+  filter: drop-shadow(0 0 4px rgba(2, 170, 235, 0.6));
+}
+
+.upcoming {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.08) 100%);
+  color: #7a4708;
+  border-color: rgba(217, 119, 6, 0.28);
+}
+.upcoming .arrow {
+  color: #d97706;
+}
+
+.vacant {
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-tertiary);
+  border-color: var(--color-warm-gray-200);
+}
+.vacant .dot {
+  color: var(--color-warm-gray-400);
+}
+
+:global(.dark) .occupied {
+  background: linear-gradient(180deg, rgba(2, 170, 235, 0.18) 0%, rgba(27, 119, 190, 0.12) 100%);
+  color: #7ccaec;
+  border-color: rgba(2, 170, 235, 0.3);
+}
+:global(.dark) .upcoming {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f5c977;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+:global(.dark) .upcoming .arrow {
+  color: #f59e0b;
+}
+:global(.dark) .vacant {
+  background: rgba(255, 255, 255, 0.04);
+  color: #8a8a8a;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 520px) {
+  .pill {
+    max-width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .row {
+    font-size: 11px;
+    padding: 3px 8px 3px 7px;
+  }
+  .card {
+    font-size: 11.5px;
+    padding: 4px 10px 4px 9px;
+  }
+}
+
+@media (max-width: 380px) {
+  .row,
+  .card {
+    font-size: 11px;
+  }
+}
