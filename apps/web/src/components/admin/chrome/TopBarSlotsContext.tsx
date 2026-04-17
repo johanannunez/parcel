@@ -63,6 +63,10 @@ export function useSetTopBarSlots(
   deps: DependencyList,
 ) {
   const ctx = useContext(TopBarSlotsContext);
+
+  // Push latest slot content whenever deps change. Do NOT clear on each
+  // update — clearing then re-setting causes a visible flash as the chrome
+  // briefly renders with no slot content between cleanup and next set.
   useEffect(() => {
     if (!ctx) return;
     const next = build();
@@ -71,7 +75,15 @@ export function useSetTopBarSlots(
       searchOverride: next.searchOverride ?? null,
       hideHelp: next.hideHelp ?? false,
     });
-    return () => ctx.clear();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
+
+  // Clear slots only when the consuming component truly unmounts, so routes
+  // that don't inject slots revert to the default chrome.
+  useEffect(() => {
+    return () => {
+      ctx?.clear();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
