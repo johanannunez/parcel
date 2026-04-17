@@ -1,0 +1,115 @@
+.card {
+  display: block;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+  text-decoration: none;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -6px rgba(15,23,42,0.12);
+}
+
+.photo {
+  position: relative;
+  height: 88px;
+  background-size: cover; background-position: center;
+}
+.photoOverlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.4) 100%);
+}
+.coverEmoji {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+}
+
+.statusPill {
+  position: absolute; top: 7px; left: 7px;
+  padding: 3px 7px; border-radius: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.4px;
+  text-transform: uppercase; color: #fff;
+}
+.pillLive { background: #10B981; }
+.pillOnb { background: #02AAEB; }
+.pillReview { background: #8B5CF6; }
+.pillStuck { background: #EF4444; }
+.pillPaused { background: #6b7280; }
+.pillInfo { background: #0F3B6B; }
+
+.stageBadge {
+  position: absolute; top: 7px; right: 7px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+  color: #fff; font-size: 10px; padding: 3px 7px; border-radius: 5px;
+}
+
+.body { padding: 11px 12px 10px; }
+
+.name { color: #0F3B6B; font-size: 13.5px; font-weight: 700; line-height: 1.3; }
+.sub { color: #6b7280; font-size: 11.5px; margin-top: 1px; }
+
+.stats {
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+}
+.stat {}
+.statLabel {
+  color: #9ca3af; font-size: 8.5px; letter-spacing: 0.4px;
+  text-transform: uppercase; font-weight: 600;
+}
+.statValue {
+  color: #0F3B6B; font-size: 11.5px; font-weight: 700; margin-top: 2px;
+}
+.bar {
+  margin-top: 4px; height: 3px; background: #e5e7eb;
+  border-radius: 3px; overflow: hidden;
+}
+.barFill { height: 100%; }
+.barOk { background: #02AAEB; }
+.barWarn { background: #F59E0B; }
+.barBad { background: #EF4444; }
+
+.foot {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 9px; margin-top: 9px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.avStack { display: flex; }
+.avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid #fff; margin-left: -7px;
+}
+.avatar:first-child { margin-left: 0; }
+.avatarFallback {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+  color: #fff; font-size: 10px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid #fff; margin-left: -7px;
+}
+.avatarFallback:first-child { margin-left: 0; }
+.avatarMore {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #e5e7eb; color: #6b7280;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700;
+  border: 2px solid #fff; margin-left: -7px;
+}
+
+.due {
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.dueBad { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.dueWarn { background: #fed7aa; color: #9a3412; border: 1px solid #fdba74; }
+.dueCalm { background: rgba(2,170,235,0.12); color: #02AAEB; border: 1px solid rgba(2,170,235,0.3); }
+.dueGreen { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
