@@ -3,7 +3,8 @@
 import { useMemo, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSetTopBarSlots } from "@/components/admin/chrome/TopBarSlotsContext";
-import { HomesViewSwitcher, type HomesViewKey } from "./HomesViewSwitcher";
+import { HomesViewSwitcher } from "./HomesViewSwitcher";
+import { StatusButton } from "./StatusButton";
 import { PropertiesTopBarSearch } from "./PropertiesTopBarSearch";
 import {
   PropertiesFilterProvider,
@@ -64,8 +65,6 @@ function TopBarController({
   const { selection } = usePropertiesFilter();
   const { mode, setMode } = usePropertiesMode();
 
-  const activeKey: HomesViewKey = onStatusView ? "status" : mode;
-
   const visibleCount = useMemo(() => {
     const noSelection =
       selection.ownerIds.size === 0 && selection.propertyIds.size === 0;
@@ -87,20 +86,19 @@ function TopBarController({
   useSetTopBarSlots(
     () => ({
       centerSlot: (
-        <HomesViewSwitcher
-          activeKey={activeKey}
-          tabs={[
-            onStatusView
-              ? { key: "status", label: "Status", href: "/admin/properties?view=launchpad" }
-              : { key: "status", label: "Status", href: "/admin/properties?view=launchpad" },
-            onStatusView
-              ? { key: "gallery", label: "Gallery", href: "/admin/properties?view=details&mode=gallery" }
-              : { key: "gallery", label: "Gallery", onClick: () => flipMode("gallery") },
-            onStatusView
-              ? { key: "table", label: "Table", href: "/admin/properties?view=details&mode=table" }
-              : { key: "table", label: "Table", onClick: () => flipMode("table") },
-          ]}
-        />
+        <>
+          <StatusButton
+            active={onStatusView}
+            href="/admin/properties?view=launchpad"
+          />
+          <HomesViewSwitcher
+            activeKey={mode}
+            tabs={[
+              { key: "gallery", label: "Gallery", onClick: () => flipMode("gallery") },
+              { key: "table", label: "Table", onClick: () => flipMode("table") },
+            ]}
+          />
+        </>
       ),
       searchOverride: (
         <PropertiesTopBarSearch
@@ -112,7 +110,7 @@ function TopBarController({
       ),
       hideHelp: true,
     }),
-    [activeKey, visibleCount, owners, summaries, onStatusView],
+    [mode, visibleCount, owners, summaries, onStatusView],
   );
 
   return null;

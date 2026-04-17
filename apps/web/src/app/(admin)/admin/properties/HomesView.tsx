@@ -95,38 +95,49 @@ export function HomesView({
       )}
 
       <div className={styles.content}>
-        <div key={mode} className={styles.modeWrap}>
-          {filtered.length === 0 ? (
-            <div className={styles.empty}>
-              <p>No properties match your filters.</p>
+        {filtered.length === 0 ? (
+          <div className={styles.empty}>
+            <p>No properties match your filters.</p>
+          </div>
+        ) : (
+          <>
+            <div
+              className={styles.modePane}
+              style={{ display: mode === "gallery" ? "block" : "none" }}
+              aria-hidden={mode !== "gallery"}
+            >
+              <div className={styles.galleryList}>
+                {filtered.map((p) => (
+                  <GalleryCard
+                    key={p.id}
+                    property={p}
+                    onOpen={() => setDrawerPropertyId(p.id)}
+                  />
+                ))}
+              </div>
             </div>
-          ) : mode === "gallery" ? (
-            <div className={styles.galleryList}>
-              {sorted.map((p) => (
-                <GalleryCard
-                  key={p.id}
-                  property={p}
-                  onOpen={() => setDrawerPropertyId(p.id)}
-                />
-              ))}
+            <div
+              className={styles.modePane}
+              style={{ display: mode === "table" ? "block" : "none" }}
+              aria-hidden={mode !== "table"}
+            >
+              <HomesTable
+                properties={sorted}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSort={(k) => {
+                  if (k === sortKey) {
+                    setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+                  } else {
+                    setSortKey(k);
+                    setSortDir("asc");
+                  }
+                }}
+                onOpen={(id) => setDrawerPropertyId(id)}
+              />
             </div>
-          ) : (
-            <HomesTable
-              properties={sorted}
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onSort={(k) => {
-                if (k === sortKey) {
-                  setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-                } else {
-                  setSortKey(k);
-                  setSortDir("asc");
-                }
-              }}
-              onOpen={(id) => setDrawerPropertyId(id)}
-            />
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       <PropertyDrawer

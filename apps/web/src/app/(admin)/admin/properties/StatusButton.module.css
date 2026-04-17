@@ -1,0 +1,72 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn:hover:not(.btnActive) {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+}
+
+.btnActive {
+  color: #3b2309;
+  font-weight: 600;
+  background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%);
+  border-color: rgba(180, 83, 9, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 2px rgba(146, 64, 14, 0.25),
+    0 6px 18px rgba(245, 158, 11, 0.42);
+}
+
+.btnActive:hover {
+  background: linear-gradient(180deg, #fde68a 0%, #fbbf24 100%);
+  border-color: rgba(180, 83, 9, 0.65);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 4px rgba(146, 64, 14, 0.28),
+    0 8px 22px rgba(245, 158, 11, 0.5);
+}
+
+.icon {
+  color: currentColor;
+  opacity: 0.88;
+  flex-shrink: 0;
+}
+
+.btnActive .icon {
+  color: #7c2d12;
+  opacity: 1;
+}
+
+.label {
+  line-height: 1;
+}
