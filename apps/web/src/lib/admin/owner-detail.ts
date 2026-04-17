@@ -9,6 +9,7 @@ import type {
   OwnerDetailProperty,
   OwnerDetailActivityEntry,
   OwnerDetailSwitcherRow,
+  OverviewState,
 } from "@/lib/admin/owner-detail-types";
 
 export type {
@@ -57,6 +58,28 @@ function deriveStatus({
   if (allOnboarded) return "active";
   if (propertyCount > 0) return "setting_up";
   return "invited";
+}
+
+function deriveOverviewState(args: {
+  lifecycleStage: string | null;
+  primaryOnboarded: boolean;
+  allPropertiesPublished: boolean;
+}): OverviewState {
+  const stage = args.lifecycleStage;
+  if (
+    stage === "lead_new" ||
+    stage === "qualified" ||
+    stage === "in_discussion" ||
+    stage === "contract_sent"
+  ) {
+    return "lead";
+  }
+  if (stage === "paused" || stage === "churned") {
+    return "dormant";
+  }
+  // Fall back to existing property/profile heuristic for onboarding vs operating.
+  if (args.primaryOnboarded && args.allPropertiesPublished) return "operating";
+  return "onboarding";
 }
 
 export async function fetchOwnerDetail(entityId: string): Promise<OwnerDetailData | null> {
@@ -127,10 +150,28 @@ export async function fetchOwnerDetail(entityId: string): Promise<OwnerDetailDat
     .order("created_at", { ascending: false })
     .limit(12);
 
-  const [{ data: properties }, { data: activityRaw }] = await Promise.all([
-    propertiesPromise,
-    activityPromise,
-  ]);
+  // Query the contacts row linked to the primary profile so we can derive
+  // lifecycle_stage and expose contact-level fields to the overview components.
+  const contactPromise = (supabase as any)
+    .from("contacts")
+    .select(
+      "id, lifecycle_stage, stage_changed_at, source, source_detail, estimated_mrr, assigned_to",
+    )
+    .eq("profile_id", primaryRaw.id)
+    .maybeSingle() as Promise<{
+    data: {
+      id: string;
+      lifecycle_stage: string | null;
+      stage_changed_at: string | null;
+      source: string | null;
+      source_detail: string | null;
+      estimated_mrr: number | null;
+      assigned_to: string | null;
+    } | null;
+  }>;
+
+  const [{ data: properties }, { data: activityRaw }, { data: contactRow }] =
+    await Promise.all([propertiesPromise, activityPromise, contactPromise]);
 
   // Build the switcher list in the same pass (so the identity-band dropdown
   // can navigate between owners without another round trip on the client).
@@ -265,15 +306,51 @@ export async function fetchOwnerDetail(entityId: string): Promise<OwnerDetailDat
     propertyCount,
   });
 
-  // Onboarding state if primary hasn't completed onboarding OR any property
-  // isn't published. This matches the spec threshold (any property below
-  // "complete" Launchpad flips the whole owner into onboarding mode).
+  // Derive the 4-way overview state. contacts.lifecycle_stage wins when
+  // present; property/profile heuristics are the fallback.
   const primaryOnboarded = !!primaryMember.onboardingCompletedAt;
   const allPropertiesPublished =
     propertiesOut.length > 0 &&
     propertiesOut.every((p) => p.setupStatus === "published");
-  const overviewState: "onboarding" | "operating" =
-    primaryOnboarded && allPropertiesPublished ? "operating" : "onboarding";
+  const overviewState: OverviewState = deriveOverviewState({
+    lifecycleStage: contactRow?.lifecycle_stage ?? null,
+    primaryOnboarded,
+    allPropertiesPublished,
+  });
+
+  // Fetch assigned_to name if present on the contact row.
+  let assignedToName: string | null = null;
+  if (contactRow?.assigned_to) {
+    const { data: assignee } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", contactRow.assigned_to)
+      .maybeSingle();
+    assignedToName = assignee?.full_name?.trim() || assignee?.email || null;
+  }
+
+  // Lifetime payouts for dormant contacts (sum of net_payout across all
+  // properties owned by this entity).
+  let lifetimePayouts: number | null = null;
+  if (propertyIds.length > 0) {
+    const { data: payoutsRaw } = await supabase
+      .from("payouts")
+      .select("net_payout")
+      .in("property_id", propertyIds);
+    if (payoutsRaw && payoutsRaw.length > 0) {
+      lifetimePayouts = (payoutsRaw as Array<{ net_payout: number | null }>).reduce(
+        (sum, p) => sum + (p.net_payout ?? 0),
+        0,
+      );
+    }
+  }
+
+  // pausedAt: use stage_changed_at when stage is paused/churned.
+  const pausedAt =
+    contactRow?.lifecycle_stage === "paused" ||
+    contactRow?.lifecycle_stage === "churned"
+      ? (contactRow.stage_changed_at ?? null)
+      : null;
 
   const activity: OwnerDetailActivityEntry[] = (activityRaw ?? []).map(
     (a: any) => ({
@@ -304,5 +381,15 @@ export async function fetchOwnerDetail(entityId: string): Promise<OwnerDetailDat
     switcher: switcher.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     ),
+    // Contact-linked fields
+    contactId: contactRow?.id ?? null,
+    source: contactRow?.source ?? null,
+    sourceDetail: contactRow?.source_detail ?? null,
+    estimatedMrr: contactRow?.estimated_mrr ?? null,
+    stageChangedAt: contactRow?.stage_changed_at ?? null,
+    assignedTo: contactRow?.assigned_to ?? null,
+    assignedToName,
+    pausedAt,
+    lifetimePayouts,
   };
 }
