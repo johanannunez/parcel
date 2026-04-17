@@ -5,8 +5,10 @@ import { createTask } from '@/lib/admin/task-actions';
 import { createAttachmentRecord } from '@/lib/admin/attachment-actions';
 import { useCreateScope } from '../CreateScopeContext';
 import type { ParentType, TaskType } from '@/lib/admin/task-types';
+import type { RecurrenceRule } from '@/lib/admin/recurrence';
 import { RichDescriptionEditor } from '@/components/admin/tasks/RichDescriptionEditor';
 import { AttachmentsField } from '@/components/admin/tasks/AttachmentsField';
+import { RecurrenceField } from '@/components/admin/tasks/RecurrenceField';
 import type { UploadedAttachment, AttachmentScope } from '@/lib/admin/attachment-upload';
 import styles from './TaskForm.module.css';
 
@@ -51,6 +53,8 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
   const [tagsRaw, setTagsRaw] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState('');
   const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
+  const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | null>(null);
+  const [preNotifyHours, setPreNotifyHours] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -129,6 +133,8 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
           taskType,
           tags: parseTags(tagsRaw),
           estimatedMinutes: mins && !isNaN(mins) ? mins : null,
+          recurrenceRule,
+          preNotifyHours,
         });
         // Persist any uploaded files as attachment records linked to the new task.
         for (const att of attachments) {
@@ -238,6 +244,18 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
             disabled={isPending}
           />
         ) : null}
+      </div>
+
+      {/* Recurrence + pre-notify */}
+      <div className={styles.field}>
+        <label className={styles.label}>Recurrence</label>
+        <RecurrenceField
+          value={recurrenceRule}
+          onChange={setRecurrenceRule}
+          preNotifyHours={preNotifyHours}
+          onPreNotifyChange={setPreNotifyHours}
+          disabled={isPending}
+        />
       </div>
 
       {/* Tags */}
