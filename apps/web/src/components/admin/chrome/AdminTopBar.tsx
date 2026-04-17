@@ -57,9 +57,8 @@ export function AdminTopBar({ notificationCount = 0 }: Props) {
         {info.subtitle ? <div className={styles.sub}>{info.subtitle}</div> : null}
       </div>
 
-      {centerSlot ? <div className={styles.center}>{centerSlot}</div> : null}
-
       <div className={styles.right}>
+        {centerSlot ? <div className={styles.centerInline}>{centerSlot}</div> : null}
         {searchOverride ? (
           <div className={styles.searchSlot}>{searchOverride}</div>
         ) : (

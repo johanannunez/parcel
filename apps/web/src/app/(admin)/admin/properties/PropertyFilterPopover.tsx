@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useMemo,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
 import { CaretDown, MagnifyingGlass, X } from "@phosphor-icons/react";
 
 type Owner = { id: string; name: string | null };
@@ -38,6 +46,13 @@ export function PropertyFilterPopover({
   renderTrigger,
   hideChips = false,
   popoverAlign = "right",
+  hideSearchRow = false,
+  externalQuery,
+  onExternalQueryChange,
+  externalOpen,
+  onExternalOpenChange,
+  portal = false,
+  popoverWidth,
 }: {
   owners: Owner[];
   properties: Property[];
@@ -48,19 +63,68 @@ export function PropertyFilterPopover({
   renderTrigger?: (props: PropertyFilterTriggerProps) => ReactNode;
   hideChips?: boolean;
   popoverAlign?: "left" | "right";
+  hideSearchRow?: boolean;
+  externalQuery?: string;
+  onExternalQueryChange?: (next: string) => void;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (next: boolean) => void;
+  portal?: boolean;
+  popoverWidth?: number;
 }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+  const setOpen = (next: boolean) => {
+    if (onExternalOpenChange) onExternalOpenChange(next);
+    else setInternalOpen(next);
+  };
+  const [internalQuery, setInternalQuery] = useState("");
+  const query = externalQuery ?? internalQuery;
+  const setQuery = (next: string) => {
+    if (onExternalQueryChange) onExternalQueryChange(next);
+    else setInternalQuery(next);
+  };
   const [tab, setTab] = useState<FilterTab>("owners");
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [portalRect, setPortalRect] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!portal || !open || !triggerRef.current) return;
+    const update = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = popoverWidth ?? Math.max(rect.width, 320);
+      const left = popoverAlign === "right"
+        ? rect.right - width
+        : rect.left;
+      setPortalRect({
+        top: rect.bottom + 8,
+        left: Math.max(12, left),
+        width,
+      });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [portal, open, popoverAlign, popoverWidth]);
+
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current && ref.current.contains(target)) return;
+      if (popoverRef.current && popoverRef.current.contains(target)) return;
+      setOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const filteredOwners = useMemo(() => {
@@ -116,19 +180,181 @@ export function PropertyFilterPopover({
     setQuery("");
   }
 
+  const popoverBody = open ? (
+    <div
+      ref={popoverRef}
+      style={{
+        position: portal ? "fixed" : "absolute",
+        top: portal ? (portalRect?.top ?? 0) : "calc(100% + 6px)",
+        left: portal ? (portalRect?.left ?? 0) : popoverAlign === "left" ? 0 : undefined,
+        right: portal ? undefined : popoverAlign === "right" ? 0 : undefined,
+        width: portal ? (portalRect?.width ?? 320) : "max-content",
+        zIndex: 200,
+        minWidth: "260px",
+        maxWidth: portal ? undefined : "420px",
+        maxHeight: "480px",
+        borderRadius: "12px",
+        border: "1px solid var(--color-warm-gray-200)",
+        backgroundColor: "var(--color-white)",
+        boxShadow: "0 20px 44px rgba(0,0,0,0.18), 0 4px 10px rgba(0,0,0,0.06)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {!hideSearchRow && (
+        <div
+          style={{
+            padding: "10px 12px",
+            borderBottom: "1px solid var(--color-warm-gray-100)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <MagnifyingGlass size={14} weight="bold" color="var(--color-text-tertiary)" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search owners or properties..."
+            autoFocus
+            style={{
+              flex: 1,
+              border: "none",
+              outline: "none",
+              fontSize: "13px",
+              color: "var(--color-text-primary)",
+              background: "transparent",
+            }}
+          />
+          {hasSelection && (
+            <button
+              type="button"
+              onClick={clearAll}
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                color: "#02AAEB",
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                padding: "2px 4px",
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Segmented toggle: Owners | Properties */}
+      <div
+        style={{
+          padding: hideSearchRow ? "12px 12px 0" : "10px 12px 0",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            padding: "3px",
+            borderRadius: "8px",
+            backgroundColor: "var(--color-warm-gray-100)",
+            border: "1px solid var(--color-warm-gray-200)",
+            flex: 1,
+          }}
+        >
+          <SegmentButton
+            active={tab === "owners"}
+            onClick={() => setTab("owners")}
+            label="Owners"
+            count={filteredOwners.length}
+            selectedCount={selection.ownerIds.size}
+          />
+          <SegmentButton
+            active={tab === "properties"}
+            onClick={() => setTab("properties")}
+            label="Properties"
+            count={filteredProperties.length}
+            selectedCount={selection.propertyIds.size}
+          />
+        </div>
+      </div>
+
+      {tab === "owners" ? (
+        <ScrollableListWithAlphabet
+          items={filteredOwners.map((o) => ({
+            id: o.id,
+            letter: (o.name ?? "?").trim().charAt(0).toUpperCase() || "?",
+            render: (
+              <CheckRow
+                key={o.id}
+                label={o.name ?? "Unknown"}
+                sublabel="Shows all their properties"
+                checked={selection.ownerIds.has(o.id)}
+                onToggle={() => toggleOwner(o.id)}
+              />
+            ),
+          }))}
+          emptyText="No owners match"
+        />
+      ) : (
+        <ScrollableListWithAlphabet
+          items={filteredProperties.map((p) => ({
+            id: p.id,
+            letter: p.street.trim().charAt(0).toUpperCase() || "?",
+            render: (
+              <CheckRow
+                key={p.id}
+                label={p.unit ? `${p.unit}, ${p.street}` : p.street}
+                sublabel={p.location}
+                checked={selection.propertyIds.has(p.id)}
+                onToggle={() => toggleProperty(p.id)}
+              />
+            ),
+          }))}
+          emptyText="No properties match"
+        />
+      )}
+
+      {/* Footer */}
+      <div
+        style={{
+          padding: "8px 12px",
+          borderTop: "1px solid var(--color-warm-gray-100)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontSize: "11px",
+          color: "var(--color-text-tertiary)",
+          backgroundColor: "var(--color-warm-gray-50)",
+        }}
+      >
+        <span>Combine owners + properties freely</span>
+        <span style={{ fontWeight: 600, color: "var(--color-text-secondary)" }}>
+          {totalVisible} showing
+        </span>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      {renderTrigger ? (
-        renderTrigger({
-          open,
-          toggle: () => setOpen(!open),
-          hasSelection,
-          totalVisible,
-          totalAll,
-          totalSelected,
-        })
-      ) : (
-        <button
+      <div ref={triggerRef}>
+        {renderTrigger ? (
+          renderTrigger({
+            open,
+            toggle: () => setOpen(!open),
+            hasSelection,
+            totalVisible,
+            totalAll,
+            totalSelected,
+          })
+        ) : (
+          <button
           type="button"
           onClick={() => setOpen(!open)}
           style={{
@@ -172,167 +398,12 @@ export function PropertyFilterPopover({
             }}
           />
         </button>
-      )}
+        )}
+      </div>
 
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: popoverAlign === "right" ? 0 : undefined,
-            left: popoverAlign === "left" ? 0 : undefined,
-            zIndex: 50,
-            width: "max-content",
-            minWidth: "260px",
-            maxWidth: "420px",
-            maxHeight: "480px",
-            borderRadius: "12px",
-            border: "1px solid var(--color-warm-gray-200)",
-            backgroundColor: "var(--color-white)",
-            boxShadow: "0 20px 44px rgba(0,0,0,0.14), 0 4px 10px rgba(0,0,0,0.06)",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
-          {/* Search row */}
-          <div
-            style={{
-              padding: "10px 12px",
-              borderBottom: "1px solid var(--color-warm-gray-100)",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <MagnifyingGlass size={14} weight="bold" color="var(--color-text-tertiary)" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search owners or properties..."
-              autoFocus
-              style={{
-                flex: 1,
-                border: "none",
-                outline: "none",
-                fontSize: "13px",
-                color: "var(--color-text-primary)",
-                background: "transparent",
-              }}
-            />
-            {hasSelection && (
-              <button
-                type="button"
-                onClick={clearAll}
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  color: "#02AAEB",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  padding: "2px 4px",
-                }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-          {/* Segmented toggle: Owners | Properties */}
-          <div
-            style={{
-              padding: "10px 12px 0",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-flex",
-                padding: "3px",
-                borderRadius: "8px",
-                backgroundColor: "var(--color-warm-gray-100)",
-                border: "1px solid var(--color-warm-gray-200)",
-                flex: 1,
-              }}
-            >
-              <SegmentButton
-                active={tab === "owners"}
-                onClick={() => setTab("owners")}
-                label="Owners"
-                count={filteredOwners.length}
-                selectedCount={selection.ownerIds.size}
-              />
-              <SegmentButton
-                active={tab === "properties"}
-                onClick={() => setTab("properties")}
-                label="Properties"
-                count={filteredProperties.length}
-                selectedCount={selection.propertyIds.size}
-              />
-            </div>
-          </div>
-
-          {/* Scrollable body + alphabet ticker rail */}
-          {tab === "owners" ? (
-            <ScrollableListWithAlphabet
-              items={filteredOwners.map((o) => ({
-                id: o.id,
-                letter: (o.name ?? "?").trim().charAt(0).toUpperCase() || "?",
-                render: (
-                  <CheckRow
-                    key={o.id}
-                    label={o.name ?? "Unknown"}
-                    sublabel="Shows all their properties"
-                    checked={selection.ownerIds.has(o.id)}
-                    onToggle={() => toggleOwner(o.id)}
-                  />
-                ),
-              }))}
-              emptyText="No owners match"
-            />
-          ) : (
-            <ScrollableListWithAlphabet
-              items={filteredProperties.map((p) => ({
-                id: p.id,
-                letter: p.street.trim().charAt(0).toUpperCase() || "?",
-                render: (
-                  <CheckRow
-                    key={p.id}
-                    label={p.unit ? `${p.unit}, ${p.street}` : p.street}
-                    sublabel={p.location}
-                    checked={selection.propertyIds.has(p.id)}
-                    onToggle={() => toggleProperty(p.id)}
-                  />
-                ),
-              }))}
-              emptyText="No properties match"
-            />
-          )}
-
-          {/* Footer */}
-          <div
-            style={{
-              padding: "8px 12px",
-              borderTop: "1px solid var(--color-warm-gray-100)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontSize: "11px",
-              color: "var(--color-text-tertiary)",
-              backgroundColor: "var(--color-warm-gray-50)",
-            }}
-          >
-            <span>Combine owners + properties freely</span>
-            <span style={{ fontWeight: 600, color: "var(--color-text-secondary)" }}>
-              {totalVisible} showing
-            </span>
-          </div>
-        </div>
-      )}
+      {portal && typeof document !== "undefined"
+        ? open && createPortal(popoverBody, document.body)
+        : popoverBody}
 
       {/* Selected chips (below the button, wrap) */}
       {hasSelection && !hideChips && (

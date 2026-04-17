@@ -16,7 +16,7 @@
   font-size: 12.5px;
   font-weight: 500;
   letter-spacing: -0.005em;
-  cursor: pointer;
+  cursor: text;
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
@@ -26,11 +26,6 @@
 .trigger:hover {
   background-color: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.36);
-}
-
-.trigger:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.65);
-  outline-offset: 2px;
 }
 
 .triggerOpen {
@@ -44,32 +39,27 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
 }
 
-.triggerActive .placeholder {
-  color: #ffffff;
-}
-
-.triggerActive .placeholder strong {
-  color: #ffffff;
-  font-weight: 700;
-}
-
 .icon {
   color: rgba(255, 255, 255, 0.88);
   flex-shrink: 0;
 }
 
-.placeholder {
+.input {
   flex: 1;
-  text-align: left;
-  color: rgba(255, 255, 255, 0.78);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  padding: 0;
+  min-width: 0;
 }
 
-.placeholder strong {
-  font-weight: 700;
-  color: #ffffff;
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .caret {

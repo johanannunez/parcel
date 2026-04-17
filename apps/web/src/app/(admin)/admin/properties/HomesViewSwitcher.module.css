@@ -3,11 +3,13 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  height: 36px;
   padding: 3px;
-  border-radius: 12px;
-  background-color: var(--color-warm-gray-50);
-  border: 1px solid var(--color-warm-gray-200);
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   flex-wrap: nowrap;
   max-width: 100%;
 }
@@ -21,54 +23,50 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 8px 16px;
-  min-height: 36px;
+  gap: 6px;
+  padding: 0 12px;
+  height: 28px;
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--color-text-tertiary);
+  color: rgba(255, 255, 255, 0.78);
   background: transparent;
   border: none;
-  border-radius: 9px;
+  border-radius: 7px;
   cursor: pointer;
   text-decoration: none;
   letter-spacing: -0.005em;
   white-space: nowrap;
   transition:
-    color 180ms ease,
-    background-color 180ms ease,
-    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 180ms ease;
+    color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
   -webkit-tap-highlight-color: transparent;
-}
-
-.tab:hover {
-  color: var(--color-text-primary);
+  font-family: inherit;
 }
 
 .tab:hover:not(.tabActive) {
-  background-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .tab:focus-visible {
-  outline: 2px solid #02aaeb;
+  outline: 2px solid rgba(255, 255, 255, 0.7);
   outline-offset: 2px;
 }
 
 .tabActive {
-  color: var(--color-text-primary);
+  color: #0f3b6b;
   font-weight: 600;
   background-color: #ffffff;
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.06),
-    0 4px 10px rgba(15, 23, 42, 0.06),
-    inset 0 0 0 1px rgba(2, 170, 235, 0.22);
+    0 1px 2px rgba(15, 23, 42, 0.12),
+    0 2px 6px rgba(15, 23, 42, 0.12);
 }
 
 .icon {
   display: inline-flex;
   color: currentColor;
-  opacity: 0.8;
+  opacity: 0.85;
   transition: color 180ms ease, opacity 180ms ease;
 }
 
@@ -89,9 +87,9 @@
   .tab {
     flex: 1 1 0;
     min-width: 0;
-    padding: 8px 10px;
+    padding: 0 10px;
     font-size: 12px;
-    gap: 6px;
+    gap: 5px;
   }
   .label {
     overflow: hidden;
@@ -102,8 +100,8 @@
 
 @media (max-width: 380px) {
   .tab {
-    padding: 8px 8px;
+    padding: 0 8px;
     font-size: 11.5px;
-    gap: 5px;
+    gap: 4px;
   }
 }
