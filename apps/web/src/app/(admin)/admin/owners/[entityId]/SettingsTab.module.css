@@ -1,0 +1,129 @@
+/*
+ * Owner detail Settings tab: left-nav + right content.
+ *
+ * The tab lives inside OwnerDetailShell's .content area, which already
+ * supplies 24px 28px padding. We subtract that visually by going
+ * edge-to-edge with a single rounded card that holds both columns.
+ */
+
+.root {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 560px;
+  background: #FFFFFF;
+  border: 1px solid #E6ECF2;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04);
+}
+
+/* --- Left nav --------------------------------------------------------- */
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 14px;
+  background: #FFFFFF;
+  border-right: 1px solid #E6ECF2;
+}
+
+.navGroupLabel {
+  padding: 8px 10px 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8A9AAB;
+}
+
+.navItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: #647689;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+  white-space: nowrap;
+}
+.navItem:hover {
+  background: #F6F8FB;
+  color: #0B1B2B;
+}
+.navItemActive {
+  background: rgba(2, 170, 235, 0.08);
+  color: #1B77BE;
+  font-weight: 600;
+}
+.navItemActive:hover {
+  background: rgba(2, 170, 235, 0.12);
+  color: #1B77BE;
+}
+
+.navItemDanger {
+  color: #B3261E;
+}
+.navItemDanger:hover {
+  background: rgba(179, 38, 30, 0.06);
+  color: #B3261E;
+}
+.navItemDangerActive {
+  background: rgba(179, 38, 30, 0.08);
+  color: #B3261E;
+  font-weight: 600;
+}
+
+.navDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #F59E0B;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.navDivider {
+  height: 1px;
+  background: #E6ECF2;
+  margin: 8px 10px;
+}
+
+/* --- Right content ---------------------------------------------------- */
+
+.content {
+  padding: 32px 40px 40px;
+  background: #F6F8FB;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.impersonationBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(194, 65, 12, 0.06);
+  border: 1px solid rgba(194, 65, 12, 0.18);
+  color: #9A3412;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-bottom: 24px;
+}
+.impersonationBanner strong {
+  font-weight: 600;
+  color: #7C2D12;
+}
+.impersonationIcon {
+  color: #C2410C;
+  flex-shrink: 0;
+}
