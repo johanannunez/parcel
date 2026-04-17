@@ -92,7 +92,8 @@ function TopBarController({
             href="/admin/properties?view=launchpad"
           />
           <HomesViewSwitcher
-            activeKey={mode}
+            activeKey={onStatusView ? null : mode}
+            subdued={onStatusView}
             tabs={[
               { key: "gallery", label: "Gallery", onClick: () => flipMode("gallery") },
               { key: "table", label: "Table", onClick: () => flipMode("table") },

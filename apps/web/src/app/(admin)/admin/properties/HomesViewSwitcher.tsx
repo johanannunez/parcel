@@ -16,19 +16,28 @@ const ICONS: Record<HomesViewKey, React.ReactNode> = {
 export function HomesViewSwitcher({
   activeKey,
   tabs,
+  subdued = false,
 }: {
-  activeKey: HomesViewKey;
+  activeKey: HomesViewKey | null;
   tabs: TabDef[];
+  subdued?: boolean;
 }) {
   const shellRef = useRef<HTMLDivElement>(null);
   const [indicator, setIndicator] = useState<CSSProperties>({ opacity: 0 });
 
   useLayoutEffect(() => {
     if (!shellRef.current) return;
+    if (activeKey === null) {
+      setIndicator((prev) => ({ ...prev, opacity: 0 }));
+      return;
+    }
     const active = shellRef.current.querySelector<HTMLElement>(
       `[data-key="${activeKey}"]`,
     );
-    if (!active) return;
+    if (!active) {
+      setIndicator((prev) => ({ ...prev, opacity: 0 }));
+      return;
+    }
     const parentRect = shellRef.current.getBoundingClientRect();
     const rect = active.getBoundingClientRect();
     setIndicator({
@@ -41,7 +50,7 @@ export function HomesViewSwitcher({
   return (
     <div
       ref={shellRef}
-      className={styles.switcher}
+      className={`${styles.switcher} ${subdued ? styles.switcherSubdued : ""}`}
       role="tablist"
       aria-label="View mode"
     >
