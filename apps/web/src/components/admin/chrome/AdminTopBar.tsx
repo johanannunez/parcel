@@ -74,7 +74,7 @@ export function AdminTopBar({ notificationCount = 0 }: Props) {
             <span className={styles.badge}>{notificationCount > 9 ? "9+" : notificationCount}</span>
           ) : null}
         </button>
-        <div className={styles.clock} aria-live="off">
+        <div className={styles.clock} aria-live="off" suppressHydrationWarning>
           <div className={styles.clockDate}>{dateLabel}</div>
           <div className={styles.clockTime}>
             <span className={styles.live} />
