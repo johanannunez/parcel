@@ -4,7 +4,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import type { ParentType, TaskStatus } from './task-types';
+import type { ParentType, TaskStatus, TaskType } from './task-types';
 
 export type CreateTaskInput = {
   title: string;
@@ -14,6 +14,9 @@ export type CreateTaskInput = {
   parentTaskId?: string | null;
   assigneeId?: string | null;
   dueAt?: string | null;
+  taskType?: TaskType | null;
+  tags?: string[];
+  estimatedMinutes?: number | null;
 };
 
 export async function createTask(input: CreateTaskInput): Promise<{ id: string }> {
@@ -30,6 +33,9 @@ export async function createTask(input: CreateTaskInput): Promise<{ id: string }
     assignee_id: input.assigneeId ?? null,
     created_by: user.id,
     due_at: input.dueAt ?? null,
+    task_type: input.taskType ?? null,
+    tags: input.tags && input.tags.length > 0 ? input.tags : null,
+    estimated_minutes: input.estimatedMinutes ?? null,
   };
 
   const { data, error } = await supabase
@@ -56,6 +62,9 @@ export async function updateTask(
     status: TaskStatus;
     assigneeId: string | null;
     dueAt: string | null;
+    taskType: TaskType | null;
+    tags: string[];
+    estimatedMinutes: number | null;
   }>,
 ): Promise<void> {
   const supabase = await createClient();
@@ -65,6 +74,9 @@ export async function updateTask(
   if (patch.status !== undefined) update.status = patch.status;
   if (patch.assigneeId !== undefined) update.assignee_id = patch.assigneeId;
   if (patch.dueAt !== undefined) update.due_at = patch.dueAt;
+  if (patch.taskType !== undefined) update.task_type = patch.taskType;
+  if (patch.tags !== undefined) update.tags = patch.tags && patch.tags.length > 0 ? patch.tags : null;
+  if (patch.estimatedMinutes !== undefined) update.estimated_minutes = patch.estimatedMinutes;
 
   const { error } = await supabase.from('tasks').update(update).eq('id', id);
   if (error) throw error;

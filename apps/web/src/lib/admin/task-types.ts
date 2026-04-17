@@ -1,6 +1,7 @@
 import type { DueBucket } from './due-buckets';
 
 export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'done';
+export type TaskType = 'todo' | 'call' | 'meeting' | 'email' | 'milestone';
 export type ParentType = 'contact' | 'property' | 'project';
 
 export type TaskParent = {
