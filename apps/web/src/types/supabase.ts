@@ -2173,6 +2173,58 @@ export type Database = {
           },
         ]
       }
+      property_task_templates: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          is_active: boolean
+          last_spawned_at: string | null
+          next_due_at: string | null
+          property_id: string
+          template_id: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          is_active?: boolean
+          last_spawned_at?: string | null
+          next_due_at?: string | null
+          property_id: string
+          template_id: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          is_active?: boolean
+          last_spawned_at?: string | null
+          next_due_at?: string | null
+          property_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_task_templates_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_task_templates_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_task_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_team: {
         Row: {
           created_at: string
@@ -2729,6 +2781,62 @@ export type Database = {
           },
         ]
       }
+      task_templates: {
+        Row: {
+          applies_to: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          is_active: boolean
+          name: string
+          pre_notify_hours: number | null
+          recurrence_rule: Json
+          tags: string[]
+          task_type: Database["public"]["Enums"]["task_kind"]
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          pre_notify_hours?: number | null
+          recurrence_rule: Json
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_templates_legacy: {
         Row: {
           category: string | null
@@ -2776,12 +2884,21 @@ export type Database = {
           created_by: string | null
           description: string | null
           due_at: string | null
+          estimated_minutes: number | null
           id: string
+          linked_contact_id: string | null
+          linked_property_id: string | null
           metadata: Json
+          next_spawn_at: string | null
           parent_id: string | null
           parent_task_id: string | null
           parent_type: string | null
+          pre_notify_hours: number | null
+          recurrence_rule: Json | null
+          spawned_from_task_id: string | null
           status: string
+          tags: string[]
+          task_type: Database["public"]["Enums"]["task_kind"]
           title: string
           updated_at: string
         }
@@ -2792,12 +2909,21 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           due_at?: string | null
+          estimated_minutes?: number | null
           id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
           metadata?: Json
+          next_spawn_at?: string | null
           parent_id?: string | null
           parent_task_id?: string | null
           parent_type?: string | null
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json | null
+          spawned_from_task_id?: string | null
           status?: string
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
           title: string
           updated_at?: string
         }
@@ -2808,12 +2934,21 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           due_at?: string | null
+          estimated_minutes?: number | null
           id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
           metadata?: Json
+          next_spawn_at?: string | null
           parent_id?: string | null
           parent_task_id?: string | null
           parent_type?: string | null
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json | null
+          spawned_from_task_id?: string | null
           status?: string
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
           title?: string
           updated_at?: string
         }
@@ -2833,8 +2968,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tasks_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_linked_property_id_fkey"
+            columns: ["linked_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tasks_parent_task_id_fkey"
             columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_spawned_from_task_id_fkey"
+            columns: ["spawned_from_task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id"]
@@ -3419,6 +3575,7 @@ export type Database = {
         | "trialing"
         | "unpaid"
         | "paused"
+      task_kind: "todo" | "call" | "meeting" | "email" | "milestone"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status:
         | "backlog"
@@ -3617,6 +3774,7 @@ export const Constants = {
         "unpaid",
         "paused",
       ],
+      task_kind: ["todo", "call", "meeting", "email", "milestone"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: [
         "backlog",
