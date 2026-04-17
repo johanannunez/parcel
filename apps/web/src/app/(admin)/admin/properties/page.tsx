@@ -170,11 +170,5 @@ export default async function AdminPropertiesPage({
     };
   });
 
-  return (
-    <HomesView
-      properties={homesRows}
-      initialMode={homesMode}
-      owners={(ownersProfiles ?? []).map((o) => ({ id: o.id, name: o.full_name }))}
-    />
-  );
+  return <HomesView properties={homesRows} initialMode={homesMode} />;
 }

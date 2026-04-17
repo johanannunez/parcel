@@ -8,6 +8,7 @@ import { PullToRefresh } from "@/components/portal/PullToRefresh";
 import { AdminTopBar as AdminTopBarNew } from "@/components/admin/chrome/AdminTopBar";
 import { CreateScopeProvider } from "@/components/admin/chrome/CreateScopeContext";
 import { CreateModal } from "@/components/admin/chrome/CreateModal";
+import { TopBarSlotsProvider } from "@/components/admin/chrome/TopBarSlotsContext";
 
 /**
  * Admin layout with dark vertical sidebar.
@@ -51,6 +52,7 @@ export default async function AdminLayout({
 
   return (
     <CreateScopeProvider>
+      <TopBarSlotsProvider>
       <div
         className="flex h-screen overflow-hidden"
         style={{ backgroundColor: "var(--color-navy)" }}
@@ -101,6 +103,7 @@ export default async function AdminLayout({
 
         <CreateModal />
       </div>
+      </TopBarSlotsProvider>
     </CreateScopeProvider>
   );
 }

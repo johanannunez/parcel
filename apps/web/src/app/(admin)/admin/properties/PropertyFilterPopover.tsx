@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, type ReactNode } from "react";
 import { CaretDown, MagnifyingGlass, X } from "@phosphor-icons/react";
 
 type Owner = { id: string; name: string | null };
@@ -19,6 +19,15 @@ export type FilterSelection = {
 
 type FilterTab = "owners" | "properties";
 
+export type PropertyFilterTriggerProps = {
+  open: boolean;
+  toggle: () => void;
+  hasSelection: boolean;
+  totalVisible: number;
+  totalAll: number;
+  totalSelected: number;
+};
+
 export function PropertyFilterPopover({
   owners,
   properties,
@@ -26,6 +35,9 @@ export function PropertyFilterPopover({
   onChange,
   totalVisible,
   totalAll,
+  renderTrigger,
+  hideChips = false,
+  popoverAlign = "right",
 }: {
   owners: Owner[];
   properties: Property[];
@@ -33,6 +45,9 @@ export function PropertyFilterPopover({
   onChange: (next: FilterSelection) => void;
   totalVisible: number;
   totalAll: number;
+  renderTrigger?: (props: PropertyFilterTriggerProps) => ReactNode;
+  hideChips?: boolean;
+  popoverAlign?: "left" | "right";
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -103,57 +118,69 @@ export function PropertyFilterPopover({
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "8px 14px",
-          borderRadius: "8px",
-          border: "1px solid var(--color-warm-gray-200)",
-          backgroundColor: "var(--color-white)",
-          fontSize: "13px",
-          fontWeight: 500,
-          color: "var(--color-text-primary)",
-          cursor: "pointer",
-          transition: "border-color 120ms ease, box-shadow 120ms ease",
-          boxShadow: hasSelection
-            ? "0 0 0 3px rgba(2, 170, 235, 0.14)"
-            : "none",
-          borderColor: hasSelection ? "#02AAEB" : "var(--color-warm-gray-200)",
-        }}
-      >
-        <span style={{ fontWeight: 600 }}>
-          {hasSelection ? (
-            <>
-              <span style={{ color: "#02AAEB" }}>{totalSelected}</span> selected
-            </>
-          ) : (
-            <>
-              Showing <span style={{ fontWeight: 700 }}>{totalVisible}</span> of{" "}
-              {totalAll}
-            </>
-          )}
-        </span>
-        <CaretDown
-          size={12}
-          weight="bold"
+      {renderTrigger ? (
+        renderTrigger({
+          open,
+          toggle: () => setOpen(!open),
+          hasSelection,
+          totalVisible,
+          totalAll,
+          totalSelected,
+        })
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
           style={{
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 150ms ease",
-            color: "var(--color-text-tertiary)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 14px",
+            borderRadius: "8px",
+            border: "1px solid var(--color-warm-gray-200)",
+            backgroundColor: "var(--color-white)",
+            fontSize: "13px",
+            fontWeight: 500,
+            color: "var(--color-text-primary)",
+            cursor: "pointer",
+            transition: "border-color 120ms ease, box-shadow 120ms ease",
+            boxShadow: hasSelection
+              ? "0 0 0 3px rgba(2, 170, 235, 0.14)"
+              : "none",
+            borderColor: hasSelection ? "#02AAEB" : "var(--color-warm-gray-200)",
           }}
-        />
-      </button>
+        >
+          <span style={{ fontWeight: 600 }}>
+            {hasSelection ? (
+              <>
+                <span style={{ color: "#02AAEB" }}>{totalSelected}</span> selected
+              </>
+            ) : (
+              <>
+                Showing <span style={{ fontWeight: 700 }}>{totalVisible}</span> of{" "}
+                {totalAll}
+              </>
+            )}
+          </span>
+          <CaretDown
+            size={12}
+            weight="bold"
+            style={{
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 150ms ease",
+              color: "var(--color-text-tertiary)",
+            }}
+          />
+        </button>
+      )}
 
       {open && (
         <div
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
-            right: 0,
+            right: popoverAlign === "right" ? 0 : undefined,
+            left: popoverAlign === "left" ? 0 : undefined,
             zIndex: 50,
             width: "max-content",
             minWidth: "260px",
@@ -308,7 +335,7 @@ export function PropertyFilterPopover({
       )}
 
       {/* Selected chips (below the button, wrap) */}
-      {hasSelection && (
+      {hasSelection && !hideChips && (
         <div
           style={{
             marginTop: "8px",

@@ -1,9 +1,28 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--color-off-white);
+  color: var(--color-text-primary);
+}
+
+.content {
+  padding: 24px 32px 48px;
+  width: 100%;
+}
+
+.sortBar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 32px 0;
+}
+
 .sortControl {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  margin-left: 4px;
 }
 
 .sortLabel {
@@ -79,8 +98,24 @@
   }
 }
 
+@media (max-width: 900px) {
+  .content,
+  .sortBar {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
 @media (max-width: 720px) {
   .galleryList {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .content,
+  .sortBar {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }

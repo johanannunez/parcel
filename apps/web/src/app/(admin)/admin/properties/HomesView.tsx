@@ -1,37 +1,25 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CaretDown } from "@phosphor-icons/react";
 import styles from "./HomesView.module.css";
 import type { HomesMode, HomesProperty } from "./homes-types";
 import { GalleryCard } from "./GalleryCard";
 import { HomesTable } from "./HomesTable";
 import { PropertyDrawer } from "./PropertyDrawer";
-import { HomesPageChrome } from "./HomesPageChrome";
-import { HomesViewSwitcher } from "./HomesViewSwitcher";
-import {
-  PropertyFilterPopover,
-  type FilterSelection,
-} from "./PropertyFilterPopover";
+import { usePropertiesFilter } from "./PropertiesFilterContext";
 
 type SortKey = "address" | "beds" | "baths" | "sqft" | "sleeps" | "status";
 
 export function HomesView({
   properties,
   initialMode,
-  owners,
 }: {
   properties: HomesProperty[];
   initialMode: HomesMode;
-  owners: Array<{ id: string; name: string | null }>;
 }) {
-  const router = useRouter();
-  const [mode, setMode] = useState<HomesMode>(initialMode);
-  const [selection, setSelection] = useState<FilterSelection>({
-    ownerIds: new Set<string>(),
-    propertyIds: new Set<string>(),
-  });
+  const [mode] = useState<HomesMode>(initialMode);
+  const { selection } = usePropertiesFilter();
   const [drawerPropertyId, setDrawerPropertyId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("address");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -41,23 +29,10 @@ export function HomesView({
       selection.ownerIds.size === 0 && selection.propertyIds.size === 0;
     if (noSelection) return properties;
     return properties.filter((p) => {
-      const ownerMatch = p.owners.some((o) => selection.ownerIds.has(o.id));
-      const propertyMatch = selection.propertyIds.has(p.id);
-      return ownerMatch || propertyMatch;
+      if (selection.propertyIds.has(p.id)) return true;
+      return p.owners.some((o) => selection.ownerIds.has(o.id));
     });
   }, [properties, selection]);
-
-  const filterPopoverProperties = useMemo(
-    () =>
-      properties.map((p) => ({
-        id: p.id,
-        street: p.street,
-        unit: p.unit,
-        location: `${p.city}, ${p.state}`,
-        owners: p.owners.map((o) => ({ id: o.id, name: o.name })),
-      })),
-    [properties],
-  );
 
   const sorted = useMemo(() => {
     if (mode !== "table") return filtered;
@@ -85,117 +60,79 @@ export function HomesView({
 
   const active = properties.find((p) => p.id === drawerPropertyId) ?? null;
 
-  const handleSelectMode = (next: HomesMode) => {
-    setMode(next);
-    const url = new URL(window.location.href);
-    url.searchParams.set("view", "details");
-    url.searchParams.set("mode", next);
-    router.replace(`${url.pathname}?${url.searchParams.toString()}`, { scroll: false });
-  };
-
   return (
-    <HomesPageChrome
-      toolbarLeft={
-        <>
-          <HomesViewSwitcher
-            activeKey={mode}
-            tabs={[
-              {
-                key: "status",
-                label: "Status",
-                href: "/admin/properties?view=launchpad",
-              },
-              {
-                key: "gallery",
-                label: "Gallery",
-                onClick: () => handleSelectMode("gallery"),
-              },
-              {
-                key: "table",
-                label: "Table",
-                onClick: () => handleSelectMode("table"),
-              },
-            ]}
-          />
-          {mode === "table" && (
-            <div className={styles.sortControl}>
-              <label htmlFor="sort-key" className={styles.sortLabel}>
-                Sort
-              </label>
-              <div className={styles.sortSelect}>
-                <select
-                  id="sort-key"
-                  value={sortKey}
-                  onChange={(e) => setSortKey(e.target.value as SortKey)}
-                >
-                  <option value="address">Address</option>
-                  <option value="beds">Beds</option>
-                  <option value="baths">Baths</option>
-                  <option value="sqft">Sqft</option>
-                  <option value="sleeps">Sleeps</option>
-                  <option value="status">Status</option>
-                </select>
-                <CaretDown size={10} weight="bold" />
-              </div>
-              <button
-                type="button"
-                className={styles.sortDir}
-                onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-                aria-label={`Sort ${sortDir === "asc" ? "descending" : "ascending"}`}
+    <div className={styles.page}>
+      {mode === "table" && (
+        <div className={styles.sortBar}>
+          <div className={styles.sortControl}>
+            <label htmlFor="sort-key" className={styles.sortLabel}>
+              Sort
+            </label>
+            <div className={styles.sortSelect}>
+              <select
+                id="sort-key"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
               >
-                {sortDir === "asc" ? "↑" : "↓"}
-              </button>
+                <option value="address">Address</option>
+                <option value="beds">Beds</option>
+                <option value="baths">Baths</option>
+                <option value="sqft">Sqft</option>
+                <option value="sleeps">Sleeps</option>
+                <option value="status">Status</option>
+              </select>
+              <CaretDown size={10} weight="bold" />
             </div>
-          )}
-        </>
-      }
-      toolbarRight={
-        <PropertyFilterPopover
-          owners={owners}
-          properties={filterPopoverProperties}
-          selection={selection}
-          onChange={setSelection}
-          totalVisible={filtered.length}
-          totalAll={properties.length}
-        />
-      }
-    >
-      {filtered.length === 0 ? (
-        <div className={styles.empty}>
-          <p>No properties match your filters.</p>
+            <button
+              type="button"
+              className={styles.sortDir}
+              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+              aria-label={`Sort ${sortDir === "asc" ? "descending" : "ascending"}`}
+            >
+              {sortDir === "asc" ? "↑" : "↓"}
+            </button>
+          </div>
         </div>
-      ) : mode === "gallery" ? (
-        <div className={styles.galleryList}>
-          {sorted.map((p) => (
-            <GalleryCard
-              key={p.id}
-              property={p}
-              onOpen={() => setDrawerPropertyId(p.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <HomesTable
-          properties={sorted}
-          sortKey={sortKey}
-          sortDir={sortDir}
-          onSort={(k) => {
-            if (k === sortKey) {
-              setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-            } else {
-              setSortKey(k);
-              setSortDir("asc");
-            }
-          }}
-          onOpen={(id) => setDrawerPropertyId(id)}
-        />
       )}
+
+      <div className={styles.content}>
+        {filtered.length === 0 ? (
+          <div className={styles.empty}>
+            <p>No properties match your filters.</p>
+          </div>
+        ) : mode === "gallery" ? (
+          <div className={styles.galleryList}>
+            {sorted.map((p) => (
+              <GalleryCard
+                key={p.id}
+                property={p}
+                onOpen={() => setDrawerPropertyId(p.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <HomesTable
+            properties={sorted}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={(k) => {
+              if (k === sortKey) {
+                setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+              } else {
+                setSortKey(k);
+                setSortDir("asc");
+              }
+            }}
+            onOpen={(id) => setDrawerPropertyId(id)}
+          />
+        )}
+      </div>
 
       <PropertyDrawer
         property={active}
         onClose={() => setDrawerPropertyId(null)}
       />
-    </HomesPageChrome>
+    </div>
   );
 }
 
