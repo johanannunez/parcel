@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { OwnerDetailShell } from "./OwnerDetailShell";
 import { OverviewTab } from "./OverviewTab";
 import { TabPlaceholder } from "./TabPlaceholder";
+import { FinancialsTab } from "./FinancialsTab";
 import {
   SettingsTab,
   SETTINGS_SECTIONS,
@@ -97,12 +98,7 @@ export default async function OwnerHubPage({
         />
       ) : null}
       {tab === "financials" ? (
-        <TabPlaceholder
-          title="Financials. Rebuilding."
-          body="Stripe invoicing and the new financials dashboard are shipping in a later plan. You can still see payouts in the admin Payouts page."
-          linkHref="/admin/payouts"
-          linkLabel="Go to Payouts"
-        />
+        <FinancialsTab ownerId={data.primaryMember.id} />
       ) : null}
       {tab === "activity" ? (
         <TabPlaceholder
