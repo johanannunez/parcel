@@ -10,7 +10,6 @@ import {
   List,
   Buildings,
   UserSwitch,
-  Target,
   ListChecks,
   BookOpenText,
   GearSix,
@@ -49,11 +48,11 @@ const navItems: NavItem[] = [
     activeIcon: <House size={22} weight="fill" />,
   },
   {
-    href: "/admin/owners",
-    label: "Owners",
+    href: "/admin/contacts",
+    label: "Contacts",
     icon: <UsersThree size={22} weight="regular" />,
     activeIcon: <UsersThree size={22} weight="fill" />,
-    matchPrefix: "/admin/owners",
+    matchPrefix: "/admin/contacts",
   },
   {
     href: "/admin/inbox",
@@ -70,15 +69,14 @@ const sheetItems: SheetNavItem[] = [
   { href: "/admin", label: "Dashboard", icon: <House size={19} weight="duotone" /> },
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/owners", label: "Owners", icon: <UsersThree size={19} weight="duotone" />, matchPrefix: "/admin/owners" },
+  { href: "/admin/contacts", label: "Contacts", icon: <UsersThree size={19} weight="duotone" />, matchPrefix: "/admin/contacts" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
-  { href: "/admin/leads", label: "Leads", icon: <Target size={19} weight="duotone" />, matchPrefix: "/admin/leads" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
 /* ── Helpers ── */
 
-const mainNavPrefixes = ["/admin", "/admin/owners", "/admin/inbox"];
+const mainNavPrefixes = ["/admin", "/admin/contacts", "/admin/inbox"];
 
 /* ── Component ── */
 

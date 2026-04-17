@@ -12,7 +12,6 @@ import {
   EnvelopeSimple,
   ChatCircle,
   ListChecks,
-  Target,
   BookOpenText,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
@@ -36,9 +35,8 @@ const navItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: <House size={18} weight="duotone" /> },
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/owners", label: "Owners", icon: <UsersThree size={18} weight="duotone" />, matchPrefix: "/admin/owners" },
+  { href: "/admin/contacts", label: "Contacts", icon: <UsersThree size={18} weight="duotone" />, matchPrefix: "/admin/contacts" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
-  { href: "/admin/leads", label: "Leads", icon: <Target size={18} weight="duotone" />, matchPrefix: "/admin/leads" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
@@ -335,11 +333,10 @@ export function AdminTopBar({
   const pageTitle = (() => {
     if (!pathname) return "";
     if (pathname === "/admin") return "";
-    if (pathname.startsWith("/admin/owners")) return "Owners";
+    if (pathname.startsWith("/admin/contacts")) return "Contacts";
     if (pathname.startsWith("/admin/properties")) return "Properties";
     if (pathname.startsWith("/admin/inbox")) return "Inbox";
     if (pathname.startsWith("/admin/tasks")) return "Tasks";
-    if (pathname.startsWith("/admin/leads")) return "Leads";
     if (pathname.startsWith("/admin/help")) return "Help Center";
     if (pathname.startsWith("/admin/treasury")) return "Treasury";
     if (pathname.startsWith("/admin/calendar")) return "Calendar";
@@ -439,9 +436,8 @@ const adminRailItems: Array<{
   { href: "/admin", icon: <House size={20} weight="duotone" />, label: "Dashboard" },
   { href: "/admin/inbox", icon: <ChatCircle size={20} weight="duotone" />, label: "Inbox", matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
-  { href: "/admin/owners", icon: <UsersThree size={20} weight="duotone" />, label: "Owners", matchPrefix: "/admin/owners" },
+  { href: "/admin/contacts", icon: <UsersThree size={20} weight="duotone" />, label: "Contacts", matchPrefix: "/admin/contacts" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
-  { href: "/admin/leads", icon: <Target size={20} weight="duotone" />, label: "Leads", matchPrefix: "/admin/leads" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
 
