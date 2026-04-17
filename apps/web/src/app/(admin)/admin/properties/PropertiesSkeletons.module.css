@@ -1,0 +1,430 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--color-off-white);
+  color: var(--color-text-primary);
+  animation: skeletonIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.content {
+  padding: 24px 32px 48px;
+  width: 100%;
+}
+
+.shim {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.07),
+    rgba(15, 23, 42, 0.04)
+  );
+  border-radius: 6px;
+  animation: breathe 1600ms ease-in-out infinite;
+}
+
+/* Gallery skeleton */
+.galleryList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 14px;
+  aspect-ratio: 2.5 / 1;
+  padding: 0;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 1px 3px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.photoSlot {
+  position: relative;
+  background: linear-gradient(135deg, #dfe8f1 0%, #c9d6e4 100%);
+  animation: breathe 2000ms ease-in-out infinite;
+}
+
+.photoSlot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(2, 170, 235, 0.18),
+    transparent 60%
+  );
+}
+
+.homeTypeBadge {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  z-index: 2;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px 10px 0;
+  min-width: 0;
+}
+
+.address {
+  height: 14px;
+  width: 72%;
+  border-radius: 4px;
+}
+
+.location {
+  height: 10px;
+  width: 50%;
+  border-radius: 4px;
+}
+
+.ownerChips {
+  display: inline-flex;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.ownerChip {
+  height: 22px;
+  width: 84px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(30, 41, 59, 0.85),
+    rgba(15, 23, 42, 0.95)
+  );
+  animation: breathe 1600ms ease-in-out infinite;
+}
+
+.specs {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+  padding: 6px 10px;
+  background-color: var(--color-warm-gray-50);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 8px;
+}
+
+.spec {
+  height: 10px;
+  width: 40px;
+  border-radius: 4px;
+}
+
+/* Table skeleton */
+.tableSkeleton {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 1px 3px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.tableHead {
+  display: grid;
+  grid-template-columns: 2.6fr 1fr 1fr 0.8fr 0.8fr 0.8fr 1fr;
+  gap: 16px;
+  padding: 12px 16px;
+  background-color: var(--color-warm-gray-50);
+  border-bottom: 1px solid var(--color-warm-gray-200);
+}
+
+.th {
+  height: 8px;
+  width: 55%;
+  border-radius: 3px;
+  opacity: 0.7;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2.6fr 1fr 1fr 0.8fr 0.8fr 0.8fr 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-warm-gray-100);
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.td {
+  height: 10px;
+  width: 75%;
+  border-radius: 4px;
+}
+
+.td.wide {
+  width: 92%;
+}
+
+.td.narrow {
+  width: 50%;
+}
+
+.td.pill {
+  height: 18px;
+  width: 78px;
+  border-radius: 999px;
+}
+
+/* Status (GridView spreadsheet) skeleton */
+.statusShell {
+  max-width: 1440px;
+  margin: 0 auto;
+  border-radius: 12px;
+  border: 1px solid var(--color-warm-gray-200);
+  background-color: var(--color-white);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.statusHeadRow {
+  display: grid;
+  grid-template-columns: 180px repeat(5, minmax(0, 1fr));
+  background-image: linear-gradient(
+    180deg,
+    var(--color-white) 0%,
+    var(--color-warm-gray-50) 100%
+  );
+  border-bottom: 1px solid var(--color-warm-gray-200);
+}
+
+.statusCornerCell {
+  padding: 16px 18px;
+  border-right: 1px solid var(--color-warm-gray-200);
+  display: flex;
+  align-items: flex-end;
+}
+
+.statusCornerLabel {
+  height: 10px;
+  width: 72px;
+  border-radius: 4px;
+}
+
+.statusHeadCell {
+  padding: 12px 10px 10px;
+  border-right: 1px solid var(--color-warm-gray-100);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.statusHeadCell:last-child {
+  border-right: none;
+}
+
+.statusHeadName {
+  height: 11px;
+  width: 70%;
+  border-radius: 4px;
+}
+
+.statusHeadSub {
+  height: 8px;
+  width: 50%;
+  border-radius: 4px;
+}
+
+.statusBand {
+  display: grid;
+  grid-template-columns: 180px repeat(5, minmax(0, 1fr));
+  border-bottom: 1px solid var(--color-warm-gray-200);
+}
+
+.statusBand.documents {
+  background-color: #eff5fd;
+}
+.statusBand.finances {
+  background-color: #fef6ea;
+}
+.statusBand.listings {
+  background-color: #f3eefc;
+}
+
+.statusBandLabel {
+  padding: 10px 18px;
+  border-right: 1px solid var(--color-warm-gray-200);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusBandDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.statusBandText {
+  height: 10px;
+  width: 80px;
+  border-radius: 4px;
+}
+
+.statusBandSpacer {
+  grid-column: 2 / -1;
+}
+
+.statusRow {
+  display: grid;
+  grid-template-columns: 180px repeat(5, minmax(0, 1fr));
+  border-bottom: 1px solid var(--color-warm-gray-100);
+}
+
+.statusRow:last-child {
+  border-bottom: none;
+}
+
+.statusItemCell {
+  padding: 14px 18px;
+  border-right: 1px solid var(--color-warm-gray-200);
+  background: var(--color-white);
+}
+
+.statusItemLabel {
+  height: 10px;
+  width: 80%;
+  border-radius: 4px;
+}
+
+.statusCell {
+  padding: 14px 10px;
+  border-right: 1px solid var(--color-warm-gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.statusCell:last-child {
+  border-right: none;
+}
+
+.statusCellPill {
+  height: 18px;
+  width: 64px;
+  border-radius: 999px;
+}
+
+/* Keyframes */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes skeletonIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shim,
+  .photoSlot,
+  .ownerChip,
+  .page {
+    animation: none;
+  }
+}
+
+/* Stagger row/card reveals */
+.galleryList > .card,
+.tableSkeleton > .tableRow,
+.statusShell > .statusRow {
+  animation: skeletonIn 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.galleryList > .card:nth-child(1),
+.tableSkeleton > .tableRow:nth-child(1),
+.statusShell > .statusRow:nth-child(1) {
+  animation-delay: 0ms;
+}
+.galleryList > .card:nth-child(2),
+.tableSkeleton > .tableRow:nth-child(2),
+.statusShell > .statusRow:nth-child(2) {
+  animation-delay: 40ms;
+}
+.galleryList > .card:nth-child(3),
+.tableSkeleton > .tableRow:nth-child(3),
+.statusShell > .statusRow:nth-child(3) {
+  animation-delay: 80ms;
+}
+.galleryList > .card:nth-child(4),
+.tableSkeleton > .tableRow:nth-child(4),
+.statusShell > .statusRow:nth-child(4) {
+  animation-delay: 120ms;
+}
+.galleryList > .card:nth-child(5),
+.tableSkeleton > .tableRow:nth-child(5),
+.statusShell > .statusRow:nth-child(5) {
+  animation-delay: 160ms;
+}
+.galleryList > .card:nth-child(6),
+.tableSkeleton > .tableRow:nth-child(6),
+.statusShell > .statusRow:nth-child(6) {
+  animation-delay: 200ms;
+}
+
+@media (max-width: 1140px) {
+  .galleryList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .content {
+    padding: 20px 20px 40px;
+  }
+  .galleryList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .card {
+    aspect-ratio: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .photoSlot {
+    aspect-ratio: 16 / 10;
+  }
+  .cardContent {
+    padding: 14px 16px 16px;
+  }
+}

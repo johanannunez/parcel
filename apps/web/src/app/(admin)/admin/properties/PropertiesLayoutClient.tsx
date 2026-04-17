@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSetTopBarSlots } from "@/components/admin/chrome/TopBarSlotsContext";
 import { HomesViewSwitcher } from "./HomesViewSwitcher";
 import { StatusButton } from "./StatusButton";
@@ -14,6 +14,11 @@ import {
   PropertiesModeProvider,
   usePropertiesMode,
 } from "./PropertiesModeContext";
+import {
+  PropertiesNavProvider,
+  PropertiesContent,
+  usePropertiesNav,
+} from "./PropertiesNavContext";
 import type { HomesMode } from "./homes-types";
 
 type Owner = { id: string; name: string | null };
@@ -42,12 +47,14 @@ export function PropertiesLayoutClient({
   return (
     <PropertiesFilterProvider>
       <PropertiesModeProvider initialMode={initialMode}>
-        <TopBarController
-          owners={owners}
-          summaries={summaries}
-          onStatusView={view === "launchpad"}
-        />
-        {children}
+        <PropertiesNavProvider>
+          <TopBarController
+            owners={owners}
+            summaries={summaries}
+            onStatusView={view === "launchpad"}
+          />
+          <PropertiesContent>{children}</PropertiesContent>
+        </PropertiesNavProvider>
       </PropertiesModeProvider>
     </PropertiesFilterProvider>
   );
@@ -62,9 +69,9 @@ function TopBarController({
   summaries: PropertySummary[];
   onStatusView: boolean;
 }) {
-  const router = useRouter();
   const { selection } = usePropertiesFilter();
-  const { mode, setMode } = usePropertiesMode();
+  const { mode } = usePropertiesMode();
+  const { navigateTo, pendingDest } = usePropertiesNav();
 
   const visibleCount = useMemo(() => {
     const noSelection =
@@ -76,38 +83,34 @@ function TopBarController({
     }).length;
   }, [selection, summaries]);
 
-  const flipMode = (next: HomesMode) => {
-    if (onStatusView) {
-      // Leaving Launchpad for Homes: the server component for page.tsx needs
-      // to swap GridViewPage out for HomesView, so a real navigation is
-      // required. We still preseed the client mode so the new view lands in
-      // the right tab without a flash.
-      setMode(next);
-      router.push(`/admin/properties?view=details&mode=${next}`, { scroll: false });
-      return;
-    }
-    // Already on Homes: instant client flip, URL updated shallowly.
-    setMode(next);
-    const url = new URL(window.location.href);
-    url.searchParams.set("view", "details");
-    url.searchParams.set("mode", next);
-    window.history.replaceState(null, "", `${url.pathname}?${url.searchParams.toString()}`);
-  };
+  // Pre-select the destination tab the moment a user clicks. Until the route
+  // settles the tab/button class reflects where they're headed, not where
+  // they came from. Prevents the "both tabs look active" flash during load.
+  const pendingModeKey =
+    pendingDest === "gallery" || pendingDest === "table" ? pendingDest : null;
+  const activeSwitcherKey = pendingDest === "status"
+    ? null
+    : pendingModeKey ?? (onStatusView ? null : mode);
+  const statusPending = pendingDest === "status";
+  const statusActive = statusPending || (onStatusView && !pendingModeKey);
+  const switcherSubdued = statusActive;
 
   useSetTopBarSlots(
     () => ({
       centerSlot: (
         <>
           <StatusButton
-            active={onStatusView}
+            active={statusActive}
+            pending={statusPending}
+            onNavigate={() => navigateTo("status")}
             href="/admin/properties?view=launchpad"
           />
           <HomesViewSwitcher
-            activeKey={onStatusView ? null : mode}
-            subdued={onStatusView}
+            activeKey={activeSwitcherKey}
+            subdued={switcherSubdued}
             tabs={[
-              { key: "gallery", label: "Gallery", onClick: () => flipMode("gallery") },
-              { key: "table", label: "Table", onClick: () => flipMode("table") },
+              { key: "gallery", label: "Gallery", onClick: () => navigateTo("gallery") },
+              { key: "table", label: "Table", onClick: () => navigateTo("table") },
             ]}
           />
         </>
@@ -122,7 +125,18 @@ function TopBarController({
       ),
       hideHelp: true,
     }),
-    [mode, visibleCount, owners, summaries, onStatusView],
+    [
+      mode,
+      visibleCount,
+      owners,
+      summaries,
+      onStatusView,
+      navigateTo,
+      activeSwitcherKey,
+      statusActive,
+      statusPending,
+      switcherSubdued,
+    ],
   );
 
   return null;

@@ -1,42 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { RocketLaunch } from "@phosphor-icons/react";
 import styles from "./StatusButton.module.css";
 
 export function StatusButton({
   active,
+  pending,
   href,
+  onNavigate,
 }: {
   active: boolean;
+  pending?: boolean;
   href: string;
+  onNavigate?: () => void;
 }) {
-  const [firing, setFiring] = useState(false);
+  const [localFiring, setLocalFiring] = useState(false);
 
-  // Clear the firing state once we land on the Status page.
+  // Clear the local firing state once navigation settles on Status.
   useEffect(() => {
-    if (active) setFiring(false);
-  }, [active]);
+    if (active && !pending) setLocalFiring(false);
+  }, [active, pending]);
 
-  // Safety clear in case navigation never completes.
+  // Safety clear in case navigation never lands.
   useEffect(() => {
-    if (!firing) return;
-    const id = setTimeout(() => setFiring(false), 4000);
+    if (!localFiring) return;
+    const id = setTimeout(() => setLocalFiring(false), 4000);
     return () => clearTimeout(id);
-  }, [firing]);
+  }, [localFiring]);
 
-  const handleClick = () => {
-    if (active) return;
-    setFiring(true);
+  const firing = pending || localFiring;
+  const activeState = active && !pending;
+
+  const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (activeState) return;
+    // Allow right-click / cmd-click / middle-click to fall back to the
+    // native Link behavior (open in new tab, copy URL, etc.). For a plain
+    // left-click we hand off to the nav context so useTransition can cover
+    // the render wait with a skeleton.
+    if (
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey
+    ) {
+      return;
+    }
+    e.preventDefault();
+    setLocalFiring(true);
+    onNavigate?.();
   };
 
   return (
     <Link
       href={href}
       onClick={handleClick}
-      className={`${styles.btn} ${active ? styles.btnActive : ""} ${firing ? styles.btnFiring : ""}`}
-      aria-current={active ? "page" : undefined}
+      className={`${styles.btn} ${activeState ? styles.btnActive : ""} ${firing ? styles.btnFiring : ""}`}
+      aria-current={activeState ? "page" : undefined}
+      aria-busy={firing || undefined}
     >
       <span className={styles.iconWrap}>
         <RocketLaunch size={14} weight="duotone" className={styles.icon} />
