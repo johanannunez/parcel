@@ -1,0 +1,419 @@
+/*
+ * Personal info section (and shared placeholder styling) for the owner
+ * detail Settings tab.
+ *
+ * A section is:
+ *   - A two-row header (title + subtitle)
+ *   - One or more white cards stacked vertically with 16px gap
+ *   - Each card has a body (form rows) and an optional footer (actions)
+ *
+ * Form rows render a 180px label column + a field column on the right.
+ */
+
+/* --- Shared section header ------------------------------------------- */
+
+.sectionHeader {
+  margin-bottom: 20px;
+}
+.sectionTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #0B1B2B;
+  line-height: 1.2;
+}
+.sectionSubtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #647689;
+  line-height: 1.5;
+}
+
+/* --- Card shell ------------------------------------------------------- */
+
+.card {
+  background: #FFFFFF;
+  border: 1px solid #E6ECF2;
+  border-radius: 14px;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04);
+  overflow: hidden;
+}
+.card + .card {
+  margin-top: 16px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 22px 0;
+}
+.cardHeaderTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0B1B2B;
+  letter-spacing: -0.01em;
+}
+.cardHeaderSub {
+  padding: 4px 22px 0;
+  font-size: 12.5px;
+  color: #647689;
+  line-height: 1.5;
+}
+
+.adminPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  background: #0B1B2B;
+  color: #FFFFFF;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.cardBody {
+  padding: 18px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 22px;
+  background: #F9FBFD;
+  border-top: 1px solid #E6ECF2;
+}
+
+.cardFooterHint {
+  font-size: 11.5px;
+  color: #8A9AAB;
+  line-height: 1.5;
+}
+
+.cardFooterActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Row: label column + field column -------------------------------- */
+
+.row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.labelCell {
+  padding-top: 10px;
+  min-width: 0;
+}
+
+.label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #0B1B2B;
+  line-height: 1.3;
+}
+
+.labelHint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #8A9AAB;
+  line-height: 1.4;
+}
+
+.fieldCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* --- Form controls --------------------------------------------------- */
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #D7DFE8;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #0B1B2B;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #1B77BE;
+  box-shadow: 0 0 0 3px rgba(2, 170, 235, 0.16);
+}
+.input::placeholder,
+.textarea::placeholder {
+  color: #B4C0CD;
+}
+.input:disabled {
+  background: #F6F8FB;
+  color: #647689;
+  cursor: not-allowed;
+}
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.inputRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.emailWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.emailWrap .input {
+  flex: 1;
+}
+
+.verifiedPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  background: #E7F7EE;
+  color: #12824A;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.35;
+  flex-shrink: 0;
+}
+.verifiedPill svg {
+  flex-shrink: 0;
+}
+
+.fieldHint {
+  font-size: 11px;
+  color: #8A9AAB;
+  line-height: 1.45;
+}
+
+.fieldError {
+  font-size: 11.5px;
+  color: #B3261E;
+  line-height: 1.45;
+}
+
+/* --- Avatar row ------------------------------------------------------ */
+
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04),
+    0 10px 24px -14px rgba(2, 170, 235, 0.45);
+  overflow: hidden;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Segmented control ---------------------------------------------- */
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  background: #F6F8FB;
+  border: 1px solid #E6ECF2;
+  border-radius: 10px;
+  gap: 2px;
+  width: fit-content;
+}
+.segmentedBtn {
+  padding: 6px 14px;
+  border: 0;
+  background: transparent;
+  color: #647689;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+.segmentedBtn:hover {
+  color: #0B1B2B;
+}
+.segmentedBtnActive {
+  background: #FFFFFF;
+  color: #1B77BE;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(11, 27, 43, 0.06),
+    0 2px 6px -2px rgba(11, 27, 43, 0.08);
+}
+
+/* --- Buttons --------------------------------------------------------- */
+
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #647689;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+.btnGhost:hover {
+  color: #0B1B2B;
+  background: #F6F8FB;
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #D7DFE8;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #0B1B2B;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.btnSecondary:hover {
+  border-color: #B4C0CD;
+  background: #F6F8FB;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 16px -6px rgba(2, 170, 235, 0.55);
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+.btnPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px -8px rgba(2, 170, 235, 0.65);
+}
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* --- Inline status messages ----------------------------------------- */
+
+.inlineError {
+  padding: 10px 12px;
+  background: rgba(179, 38, 30, 0.06);
+  border: 1px solid rgba(179, 38, 30, 0.2);
+  color: #B3261E;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.inlineSuccess {
+  padding: 10px 12px;
+  background: rgba(18, 130, 74, 0.06);
+  border: 1px solid rgba(18, 130, 74, 0.2);
+  color: #12824A;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* --- Placeholder card (shared with SectionPlaceholder) -------------- */
+
+.placeholderCard {
+  background: #FFFFFF;
+  border: 1px solid #E6ECF2;
+  border-radius: 14px;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04);
+  padding: 40px 32px;
+  text-align: center;
+}
+.placeholderIcon {
+  margin: 0 auto 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3E8FF;
+  color: #6D28D9;
+}
+.placeholderTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0B1B2B;
+  letter-spacing: -0.01em;
+}
+.placeholderBody {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #8A9AAB;
+  line-height: 1.55;
+}
