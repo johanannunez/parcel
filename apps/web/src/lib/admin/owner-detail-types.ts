@@ -65,6 +65,7 @@ export type OwnerDetailData = {
   status: OwnerStatus;
   overviewState: "onboarding" | "operating";
   switcher: OwnerDetailSwitcherRow[];
+  contactId: string | null;
 };
 
 /** Short month/year label: "Apr 2026". Safe for client code. */

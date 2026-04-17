@@ -233,6 +233,12 @@ export async function fetchOwnerDetail(entityId: string): Promise<OwnerDetailDat
     isPending: isPending(primaryRaw.email),
   };
 
+  const { data: contactRow } = await supabase
+    .from('contacts')
+    .select('id')
+    .eq('profile_id', primaryMember.id)
+    .maybeSingle();
+
   const membersOut: OwnerDetailMember[] = members.map((m) => ({
     id: m.id,
     fullName: m.full_name?.trim() || m.email,
@@ -304,5 +310,6 @@ export async function fetchOwnerDetail(entityId: string): Promise<OwnerDetailDat
     switcher: switcher.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     ),
+    contactId: contactRow?.id ?? null,
   };
 }

@@ -15,6 +15,7 @@ import styles from "./OwnerDetailShell.module.css";
 
 type TabKey =
   | "overview"
+  | "tasks"
   | "properties"
   | "financials"
   | "activity"
@@ -23,6 +24,7 @@ type TabKey =
 
 const TAB_ORDER: TabKey[] = [
   "overview",
+  "tasks",
   "properties",
   "financials",
   "activity",
@@ -32,6 +34,7 @@ const TAB_ORDER: TabKey[] = [
 
 const TAB_LABEL: Record<TabKey, string> = {
   overview: "Overview",
+  tasks: "Tasks",
   properties: "Properties",
   financials: "Financials",
   activity: "Activity",

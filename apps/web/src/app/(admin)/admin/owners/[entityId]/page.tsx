@@ -12,6 +12,7 @@ import {
   SETTINGS_SECTIONS,
   type SettingsSection,
 } from "./SettingsTab";
+import { TasksTab } from "@/components/admin/tasks/TasksTab";
 
 export const metadata: Metadata = {
   title: "Owner Hub",
@@ -20,6 +21,7 @@ export const dynamic = "force-dynamic";
 
 type TabKey =
   | "overview"
+  | "tasks"
   | "properties"
   | "financials"
   | "activity"
@@ -28,6 +30,7 @@ type TabKey =
 
 const KNOWN_TABS: readonly TabKey[] = [
   "overview",
+  "tasks",
   "properties",
   "financials",
   "activity",
@@ -89,6 +92,15 @@ export default async function OwnerHubPage({
   return (
     <OwnerDetailShell data={data}>
       {tab === "overview" ? <OverviewTab data={data} /> : null}
+      {tab === "tasks" ? (
+        data.contactId ? (
+          <TasksTab parentType="contact" parentId={data.contactId} />
+        ) : (
+          <div style={{ padding: 20, color: '#6b7280', fontSize: 13 }}>
+            Contact record not yet migrated for this owner.
+          </div>
+        )
+      ) : null}
       {tab === "properties" ? (
         <TabPlaceholder
           title="Properties. Rebuilding."
