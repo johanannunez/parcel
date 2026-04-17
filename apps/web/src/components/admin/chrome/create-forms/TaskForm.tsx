@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { createTask } from '@/lib/admin/task-actions';
 import { useCreateScope } from '../CreateScopeContext';
 import type { ParentType, TaskType } from '@/lib/admin/task-types';
+import { RichDescriptionEditor } from '@/components/admin/tasks/RichDescriptionEditor';
 import styles from './TaskForm.module.css';
 
 type PresetKey = 'today' | 'tomorrow' | '+3' | 'next_week' | 'none';
@@ -110,7 +111,7 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
         const mins = estimatedMinutes ? parseInt(estimatedMinutes, 10) : null;
         await createTask({
           title: title.trim(),
-          description: description.trim() || undefined,
+          description: description && description.trim() !== '<p></p>' ? description : undefined,
           parentType,
           parentId,
           dueAt: buildDueAt(),
@@ -257,16 +258,14 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
 
       {/* Description */}
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="task-desc">
+        <label className={styles.label}>
           Description
         </label>
-        <textarea
-          id="task-desc"
-          className={styles.textarea}
+        <RichDescriptionEditor
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Optional notes"
-          rows={3}
+          onChange={setDescription}
+          placeholder="Describe the task..."
+          minHeight={120}
           disabled={isPending}
         />
       </div>
