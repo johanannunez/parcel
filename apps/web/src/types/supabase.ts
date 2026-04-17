@@ -55,6 +55,50 @@ export type Database = {
           },
         ]
       }
+      attachments: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          mime_type: string | null
+          parent_id: string
+          parent_type: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          mime_type?: string | null
+          parent_id: string
+          parent_type: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          parent_id?: string
+          parent_type?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       block_requests: {
         Row: {
           adults: number
@@ -910,6 +954,47 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          parent_id: string
+          parent_type: string
+          pinned: boolean
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          parent_id: string
+          parent_type: string
+          pinned?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          parent_id?: string
+          parent_type?: string
+          pinned?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -1301,7 +1386,7 @@ export type Database = {
           },
         ]
       }
-      owner_tasks: {
+      owner_tasks_legacy: {
         Row: {
           assigned_to: string | null
           completed_at: string | null
@@ -2477,7 +2562,7 @@ export type Database = {
           },
         ]
       }
-      task_assignees: {
+      task_assignees_legacy: {
         Row: {
           created_at: string
           id: string
@@ -2508,12 +2593,12 @@ export type Database = {
             foreignKeyName: "task_assignees_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_comments: {
+      task_comments_legacy: {
         Row: {
           author_id: string
           content: string
@@ -2550,12 +2635,12 @@ export type Database = {
             foreignKeyName: "task_comments_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_label_map: {
+      task_label_map_legacy: {
         Row: {
           label_id: string
           task_id: string
@@ -2573,19 +2658,19 @@ export type Database = {
             foreignKeyName: "task_label_map_label_id_fkey"
             columns: ["label_id"]
             isOneToOne: false
-            referencedRelation: "task_labels"
+            referencedRelation: "task_labels_legacy"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "task_label_map_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_labels: {
+      task_labels_legacy: {
         Row: {
           color: string
           created_at: string
@@ -2606,7 +2691,7 @@ export type Database = {
         }
         Relationships: []
       }
-      task_subtasks: {
+      task_subtasks_legacy: {
         Row: {
           completed: boolean
           completed_at: string | null
@@ -2639,12 +2724,12 @@ export type Database = {
             foreignKeyName: "task_subtasks_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_templates: {
+      task_templates_legacy: {
         Row: {
           category: string | null
           created_at: string
@@ -2684,6 +2769,79 @@ export type Database = {
         Relationships: []
       }
       tasks: {
+        Row: {
+          assignee_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_at: string | null
+          id: string
+          metadata: Json
+          parent_id: string | null
+          parent_task_id: string | null
+          parent_type: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          metadata?: Json
+          parent_id?: string | null
+          parent_task_id?: string | null
+          parent_type?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          metadata?: Json
+          parent_id?: string | null
+          parent_task_id?: string | null
+          parent_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_created_by_fkey1"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks_legacy: {
         Row: {
           completed_at: string | null
           created_at: string
