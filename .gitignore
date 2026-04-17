@@ -56,3 +56,4 @@ apps/web/take-help-screenshots.mjs
 apps/web/upload-help-screenshots.mjs
 apps/web/verify-articles.mjs
 content/carousel-references/
+.superpowers/
