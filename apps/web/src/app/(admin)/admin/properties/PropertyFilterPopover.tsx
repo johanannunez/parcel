@@ -93,7 +93,7 @@ export function PropertyFilterPopover({
     const update = () => {
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const width = popoverWidth ?? Math.max(rect.width, 320);
+      const width = popoverWidth ?? rect.width;
       const left = popoverAlign === "right"
         ? rect.right - width
         : rect.left;

@@ -46,7 +46,6 @@ export function PropertiesTopBarSearch({
       hideSearchRow
       popoverAlign="right"
       portal
-      popoverWidth={360}
       externalQuery={query}
       onExternalQueryChange={setQuery}
       externalOpen={open}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSetTopBarSlots } from "@/components/admin/chrome/TopBarSlotsContext";
 import { HomesViewSwitcher, type HomesViewKey } from "./HomesViewSwitcher";
 import { PropertiesTopBarSearch } from "./PropertiesTopBarSearch";
@@ -9,6 +9,11 @@ import {
   PropertiesFilterProvider,
   usePropertiesFilter,
 } from "./PropertiesFilterContext";
+import {
+  PropertiesModeProvider,
+  usePropertiesMode,
+} from "./PropertiesModeContext";
+import type { HomesMode } from "./homes-types";
 
 type Owner = { id: string; name: string | null };
 type PropertySummary = {
@@ -28,10 +33,21 @@ export function PropertiesLayoutClient({
   summaries: PropertySummary[];
   children: ReactNode;
 }) {
+  const searchParams = useSearchParams();
+  const view = searchParams?.get("view") ?? "";
+  const modeParam = searchParams?.get("mode") ?? "";
+  const initialMode: HomesMode = modeParam === "table" ? "table" : "gallery";
+
   return (
     <PropertiesFilterProvider>
-      <TopBarController owners={owners} summaries={summaries} />
-      {children}
+      <PropertiesModeProvider initialMode={initialMode}>
+        <TopBarController
+          owners={owners}
+          summaries={summaries}
+          onStatusView={view === "launchpad"}
+        />
+        {children}
+      </PropertiesModeProvider>
     </PropertiesFilterProvider>
   );
 }
@@ -39,23 +55,16 @@ export function PropertiesLayoutClient({
 function TopBarController({
   owners,
   summaries,
+  onStatusView,
 }: {
   owners: Owner[];
   summaries: PropertySummary[];
+  onStatusView: boolean;
 }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const { selection } = usePropertiesFilter();
+  const { mode, setMode } = usePropertiesMode();
 
-  const view = searchParams?.get("view") ?? "";
-  const mode = searchParams?.get("mode") ?? "";
-
-  const activeKey: HomesViewKey = useMemo(() => {
-    if (view === "launchpad") return "status";
-    if (mode === "table") return "table";
-    return "gallery";
-  }, [view, mode]);
+  const activeKey: HomesViewKey = onStatusView ? "status" : mode;
 
   const visibleCount = useMemo(() => {
     const noSelection =
@@ -67,11 +76,12 @@ function TopBarController({
     }).length;
   }, [selection, summaries]);
 
-  const handleGallery = () => {
-    router.replace("/admin/properties?view=details&mode=gallery", { scroll: false });
-  };
-  const handleTable = () => {
-    router.replace("/admin/properties?view=details&mode=table", { scroll: false });
+  const flipMode = (next: HomesMode) => {
+    setMode(next);
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", "details");
+    url.searchParams.set("mode", next);
+    window.history.replaceState(null, "", `${url.pathname}?${url.searchParams.toString()}`);
   };
 
   useSetTopBarSlots(
@@ -80,17 +90,15 @@ function TopBarController({
         <HomesViewSwitcher
           activeKey={activeKey}
           tabs={[
-            {
-              key: "status",
-              label: "Status",
-              href: "/admin/properties?view=launchpad",
-            },
-            activeKey === "status"
+            onStatusView
+              ? { key: "status", label: "Status", href: "/admin/properties?view=launchpad" }
+              : { key: "status", label: "Status", href: "/admin/properties?view=launchpad" },
+            onStatusView
               ? { key: "gallery", label: "Gallery", href: "/admin/properties?view=details&mode=gallery" }
-              : { key: "gallery", label: "Gallery", onClick: handleGallery },
-            activeKey === "status"
+              : { key: "gallery", label: "Gallery", onClick: () => flipMode("gallery") },
+            onStatusView
               ? { key: "table", label: "Table", href: "/admin/properties?view=details&mode=table" }
-              : { key: "table", label: "Table", onClick: handleTable },
+              : { key: "table", label: "Table", onClick: () => flipMode("table") },
           ]}
         />
       ),
@@ -104,7 +112,7 @@ function TopBarController({
       ),
       hideHelp: true,
     }),
-    [activeKey, pathname, visibleCount, owners, summaries],
+    [activeKey, visibleCount, owners, summaries, onStatusView],
   );
 
   return null;

@@ -12,14 +12,31 @@
   -webkit-backdrop-filter: blur(6px);
   flex-wrap: nowrap;
   max-width: 100%;
+  isolation: isolate;
 }
 
-.track {
-  display: none;
+.indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  background-color: rgba(255, 255, 255, 0.96);
+  border-radius: 7px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.12),
+    0 3px 8px rgba(15, 23, 42, 0.14);
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform, width;
 }
 
 .tab {
   position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -28,7 +45,7 @@
   height: 28px;
   font-size: 12.5px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.82);
   background: transparent;
   border: none;
   border-radius: 7px;
@@ -36,17 +53,13 @@
   text-decoration: none;
   letter-spacing: -0.005em;
   white-space: nowrap;
-  transition:
-    color 160ms ease,
-    background-color 160ms ease,
-    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 160ms ease;
   -webkit-tap-highlight-color: transparent;
   font-family: inherit;
 }
 
 .tab:hover:not(.tabActive) {
   color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .tab:focus-visible {
@@ -57,10 +70,6 @@
 .tabActive {
   color: #0f3b6b;
   font-weight: 600;
-  background-color: #ffffff;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.12),
-    0 2px 6px rgba(15, 23, 42, 0.12);
 }
 
 .icon {
@@ -88,7 +97,7 @@
     flex: 1 1 0;
     min-width: 0;
     padding: 0 10px;
-    font-size: 12px;
+    font-size: 12;
     gap: 5px;
   }
   .label {

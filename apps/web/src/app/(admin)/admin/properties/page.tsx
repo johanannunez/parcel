@@ -4,7 +4,7 @@ import { normalizeUnit, shortenStreet } from "@/lib/address";
 import { getChecklistItemsForProperties, type ChecklistItem } from "@/lib/checklist";
 import { GridViewPage } from "./GridViewPage";
 import { HomesView } from "./HomesView";
-import type { HomesProperty, BookingSummary, HomesMode } from "./homes-types";
+import type { HomesProperty, BookingSummary } from "./homes-types";
 
 export const metadata: Metadata = { title: "Properties (Admin)" };
 export const dynamic = "force-dynamic";
@@ -19,8 +19,6 @@ export default async function AdminPropertiesPage({
   //   ?view=launchpad  → spreadsheet-style Status board (onboarding progress).
   //   ?view=details    → photo-based Homes view (Gallery or Table mode).
   const view = params.view === "launchpad" ? "launchpad" : "details";
-  const modeParam = typeof params.mode === "string" ? params.mode : "";
-  const homesMode: HomesMode = modeParam === "table" ? "table" : "gallery";
 
   const supabase = await createClient();
 
@@ -170,5 +168,5 @@ export default async function AdminPropertiesPage({
     };
   });
 
-  return <HomesView properties={homesRows} initialMode={homesMode} />;
+  return <HomesView properties={homesRows} />;
 }

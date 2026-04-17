@@ -3,22 +3,21 @@
 import { useMemo, useState } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 import styles from "./HomesView.module.css";
-import type { HomesMode, HomesProperty } from "./homes-types";
+import type { HomesProperty } from "./homes-types";
 import { GalleryCard } from "./GalleryCard";
 import { HomesTable } from "./HomesTable";
 import { PropertyDrawer } from "./PropertyDrawer";
 import { usePropertiesFilter } from "./PropertiesFilterContext";
+import { usePropertiesMode } from "./PropertiesModeContext";
 
 type SortKey = "address" | "beds" | "baths" | "sqft" | "sleeps" | "status";
 
 export function HomesView({
   properties,
-  initialMode,
 }: {
   properties: HomesProperty[];
-  initialMode: HomesMode;
 }) {
-  const [mode] = useState<HomesMode>(initialMode);
+  const { mode } = usePropertiesMode();
   const { selection } = usePropertiesFilter();
   const [drawerPropertyId, setDrawerPropertyId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("address");
@@ -96,36 +95,38 @@ export function HomesView({
       )}
 
       <div className={styles.content}>
-        {filtered.length === 0 ? (
-          <div className={styles.empty}>
-            <p>No properties match your filters.</p>
-          </div>
-        ) : mode === "gallery" ? (
-          <div className={styles.galleryList}>
-            {sorted.map((p) => (
-              <GalleryCard
-                key={p.id}
-                property={p}
-                onOpen={() => setDrawerPropertyId(p.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <HomesTable
-            properties={sorted}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={(k) => {
-              if (k === sortKey) {
-                setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-              } else {
-                setSortKey(k);
-                setSortDir("asc");
-              }
-            }}
-            onOpen={(id) => setDrawerPropertyId(id)}
-          />
-        )}
+        <div key={mode} className={styles.modeWrap}>
+          {filtered.length === 0 ? (
+            <div className={styles.empty}>
+              <p>No properties match your filters.</p>
+            </div>
+          ) : mode === "gallery" ? (
+            <div className={styles.galleryList}>
+              {sorted.map((p) => (
+                <GalleryCard
+                  key={p.id}
+                  property={p}
+                  onOpen={() => setDrawerPropertyId(p.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <HomesTable
+              properties={sorted}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={(k) => {
+                if (k === sortKey) {
+                  setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+                } else {
+                  setSortKey(k);
+                  setSortDir("asc");
+                }
+              }}
+              onOpen={(id) => setDrawerPropertyId(id)}
+            />
+          )}
+        </div>
       </div>
 
       <PropertyDrawer
