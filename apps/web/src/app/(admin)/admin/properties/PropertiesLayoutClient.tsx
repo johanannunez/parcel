@@ -89,8 +89,8 @@ function TopBarController({
               ? { key: "gallery", label: "Gallery", href: "/admin/properties?view=details&mode=gallery" }
               : { key: "gallery", label: "Gallery", onClick: handleGallery },
             activeKey === "status"
-              ? { key: "table", label: "Compact", href: "/admin/properties?view=details&mode=table" }
-              : { key: "table", label: "Compact", onClick: handleTable },
+              ? { key: "table", label: "Table", href: "/admin/properties?view=details&mode=table" }
+              : { key: "table", label: "Table", onClick: handleTable },
           ]}
         />
       ),
