@@ -2,9 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { createTask } from '@/lib/admin/task-actions';
+import { createAttachmentRecord } from '@/lib/admin/attachment-actions';
 import { useCreateScope } from '../CreateScopeContext';
 import type { ParentType, TaskType } from '@/lib/admin/task-types';
 import { RichDescriptionEditor } from '@/components/admin/tasks/RichDescriptionEditor';
+import { AttachmentsField } from '@/components/admin/tasks/AttachmentsField';
+import type { UploadedAttachment, AttachmentScope } from '@/lib/admin/attachment-upload';
 import styles from './TaskForm.module.css';
 
 type PresetKey = 'today' | 'tomorrow' | '+3' | 'next_week' | 'none';
@@ -47,6 +50,7 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
   const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
   const [tagsRaw, setTagsRaw] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState('');
+  const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -58,6 +62,12 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
       ? 'property'
       : null;
   const parentId: string | null = target?.id ?? null;
+
+  // Attachment scope mirrors parentType/parentId for pre-task upload path naming.
+  const attachmentScope: AttachmentScope | null =
+    parentType && parentId
+      ? { parentType: parentType as AttachmentScope['parentType'], parentId }
+      : null;
 
   const applyPreset = (key: PresetKey) => {
     if (isPending) return;
@@ -109,7 +119,7 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
     startTransition(async () => {
       try {
         const mins = estimatedMinutes ? parseInt(estimatedMinutes, 10) : null;
-        await createTask({
+        const { id: taskId } = await createTask({
           title: title.trim(),
           description: description && description.trim() !== '<p></p>' ? description : undefined,
           parentType,
@@ -120,6 +130,17 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
           tags: parseTags(tagsRaw),
           estimatedMinutes: mins && !isNaN(mins) ? mins : null,
         });
+        // Persist any uploaded files as attachment records linked to the new task.
+        for (const att of attachments) {
+          await createAttachmentRecord({
+            parentType: 'task',
+            parentId: taskId,
+            filename: att.filename,
+            storagePath: att.storagePath,
+            mimeType: att.mimeType,
+            sizeBytes: att.sizeBytes,
+          });
+        }
         onClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -266,6 +287,17 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
           onChange={setDescription}
           placeholder="Describe the task..."
           minHeight={120}
+          disabled={isPending}
+        />
+      </div>
+
+      {/* Attachments */}
+      <div className={styles.field}>
+        <label className={styles.label}>Attachments</label>
+        <AttachmentsField
+          uploaded={attachments}
+          onChange={setAttachments}
+          scope={attachmentScope}
           disabled={isPending}
         />
       </div>
