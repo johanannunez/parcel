@@ -23,6 +23,7 @@ export type Database = {
           entity_type: string
           id: string
           metadata: Json
+          visibility: Database["public"]["Enums"]["activity_visibility"]
         }
         Insert: {
           action: string
@@ -32,6 +33,7 @@ export type Database = {
           entity_type: string
           id?: string
           metadata?: Json
+          visibility?: Database["public"]["Enums"]["activity_visibility"]
         }
         Update: {
           action?: string
@@ -41,6 +43,7 @@ export type Database = {
           entity_type?: string
           id?: string
           metadata?: Json
+          visibility?: Database["public"]["Enums"]["activity_visibility"]
         }
         Relationships: [
           {
@@ -254,6 +257,84 @@ export type Database = {
           {
             foreignKeyName: "connections_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          assigned_to: string | null
+          avatar_url: string | null
+          company_name: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          estimated_mrr: number | null
+          full_name: string
+          id: string
+          last_activity_at: string | null
+          lifecycle_stage: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          metadata: Json
+          phone: string | null
+          profile_id: string | null
+          source: string | null
+          source_detail: string | null
+          stage_changed_at: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          estimated_mrr?: number | null
+          full_name: string
+          id?: string
+          last_activity_at?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          metadata?: Json
+          phone?: string | null
+          profile_id?: string | null
+          source?: string | null
+          source_detail?: string | null
+          stage_changed_at?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          estimated_mrr?: number | null
+          full_name?: string
+          id?: string
+          last_activity_at?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          metadata?: Json
+          phone?: string | null
+          profile_id?: string | null
+          source?: string | null
+          source_detail?: string | null
+          stage_changed_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -622,6 +703,120 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          stripe_line_item_id: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          stripe_line_item_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          stripe_line_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          due_at: string | null
+          hosted_invoice_url: string | null
+          id: string
+          kind: Database["public"]["Enums"]["invoice_kind"]
+          owner_id: string
+          paid_at: string | null
+          property_id: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          stripe_invoice_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          due_at?: string | null
+          hosted_invoice_url?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["invoice_kind"]
+          owner_id: string
+          paid_at?: string | null
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_invoice_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          due_at?: string | null
+          hosted_invoice_url?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["invoice_kind"]
+          owner_id?: string
+          paid_at?: string | null
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_invoice_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reads: {
         Row: {
           device_info: string | null
@@ -780,6 +975,69 @@ export type Database = {
             foreignKeyName: "onboarding_drafts_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_facts: {
+        Row: {
+          category: Database["public"]["Enums"]["owner_fact_category"] | null
+          confidence: number
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          owner_id: string
+          pinned: boolean
+          source_id: string | null
+          source_type: Database["public"]["Enums"]["owner_fact_source_type"]
+          suppressed: boolean
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["owner_fact_category"] | null
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          owner_id: string
+          pinned?: boolean
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["owner_fact_source_type"]
+          suppressed?: boolean
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["owner_fact_category"] | null
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          owner_id?: string
+          pinned?: boolean
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["owner_fact_source_type"]
+          suppressed?: boolean
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_facts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_facts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1385,6 +1643,7 @@ export type Database = {
           cleaning_choice: string | null
           cleaning_team: Json | null
           compliance_details: Json | null
+          contact_id: string | null
           country: string
           cover_photo_url: string | null
           created_at: string
@@ -1437,6 +1696,7 @@ export type Database = {
           cleaning_choice?: string | null
           cleaning_team?: Json | null
           compliance_details?: Json | null
+          contact_id?: string | null
           country?: string
           cover_photo_url?: string | null
           created_at?: string
@@ -1489,6 +1749,7 @@ export type Database = {
           cleaning_choice?: string | null
           cleaning_team?: Json | null
           compliance_details?: Json | null
+          contact_id?: string | null
           country?: string
           cover_photo_url?: string | null
           created_at?: string
@@ -1529,6 +1790,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "properties_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "properties_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
@@ -1559,6 +1827,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "property_amenities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_checklist_items: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          item_key: string
+          label: string
+          notes: string | null
+          property_id: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          item_key: string
+          label: string
+          notes?: string | null
+          property_id: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          item_key?: string
+          label?: string
+          notes?: string | null
+          property_id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_checklist_items_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -1852,6 +2167,65 @@ export type Database = {
           },
         ]
       }
+      saved_views: {
+        Row: {
+          columns_jsonb: Json | null
+          created_at: string
+          entity_type: string
+          filter_jsonb: Json
+          grouping: string | null
+          id: string
+          is_shared: boolean
+          key: string
+          name: string
+          owner_user_id: string | null
+          sort: string | null
+          sort_order: number
+          updated_at: string
+          view_mode: string
+        }
+        Insert: {
+          columns_jsonb?: Json | null
+          created_at?: string
+          entity_type: string
+          filter_jsonb?: Json
+          grouping?: string | null
+          id?: string
+          is_shared?: boolean
+          key: string
+          name: string
+          owner_user_id?: string | null
+          sort?: string | null
+          sort_order?: number
+          updated_at?: string
+          view_mode?: string
+        }
+        Update: {
+          columns_jsonb?: Json | null
+          created_at?: string
+          entity_type?: string
+          filter_jsonb?: Json
+          grouping?: string | null
+          id?: string
+          is_shared?: boolean
+          key?: string
+          name?: string
+          owner_user_id?: string | null
+          sort?: string | null
+          sort_order?: number
+          updated_at?: string
+          view_mode?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_views_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_log: {
         Row: {
           browser: string | null
@@ -2004,6 +2378,101 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_customers: {
+        Row: {
+          created_at: string
+          email: string | null
+          profile_id: string
+          stripe_customer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          profile_id: string
+          stripe_customer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          profile_id?: string
+          stripe_customer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_customers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          id: string
+          interval: string
+          owner_id: string
+          price_cents: number
+          property_id: string | null
+          status: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          id?: string
+          interval?: string
+          owner_id: string
+          price_cents?: number
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          id?: string
+          interval?: string
+          owner_id?: string
+          price_cents?: number
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -2429,6 +2898,30 @@ export type Database = {
           },
         ]
       }
+      treasury_balance_snapshots: {
+        Row: {
+          account_balances: Json | null
+          created_at: string | null
+          date: string
+          id: string
+          total_balance: number
+        }
+        Insert: {
+          account_balances?: Json | null
+          created_at?: string | null
+          date: string
+          id?: string
+          total_balance?: number
+        }
+        Update: {
+          account_balances?: Json | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          total_balance?: number
+        }
+        Relationships: []
+      }
       treasury_connections: {
         Row: {
           access_token_encrypted: string
@@ -2720,6 +3213,7 @@ export type Database = {
       user_owns_property: { Args: { p_property_id: string }; Returns: boolean }
     }
     Enums: {
+      activity_visibility: "admin_only" | "both"
       booking_source:
         | "direct"
         | "airbnb"
@@ -2728,10 +3222,45 @@ export type Database = {
         | "furnished_finder"
         | "hospitable"
         | "other"
+      contact_lifecycle_stage:
+        | "lead_new"
+        | "qualified"
+        | "in_discussion"
+        | "contract_sent"
+        | "onboarding"
+        | "active_owner"
+        | "paused"
+        | "churned"
       conversation_type: "direct" | "announcement" | "email_log"
       help_article_status: "draft" | "published" | "archived"
       inquiry_status: "new" | "contacted" | "qualified" | "won" | "lost"
+      invoice_kind: "onboarding_fee" | "tech_fee" | "adhoc"
+      invoice_status: "draft" | "open" | "paid" | "uncollectible" | "void"
+      owner_fact_category:
+        | "communication"
+        | "background"
+        | "relationships"
+        | "property_knowledge"
+        | "business"
+        | "personal"
+        | "other"
+      owner_fact_source_type:
+        | "manual"
+        | "meeting"
+        | "email"
+        | "message"
+        | "document"
+        | "ai_summary"
       property_type: "str" | "ltr" | "arbitrage" | "mtr" | "co-hosting"
+      subscription_status:
+        | "active"
+        | "past_due"
+        | "canceled"
+        | "incomplete"
+        | "incomplete_expired"
+        | "trialing"
+        | "unpaid"
+        | "paused"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status:
         | "backlog"
@@ -2877,6 +3406,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_visibility: ["admin_only", "both"],
       booking_source: [
         "direct",
         "airbnb",
@@ -2886,10 +3416,49 @@ export const Constants = {
         "hospitable",
         "other",
       ],
+      contact_lifecycle_stage: [
+        "lead_new",
+        "qualified",
+        "in_discussion",
+        "contract_sent",
+        "onboarding",
+        "active_owner",
+        "paused",
+        "churned",
+      ],
       conversation_type: ["direct", "announcement", "email_log"],
       help_article_status: ["draft", "published", "archived"],
       inquiry_status: ["new", "contacted", "qualified", "won", "lost"],
+      invoice_kind: ["onboarding_fee", "tech_fee", "adhoc"],
+      invoice_status: ["draft", "open", "paid", "uncollectible", "void"],
+      owner_fact_category: [
+        "communication",
+        "background",
+        "relationships",
+        "property_knowledge",
+        "business",
+        "personal",
+        "other",
+      ],
+      owner_fact_source_type: [
+        "manual",
+        "meeting",
+        "email",
+        "message",
+        "document",
+        "ai_summary",
+      ],
       property_type: ["str", "ltr", "arbitrage", "mtr", "co-hosting"],
+      subscription_status: [
+        "active",
+        "past_due",
+        "canceled",
+        "incomplete",
+        "incomplete_expired",
+        "trialing",
+        "unpaid",
+        "paused",
+      ],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: [
         "backlog",
@@ -2913,4 +3482,3 @@ export const Constants = {
     },
   },
 } as const
-
