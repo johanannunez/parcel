@@ -17,6 +17,8 @@ import {
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
+import { SidebarSearch } from "@/components/admin/chrome/SidebarSearch";
+import { CreateMenu } from "@/components/admin/chrome/CreateMenu";
 import css from "./AdminSidebar.module.css";
 
 type NavItem = {
@@ -144,6 +146,19 @@ export function AdminSidebar({
             Admin
           </span>
         </Link>
+      </div>
+
+      {/* Search + Create — global utilities, carry across every admin page */}
+      <div
+        style={{
+          display: "flex",
+          gap: "6px",
+          padding: "0 14px 12px",
+          alignItems: "center",
+        }}
+      >
+        <SidebarSearch />
+        <CreateMenu />
       </div>
 
       {/* Nav */}

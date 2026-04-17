@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AdminSidebar, AdminIconRail, AdminTopBar } from "@/components/admin/AdminSidebar";
+import { AdminSidebar, AdminIconRail, AdminTopBar as AdminTopBarLegacy } from "@/components/admin/AdminSidebar";
 import { AdminBottomNav } from "@/components/admin/AdminBottomNav";
 import { AdminSignOutButton } from "@/components/admin/AdminSignOutButton";
 import { PullToRefresh } from "@/components/portal/PullToRefresh";
+import { AdminTopBar as AdminTopBarNew } from "@/components/admin/chrome/AdminTopBar";
+import { CreateScopeProvider } from "@/components/admin/chrome/CreateScopeContext";
+import { CreateModal } from "@/components/admin/chrome/CreateModal";
 
 /**
  * Admin layout with dark vertical sidebar.
@@ -47,36 +50,58 @@ export default async function AdminLayout({
   const initials = buildInitials(fullName);
 
   return (
-    <div
-      className="flex h-screen overflow-hidden"
-      style={{ backgroundColor: "var(--color-navy)" }}
-    >
-      <AdminIconRail pendingBlockCount={pendingBlockCount ?? 0} />
-      <AdminSidebar
-        userName={fullName}
-        userEmail={user.email ?? ""}
-        initials={initials}
-        avatarUrl={profile?.avatar_url ?? null}
-        pendingBlockCount={pendingBlockCount ?? 0}
-        signOutSlot={<AdminSignOutButton />}
-      />
+    <CreateScopeProvider>
+      <div
+        className="flex h-screen overflow-hidden"
+        style={{ backgroundColor: "var(--color-navy)" }}
+      >
+        <AdminIconRail pendingBlockCount={pendingBlockCount ?? 0} />
+        <AdminSidebar
+          userName={fullName}
+          userEmail={user.email ?? ""}
+          initials={initials}
+          avatarUrl={profile?.avatar_url ?? null}
+          pendingBlockCount={pendingBlockCount ?? 0}
+          signOutSlot={<AdminSignOutButton />}
+        />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden" style={{ backgroundColor: "var(--color-off-white)", color: "var(--color-text-primary)" }}>
-        <AdminTopBar userName={firstName} initials={initials} pendingBlockCount={pendingBlockCount ?? 0} />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
-          <PullToRefresh>{children}</PullToRefresh>
-        </main>
+        <div
+          className="flex min-w-0 flex-1 flex-col overflow-hidden"
+          style={{
+            backgroundColor: "var(--color-off-white)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          {/* Desktop + tablet: the new rich top bar with title, subtitle, utility cluster, clock. */}
+          <div className="hidden md:block">
+            <AdminTopBarNew notificationCount={pendingBlockCount ?? 0} />
+          </div>
+          {/* Mobile: keep the legacy compact header for now; responsive pass lands in Dispatch 8. */}
+          <div className="md:hidden">
+            <AdminTopBarLegacy
+              userName={firstName}
+              initials={initials}
+              pendingBlockCount={pendingBlockCount ?? 0}
+            />
+          </div>
+
+          <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
+            <PullToRefresh>{children}</PullToRefresh>
+          </main>
+        </div>
+
+        <AdminBottomNav
+          pendingBlockCount={pendingBlockCount ?? 0}
+          signOutSlot={<AdminSignOutButton />}
+          userName={fullName}
+          userEmail={user.email ?? ""}
+          initials={initials}
+          avatarUrl={profile?.avatar_url ?? null}
+        />
+
+        <CreateModal />
       </div>
-
-      <AdminBottomNav
-        pendingBlockCount={pendingBlockCount ?? 0}
-        signOutSlot={<AdminSignOutButton />}
-        userName={fullName}
-        userEmail={user.email ?? ""}
-        initials={initials}
-        avatarUrl={profile?.avatar_url ?? null}
-      />
-    </div>
+    </CreateScopeProvider>
   );
 }
 
