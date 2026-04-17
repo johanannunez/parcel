@@ -49,7 +49,7 @@ export function OverviewOperating({ data }: { data: OwnerDetailData }) {
   const tenure = tenureLabel(primaryMember.createdAt);
   const mostRecent = activity[0] ?? null;
 
-  // Health pill: conservative — Healthy unless we spot something missing.
+  // Health pill: conservative. Healthy unless we spot something missing.
   const missingPhone = !primaryMember.phone;
   const healthLevel: "healthy" | "attention" = missingPhone
     ? "attention"
@@ -105,7 +105,7 @@ export function OverviewOperating({ data }: { data: OwnerDetailData }) {
           <div className={styles.healthMetric}>
             <div className={styles.healthMetricLabel}>Last contact</div>
             <div className={styles.healthMetricValue}>
-              {mostRecent ? relativeTimeShort(mostRecent.createdAt) : "\u2014"}
+              {mostRecent ? relativeTimeShort(mostRecent.createdAt) : "None"}
             </div>
             <div className={styles.healthMetricSub}>
               {mostRecent
@@ -115,12 +115,12 @@ export function OverviewOperating({ data }: { data: OwnerDetailData }) {
           </div>
           <div className={styles.healthMetric}>
             <div className={styles.healthMetricLabel}>Next touchpoint</div>
-            <div className={styles.healthMetricValue}>&mdash;</div>
+            <div className={styles.healthMetricValue}>None</div>
             <div className={styles.healthMetricSub}>Nothing scheduled</div>
           </div>
           <div className={styles.healthMetric}>
             <div className={styles.healthMetricLabel}>Avg response time</div>
-            <div className={styles.healthMetricValue}>&mdash;</div>
+            <div className={styles.healthMetricValue}>N/A</div>
             <div className={styles.healthMetricSub}>Not enough data</div>
           </div>
         </div>
