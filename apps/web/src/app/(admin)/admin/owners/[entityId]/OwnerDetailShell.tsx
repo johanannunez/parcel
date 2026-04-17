@@ -8,8 +8,8 @@ import { PageTitle } from "@/components/admin/chrome/PageTitle";
 import type {
   OwnerDetailData,
   OwnerDetailSwitcherRow,
-} from "@/lib/admin/owner-detail";
-import { formatMonthYear } from "@/lib/admin/owner-detail";
+} from "@/lib/admin/owner-detail-types";
+import { formatMonthYear } from "@/lib/admin/owner-detail-types";
 import type { OwnerStatus } from "@/lib/admin/owners-list";
 import styles from "./OwnerDetailShell.module.css";
 

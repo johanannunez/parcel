@@ -1,7 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { propertyLabel } from "@/lib/address";
 import type { OwnerStatus } from "@/lib/admin/owners-list";
+import type {
+  OwnerDetailData,
+  OwnerDetailMember,
+  OwnerDetailProperty,
+  OwnerDetailActivityEntry,
+  OwnerDetailSwitcherRow,
+} from "@/lib/admin/owner-detail-types";
+
+export type {
+  OwnerDetailData,
+  OwnerDetailMember,
+  OwnerDetailProperty,
+  OwnerDetailActivityEntry,
+  OwnerDetailSwitcherRow,
+  OwnerDetailEntity,
+} from "@/lib/admin/owner-detail-types";
+export { formatMonthYear } from "@/lib/admin/owner-detail-types";
 
 /**
  * Server-side data layer for the new admin owner detail page. This
@@ -25,67 +43,6 @@ import type { OwnerStatus } from "@/lib/admin/owners-list";
  *     - `setting_up`   at least one property but onboarding not stamped
  *     - `invited`      fallback (real email, no properties)
  */
-
-export type OwnerDetailMember = {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string | null;
-  avatarUrl: string | null;
-  createdAt: string;
-  onboardingCompletedAt: string | null;
-  isPending: boolean;
-};
-
-export type OwnerDetailProperty = {
-  id: string;
-  label: string;
-  city: string | null;
-  state: string | null;
-  setupStatus: string;
-  active: boolean;
-  bedrooms: number | null;
-  bathrooms: number | null;
-  createdAt: string;
-};
-
-export type OwnerDetailActivityEntry = {
-  id: string;
-  actorName: string | null;
-  action: string;
-  entityType: string;
-  entityId: string | null;
-  metadata: Record<string, unknown>;
-  createdAt: string;
-};
-
-export type OwnerDetailEntity = {
-  id: string;
-  name: string;
-  type: string;
-  createdAt: string;
-};
-
-export type OwnerDetailSwitcherRow = {
-  id: string;
-  name: string;
-  type: string;
-  memberCount: number;
-  propertyCount: number;
-  status: OwnerStatus;
-};
-
-export type OwnerDetailData = {
-  entity: OwnerDetailEntity;
-  members: OwnerDetailMember[];
-  primaryMember: OwnerDetailMember;
-  properties: OwnerDetailProperty[];
-  propertyCount: number;
-  activity: OwnerDetailActivityEntry[];
-  status: OwnerStatus;
-  overviewState: "onboarding" | "operating";
-  switcher: OwnerDetailSwitcherRow[];
-};
 
 function deriveStatus({
   allPending,
@@ -348,17 +305,4 @@ export async function fetchOwnerDetail(entityId: string): Promise<OwnerDetailDat
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     ),
   };
-}
-
-/** Short month/year label: "Apr 2026". */
-export function formatMonthYear(iso: string | null | undefined): string {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return "";
-  }
 }
