@@ -21,6 +21,11 @@
     "onlyBuiltDependencies": [
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "protobufjs": ">=7.5.5",
+      "follow-redirects": ">=1.16.0",
+      "dompurify": ">=3.4.0"
+    }
   }
 }
