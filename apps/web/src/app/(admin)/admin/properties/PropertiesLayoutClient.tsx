@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSetTopBarSlots } from "@/components/admin/chrome/TopBarSlotsContext";
 import { HomesViewSwitcher } from "./HomesViewSwitcher";
 import { StatusButton } from "./StatusButton";
@@ -62,6 +62,7 @@ function TopBarController({
   summaries: PropertySummary[];
   onStatusView: boolean;
 }) {
+  const router = useRouter();
   const { selection } = usePropertiesFilter();
   const { mode, setMode } = usePropertiesMode();
 
@@ -76,6 +77,16 @@ function TopBarController({
   }, [selection, summaries]);
 
   const flipMode = (next: HomesMode) => {
+    if (onStatusView) {
+      // Leaving Launchpad for Homes: the server component for page.tsx needs
+      // to swap GridViewPage out for HomesView, so a real navigation is
+      // required. We still preseed the client mode so the new view lands in
+      // the right tab without a flash.
+      setMode(next);
+      router.push(`/admin/properties?view=details&mode=${next}`, { scroll: false });
+      return;
+    }
+    // Already on Homes: instant client flip, URL updated shallowly.
     setMode(next);
     const url = new URL(window.location.href);
     url.searchParams.set("view", "details");
