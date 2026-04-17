@@ -45,7 +45,7 @@ export function HomesViewSwitcher({
       width: `${rect.width}px`,
       opacity: 1,
     });
-  }, [activeKey, tabs.length]);
+  }, [activeKey, tabs.length, subdued]);
 
   return (
     <div
