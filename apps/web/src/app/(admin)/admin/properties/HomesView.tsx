@@ -28,7 +28,6 @@ export function HomesView({
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<HomesMode>(initialMode);
-  const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<FilterSelection>({
     ownerIds: new Set<string>(),
     propertyIds: new Set<string>(),
@@ -38,30 +37,15 @@ export function HomesView({
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     const noSelection =
       selection.ownerIds.size === 0 && selection.propertyIds.size === 0;
-
+    if (noSelection) return properties;
     return properties.filter((p) => {
-      if (!noSelection) {
-        const ownerMatch = p.owners.some((o) => selection.ownerIds.has(o.id));
-        const propertyMatch = selection.propertyIds.has(p.id);
-        if (!ownerMatch && !propertyMatch) return false;
-      }
-      if (!q) return true;
-      const hay = [
-        p.street,
-        p.unit ?? "",
-        p.city,
-        p.state,
-        p.homeType ?? "",
-        ...p.owners.map((o) => o.name ?? ""),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
+      const ownerMatch = p.owners.some((o) => selection.ownerIds.has(o.id));
+      const propertyMatch = selection.propertyIds.has(p.id);
+      return ownerMatch || propertyMatch;
     });
-  }, [properties, query, selection]);
+  }, [properties, selection]);
 
   const filterPopoverProperties = useMemo(
     () =>
@@ -109,18 +93,8 @@ export function HomesView({
     router.replace(`${url.pathname}?${url.searchParams.toString()}`, { scroll: false });
   };
 
-  const total = properties.length;
-  const subtitle = `${total} ${total === 1 ? "home" : "homes"} under Parcel management`;
-
   return (
     <HomesPageChrome
-      title="Properties"
-      subtitle={subtitle}
-      search={{
-        kind: "input",
-        value: query,
-        onChange: setQuery,
-      }}
       toolbarLeft={
         <>
           <HomesViewSwitcher
@@ -188,7 +162,7 @@ export function HomesView({
     >
       {filtered.length === 0 ? (
         <div className={styles.empty}>
-          <p>No properties match your search.</p>
+          <p>No properties match your filters.</p>
         </div>
       ) : mode === "gallery" ? (
         <div className={styles.galleryList}>

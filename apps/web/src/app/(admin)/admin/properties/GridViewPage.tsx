@@ -44,13 +44,8 @@ export function GridViewPage({
     });
   }, [properties, selection]);
 
-  const total = properties.length;
-  const subtitle = `${total} ${total === 1 ? "home" : "homes"} under Parcel management`;
-
   return (
     <HomesPageChrome
-      title="Properties"
-      subtitle={subtitle}
       toolbarLeft={
         <HomesViewSwitcher
           activeKey="status"
