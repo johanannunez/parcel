@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CaretDown, SignIn, ChatCircle } from "@phosphor-icons/react/dist/ssr";
@@ -11,6 +11,7 @@ import type {
 } from "@/lib/admin/owner-detail-types";
 import { formatMonthYear } from "@/lib/admin/owner-detail-types";
 import type { OwnerStatus } from "@/lib/admin/owners-list";
+import { setViewingAs } from "@/app/(portal)/portal/viewing-as-actions";
 import styles from "./OwnerDetailShell.module.css";
 
 type TabKey =
@@ -189,6 +190,7 @@ function IdentityBand({
   const router = useRouter();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [impersonating, startImpersonate] = useTransition();
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -263,7 +265,7 @@ function IdentityBand({
                 <input
                   type="text"
                   className={styles.switcherSearch}
-                  placeholder="Jump to owner..."
+                  placeholder="Jump to owner by name or email"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   autoFocus
@@ -338,15 +340,17 @@ function IdentityBand({
         <button
           type="button"
           className={styles.ghostBtn}
+          disabled={impersonating}
           onClick={() => {
-            // TODO: hook up real impersonation in a later dispatch
-            window.alert(
-              "Impersonation will be wired up in the Settings + Account system plan.",
-            );
+            startImpersonate(async () => {
+              await setViewingAs(primaryMember.id);
+              router.push("/portal");
+            });
           }}
+          title="Open the portal as this owner. You can return any time from the orange banner."
         >
           <SignIn size={14} weight="bold" />
-          Impersonate
+          {impersonating ? "Opening…" : "Impersonate"}
         </button>
         <button
           type="button"
