@@ -15,6 +15,7 @@ import {
   usePropertiesMode,
 } from "./PropertiesModeContext";
 import type { HomesMode } from "./homes-types";
+import { Kanban } from "@phosphor-icons/react";
 
 type Owner = { id: string; name: string | null };
 type PropertySummary = {
@@ -37,6 +38,7 @@ export function PropertiesLayoutClient({
   const searchParams = useSearchParams();
   const view = searchParams?.get("view") ?? "";
   const modeParam = searchParams?.get("mode") ?? "";
+  const onKanbanView = modeParam === "status";
   const initialMode: HomesMode = modeParam === "table" ? "table" : "gallery";
 
   return (
@@ -46,6 +48,7 @@ export function PropertiesLayoutClient({
           owners={owners}
           summaries={summaries}
           onStatusView={view === "launchpad"}
+          onKanbanView={onKanbanView}
         />
         {children}
       </PropertiesModeProvider>
@@ -57,10 +60,12 @@ function TopBarController({
   owners,
   summaries,
   onStatusView,
+  onKanbanView,
 }: {
   owners: Owner[];
   summaries: PropertySummary[];
   onStatusView: boolean;
+  onKanbanView: boolean;
 }) {
   const router = useRouter();
   const { selection } = usePropertiesFilter();
@@ -77,16 +82,11 @@ function TopBarController({
   }, [selection, summaries]);
 
   const flipMode = (next: HomesMode) => {
-    if (onStatusView) {
-      // Leaving Launchpad for Homes: the server component for page.tsx needs
-      // to swap GridViewPage out for HomesView, so a real navigation is
-      // required. We still preseed the client mode so the new view lands in
-      // the right tab without a flash.
+    if (onStatusView || onKanbanView) {
       setMode(next);
       router.push(`/admin/properties?view=details&mode=${next}`, { scroll: false });
       return;
     }
-    // Already on Homes: instant client flip, URL updated shallowly.
     setMode(next);
     const url = new URL(window.location.href);
     url.searchParams.set("view", "details");
@@ -98,13 +98,38 @@ function TopBarController({
     () => ({
       centerSlot: (
         <>
+          {/* Kanban (Plan D status view) button */}
+          <a
+            href="/admin/properties?mode=status"
+            aria-label="Status view"
+            title="Status (Kanban)"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "0 10px",
+              height: 30,
+              borderRadius: 8,
+              background: onKanbanView ? "rgba(255,255,255,0.96)" : "transparent",
+              border: "1px solid rgba(255,255,255,0.25)",
+              color: onKanbanView ? "#0f3b6b" : "rgba(255,255,255,0.8)",
+              fontSize: 12,
+              fontWeight: 600,
+              textDecoration: "none",
+              transition: "background 160ms ease, color 160ms ease",
+              marginRight: 6,
+            }}
+          >
+            <Kanban size={13} weight="duotone" />
+            Status
+          </a>
           <StatusButton
             active={onStatusView}
             href="/admin/properties?view=launchpad"
           />
           <HomesViewSwitcher
-            activeKey={onStatusView ? null : mode}
-            subdued={onStatusView}
+            activeKey={onStatusView || onKanbanView ? null : mode}
+            subdued={onStatusView || onKanbanView}
             tabs={[
               { key: "gallery", label: "Gallery", onClick: () => flipMode("gallery") },
               { key: "table", label: "Table", onClick: () => flipMode("table") },
@@ -122,7 +147,7 @@ function TopBarController({
       ),
       hideHelp: true,
     }),
-    [mode, visibleCount, owners, summaries, onStatusView],
+    [mode, visibleCount, owners, summaries, onStatusView, onKanbanView],
   );
 
   return null;
