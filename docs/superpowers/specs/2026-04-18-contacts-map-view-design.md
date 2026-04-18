@@ -124,7 +124,8 @@ Home addresses are only collected during full sign-up, not at lead capture. This
 - Add `home_lat: number | null` and `home_lng: number | null` columns to the contacts table
 - When the onboarding address form is submitted, call Mapbox Geocoding API server-side, store the resulting lat/lng alongside the text address
 - One geocode per contact, stored for life. No runtime geocoding on map load.
-- Re-geocode only if the address is edited later
+- Re-geocode only if the address is edited later; update `home_lat`/`home_lng` in place
+- Every address change logs a timeline event (old address, new address, actor, timestamp) using the existing timeline system. No separate history table needed.
 - If geocoding fails (bad address), store null and fall back to the "not mapped" chip
 
 This approach also benefits other parts of the app: the portal property detail page already expects `latitude`/`longitude` for weather lookups, and we can reuse the same geocoding pattern.
