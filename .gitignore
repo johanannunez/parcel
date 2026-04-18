@@ -37,6 +37,7 @@ pnpm-debug.log*
 
 # Screenshot tooling output
 temporary screenshots/
+screenshot-*.js
 
 # Business records (not code, see CLAUDE.md)
 # Note: no trailing slash so this matches the symlink at workspace/parcel/records
