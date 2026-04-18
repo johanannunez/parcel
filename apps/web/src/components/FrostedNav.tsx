@@ -14,10 +14,16 @@ const NAV_LINKS = [
   { label: "Contact", href: "#contact" },
 ];
 
-export default function FrostedNav() {
+interface FrostedNavProps {
+  transparent?: boolean;
+}
+
+export default function FrostedNav({ transparent = true }: FrostedNavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { resolvedTheme, toggleTheme } = useTheme();
+
+  const isDark = transparent && !scrolled;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -33,7 +39,7 @@ export default function FrostedNav() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled
+          !isDark
             ? "frosted border-b border-warm-gray-200/50 shadow-sm"
             : "bg-transparent"
         }`}
@@ -42,7 +48,7 @@ export default function FrostedNav() {
           {/* Logo */}
           <Link href="/" className="relative z-10 flex items-center gap-2">
             <Image
-              src={scrolled && resolvedTheme === "light" ? "/brand/logo-mark.png" : "/brand/logo-mark-white.png"}
+              src={!isDark && resolvedTheme === "light" ? "/brand/logo-mark.png" : "/brand/logo-mark-white.png"}
               alt="The Parcel Company"
               width={48}
               height={48}
@@ -58,7 +64,7 @@ export default function FrostedNav() {
                 key={link.href}
                 href={link.href}
                 className={`text-sm font-medium transition-colors duration-300 hover:text-brand ${
-                  scrolled ? "text-text-primary" : "text-white"
+                  isDark ? "text-white" : "text-text-primary"
                 }`}
               >
                 {link.label}
@@ -67,7 +73,7 @@ export default function FrostedNav() {
             <Link
               href="/login"
               className={`text-sm font-medium transition-colors duration-300 hover:text-brand ${
-                scrolled ? "text-text-primary" : "text-white"
+                isDark ? "text-white" : "text-text-primary"
               }`}
             >
               Owner Login
@@ -75,9 +81,9 @@ export default function FrostedNav() {
             <button
               onClick={toggleTheme}
               className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-300 ${
-                scrolled
-                  ? "text-text-primary hover:bg-warm-gray-100"
-                  : "text-white hover:bg-white/10"
+                isDark
+                  ? "text-white hover:bg-white/10"
+                  : "text-text-primary hover:bg-warm-gray-100"
               }`}
               aria-label={`Switch to ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             >
@@ -100,9 +106,9 @@ export default function FrostedNav() {
             <button
               onClick={toggleTheme}
               className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-300 ${
-                scrolled
-                  ? "text-text-primary hover:bg-warm-gray-100"
-                  : "text-white hover:bg-white/10"
+                isDark
+                  ? "text-white hover:bg-white/10"
+                  : "text-text-primary hover:bg-warm-gray-100"
               }`}
               aria-label={`Switch to ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             >
@@ -115,7 +121,7 @@ export default function FrostedNav() {
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full ${
-                scrolled ? "text-text-primary" : "text-white"
+                isDark ? "text-white" : "text-text-primary"
               }`}
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileOpen}

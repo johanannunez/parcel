@@ -6,9 +6,9 @@ import DarkFooter from "@/components/DarkFooter";
 import { BLOG_POSTS, BLOG_CATEGORIES } from "@/data/blog-posts";
 
 export const metadata: Metadata = {
-  title: "Journal — Vacation Rental Tips, Property Investment & Travel Guides",
+  title: "Journal: Vacation Rental Tips, Property Investment & Travel Guides",
   description:
-    "Expert articles on vacation rental management, property investment, corporate housing, sustainable travel, and destination guides. Insights from The Parcel Company.",
+    "Expert articles on vacation rental management, property investment, corporate housing, sustainable travel, and destination guides. Insights from Parcel Co.",
   keywords: [
     "vacation rental blog",
     "property management tips",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "short-term rental advice",
   ],
   openGraph: {
-    title: "Journal | The Parcel Company",
+    title: "Parcel Co. | Journal",
     description:
       "Expert articles on vacation rental management, property investment, and travel.",
     type: "website",

@@ -36,8 +36,8 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "default",
   },
   title: {
-    default: "The Parcel Company | Vacation Rentals & Furnished Residences",
-    template: "%s | The Parcel Company",
+    default: "Parcel Co. | Vacation Rentals & Furnished Residences",
+    template: "Parcel Co. | %s",
   },
   description:
     "Book handpicked vacation homes and furnished corporate residences across the US. Verified properties, flexible cancellation, and responsive management.",
@@ -55,16 +55,16 @@ export const metadata: Metadata = {
   creator: "The Parcel Company",
   publisher: "The Parcel Company",
   openGraph: {
-    title: "The Parcel Company | Vacation Rentals & Furnished Residences",
+    title: "Parcel Co. | Vacation Rentals & Furnished Residences",
     description:
       "Book handpicked vacation homes and furnished corporate residences across the US. Verified properties, flexible cancellation, and responsive management.",
     type: "website",
     locale: "en_US",
-    siteName: "The Parcel Company",
+    siteName: "Parcel Co.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Parcel Company | Vacation Rentals & Furnished Residences",
+    title: "Parcel Co. | Vacation Rentals & Furnished Residences",
     description:
       "Book handpicked vacation homes and furnished corporate residences across the US.",
   },

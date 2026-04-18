@@ -5,7 +5,7 @@ export const metadata = {
   description:
     "The Parcel Company curates vacation homes and furnished residences for people who notice the details. Learn about our mission, standards, and commitment to quality.",
   openGraph: {
-    title: "About Us | The Parcel Company",
+    title: "Parcel Co. | About Us",
     description:
       "Learn about The Parcel Company's mission to make short-term rentals better, one property at a time.",
   },

@@ -23,7 +23,7 @@ export async function generateMetadata({
     description: post.excerpt,
     keywords: post.keywords,
     openGraph: {
-      title: `${post.title} | The Parcel Company`,
+      title: `Parcel Co. | ${post.title}`,
       description: post.excerpt,
       type: "article",
       publishedTime: new Date(post.date).toISOString(),

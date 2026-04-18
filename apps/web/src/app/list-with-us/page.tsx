@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description:
     "Partner with The Parcel Company to maximize your vacation rental revenue. Professional management, premium guests, and hands-off ownership in the Tri-Cities, WA area.",
   openGraph: {
-    title: "List Your Property | The Parcel Company",
+    title: "Parcel Co. | List Your Property",
     description:
       "See what your property could earn with The Parcel Company. Professional co-hosting and vacation rental management in the Tri-Cities.",
   },

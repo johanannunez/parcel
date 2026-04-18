@@ -4,14 +4,14 @@ import DarkFooter from "@/components/DarkFooter";
 
 export const metadata: Metadata = {
   title: {
-    default: "Help Center",
-    template: "%s | Help Center | The Parcel Company",
+    default: "Parcel Co. | Help Center",
+    template: "Parcel Co. | %s | Help Center",
   },
   description:
-    "Find answers about property management, payouts, calendar, bookings, and your owner portal at The Parcel Company.",
+    "Find answers about property management, payouts, calendar, bookings, and your owner portal at Parcel Co.",
   alternates: { canonical: "https://theparcelco.com/help" },
   openGraph: {
-    title: "Help Center | The Parcel Company",
+    title: "Parcel Co. | Help Center",
     description:
       "Find answers about property management, payouts, calendar, bookings, and your owner portal.",
     type: "website",

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Properties — Vacation Rentals & Corporate Housing",
+  title: "Vacation Rentals & Corporate Housing",
   description:
     "Browse verified vacation rentals and furnished corporate residences across the US. Filter by type, location, and amenities. Flexible cancellation included.",
   openGraph: {
-    title: "Properties — Vacation Rentals & Corporate Housing | The Parcel Company",
+    title: "Parcel Co. | Vacation Rentals & Corporate Housing",
     description:
       "Browse verified vacation rentals and furnished corporate residences across the US.",
   },
