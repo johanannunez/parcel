@@ -70,7 +70,7 @@ export default async function AdminOverviewPage() {
     {
       label: "New inquiries",
       value: inquiriesResult.count ?? 0,
-      href: "/admin/inquiries",
+      href: "/admin/leads",
     },
     {
       label: "Reservations to verify",
@@ -83,8 +83,8 @@ export default async function AdminOverviewPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-          Overview
+        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+          Dashboard
         </h1>
         <p
           className="mt-2 text-sm"

@@ -1,0 +1,163 @@
+/* Outer scroll container */
+.gridWrapper {
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--color-warm-gray-200);
+  background-color: var(--color-white);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  max-height: calc(100vh - 170px);
+  position: relative;
+
+  /* Hide scrollbars visually while keeping scroll functional */
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;         /* old IE/Edge */
+}
+
+.gridWrapper::-webkit-scrollbar {
+  display: none;                    /* WebKit */
+  width: 0;
+  height: 0;
+}
+
+.grid {
+  display: grid;
+  min-width: fit-content;
+  position: relative;
+}
+
+/* ── Top-left corner cell ── */
+.cornerCell {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 14;
+  /* Opaque background so scrolling content never bleeds through */
+  background: var(--color-white);
+  background-image: linear-gradient(180deg, var(--color-white) 0%, var(--color-warm-gray-50) 100%);
+  border-bottom: 1px solid var(--color-warm-gray-200);
+  border-right: 1px solid var(--color-warm-gray-200);
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-end;
+  box-shadow:
+    8px 0 14px -10px rgba(0, 0, 0, 0.14),
+    0 8px 14px -10px rgba(0, 0, 0, 0.14);
+}
+
+/* ── Per-property column header ── */
+.headerCell {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-white);
+  background-image: linear-gradient(180deg, var(--color-white) 0%, var(--color-warm-gray-50) 100%);
+  border-bottom: 1px solid var(--color-warm-gray-200);
+  border-right: 1px solid var(--color-warm-gray-100);
+  padding: 12px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 7px;
+  min-width: 0;
+  box-shadow: 0 8px 14px -10px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Category band (colored row across the whole grid) ── */
+.categoryBandLabel {
+  position: sticky;
+  left: 0;
+  z-index: 9;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-warm-gray-200);
+  border-right: 1px solid var(--color-warm-gray-200);
+  box-shadow: 8px 0 14px -10px rgba(0, 0, 0, 0.12);
+  transition: background-color 150ms ease;
+}
+
+.categoryBandLabel:hover {
+  filter: brightness(0.98);
+}
+
+.categoryBandFill {
+  border-bottom: 1px solid var(--color-warm-gray-200);
+  border-right: 1px solid var(--color-warm-gray-100);
+}
+
+/* ── Sticky item label column (body rows) ── */
+.itemLabelCell {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--color-warm-gray-100);
+  border-right: 1px solid var(--color-warm-gray-200);
+  box-shadow: 8px 0 14px -10px rgba(0, 0, 0, 0.10);
+  transition: background-color 150ms ease;
+  /* Force opaque behavior: rely on inline backgroundColor, but guarantee it's not transparent */
+  backdrop-filter: none;
+}
+
+.itemLabelCell:hover {
+  background-color: rgba(2, 170, 235, 0.04) !important;
+}
+
+/* Row cell (non-sticky) */
+.cell {
+  border-bottom: 1px solid var(--color-warm-gray-100);
+  border-right: 1px solid rgba(0, 0, 0, 0.035);
+  transition: background-color 150ms ease;
+}
+
+.cell:hover {
+  background-color: rgba(2, 170, 235, 0.035) !important;
+}
+
+/* ── External-link variant of the item label ── */
+.itemLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  color: #02aaeb;
+  text-decoration: none;
+  font-weight: 500;
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+}
+
+.itemLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Status pill interactivity ── */
+.statusPill:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-0.5px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.10);
+}
+
+.statusPill:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.96);
+}
+
+/* ── Owner chip hover ── */
+.ownerChip:hover {
+  background-color: rgba(2, 170, 235, 0.1) !important;
+  color: #02aaeb !important;
+}
+
+/* ── Floating menu option hover ── */
+.menuItem:hover {
+  background-color: var(--color-warm-gray-100) !important;
+}

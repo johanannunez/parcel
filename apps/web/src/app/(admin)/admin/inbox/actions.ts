@@ -183,7 +183,7 @@ export async function sendMessage(args: {
     visibility: "admin_only",
   });
 
-  revalidatePath("/admin/messages");
+  revalidatePath("/admin/inbox");
   return { success: true, messageId: msg.id, conversationId };
 }
 
@@ -287,7 +287,7 @@ export async function sendBroadcast(args: {
     },
   }).then(() => {}, () => {});
 
-  revalidatePath("/admin/messages");
+  revalidatePath("/admin/inbox");
   return { success: true, conversationId: conv.id, ownerCount: 0 };
 }
 

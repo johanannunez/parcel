@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { CHECKLIST_TEMPLATE, type ChecklistStatus } from "@/lib/checklist";
 
 const Schema = z.object({
   propertyId: z.string().uuid(),
@@ -71,5 +72,85 @@ export async function saveHospitableConnection(
 
   revalidatePath("/admin/properties");
   revalidatePath("/portal/reserve");
+  return { ok: true };
+}
+
+/* ─── Checklist: seed all 33 items for a property ─── */
+
+export async function seedChecklistForProperty(
+  propertyId: string,
+): Promise<SaveResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "admin") return { ok: false, error: "Admins only." };
+
+  const rows = CHECKLIST_TEMPLATE.map((t) => ({
+    property_id: propertyId,
+    category: t.category,
+    item_key: t.item_key,
+    label: t.label,
+    sort_order: t.sort_order,
+    status: "not_started" as const,
+  }));
+
+  // Use service client to bypass RLS for batch insert
+  // Cast through any: table not in generated types yet
+  const svc = createServiceClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (svc as any)
+    .from("property_checklist_items")
+    .upsert(rows, { onConflict: "property_id,item_key" });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/properties");
+  return { ok: true };
+}
+
+/* ─── Checklist: update a single item's status ─── */
+
+const validStatuses: ChecklistStatus[] = ["not_started", "in_progress", "pending_owner", "stuck", "completed"];
+
+export async function updateChecklistStatus(
+  itemId: string,
+  status: ChecklistStatus,
+): Promise<SaveResult> {
+  if (!validStatuses.includes(status)) {
+    return { ok: false, error: "Invalid status." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "admin") return { ok: false, error: "Admins only." };
+
+  // Cast through any: table not in generated types yet
+  const svc = createServiceClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (svc as any)
+    .from("property_checklist_items")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", itemId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/properties");
   return { ok: true };
 }

@@ -3,24 +3,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { motion, LayoutGroup, AnimatePresence } from "motion/react";
+import { motion, LayoutGroup } from "motion/react";
 import {
   House,
   UsersThree,
   Buildings,
-  CalendarBlank,
   Wallet,
   EnvelopeSimple,
-  ClipboardText,
   ChatCircle,
   ListChecks,
-  ClockCounterClockwise,
+  Target,
   BookOpenText,
-  Vault,
-  ArrowsLeftRight,
-  TrendUp,
-  CaretDown,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
@@ -36,30 +29,14 @@ type NavItem = {
 
 /* ─── Nav data ─── */
 
-const managementNav: NavItem[] = [
-  { href: "/admin", label: "Overview", icon: <House size={18} weight="duotone" /> },
+const navItems: NavItem[] = [
+  { href: "/admin", label: "Dashboard", icon: <House size={18} weight="duotone" /> },
+  { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/inbox" },
+  { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { href: "/admin/owners", label: "Owners", icon: <UsersThree size={18} weight="duotone" />, matchPrefix: "/admin/owners" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
-];
-
-const operationsNav = (pendingBlockCount: number): NavItem[] => [
-  { href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/calendar" },
-  { href: "/admin/block-requests", label: "Reservations", icon: <ClipboardText size={18} weight="duotone" />, matchPrefix: "/admin/block-requests", badge: pendingBlockCount },
-];
-
-const treasuryNav: NavItem[] = [
-  { href: "/admin/treasury", label: "Overview", icon: <Vault size={18} weight="duotone" /> },
-  { href: "/admin/treasury/accounts", label: "Accounts", icon: <Wallet size={18} weight="duotone" />, matchPrefix: "/admin/treasury/accounts" },
-  { href: "/admin/treasury/transactions", label: "Transactions", icon: <ArrowsLeftRight size={18} weight="duotone" />, matchPrefix: "/admin/treasury/transactions" },
-  { href: "/admin/treasury/forecast", label: "Forecast", icon: <TrendUp size={18} weight="duotone" />, matchPrefix: "/admin/treasury/forecast" },
-];
-
-const communicationsNav: NavItem[] = [
-  { href: "/admin/inquiries", label: "Inquiries", icon: <EnvelopeSimple size={18} weight="duotone" />, matchPrefix: "/admin/inquiries" },
-  { href: "/admin/messages", label: "Messages", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/messages" },
-  { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/timeline", label: "Timeline", icon: <ClockCounterClockwise size={18} weight="duotone" />, matchPrefix: "/admin/timeline" },
-  { href: "/admin/help", label: "Help Articles", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
+  { href: "/admin/leads", label: "Leads", icon: <Target size={18} weight="duotone" />, matchPrefix: "/admin/leads" },
+  { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
 /* ─── Token constants ─── */
@@ -73,7 +50,6 @@ const T = {
   inactiveIconColor: "rgba(255,255,255,0.44)",
   activeBg: "rgba(2, 170, 235, 0.09)",
   hoverBg: "rgba(255, 255, 255, 0.045)",
-  sectionLabelColor: "rgba(255,255,255,0.28)",
   badgeBg: "#f59e0b",
   badgeText: "#1a1a1a",
   indicatorGlow: "0 0 10px 1px rgba(2, 170, 235, 0.55), 0 0 3px rgba(255,255,255,0.18)",
@@ -85,253 +61,6 @@ const springSnap = { type: "spring" as const, stiffness: 420, damping: 32, mass:
 const springIcon = { type: "spring" as const, stiffness: 520, damping: 28 };
 const easeFade = { duration: 0.12 };
 
-/* ─── AdminNavSection (collapsible) ─── */
-
-function AdminNavSection({
-  label,
-  items,
-  isActive,
-  badges,
-  isOpen,
-  onToggle,
-}: {
-  label: string;
-  items: NavItem[];
-  isActive: (item: NavItem) => boolean | undefined;
-  badges?: Record<string, number>;
-  isOpen: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div style={{ marginBottom: "14px" }}>
-      {/* Collapsible section header */}
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-        className={css.sectionToggle}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: "6px 12px 6px 12px",
-          fontSize: "9.5px",
-          fontWeight: 700,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: T.sectionLabelColor,
-          userSelect: "none",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          borderRadius: "6px",
-        }}
-      >
-        <span>{label}</span>
-        <CaretDown
-          size={10}
-          weight="bold"
-          style={{
-            color: T.sectionLabelColor,
-            transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)",
-            transition: "transform 0.2s ease",
-          }}
-        />
-      </button>
-
-      {/* Collapsible nav items with left border */}
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18, ease: "easeInOut" }}
-            style={{ overflow: "hidden" }}
-          >
-            <div
-              style={{
-                marginLeft: "12px",
-                paddingLeft: "10px",
-                paddingTop: "4px",
-                paddingBottom: "2px",
-                borderLeft: "2px solid rgba(255,255,255,0.06)",
-              }}
-            >
-              <ul
-                role="list"
-                style={{
-                  listStyle: "none",
-                  margin: 0,
-                  padding: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "2px",
-                }}
-              >
-                {items.map((item) => {
-                  const active = !!isActive(item);
-                  const badgeCount = badges?.[item.href] ?? item.badge ?? 0;
-
-                  return (
-                    <motion.li
-                      key={item.href}
-                      initial="idle"
-                      whileHover="hovered"
-                      animate="idle"
-                      style={{ listStyle: "none" }}
-                    >
-                      <Link
-                        href={item.href}
-                        aria-current={active ? "page" : undefined}
-                        className={css.navLink}
-                        style={{
-                          position: "relative",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                          padding: "8px 12px",
-                          borderRadius: "9px",
-                          textDecoration: "none",
-                          fontSize: "13.5px",
-                          fontWeight: active ? 600 : 500,
-                          letterSpacing: "0.01em",
-                          lineHeight: 1.2,
-                          color: active ? T.activeTextColor : T.inactiveTextColor,
-                          backgroundColor: active ? T.activeBg : "transparent",
-                        }}
-                      >
-                        {/* Hover overlay */}
-                        {!active && (
-                          <motion.span
-                            aria-hidden
-                            variants={{ idle: { opacity: 0 }, hovered: { opacity: 1 } }}
-                            transition={easeFade}
-                            style={{
-                              position: "absolute",
-                              inset: 0,
-                              borderRadius: "9px",
-                              backgroundColor: T.hoverBg,
-                              pointerEvents: "none",
-                            }}
-                          />
-                        )}
-
-                        {/* Active indicator pill */}
-                        {active && (
-                          <motion.span
-                            layoutId="admin-nav-pill"
-                            aria-hidden
-                            style={{
-                              position: "absolute",
-                              left: 0,
-                              top: "50%",
-                              width: "3px",
-                              height: "16px",
-                              borderRadius: "999px",
-                              backgroundColor: T.brandLight,
-                              boxShadow: T.indicatorGlow,
-                              translateY: "-50%",
-                            }}
-                            transition={springSnap}
-                          />
-                        )}
-
-                        {/* Icon */}
-                        <motion.span
-                          aria-hidden
-                          variants={{
-                            idle: { scale: 1 },
-                            hovered: { scale: active ? 1 : 1.1 },
-                          }}
-                          transition={springIcon}
-                          style={{
-                            display: "inline-flex",
-                            width: "20px",
-                            height: "20px",
-                            flexShrink: 0,
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: active ? T.activeIconColor : T.inactiveIconColor,
-                            transition: "color 0.15s ease",
-                          }}
-                        >
-                          {item.icon}
-                        </motion.span>
-
-                        {/* Label */}
-                        <span style={{ flex: 1 }}>{item.label}</span>
-
-                        {/* Badge */}
-                        {badgeCount > 0 && (
-                          <motion.span
-                            initial={{ scale: 0.6, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ type: "spring", stiffness: 480, damping: 24 }}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              minWidth: "18px",
-                              height: "17px",
-                              borderRadius: "999px",
-                              padding: "0 5px",
-                              fontSize: "9px",
-                              fontWeight: 700,
-                              backgroundColor: T.badgeBg,
-                              color: T.badgeText,
-                              letterSpacing: "0.02em",
-                              boxShadow: "0 1px 4px rgba(245, 158, 11, 0.35)",
-                            }}
-                          >
-                            {badgeCount > 99 ? "99+" : badgeCount}
-                          </motion.span>
-                        )}
-                      </Link>
-                    </motion.li>
-                  );
-                })}
-              </ul>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/* ─── Helper: determine which section owns the current route ─── */
-
-const sectionRoutes: Record<string, NavItem[]> = {
-  Management: managementNav,
-  Communications: communicationsNav,
-  Treasury: treasuryNav,
-};
-
-function getActiveSections(pathname: string | null, _pendingBlockCount: number): Set<string> {
-  const active = new Set<string>();
-  if (!pathname) return active;
-
-  for (const [section, items] of Object.entries(sectionRoutes)) {
-    if (items.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) {
-      active.add(section);
-    }
-  }
-
-  const ops = [
-    { matchPrefix: "/admin/calendar" },
-    { matchPrefix: "/admin/block-requests" },
-  ];
-  if (ops.some((i) => pathname.startsWith(i.matchPrefix!))) {
-    active.add("Operations");
-  }
-
-  // Default: open Management if nothing else matches
-  if (active.size === 0) active.add("Management");
-  return active;
-}
-
 /* ─── AdminSidebar ─── */
 
 export function AdminSidebar({
@@ -339,7 +68,7 @@ export function AdminSidebar({
   userEmail,
   initials,
   avatarUrl = null,
-  pendingBlockCount,
+  pendingBlockCount: _pendingBlockCount,
   signOutSlot,
 }: {
   userName: string;
@@ -354,33 +83,6 @@ export function AdminSidebar({
   const isActive = (item: NavItem) => {
     if (item.matchPrefix) return pathname?.startsWith(item.matchPrefix);
     return pathname === item.href;
-  };
-
-  // Collapsible section state. Auto-expand sections containing the active route.
-  const [openSections, setOpenSections] = useState<Set<string>>(
-    () => getActiveSections(pathname, pendingBlockCount),
-  );
-
-  // When route changes, ensure the section containing the new route is open
-  useEffect(() => {
-    const active = getActiveSections(pathname, pendingBlockCount);
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      for (const s of active) next.add(s);
-      return next;
-    });
-  }, [pathname, pendingBlockCount]);
-
-  const toggleSection = (label: string) => {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) {
-        next.delete(label);
-      } else {
-        next.add(label);
-      }
-      return next;
-    });
   };
 
   return (
@@ -454,34 +156,140 @@ export function AdminSidebar({
         }}
       >
         <LayoutGroup>
-          <AdminNavSection
-            label="Management"
-            items={managementNav}
-            isActive={isActive}
-            isOpen={openSections.has("Management")}
-            onToggle={() => toggleSection("Management")}
-          />
-          <AdminNavSection
-            label="Operations"
-            items={operationsNav(pendingBlockCount)}
-            isActive={isActive}
-            isOpen={openSections.has("Operations")}
-            onToggle={() => toggleSection("Operations")}
-          />
-          <AdminNavSection
-            label="Treasury"
-            items={treasuryNav}
-            isActive={isActive}
-            isOpen={openSections.has("Treasury")}
-            onToggle={() => toggleSection("Treasury")}
-          />
-          <AdminNavSection
-            label="Communications"
-            items={communicationsNav}
-            isActive={isActive}
-            isOpen={openSections.has("Communications")}
-            onToggle={() => toggleSection("Communications")}
-          />
+          <ul
+            role="list"
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            }}
+          >
+            {navItems.map((item) => {
+              const active = !!isActive(item);
+              const badgeCount = item.badge ?? 0;
+
+              return (
+                <motion.li
+                  key={item.href}
+                  initial="idle"
+                  whileHover="hovered"
+                  animate="idle"
+                  style={{ listStyle: "none" }}
+                >
+                  <Link
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={css.navLink}
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "8px 12px",
+                      borderRadius: "9px",
+                      textDecoration: "none",
+                      fontSize: "13.5px",
+                      fontWeight: active ? 600 : 500,
+                      letterSpacing: "0.01em",
+                      lineHeight: 1.2,
+                      color: active ? T.activeTextColor : T.inactiveTextColor,
+                      backgroundColor: active ? T.activeBg : "transparent",
+                    }}
+                  >
+                    {/* Hover overlay */}
+                    {!active && (
+                      <motion.span
+                        aria-hidden
+                        variants={{ idle: { opacity: 0 }, hovered: { opacity: 1 } }}
+                        transition={easeFade}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          borderRadius: "9px",
+                          backgroundColor: T.hoverBg,
+                          pointerEvents: "none",
+                        }}
+                      />
+                    )}
+
+                    {/* Active indicator pill */}
+                    {active && (
+                      <motion.span
+                        layoutId="admin-nav-pill"
+                        aria-hidden
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          top: "50%",
+                          width: "3px",
+                          height: "16px",
+                          borderRadius: "999px",
+                          backgroundColor: T.brandLight,
+                          boxShadow: T.indicatorGlow,
+                          translateY: "-50%",
+                        }}
+                        transition={springSnap}
+                      />
+                    )}
+
+                    {/* Icon */}
+                    <motion.span
+                      aria-hidden
+                      variants={{
+                        idle: { scale: 1 },
+                        hovered: { scale: active ? 1 : 1.1 },
+                      }}
+                      transition={springIcon}
+                      style={{
+                        display: "inline-flex",
+                        width: "20px",
+                        height: "20px",
+                        flexShrink: 0,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: active ? T.activeIconColor : T.inactiveIconColor,
+                        transition: "color 0.15s ease",
+                      }}
+                    >
+                      {item.icon}
+                    </motion.span>
+
+                    {/* Label */}
+                    <span style={{ flex: 1 }}>{item.label}</span>
+
+                    {/* Badge */}
+                    {badgeCount > 0 && (
+                      <motion.span
+                        initial={{ scale: 0.6, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 480, damping: 24 }}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minWidth: "18px",
+                          height: "17px",
+                          borderRadius: "999px",
+                          padding: "0 5px",
+                          fontSize: "9px",
+                          fontWeight: 700,
+                          backgroundColor: T.badgeBg,
+                          color: T.badgeText,
+                          letterSpacing: "0.02em",
+                          boxShadow: "0 1px 4px rgba(245, 158, 11, 0.35)",
+                        }}
+                      >
+                        {badgeCount > 99 ? "99+" : badgeCount}
+                      </motion.span>
+                    )}
+                  </Link>
+                </motion.li>
+              );
+            })}
+          </ul>
         </LayoutGroup>
       </nav>
 
@@ -500,9 +308,9 @@ export function AdminSidebar({
 
 export function AdminTopBar({
   initials,
-  pendingBlockCount = 0,
+  pendingBlockCount: _pendingBlockCount = 0,
 }: {
-  userName: string; // accepted for API compatibility; not displayed
+  userName: string;
   initials: string;
   pendingBlockCount?: number;
 }) {
@@ -513,12 +321,12 @@ export function AdminTopBar({
     if (pathname === "/admin") return "";
     if (pathname.startsWith("/admin/owners")) return "Owners";
     if (pathname.startsWith("/admin/properties")) return "Properties";
-    if (pathname.startsWith("/admin/calendar")) return "Calendar";
-    if (pathname.startsWith("/admin/treasury")) return "Treasury";
-    if (pathname.startsWith("/admin/inquiries")) return "Inquiries";
-    if (pathname.startsWith("/admin/messages")) return "Messages";
+    if (pathname.startsWith("/admin/inbox")) return "Inbox";
     if (pathname.startsWith("/admin/tasks")) return "Tasks";
-    if (pathname.startsWith("/admin/block-requests")) return "Reservations";
+    if (pathname.startsWith("/admin/leads")) return "Leads";
+    if (pathname.startsWith("/admin/help")) return "Help Center";
+    if (pathname.startsWith("/admin/treasury")) return "Treasury";
+    if (pathname.startsWith("/admin/calendar")) return "Calendar";
     if (pathname.startsWith("/admin/timeline")) return "Timeline";
     return "";
   })();
@@ -580,29 +388,6 @@ export function AdminTopBar({
       ) : null}
 
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {pendingBlockCount > 0 ? (
-          <Link
-            href="/admin/block-requests"
-            aria-label={`${pendingBlockCount} reservations to verify`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minWidth: "28px",
-              height: "28px",
-              borderRadius: "999px",
-              padding: "0 6px",
-              fontSize: "10px",
-              fontWeight: 700,
-              backgroundColor: "#f59e0b",
-              color: "#1a1a1a",
-              textDecoration: "none",
-              boxShadow: "0 2px 6px rgba(245, 158, 11, 0.4)",
-            }}
-          >
-            {pendingBlockCount}
-          </Link>
-        ) : null}
         <span
           style={{
             display: "flex",
@@ -632,20 +417,17 @@ const adminRailItems: Array<{
   icon: ReactNode;
   label: string;
   matchPrefix?: string;
-  isBadged?: boolean;
 }> = [
-  { href: "/admin", icon: <House size={20} weight="duotone" />, label: "Overview" },
+  { href: "/admin", icon: <House size={20} weight="duotone" />, label: "Dashboard" },
+  { href: "/admin/inbox", icon: <ChatCircle size={20} weight="duotone" />, label: "Inbox", matchPrefix: "/admin/inbox" },
+  { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
   { href: "/admin/owners", icon: <UsersThree size={20} weight="duotone" />, label: "Owners", matchPrefix: "/admin/owners" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
-  { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
-  { href: "/admin/block-requests", icon: <ClipboardText size={20} weight="duotone" />, label: "Reservations", matchPrefix: "/admin/block-requests", isBadged: true },
-  { href: "/admin/treasury", icon: <Vault size={20} weight="duotone" />, label: "Treasury", matchPrefix: "/admin/treasury" },
-  { href: "/admin/messages", icon: <ChatCircle size={20} weight="duotone" />, label: "Messages", matchPrefix: "/admin/messages" },
-  { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
-  { href: "/admin/timeline", icon: <ClockCounterClockwise size={20} weight="duotone" />, label: "Timeline", matchPrefix: "/admin/timeline" },
+  { href: "/admin/leads", icon: <Target size={20} weight="duotone" />, label: "Leads", matchPrefix: "/admin/leads" },
+  { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
 
-export function AdminIconRail({ pendingBlockCount = 0 }: { pendingBlockCount?: number }) {
+export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { pendingBlockCount?: number }) {
   const pathname = usePathname();
 
   return (
@@ -755,31 +537,6 @@ export function AdminIconRail({ pendingBlockCount = 0 }: { pendingBlockCount?: n
                 >
                   {item.icon}
                 </motion.span>
-
-                {/* Badge */}
-                {item.isBadged && pendingBlockCount > 0 && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: "-1px",
-                      right: "-1px",
-                      display: "flex",
-                      minWidth: "15px",
-                      height: "15px",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: "999px",
-                      padding: "0 3px",
-                      fontSize: "8px",
-                      fontWeight: 700,
-                      backgroundColor: "#f59e0b",
-                      color: "#1a1a1a",
-                      boxShadow: "0 1px 4px rgba(245,158,11,0.4)",
-                    }}
-                  >
-                    {pendingBlockCount}
-                  </span>
-                )}
               </Link>
             </motion.div>
           );

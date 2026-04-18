@@ -1,27 +1,19 @@
 "use client";
 
-import { useState, useCallback, useEffect, type ReactNode } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   House,
   UsersThree,
-  CalendarBlank,
   ChatCircle,
   List,
   Buildings,
   UserSwitch,
-  Wallet,
-  Vault,
-  ArrowsLeftRight,
-  TrendUp,
-  EnvelopeSimple,
-  ClipboardText,
+  Target,
   ListChecks,
-  ClockCounterClockwise,
   BookOpenText,
   GearSix,
-  CaretDown,
   X,
   Power,
   Sun,
@@ -45,7 +37,6 @@ type SheetNavItem = {
   label: string;
   icon: ReactNode;
   matchPrefix?: string;
-  badge?: number;
 };
 
 /* ── Bottom tab items (always visible) ── */
@@ -53,7 +44,7 @@ type SheetNavItem = {
 const navItems: NavItem[] = [
   {
     href: "/admin",
-    label: "Overview",
+    label: "Dashboard",
     icon: <House size={22} weight="regular" />,
     activeIcon: <House size={22} weight="fill" />,
   },
@@ -65,67 +56,34 @@ const navItems: NavItem[] = [
     matchPrefix: "/admin/owners",
   },
   {
-    href: "/admin/calendar",
-    label: "Calendar",
-    icon: <CalendarBlank size={22} weight="regular" />,
-    activeIcon: <CalendarBlank size={22} weight="fill" />,
-    matchPrefix: "/admin/calendar",
-  },
-  {
-    href: "/admin/messages",
-    label: "Messages",
+    href: "/admin/inbox",
+    label: "Inbox",
     icon: <ChatCircle size={22} weight="regular" />,
     activeIcon: <ChatCircle size={22} weight="fill" />,
-    matchPrefix: "/admin/messages",
+    matchPrefix: "/admin/inbox",
   },
 ];
 
-/* ── Sheet accordion section data (matches desktop sidebar exactly) ── */
+/* ── Sheet items (flat list matching sidebar) ── */
 
-const managementItems: SheetNavItem[] = [
-  { href: "/admin", label: "Overview", icon: <House size={19} weight="duotone" /> },
+const sheetItems: SheetNavItem[] = [
+  { href: "/admin", label: "Dashboard", icon: <House size={19} weight="duotone" /> },
+  { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
+  { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { href: "/admin/owners", label: "Owners", icon: <UsersThree size={19} weight="duotone" />, matchPrefix: "/admin/owners" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
-];
-
-const operationsItems = (pendingBlockCount: number): SheetNavItem[] => [
-  { href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={19} weight="duotone" />, matchPrefix: "/admin/calendar" },
-  { href: "/admin/block-requests", label: "Reservations", icon: <ClipboardText size={19} weight="duotone" />, matchPrefix: "/admin/block-requests", badge: pendingBlockCount },
-];
-
-const treasuryItems: SheetNavItem[] = [
-  { href: "/admin/treasury", label: "Overview", icon: <Vault size={19} weight="duotone" /> },
-  { href: "/admin/treasury/accounts", label: "Accounts", icon: <Wallet size={19} weight="duotone" />, matchPrefix: "/admin/treasury/accounts" },
-  { href: "/admin/treasury/transactions", label: "Transactions", icon: <ArrowsLeftRight size={19} weight="duotone" />, matchPrefix: "/admin/treasury/transactions" },
-  { href: "/admin/treasury/forecast", label: "Forecast", icon: <TrendUp size={19} weight="duotone" />, matchPrefix: "/admin/treasury/forecast" },
-];
-
-const communicationsItems: SheetNavItem[] = [
-  { href: "/admin/inquiries", label: "Inquiries", icon: <EnvelopeSimple size={19} weight="duotone" />, matchPrefix: "/admin/inquiries" },
-  { href: "/admin/messages", label: "Messages", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/messages" },
-  { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/timeline", label: "Timeline", icon: <ClockCounterClockwise size={19} weight="duotone" />, matchPrefix: "/admin/timeline" },
-  { href: "/admin/help", label: "Help Articles", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
+  { href: "/admin/leads", label: "Leads", icon: <Target size={19} weight="duotone" />, matchPrefix: "/admin/leads" },
+  { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
 /* ── Helpers ── */
 
-const mainNavPrefixes = ["/admin", "/admin/owners", "/admin/calendar", "/admin/messages"];
-
-function getActiveSection(pathname: string | null, pendingBlockCount: number): string {
-  if (!pathname) return "Management";
-  if (managementItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Management";
-  const ops = operationsItems(pendingBlockCount);
-  if (ops.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Operations";
-  if (treasuryItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Treasury";
-  if (communicationsItems.some((i) => (i.matchPrefix ? pathname.startsWith(i.matchPrefix) : pathname === i.href))) return "Communications";
-  return "Management";
-}
+const mainNavPrefixes = ["/admin", "/admin/owners", "/admin/inbox"];
 
 /* ── Component ── */
 
 export function AdminBottomNav({
-  pendingBlockCount = 0,
+  pendingBlockCount: _pendingBlockCount = 0,
   signOutSlot,
   userName,
   userEmail,
@@ -142,19 +100,14 @@ export function AdminBottomNav({
   const pathname = usePathname();
   const { resolvedTheme, toggleTheme } = useTheme();
   const [moreOpen, setMoreOpen] = useState(false);
-  const [openSection, setOpenSection] = useState<string>(() =>
-    getActiveSection(pathname, pendingBlockCount),
-  );
 
   const portalHref = (() => {
     const map: Array<[string, string]> = [
       ["/admin/properties", "/portal/properties"],
       ["/admin/calendar", "/portal/calendar"],
-      ["/admin/payouts", "/portal/payouts"],
-      ["/admin/messages", "/portal/messages"],
+      ["/admin/inbox", "/portal/messages"],
       ["/admin/tasks", "/portal/tasks"],
       ["/admin/timeline", "/portal/timeline"],
-      ["/admin/block-requests", "/portal/calendar"],
       ["/admin/account", "/portal/account"],
       ["/admin/help", "/portal/help"],
     ];
@@ -186,20 +139,6 @@ export function AdminBottomNav({
     ) && pathname?.startsWith("/admin") && pathname !== "/admin";
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
-
-  // Snap to the active section when sheet opens
-  useEffect(() => {
-    if (moreOpen) {
-      setOpenSection(getActiveSection(pathname, pendingBlockCount));
-    }
-  }, [moreOpen, pathname, pendingBlockCount]);
-
-  const sheetSections = [
-    { label: "Management", items: managementItems },
-    { label: "Operations", items: operationsItems(pendingBlockCount) },
-    { label: "Treasury", items: treasuryItems },
-    { label: "Communications", items: communicationsItems },
-  ];
 
   return (
     <>
@@ -271,15 +210,6 @@ export function AdminBottomNav({
             >
               More
             </span>
-            {/* Badge for pending block requests */}
-            {pendingBlockCount > 0 && !moreOpen ? (
-              <span
-                className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold"
-                style={{ backgroundColor: "#f59e0b", color: "#1a1a1a" }}
-              >
-                {pendingBlockCount}
-              </span>
-            ) : null}
           </button>
         </div>
       </nav>
@@ -373,104 +303,37 @@ export function AdminBottomNav({
                 style={{ borderColor: "rgba(255,255,255,0.08)" }}
               />
 
-              {/* Accordion sections */}
+              {/* Flat nav list */}
               <div className="px-4">
-                {sheetSections.map((section) => {
-                  const isOpen = openSection === section.label;
+                {sheetItems.map((item) => {
+                  const active = isItemActive(item);
                   return (
-                    <div key={section.label} className="mb-1">
-                      {/* Section header */}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenSection(isOpen ? "" : section.label)
-                        }
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 transition-colors"
-                        aria-expanded={isOpen}
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={closeMore}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+                      style={{
+                        color: active
+                          ? "var(--color-brand-light)"
+                          : "rgba(255,255,255,0.65)",
+                        backgroundColor: active
+                          ? "rgba(2, 170, 235, 0.09)"
+                          : "transparent",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: active
+                            ? "var(--color-brand-light)"
+                            : "rgba(255,255,255,0.4)",
+                        }}
                       >
-                        <span
-                          className="text-[11px] font-semibold uppercase tracking-[0.14em]"
-                          style={{ color: "rgba(255,255,255,0.35)" }}
-                        >
-                          {section.label}
-                        </span>
-                        <CaretDown
-                          size={11}
-                          weight="bold"
-                          className="transition-transform duration-200"
-                          style={{
-                            color: "rgba(255,255,255,0.35)",
-                            transform: isOpen
-                              ? "rotate(0deg)"
-                              : "rotate(-90deg)",
-                          }}
-                        />
-                      </button>
-
-                      {/* Items with left-border treatment */}
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.18, ease: "easeInOut" }}
-                            style={{ overflow: "hidden" }}
-                          >
-                            <div
-                              className="ml-3 pl-3 pb-1"
-                              style={{
-                                borderLeft:
-                                  "2px solid rgba(255,255,255,0.08)",
-                              }}
-                            >
-                              {section.items.map((item) => {
-                                const active = isItemActive(item);
-                                return (
-                                  <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    onClick={closeMore}
-                                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
-                                    style={{
-                                      color: active
-                                        ? "var(--color-brand-light)"
-                                        : "rgba(255,255,255,0.65)",
-                                      backgroundColor: active
-                                        ? "rgba(2, 170, 235, 0.09)"
-                                        : "transparent",
-                                      textDecoration: "none",
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        color: active
-                                          ? "var(--color-brand-light)"
-                                          : "rgba(255,255,255,0.4)",
-                                      }}
-                                    >
-                                      {item.icon}
-                                    </span>
-                                    <span className="flex-1">{item.label}</span>
-                                    {(item.badge ?? 0) > 0 ? (
-                                      <span
-                                        className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold"
-                                        style={{
-                                          backgroundColor: "#f59e0b",
-                                          color: "#1a1a1a",
-                                        }}
-                                      >
-                                        {item.badge}
-                                      </span>
-                                    ) : null}
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                        {item.icon}
+                      </span>
+                      <span className="flex-1">{item.label}</span>
+                    </Link>
                   );
                 })}
               </div>

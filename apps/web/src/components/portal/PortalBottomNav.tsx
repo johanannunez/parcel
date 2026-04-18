@@ -107,7 +107,7 @@ export function PortalBottomNav({
       ["/portal/properties", "/admin/properties"],
       ["/portal/calendar", "/admin/calendar"],
       ["/portal/payouts", "/admin/payouts"],
-      ["/portal/messages", "/admin/messages"],
+      ["/portal/messages", "/admin/inbox"],
       ["/portal/tasks", "/admin/tasks"],
       ["/portal/timeline", "/admin/timeline"],
       ["/portal/reserve", "/admin/block-requests"],

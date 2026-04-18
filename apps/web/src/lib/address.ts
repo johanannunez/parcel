@@ -15,6 +15,40 @@ type AddressParts = {
 };
 
 /**
+ * Shortens full street suffixes to their USPS-style abbreviations
+ * (e.g. "Avenue" → "Ave", "Drive" → "Dr"). Only replaces the final token
+ * of the string so directional words like "West" in "West 1st Place"
+ * stay untouched.
+ */
+const STREET_SUFFIX_ABBREVIATIONS: Record<string, string> = {
+  avenue: "Ave",
+  boulevard: "Blvd",
+  circle: "Cir",
+  court: "Ct",
+  drive: "Dr",
+  highway: "Hwy",
+  lane: "Ln",
+  parkway: "Pkwy",
+  place: "Pl",
+  road: "Rd",
+  square: "Sq",
+  street: "St",
+  terrace: "Ter",
+  trail: "Trl",
+};
+
+export function shortenStreet(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/^(.+?)\s+([A-Za-z]+)$/);
+  if (!match) return trimmed;
+  const [, prefix, lastWord] = match;
+  const abbr = STREET_SUFFIX_ABBREVIATIONS[lastWord.toLowerCase()];
+  return abbr ? `${prefix} ${abbr}` : trimmed;
+}
+
+/**
  * Normalizes the unit field so bare identifiers like "B" become "Unit B"
  * while existing prefixes like "Apt 4", "Suite 200", "#12" pass through unchanged.
  */
