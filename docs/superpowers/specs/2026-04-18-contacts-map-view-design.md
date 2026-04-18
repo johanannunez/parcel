@@ -36,6 +36,7 @@ The `PipelineViewSwitcher` component already defines `map` as a supported mode w
 - Color: same stage color as the contact, slightly darker shade to differentiate
 - Shape: circle, slightly larger than property pin to establish hierarchy
 - Requires geocoded home coordinates (see Data Requirements below)
+- **Only renders for contacts in onboarding or active stages.** Leads don't have a home address yet because we only collect it during full sign-up. Lead-stage contacts show property pins only (if they've inquired about a specific property) with no owner-to-property connecting lines.
 
 ### Connecting Lines
 - Hidden by default
@@ -112,28 +113,21 @@ Properties table already has `latitude` and `longitude` columns. The contacts-li
 
 **Required change:** Extend `fetchAdminContactsList` to join `properties(id, address_line1, city, state, latitude, longitude)` on `contact_id`. Add `properties` array to `ContactRow` type.
 
-### Owner home pins — requires schema work
-The contacts table has no geocoded home location. The profiles table has:
-- `location: string | null` — free-text city/region (e.g., "Austin, TX")
-- `mailing_address: Json | null` — structured address JSON
+### Owner home pins — requires schema work and onboarding-form integration
+The contacts table has no geocoded home location. The profiles table has `location` (free-text) and `mailing_address` (JSON), but neither has lat/lng.
 
-Neither has lat/lng.
+Home addresses are only collected during full sign-up, not at lead capture. This means:
+- Lead-stage contacts: no home pin possible (no address collected yet)
+- Onboarding and active-owner contacts: home pin possible once address is geocoded
 
-**Two options:**
-
-**Option A (Recommended): Add home_lat/home_lng to contacts table**
+**Approach: Geocode at data capture, store permanently**
 - Add `home_lat: number | null` and `home_lng: number | null` columns to the contacts table
-- Populate via Mapbox Geocoding API when a contact's address is set or updated
-- One-time geocode per contact, stored permanently
-- Clean, performant, no runtime geocoding on map load
+- When the onboarding address form is submitted, call Mapbox Geocoding API server-side, store the resulting lat/lng alongside the text address
+- One geocode per contact, stored for life. No runtime geocoding on map load.
+- Re-geocode only if the address is edited later
+- If geocoding fails (bad address), store null and fall back to the "not mapped" chip
 
-**Option B: Geocode at runtime**
-- On map load, call Mapbox Geocoding API for each contact's `location` or `mailing_address`
-- Cache in React component state for the session
-- No schema change required
-- Slower map load, more API calls per session, `location` field is often too vague to geocode accurately
-
-Option A is the right long-term approach. Option B is acceptable for a fast V1 if we want to ship quickly and defer the schema work.
+This approach also benefits other parts of the app: the portal property detail page already expects `latitude`/`longitude` for weather lookups, and we can reuse the same geocoding pattern.
 
 ### Mapbox Directions API (drive times)
 - Uses the same `NEXT_PUBLIC_MAPBOX_TOKEN`
@@ -152,12 +146,12 @@ Option A is the right long-term approach. Option B is acceptable for a fast V1 i
 - "Not mapped" chip with modal
 - No owner home pin, no connecting lines, no drive times
 
-**Phase 2 — After schema migration**
-- Add `home_lat`/`home_lng` to contacts table
-- Owner home pin with stage color
-- Dashed connecting lines on click
-- Drive time labels via Mapbox Directions API
-- Full "owner at home, properties nearby" spatial story
+**Phase 2 — After schema migration and onboarding-form geocoding**
+- Add `home_lat`/`home_lng` to contacts table (single combined SQL batch per Parcel's schema-change workflow)
+- Update onboarding address form to geocode via Mapbox Geocoding API and persist lat/lng
+- Owner home pin renders for contacts in onboarding/active stages with non-null lat/lng
+- Dashed connecting lines on click, drive time labels via Mapbox Directions API
+- Full "owner at home, properties nearby" spatial story for onboarded contacts
 
 ---
 
