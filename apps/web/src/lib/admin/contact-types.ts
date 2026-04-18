@@ -5,13 +5,23 @@ export type LifecycleStage =
   | 'contract_sent'
   | 'onboarding'
   | 'active_owner'
+  | 'lead_cold'
   | 'paused'
   | 'churned';
 
-export type StageGroup = 'lead' | 'onboarding' | 'active' | 'dormant';
+export type StageGroup = 'lead' | 'onboarding' | 'active' | 'cold' | 'dormant';
 
-export const CONTACT_VIEW_MODES = ['status', 'gallery', 'compact'] as const;
+export const CONTACT_VIEW_MODES = ['status', 'gallery', 'compact', 'map'] as const;
 export type ContactViewMode = typeof CONTACT_VIEW_MODES[number];
+
+export type ContactProperty = {
+  id: string;
+  addressLine1: string;
+  city: string | null;
+  state: string | null;
+  latitude: number | null;
+  longitude: number | null;
+};
 
 export type ContactRow = {
   id: string;
@@ -30,11 +40,21 @@ export type ContactRow = {
   assignedToName: string | null;
   estimatedMrr: number | null;
   propertyCount: number;
+  properties: ContactProperty[];
   lastActivityAt: string | null;
   createdAt: string;
 };
 
+export type ContactSavedViewSearchParams = {
+  view?: string;
+  mode?: string;
+  source?: string;
+  assignee?: string;
+  q?: string;
+};
+
 export type ContactSavedView = {
+  id: string;
   key: string;
   name: string;
   filterStages: LifecycleStage[];
@@ -42,5 +62,9 @@ export type ContactSavedView = {
   sort: 'name_asc' | 'recent_activity' | 'stage_age';
   viewMode: ContactViewMode;
   sortOrder: number;
-  count: number;
+  count: number | null;
+  isPersonal: boolean;
+  searchParams: ContactSavedViewSearchParams | null;
+  iconId: string | null;
+  iconColor: string | null;
 };
