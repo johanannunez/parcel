@@ -14,12 +14,16 @@ import {
   ListChecks,
   BookOpenText,
   Kanban,
+  MagnifyingGlass,
+  List as HamburgerIcon,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
 import { SidebarSearch } from "@/components/admin/chrome/SidebarSearch";
 import { CreateMenu } from "@/components/admin/chrome/CreateMenu";
 import { TopBarSearch } from "@/components/admin/chrome/TopBarSearch";
+import { openCommandPalette } from "@/components/admin/chrome/CommandPalette";
+import { openSidebarDrawer } from "@/components/admin/chrome/SidebarDrawer";
 import css from "./AdminSidebar.module.css";
 
 type NavItem = {
@@ -481,6 +485,31 @@ export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { p
         <Image src="/brand/logo-mark-white.png" alt="Parcel" width={24} height={24} />
       </Link>
 
+      {/* Search trigger (rail-only, opens global command palette) */}
+      <button
+        type="button"
+        aria-label="Open search"
+        onClick={() => openCommandPalette()}
+        className={css.railLink}
+        style={{
+          display: "flex",
+          width: "40px",
+          height: "40px",
+          margin: "0 auto 14px",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          color: "rgba(255,255,255,0.75)",
+          cursor: "pointer",
+          padding: 0,
+          fontFamily: "inherit",
+        }}
+      >
+        <MagnifyingGlass size={18} weight="duotone" />
+      </button>
+
       {/* Nav */}
       <nav style={{ display: "flex", flex: 1, flexDirection: "column", alignItems: "center", gap: "4px" }}>
         {adminRailItems.map((item) => {
@@ -560,6 +589,31 @@ export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { p
           );
         })}
       </nav>
+
+      {/* Hamburger: opens the full sidebar as a drawer */}
+      <button
+        type="button"
+        aria-label="Open sidebar"
+        onClick={() => openSidebarDrawer()}
+        className={css.railLink}
+        style={{
+          display: "flex",
+          width: "40px",
+          height: "40px",
+          margin: "8px auto 6px",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          color: "rgba(255,255,255,0.75)",
+          cursor: "pointer",
+          padding: 0,
+          fontFamily: "inherit",
+        }}
+      >
+        <HamburgerIcon size={18} weight="duotone" />
+      </button>
     </aside>
   );
 }

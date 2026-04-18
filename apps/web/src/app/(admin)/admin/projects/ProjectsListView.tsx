@@ -32,6 +32,7 @@ function SavedViewTabs({ views }: { views: ProjectSavedView[] }) {
             href={href}
             aria-current={isActive ? 'page' : undefined}
             className={`${styles.tab} ${isActive ? styles.tabActive : ''}`}
+            onMouseDown={(e) => e.preventDefault()}
           >
             {v.name}
             <span className={`${styles.count} ${isActive ? styles.countActive : ''}`}>

@@ -5,12 +5,11 @@ import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import type { ContactRow, ContactSavedView } from '@/lib/admin/contact-types';
 import { stageLabel, stageGroup } from '@/lib/admin/lifecycle-stage';
-import { SavedViewsTabs } from './SavedViewsTabs';
+import { useContactsFilters, matchesAssigneeFilter } from './ContactsFiltersProvider';
 import styles from './ContactsListView.module.css';
 
 type Props = {
   rows: ContactRow[];
-  views: ContactSavedView[];
   activeView: ContactSavedView;
 };
 
@@ -18,6 +17,7 @@ const STAGE_PILL_CLASS: Record<ReturnType<typeof stageGroup>, string> = {
   lead: styles.pillLead,
   onboarding: styles.pillOnboarding,
   active: styles.pillActive,
+  cold: styles.pillCold,
   dormant: styles.pillDormant,
 };
 
@@ -40,23 +40,26 @@ function relativeTime(iso: string | null): string {
   return `${Math.floor(months / 12)}y`;
 }
 
-export function ContactsListView({ rows, views, activeView }: Props) {
+export function ContactsListView({ rows, activeView }: Props) {
   const [search, setSearch] = useState('');
+  const { sources, assignees } = useContactsFilters();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      (r.fullName + ' ' + (r.companyName ?? '') + ' ' + (r.email ?? ''))
+    return rows.filter((r) => {
+      if (sources.length > 0 && (!r.source || !sources.includes(r.source))) {
+        return false;
+      }
+      if (!matchesAssigneeFilter(assignees, r.assignedTo)) return false;
+      if (!q) return true;
+      return (r.fullName + ' ' + (r.companyName ?? '') + ' ' + (r.email ?? ''))
         .toLowerCase()
-        .includes(q),
-    );
-  }, [rows, search]);
+        .includes(q);
+    });
+  }, [rows, search, sources, assignees]);
 
   return (
     <div className={styles.page}>
-      <SavedViewsTabs views={views} />
-
       <div className={styles.toolbar}>
         <input
           type="text"

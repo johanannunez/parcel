@@ -22,6 +22,7 @@
   border-bottom: 2px solid transparent;
 }
 .tab:hover { color: #0F3B6B; }
+.tab:focus-visible { outline: none; color: #0F3B6B; border-bottom-color: #02AAEB; }
 .tabActive { color: #0F3B6B; border-bottom-color: #02AAEB; font-weight: 600; }
 
 .count {

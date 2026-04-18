@@ -352,6 +352,33 @@ export type Database = {
           },
         ]
       }
+      contact_sources: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           assigned_to: string | null
@@ -2429,6 +2456,8 @@ export type Database = {
           entity_type: string
           filter_jsonb: Json
           grouping: string | null
+          icon_color: string | null
+          icon_id: string | null
           id: string
           is_shared: boolean
           key: string
@@ -2445,6 +2474,8 @@ export type Database = {
           entity_type: string
           filter_jsonb?: Json
           grouping?: string | null
+          icon_color?: string | null
+          icon_id?: string | null
           id?: string
           is_shared?: boolean
           key: string
@@ -2461,6 +2492,8 @@ export type Database = {
           entity_type?: string
           filter_jsonb?: Json
           grouping?: string | null
+          icon_color?: string | null
+          icon_id?: string | null
           id?: string
           is_shared?: boolean
           key?: string
@@ -3663,6 +3696,7 @@ export type Database = {
         | "active_owner"
         | "paused"
         | "churned"
+        | "lead_cold"
       conversation_type: "direct" | "announcement" | "email_log"
       help_article_status: "draft" | "published" | "archived"
       inquiry_status: "new" | "contacted" | "qualified" | "won" | "lost"
@@ -3858,6 +3892,7 @@ export const Constants = {
         "active_owner",
         "paused",
         "churned",
+        "lead_cold",
       ],
       conversation_type: ["direct", "announcement", "email_log"],
       help_article_status: ["draft", "published", "archived"],

@@ -1,71 +1,52 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./SidebarSearch.module.css";
+import { openCommandPalette } from "./CommandPalette";
 
+/**
+ * Sidebar search trigger (desktop and landscape tablet, ≥ 1024px).
+ * The input is visual only — clicking, focusing, or pressing ⌘K opens the
+ * global command palette. The palette owns all actual search behavior.
+ */
 export function SidebarSearch() {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [isMac, setIsMac] = useState(true);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        inputRef.current?.focus();
-        setOpen(true);
-      }
-      if (e.key === "Escape" && open) {
-        setOpen(false);
-        inputRef.current?.blur();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [open]);
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform));
+  }, []);
 
-  useEffect(() => {
-    const click = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    if (open) window.addEventListener("mousedown", click);
-    return () => window.removeEventListener("mousedown", click);
-  }, [open]);
+  const handleOpen = () => openCommandPalette();
 
   return (
-    <div className={styles.wrap} ref={wrapRef}>
-      <input
-        ref={inputRef}
-        className={styles.input}
-        placeholder="Search"
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        aria-label="Search"
-      />
-
-      {open ? (
-        <div className={styles.dropdown} role="listbox">
-          <div className={styles.sectionHead}>Actions</div>
-          <div className={styles.empty}>
-            {query
-              ? `No results yet for "${query}". Filtering ships in the next phase.`
-              : "Type to search owners, properties, tasks, files."}
-          </div>
-          <div className={styles.footer}>
-            <span>
-              <kbd>↑↓</kbd>Navigate <kbd>↵</kbd>Open
-            </span>
-            <span>
-              <kbd>Esc</kbd>Close
-            </span>
-          </div>
-        </div>
-      ) : null}
-    </div>
+    <button
+      type="button"
+      className={styles.trigger}
+      aria-label="Open search"
+      onClick={handleOpen}
+      onFocus={handleOpen}
+    >
+      <span className={styles.triggerIcon} aria-hidden>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+      </span>
+      <span className={styles.triggerLabel}>Search</span>
+      <kbd className={styles.kbdHint} aria-hidden>
+        <span className={styles.kbdKey}>{isMac ? "\u2318" : "Ctrl"}</span>
+        <span className={styles.kbdKey}>K</span>
+      </kbd>
+    </button>
   );
 }

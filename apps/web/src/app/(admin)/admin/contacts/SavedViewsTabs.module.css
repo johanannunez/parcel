@@ -2,9 +2,15 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  border-bottom: 1px solid #e5e7eb;
-  margin: 0 0 16px 0;
+  margin: 0;
   padding: 0;
+  flex-wrap: wrap;
+}
+
+.tabWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
 }
 
 .tab {
@@ -23,6 +29,12 @@
 }
 
 .tab:hover {
+  color: #0F3B6B;
+}
+
+.tab:focus-visible {
+  outline: none;
+  border-bottom-color: #02AAEB;
   color: #0F3B6B;
 }
 
@@ -46,4 +58,170 @@
 .countActive {
   background: rgba(2, 170, 235, 0.14);
   color: #02AAEB;
+}
+
+.menuWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding-right: 4px;
+}
+
+.menuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+.tabWrap:hover .menuBtn,
+.menuBtnOpen {
+  opacity: 1;
+}
+
+.menuBtn:hover,
+.menuBtnOpen {
+  background: rgba(15, 59, 107, 0.08);
+  color: #0F3B6B;
+}
+
+.menuBtn:focus-visible {
+  outline: none;
+  opacity: 1;
+  background: rgba(15, 59, 107, 0.08);
+  color: #0F3B6B;
+  box-shadow: 0 0 0 3px rgba(2, 170, 235, 0.18);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 50;
+  min-width: 160px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a1a;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease;
+  font-family: inherit;
+}
+
+.menuItem:hover {
+  background: rgba(15, 59, 107, 0.06);
+}
+
+.menuItem:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menuItemDanger {
+  color: #dc2626;
+}
+
+.menuItemDanger:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.renameForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  min-width: 240px;
+}
+
+.renameInput {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #e5e7eb;
+  font-size: 13px;
+  color: #1a1a1a;
+  font-family: inherit;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.renameInput:focus {
+  outline: none;
+  border-color: #02AAEB;
+  box-shadow: 0 0 0 3px rgba(2, 170, 235, 0.16);
+}
+
+.renameError {
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.renameActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.renameCancel,
+.renameSubmit {
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
+  font-family: inherit;
+}
+
+.renameCancel {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  color: #6b7280;
+}
+
+.renameCancel:hover {
+  background: #fafafa;
+}
+
+.renameSubmit {
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+  border: none;
+  color: #ffffff;
+}
+
+.renameSubmit:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.renameSubmit:disabled,
+.renameCancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

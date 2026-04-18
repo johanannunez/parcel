@@ -1,0 +1,81 @@
+.board {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.board::-webkit-scrollbar {
+  display: none;
+}
+
+.col {
+  flex: 0 0 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.colCollapsed {
+  flex: 0 0 48px;
+  min-width: 48px;
+  display: flex;
+}
+
+/* Column card area — becomes a drop zone */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 8px;
+  transition: background 120ms ease, outline-color 120ms ease;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  min-height: 40px;
+}
+
+.cardsOver {
+  background: rgba(2, 170, 235, 0.05);
+  outline-color: rgba(2, 170, 235, 0.4);
+}
+
+/* Source ghost — card stays in column while dragging */
+.draggingPlaceholder {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Floating card overlay */
+.overlay {
+  transform: rotate(1.5deg) scale(1.02);
+  box-shadow:
+    0 16px 48px rgba(15, 59, 107, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  opacity: 0.96;
+  cursor: grabbing;
+}
+
+/* Drag handle hint on hover */
+.cardWrap {
+  cursor: grab;
+  border-radius: 10px;
+  transition: transform 80ms ease;
+  touch-action: none;
+  user-select: none;
+}
+
+.cardWrap:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 1100px) {
+  .col { flex: 0 0 86%; }
+}

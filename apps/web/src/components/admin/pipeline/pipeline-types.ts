@@ -15,6 +15,7 @@ export type StageDef = {
 export type StatusCardData = {
   id: string;
   href: string;
+  cardVariant?: 'default' | 'person'; // 'person' renders a compact contact card without a cover zone
   coverUrl: string | null;      // real photo (properties)
   coverGradient: string | null; // fallback gradient (contacts/projects)
   coverEmoji: string | null;    // optional emoji on gradient covers
@@ -28,12 +29,17 @@ export type StatusCardData = {
   insight: Insight | null;
 };
 
+export type ColumnState = 'shown' | 'collapsed' | 'hidden';
+
 export type StatusColumnData = {
   stage: StageDef;
   cards: StatusCardData[];
+  collapsed?: boolean; // initial default when user has no stored preference
 };
 
 export type StatusBoardProps = {
   columns: StatusColumnData[];
   emptyMessage?: ReactNode;
+  /** Persistence key for per-column user preferences (e.g. 'contacts:lead-pipeline'). */
+  boardKey?: string;
 };

@@ -7,20 +7,30 @@ import {
   type CSSProperties,
 } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Kanban, List } from '@phosphor-icons/react';
+import { Kanban, List, MapTrifold } from '@phosphor-icons/react';
 import { useSetTopBarSlots } from './TopBarSlotsContext';
 import styles from './PipelineViewSwitcher.module.css';
 
-export type PipelineViewMode = 'compact' | 'status';
+export type PipelineViewMode = 'status' | 'compact' | 'map';
 
 type TabDef = { key: PipelineViewMode; label: string; icon: React.ReactNode };
 
-const TABS: TabDef[] = [
-  { key: 'status',  label: 'Status',  icon: <Kanban  size={14} weight="duotone" /> },
-  { key: 'compact', label: 'List',    icon: <List    size={14} weight="duotone" /> },
-];
+// URL param stays 'status' for the kanban mode so existing links keep working.
+const TAB_DEFS: Record<PipelineViewMode, TabDef> = {
+  status:  { key: 'status',  label: 'Kanban', icon: <Kanban     size={14} weight="duotone" /> },
+  compact: { key: 'compact', label: 'List',   icon: <List       size={14} weight="duotone" /> },
+  map:     { key: 'map',     label: 'Map',    icon: <MapTrifold size={14} weight="duotone" /> },
+};
 
-function Switcher({ activeKey }: { activeKey: PipelineViewMode }) {
+const DEFAULT_SUPPORTED: PipelineViewMode[] = ['status', 'compact'];
+
+function Switcher({
+  activeKey,
+  tabs,
+}: {
+  activeKey: PipelineViewMode;
+  tabs: TabDef[];
+}) {
   const router = useRouter();
   const sp = useSearchParams();
   const shellRef = useRef<HTMLDivElement>(null);
@@ -37,7 +47,7 @@ function Switcher({ activeKey }: { activeKey: PipelineViewMode }) {
       width: `${rect.width}px`,
       opacity: 1,
     });
-  }, [activeKey]);
+  }, [activeKey, tabs]);
 
   function navigate(mode: PipelineViewMode) {
     const params = new URLSearchParams(sp?.toString() ?? '');
@@ -48,7 +58,7 @@ function Switcher({ activeKey }: { activeKey: PipelineViewMode }) {
   return (
     <div ref={shellRef} className={styles.switcher} role="tablist" aria-label="View mode">
       <span className={styles.indicator} style={indicator} aria-hidden />
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const isActive = tab.key === activeKey;
         return (
           <button
@@ -70,19 +80,30 @@ function Switcher({ activeKey }: { activeKey: PipelineViewMode }) {
 }
 
 /**
- * Injects a Status/List view switcher into the admin top bar center slot.
- * Render inside the page or layout that owns the switcher; it self-clears on unmount.
+ * Injects a Kanban/List/Map view switcher into the admin top bar center slot.
+ * Pass `supported` to constrain which modes render for the current board.
+ * If only one mode is supported, the switcher is hidden entirely.
  */
-export function PipelineViewSwitcher({ defaultMode = 'compact' }: { defaultMode?: PipelineViewMode }) {
+export function PipelineViewSwitcher({
+  defaultMode = 'compact',
+  supported = DEFAULT_SUPPORTED,
+}: {
+  defaultMode?: PipelineViewMode;
+  supported?: PipelineViewMode[];
+}) {
   const sp = useSearchParams();
-  const mode = (sp?.get('mode') as PipelineViewMode | null) ?? defaultMode;
+  const urlMode = sp?.get('mode') as PipelineViewMode | null;
+  const mode: PipelineViewMode =
+    urlMode && supported.includes(urlMode) ? urlMode : defaultMode;
+
+  const tabs = supported.map((k) => TAB_DEFS[k]);
 
   useSetTopBarSlots(
     () => ({
-      centerSlot: <Switcher activeKey={mode} />,
+      centerSlot: tabs.length > 1 ? <Switcher activeKey={mode} tabs={tabs} /> : null,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mode],
+    [mode, supported.join('|')],
   );
 
   return null;

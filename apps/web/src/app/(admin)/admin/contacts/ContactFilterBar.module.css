@@ -1,0 +1,64 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0F3B6B;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.trigger:hover {
+  border-color: rgba(2, 170, 235, 0.4);
+  background: rgba(2, 170, 235, 0.04);
+  color: #02AAEB;
+}
+
+.trigger:active {
+  transform: translateY(0.5px);
+}
+
+.trigger svg {
+  color: inherit;
+}
+
+.triggerActive {
+  background: rgba(2, 170, 235, 0.08);
+  border-color: rgba(2, 170, 235, 0.42);
+  color: #02AAEB;
+  box-shadow: 0 1px 0 rgba(2, 170, 235, 0.04);
+}
+
+.triggerActive:hover {
+  background: rgba(2, 170, 235, 0.12);
+  border-color: rgba(2, 170, 235, 0.6);
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}

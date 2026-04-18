@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CheckSquare,
   EnvelopeSimple,
@@ -9,7 +10,7 @@ import {
   House,
   CurrencyDollar,
   UserCircle,
-  Target,
+  AddressBook,
   Kanban,
 } from "@phosphor-icons/react";
 import styles from "./CreateMenu.module.css";
@@ -22,7 +23,7 @@ export type CreateKind =
   | "property"
   | "invoice"
   | "owner"
-  | "lead"
+  | "contact"
   | "project";
 
 const CONTEXTUAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
@@ -35,18 +36,63 @@ const CONTEXTUAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode
 ];
 
 const GLOBAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
-  { kind: "owner",   label: "Owner",   icon: <UserCircle size={13} weight="duotone" />, kbd: "O" },
-  { kind: "lead",    label: "Lead",    icon: <Target size={13} weight="duotone" />,     kbd: "L" },
-  { kind: "project", label: "Project", icon: <Kanban size={13} weight="duotone" />,     kbd: "J" },
+  { kind: "contact", label: "Contact", icon: <AddressBook size={13} weight="duotone" />, kbd: "C" },
+  { kind: "owner",   label: "Owner",   icon: <UserCircle size={13} weight="duotone" />,  kbd: "O" },
+  { kind: "project", label: "Project", icon: <Kanban size={13} weight="duotone" />,      kbd: "J" },
 ];
+
+const MENU_WIDTH = 168;
+const GAP = 8;
 
 export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | "topbar" } = {}) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => setMounted(true), []);
+
+  useLayoutEffect(() => {
+    if (!open || !btnRef.current) return;
+    const updatePosition = () => {
+      const rect = btnRef.current!.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const narrowLayout = vw < 900;
+
+      let top: number;
+      let left: number;
+
+      if (placement === "topbar" || narrowLayout) {
+        top = rect.bottom + GAP;
+        left = rect.right - MENU_WIDTH;
+      } else {
+        top = rect.top;
+        left = rect.right + GAP;
+      }
+
+      if (left + MENU_WIDTH > vw - 8) left = vw - MENU_WIDTH - 8;
+      if (left < 8) left = 8;
+      if (top < 8) top = 8;
+
+      setCoords({ top, left });
+    };
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open, placement]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (wrapRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setOpen(false);
     };
     if (open) window.addEventListener("mousedown", handler);
     return () => window.removeEventListener("mousedown", handler);
@@ -56,7 +102,7 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
     if (!open) return;
     const keyMap: Record<string, CreateKind> = {
       t: "task", e: "email", m: "meeting", n: "note",
-      p: "property", i: "invoice", o: "owner", l: "lead", j: "project",
+      p: "property", i: "invoice", o: "owner", c: "contact", j: "project",
     };
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -80,12 +126,47 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
 
   const wrapClass =
     placement === "topbar" ? `${styles.wrap} ${styles.wrapTopbar}` : styles.wrap;
-  const menuClass =
-    placement === "topbar" ? `${styles.menu} ${styles.menuTopbar}` : styles.menu;
+
+  const menu =
+    open && coords ? (
+      <div
+        ref={menuRef}
+        className={styles.menu}
+        role="menu"
+        style={{ top: coords.top, left: coords.left }}
+      >
+        {CONTEXTUAL.map((it) => (
+          <button
+            key={it.kind}
+            type="button"
+            className={styles.item}
+            onClick={() => dispatch(it.kind)}
+          >
+            <span className={styles.icon}>{it.icon}</span>
+            <span>{it.label}</span>
+            <span className={styles.kbd}>{it.kbd}</span>
+          </button>
+        ))}
+        <div className={styles.divider} />
+        {GLOBAL.map((it) => (
+          <button
+            key={it.kind}
+            type="button"
+            className={styles.item}
+            onClick={() => dispatch(it.kind)}
+          >
+            <span className={styles.icon}>{it.icon}</span>
+            <span>{it.label}</span>
+            <span className={styles.kbd}>{it.kbd}</span>
+          </button>
+        ))}
+      </div>
+    ) : null;
 
   return (
     <div className={wrapClass} ref={wrapRef}>
       <button
+        ref={btnRef}
         type="button"
         className={styles.btn}
         aria-label="Create new"
@@ -94,35 +175,7 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
       >
         +
       </button>
-      {open ? (
-        <div className={menuClass} role="menu">
-          {CONTEXTUAL.map((it) => (
-            <button
-              key={it.kind}
-              type="button"
-              className={styles.item}
-              onClick={() => dispatch(it.kind)}
-            >
-              <span className={styles.icon}>{it.icon}</span>
-              <span>{it.label}</span>
-              <span className={styles.kbd}>{it.kbd}</span>
-            </button>
-          ))}
-          <div className={styles.divider} />
-          {GLOBAL.map((it) => (
-            <button
-              key={it.kind}
-              type="button"
-              className={styles.item}
-              onClick={() => dispatch(it.kind)}
-            >
-              <span className={styles.icon}>{it.icon}</span>
-              <span>{it.label}</span>
-              <span className={styles.kbd}>{it.kbd}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+      {mounted && menu ? createPortal(menu, document.body) : null}
     </div>
   );
 }

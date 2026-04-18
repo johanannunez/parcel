@@ -1,37 +1,54 @@
 .bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .tile {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 11px 14px;
+  border-radius: 8px;
+  padding: 8px 12px;
   box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  min-width: 0;
 }
+
 .featured {
   background: linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%);
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 6px 16px -4px rgba(2,170,235,0.5);
+  box-shadow: 0 4px 10px -4px rgba(2,170,235,0.4);
 }
 
 .label {
-  color: #6b7280; font-size: 9.5px;
-  letter-spacing: 1.2px; text-transform: uppercase;
-  margin-bottom: 3px; font-weight: 600;
+  color: #6b7280;
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-weight: 600;
 }
+
 .featured .label { color: rgba(255,255,255,0.85); }
 
 .value {
-  color: #0F3B6B; font-size: 18px; font-weight: 700; line-height: 1;
+  color: #0F3B6B;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.1;
 }
+
 .featured .value { color: #fff; }
 
-.delta { color: #10B981; font-size: 11px; margin-top: 4px; }
+.delta {
+  color: #10B981;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
 .featured .delta { color: rgba(255,255,255,0.9); }
 .deltaWarn { color: #F59E0B; }
 .deltaBad { color: #EF4444; }

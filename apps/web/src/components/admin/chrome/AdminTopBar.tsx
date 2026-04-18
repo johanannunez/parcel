@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell } from "@phosphor-icons/react";
 import { derivePageTitle, type PageTitleInfo } from "@/lib/admin/derive-page-title";
-import { TopBarSearch } from "./TopBarSearch";
 import { CreateMenu } from "./CreateMenu";
 import { useTopBarSlots } from "./TopBarSlotsContext";
 import styles from "./AdminTopBar.module.css";
@@ -63,12 +62,16 @@ export function AdminTopBar({ notificationCount = 0 }: Props) {
           <div className={styles.searchSlot}>{searchOverride}</div>
         ) : (
           <div className={styles.compactUtils}>
-            <TopBarSearch />
             <CreateMenu placement="topbar" />
           </div>
         )}
 
-        <button type="button" className={styles.iconBtn} aria-label="Notifications">
+        <button
+          type="button"
+          className={styles.iconBtn}
+          aria-label="Notifications"
+          onClick={() => window.dispatchEvent(new Event("admin:notifications-toggle"))}
+        >
           <Bell size={16} weight="duotone" />
           {notificationCount > 0 ? (
             <span className={styles.badge}>{notificationCount > 9 ? "9+" : notificationCount}</span>

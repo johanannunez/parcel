@@ -9,6 +9,9 @@ import { AdminTopBar as AdminTopBarNew } from "@/components/admin/chrome/AdminTo
 import { CreateScopeProvider } from "@/components/admin/chrome/CreateScopeContext";
 import { CreateModal } from "@/components/admin/chrome/CreateModal";
 import { TopBarSlotsProvider } from "@/components/admin/chrome/TopBarSlotsContext";
+import { CommandPalette } from "@/components/admin/chrome/CommandPalette";
+import { SidebarDrawer } from "@/components/admin/chrome/SidebarDrawer";
+import { NotificationPopover } from "@/components/admin/chrome/NotificationPopover";
 
 /**
  * Admin layout with dark vertical sidebar.
@@ -54,6 +57,7 @@ export default async function AdminLayout({
     <CreateScopeProvider>
       <TopBarSlotsProvider>
       <div
+        data-admin-root
         className="flex h-screen overflow-hidden"
         style={{ backgroundColor: "var(--color-navy)" }}
       >
@@ -102,6 +106,16 @@ export default async function AdminLayout({
         />
 
         <CreateModal />
+        <CommandPalette />
+        <NotificationPopover />
+        <SidebarDrawer
+          userName={fullName}
+          userEmail={user.email ?? ""}
+          initials={initials}
+          avatarUrl={profile?.avatar_url ?? null}
+          pendingBlockCount={pendingBlockCount ?? 0}
+          signOutSlot={<AdminSignOutButton />}
+        />
       </div>
       </TopBarSlotsProvider>
     </CreateScopeProvider>
