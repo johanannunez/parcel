@@ -20,6 +20,7 @@ import {
   usePropertiesNav,
 } from "./PropertiesNavContext";
 import type { HomesMode } from "./homes-types";
+import { Kanban } from "@phosphor-icons/react";
 
 type Owner = { id: string; name: string | null };
 type PropertySummary = {
@@ -42,6 +43,7 @@ export function PropertiesLayoutClient({
   const searchParams = useSearchParams();
   const view = searchParams?.get("view") ?? "";
   const modeParam = searchParams?.get("mode") ?? "";
+  const onKanbanView = modeParam === "status";
   const initialMode: HomesMode = modeParam === "table" ? "table" : "gallery";
 
   return (
@@ -52,6 +54,7 @@ export function PropertiesLayoutClient({
             owners={owners}
             summaries={summaries}
             onStatusView={view === "launchpad"}
+            onKanbanView={onKanbanView}
           />
           <PropertiesContent>{children}</PropertiesContent>
         </PropertiesNavProvider>
@@ -64,10 +67,12 @@ function TopBarController({
   owners,
   summaries,
   onStatusView,
+  onKanbanView,
 }: {
   owners: Owner[];
   summaries: PropertySummary[];
   onStatusView: boolean;
+  onKanbanView: boolean;
 }) {
   const { selection } = usePropertiesFilter();
   const { mode } = usePropertiesMode();
@@ -90,15 +95,40 @@ function TopBarController({
     pendingDest === "gallery" || pendingDest === "table" ? pendingDest : null;
   const activeSwitcherKey = pendingDest === "status"
     ? null
-    : pendingModeKey ?? (onStatusView ? null : mode);
+    : pendingModeKey ?? (onStatusView || onKanbanView ? null : mode);
   const statusPending = pendingDest === "status";
   const statusActive = statusPending || (onStatusView && !pendingModeKey);
-  const switcherSubdued = statusActive;
+  const switcherSubdued = statusActive || onKanbanView;
 
   useSetTopBarSlots(
     () => ({
       centerSlot: (
         <>
+          {/* Kanban (Plan D status view) button */}
+          <a
+            href="/admin/properties?mode=status"
+            aria-label="Status view"
+            title="Status (Kanban)"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "0 10px",
+              height: 30,
+              borderRadius: 8,
+              background: onKanbanView ? "rgba(255,255,255,0.96)" : "transparent",
+              border: "1px solid rgba(255,255,255,0.25)",
+              color: onKanbanView ? "#0f3b6b" : "rgba(255,255,255,0.8)",
+              fontSize: 12,
+              fontWeight: 600,
+              textDecoration: "none",
+              transition: "background 160ms ease, color 160ms ease",
+              marginRight: 6,
+            }}
+          >
+            <Kanban size={13} weight="duotone" />
+            Status
+          </a>
           <StatusButton
             active={statusActive}
             pending={statusPending}
@@ -131,6 +161,7 @@ function TopBarController({
       owners,
       summaries,
       onStatusView,
+      onKanbanView,
       navigateTo,
       activeSwitcherKey,
       statusActive,

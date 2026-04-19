@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useCreateScope } from "./CreateScopeContext";
 import { ScopePicker } from "./ScopePicker";
 import type { CreateKind } from "./CreateMenu";
+import { TaskForm } from "./create-forms/TaskForm";
+import { ProjectForm } from "./create-forms/ProjectForm";
+import { ContactForm } from "./create-forms/ContactForm";
 import styles from "./CreateModal.module.css";
 
 const KIND_TITLES: Record<CreateKind, string> = {
@@ -14,11 +17,12 @@ const KIND_TITLES: Record<CreateKind, string> = {
   property: "New property",
   invoice: "New invoice",
   owner: "New owner",
-  lead: "New lead",
+  contact: "New contact",
+  project: "New project",
 };
 
 // Kinds that are always global (no scope chip).
-const GLOBAL_KINDS = new Set<CreateKind>(["owner", "lead"]);
+const GLOBAL_KINDS = new Set<CreateKind>(["owner", "contact", "project"]);
 
 export function CreateModal() {
   const { target, setTarget } = useCreateScope();
@@ -130,26 +134,35 @@ export function CreateModal() {
             />
           ) : null}
 
-          <div className={styles.placeholder}>
-            <strong>{KIND_TITLES[kind]}</strong>
-            Form coming in the next plan — this chrome is ready. When the form for &ldquo;{kind}&rdquo;
-            ships, it will open here with the scope chip already filled in.
-          </div>
+          {kind === "task" ? (
+            <TaskForm onClose={() => setKind(null)} />
+          ) : kind === "project" ? (
+            <ProjectForm onClose={() => setKind(null)} />
+          ) : kind === "contact" ? (
+            <ContactForm onClose={() => setKind(null)} />
+          ) : (
+            <div className={styles.placeholder}>
+              <strong>Not yet available</strong>
+              This create kind is not wired up yet.
+            </div>
+          )}
         </div>
 
         <div className={styles.footer}>
           <span>
             <kbd>Esc</kbd>to close
           </span>
-          <div className={styles.footerActions}>
-            <button
-              type="button"
-              className={styles.btn}
-              onClick={() => setKind(null)}
-            >
-              Done
-            </button>
-          </div>
+          {kind !== "task" && kind !== "project" && kind !== "contact" ? (
+            <div className={styles.footerActions}>
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => setKind(null)}
+              >
+                Done
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

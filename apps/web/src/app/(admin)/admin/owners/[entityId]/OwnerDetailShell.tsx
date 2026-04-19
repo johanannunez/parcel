@@ -12,10 +12,13 @@ import type {
 import { formatMonthYear } from "@/lib/admin/owner-detail-types";
 import type { OwnerStatus } from "@/lib/admin/owners-list";
 import { setViewingAs } from "@/app/(portal)/portal/viewing-as-actions";
+import type { RailEvent } from "@/lib/admin/detail-rail";
+import { DetailRightRail } from "@/components/admin/detail/DetailRightRail";
 import styles from "./OwnerDetailShell.module.css";
 
 type TabKey =
   | "overview"
+  | "tasks"
   | "properties"
   | "financials"
   | "activity"
@@ -24,6 +27,7 @@ type TabKey =
 
 const TAB_ORDER: TabKey[] = [
   "overview",
+  "tasks",
   "properties",
   "financials",
   "activity",
@@ -33,6 +37,7 @@ const TAB_ORDER: TabKey[] = [
 
 const TAB_LABEL: Record<TabKey, string> = {
   overview: "Overview",
+  tasks: "Tasks",
   properties: "Properties",
   financials: "Financials",
   activity: "Activity",
@@ -81,9 +86,13 @@ function initials(name: string): string {
 export function OwnerDetailShell({
   data,
   children,
+  initialRailEvents = [],
+  realtimeId,
 }: {
   data: OwnerDetailData;
   children: ReactNode;
+  initialRailEvents?: RailEvent[];
+  realtimeId?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -167,7 +176,29 @@ export function OwnerDetailShell({
         })}
       </nav>
 
-      <div className={styles.content}>{children}</div>
+      <div
+        className={
+          activeTab === "settings" || !realtimeId
+            ? styles.content
+            : styles.contentWithRail
+        }
+      >
+        <div className={styles.mainCol}>{children}</div>
+        {activeTab !== "settings" && realtimeId ? (
+          <DetailRightRail
+            parentType="contact"
+            realtimeId={realtimeId}
+            initialEvents={initialRailEvents}
+            metadata={[
+              ...(data.source ? [{ label: "Source", value: data.source }] : []),
+              ...(data.assignedToName
+                ? [{ label: "Owner", value: data.assignedToName }]
+                : []),
+              { label: "Created", value: formatMonthYear(data.entity.createdAt) },
+            ]}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

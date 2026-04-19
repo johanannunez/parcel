@@ -23,6 +23,7 @@ export type Database = {
           entity_type: string
           id: string
           metadata: Json
+          visibility: Database["public"]["Enums"]["activity_visibility"]
         }
         Insert: {
           action: string
@@ -32,6 +33,7 @@ export type Database = {
           entity_type: string
           id?: string
           metadata?: Json
+          visibility?: Database["public"]["Enums"]["activity_visibility"]
         }
         Update: {
           action?: string
@@ -41,11 +43,101 @@ export type Database = {
           entity_type?: string
           id?: string
           metadata?: Json
+          visibility?: Database["public"]["Enums"]["activity_visibility"]
         }
         Relationships: [
           {
             foreignKeyName: "activity_log_actor_id_fkey"
             columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_insights: {
+        Row: {
+          action_label: string | null
+          action_payload: Json | null
+          agent_key: string
+          body: string
+          created_at: string
+          dismissed_at: string | null
+          expires_at: string | null
+          id: string
+          parent_id: string
+          parent_type: string
+          severity: string
+          title: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_payload?: Json | null
+          agent_key: string
+          body: string
+          created_at?: string
+          dismissed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          parent_id: string
+          parent_type: string
+          severity?: string
+          title: string
+        }
+        Update: {
+          action_label?: string | null
+          action_payload?: Json | null
+          agent_key?: string
+          body?: string
+          created_at?: string
+          dismissed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          parent_id?: string
+          parent_type?: string
+          severity?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      attachments: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          mime_type: string | null
+          parent_id: string
+          parent_type: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          mime_type?: string | null
+          parent_id: string
+          parent_type: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          parent_id?: string
+          parent_type?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -254,6 +346,111 @@ export type Database = {
           {
             foreignKeyName: "connections_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_sources: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          assigned_to: string | null
+          avatar_url: string | null
+          company_name: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          estimated_mrr: number | null
+          full_name: string
+          id: string
+          last_activity_at: string | null
+          lifecycle_stage: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          metadata: Json
+          phone: string | null
+          profile_id: string | null
+          source: string | null
+          source_detail: string | null
+          stage_changed_at: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          estimated_mrr?: number | null
+          full_name: string
+          id?: string
+          last_activity_at?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          metadata?: Json
+          phone?: string | null
+          profile_id?: string | null
+          source?: string | null
+          source_detail?: string | null
+          stage_changed_at?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          estimated_mrr?: number | null
+          full_name?: string
+          id?: string
+          last_activity_at?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          metadata?: Json
+          phone?: string | null
+          profile_id?: string | null
+          source?: string | null
+          source_detail?: string | null
+          stage_changed_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -622,6 +819,120 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          stripe_line_item_id: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          stripe_line_item_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          stripe_line_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          due_at: string | null
+          hosted_invoice_url: string | null
+          id: string
+          kind: Database["public"]["Enums"]["invoice_kind"]
+          owner_id: string
+          paid_at: string | null
+          property_id: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          stripe_invoice_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          due_at?: string | null
+          hosted_invoice_url?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["invoice_kind"]
+          owner_id: string
+          paid_at?: string | null
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_invoice_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          due_at?: string | null
+          hosted_invoice_url?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["invoice_kind"]
+          owner_id?: string
+          paid_at?: string | null
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_invoice_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reads: {
         Row: {
           device_info: string | null
@@ -715,6 +1026,47 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          parent_id: string
+          parent_type: string
+          pinned: boolean
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          parent_id: string
+          parent_type: string
+          pinned?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          parent_id?: string
+          parent_type?: string
+          pinned?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -780,6 +1132,69 @@ export type Database = {
             foreignKeyName: "onboarding_drafts_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_facts: {
+        Row: {
+          category: Database["public"]["Enums"]["owner_fact_category"] | null
+          confidence: number
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          owner_id: string
+          pinned: boolean
+          source_id: string | null
+          source_type: Database["public"]["Enums"]["owner_fact_source_type"]
+          suppressed: boolean
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["owner_fact_category"] | null
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          owner_id: string
+          pinned?: boolean
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["owner_fact_source_type"]
+          suppressed?: boolean
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["owner_fact_category"] | null
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          owner_id?: string
+          pinned?: boolean
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["owner_fact_source_type"]
+          suppressed?: boolean
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_facts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_facts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1043,7 +1458,7 @@ export type Database = {
           },
         ]
       }
-      owner_tasks: {
+      owner_tasks_legacy: {
         Row: {
           assigned_to: string | null
           completed_at: string | null
@@ -1370,6 +1785,79 @@ export type Database = {
           },
         ]
       }
+      projects: {
+        Row: {
+          archived_at: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          emoji: string | null
+          id: string
+          linked_contact_id: string | null
+          linked_property_id: string | null
+          name: string
+          owner_user_id: string | null
+          project_type: string
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          name: string
+          owner_user_id?: string | null
+          project_type: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          name?: string
+          owner_user_id?: string | null
+          project_type?: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_linked_property_id_fkey"
+            columns: ["linked_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           active: boolean
@@ -1385,6 +1873,7 @@ export type Database = {
           cleaning_choice: string | null
           cleaning_team: Json | null
           compliance_details: Json | null
+          contact_id: string | null
           country: string
           cover_photo_url: string | null
           created_at: string
@@ -1437,6 +1926,7 @@ export type Database = {
           cleaning_choice?: string | null
           cleaning_team?: Json | null
           compliance_details?: Json | null
+          contact_id?: string | null
           country?: string
           cover_photo_url?: string | null
           created_at?: string
@@ -1489,6 +1979,7 @@ export type Database = {
           cleaning_choice?: string | null
           cleaning_team?: Json | null
           compliance_details?: Json | null
+          contact_id?: string | null
           country?: string
           cover_photo_url?: string | null
           created_at?: string
@@ -1529,6 +2020,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "properties_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "properties_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
@@ -1559,6 +2057,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "property_amenities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_checklist_items: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          item_key: string
+          label: string
+          notes: string | null
+          property_id: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          item_key: string
+          label: string
+          notes?: string | null
+          property_id: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          item_key?: string
+          label?: string
+          notes?: string | null
+          property_id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_checklist_items_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -1773,6 +2318,58 @@ export type Database = {
           },
         ]
       }
+      property_task_templates: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          is_active: boolean
+          last_spawned_at: string | null
+          next_due_at: string | null
+          property_id: string
+          template_id: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          is_active?: boolean
+          last_spawned_at?: string | null
+          next_due_at?: string | null
+          property_id: string
+          template_id: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          is_active?: boolean
+          last_spawned_at?: string | null
+          next_due_at?: string | null
+          property_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_task_templates_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_task_templates_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_task_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_team: {
         Row: {
           created_at: string
@@ -1846,6 +2443,71 @@ export type Database = {
           {
             foreignKeyName: "push_subscriptions_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_views: {
+        Row: {
+          columns_jsonb: Json | null
+          created_at: string
+          entity_type: string
+          filter_jsonb: Json
+          grouping: string | null
+          icon_color: string | null
+          icon_id: string | null
+          id: string
+          is_shared: boolean
+          key: string
+          name: string
+          owner_user_id: string | null
+          sort: string | null
+          sort_order: number
+          updated_at: string
+          view_mode: string
+        }
+        Insert: {
+          columns_jsonb?: Json | null
+          created_at?: string
+          entity_type: string
+          filter_jsonb?: Json
+          grouping?: string | null
+          icon_color?: string | null
+          icon_id?: string | null
+          id?: string
+          is_shared?: boolean
+          key: string
+          name: string
+          owner_user_id?: string | null
+          sort?: string | null
+          sort_order?: number
+          updated_at?: string
+          view_mode?: string
+        }
+        Update: {
+          columns_jsonb?: Json | null
+          created_at?: string
+          entity_type?: string
+          filter_jsonb?: Json
+          grouping?: string | null
+          icon_color?: string | null
+          icon_id?: string | null
+          id?: string
+          is_shared?: boolean
+          key?: string
+          name?: string
+          owner_user_id?: string | null
+          sort?: string | null
+          sort_order?: number
+          updated_at?: string
+          view_mode?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_views_owner_user_id_fkey"
+            columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2008,7 +2670,102 @@ export type Database = {
           },
         ]
       }
-      task_assignees: {
+      stripe_customers: {
+        Row: {
+          created_at: string
+          email: string | null
+          profile_id: string
+          stripe_customer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          profile_id: string
+          stripe_customer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          profile_id?: string
+          stripe_customer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_customers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          id: string
+          interval: string
+          owner_id: string
+          price_cents: number
+          property_id: string | null
+          status: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          id?: string
+          interval?: string
+          owner_id: string
+          price_cents?: number
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          id?: string
+          interval?: string
+          owner_id?: string
+          price_cents?: number
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_assignees_legacy: {
         Row: {
           created_at: string
           id: string
@@ -2039,12 +2796,12 @@ export type Database = {
             foreignKeyName: "task_assignees_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_comments: {
+      task_comments_legacy: {
         Row: {
           author_id: string
           content: string
@@ -2081,12 +2838,12 @@ export type Database = {
             foreignKeyName: "task_comments_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_label_map: {
+      task_label_map_legacy: {
         Row: {
           label_id: string
           task_id: string
@@ -2104,19 +2861,19 @@ export type Database = {
             foreignKeyName: "task_label_map_label_id_fkey"
             columns: ["label_id"]
             isOneToOne: false
-            referencedRelation: "task_labels"
+            referencedRelation: "task_labels_legacy"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "task_label_map_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
-      task_labels: {
+      task_labels_legacy: {
         Row: {
           color: string
           created_at: string
@@ -2137,7 +2894,7 @@ export type Database = {
         }
         Relationships: []
       }
-      task_subtasks: {
+      task_subtasks_legacy: {
         Row: {
           completed: boolean
           completed_at: string | null
@@ -2170,12 +2927,68 @@ export type Database = {
             foreignKeyName: "task_subtasks_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
-            referencedRelation: "tasks"
+            referencedRelation: "tasks_legacy"
             referencedColumns: ["id"]
           },
         ]
       }
       task_templates: {
+        Row: {
+          applies_to: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          is_active: boolean
+          name: string
+          pre_notify_hours: number | null
+          recurrence_rule: Json
+          tags: string[]
+          task_type: Database["public"]["Enums"]["task_kind"]
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          pre_notify_hours?: number | null
+          recurrence_rule: Json
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_templates_legacy: {
         Row: {
           category: string | null
           created_at: string
@@ -2215,6 +3028,127 @@ export type Database = {
         Relationships: []
       }
       tasks: {
+        Row: {
+          assignee_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_at: string | null
+          estimated_minutes: number | null
+          id: string
+          linked_contact_id: string | null
+          linked_property_id: string | null
+          metadata: Json
+          next_spawn_at: string | null
+          parent_id: string | null
+          parent_task_id: string | null
+          parent_type: string | null
+          pre_notify_hours: number | null
+          recurrence_rule: Json | null
+          spawned_from_task_id: string | null
+          status: string
+          tags: string[]
+          task_type: Database["public"]["Enums"]["task_kind"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          metadata?: Json
+          next_spawn_at?: string | null
+          parent_id?: string | null
+          parent_task_id?: string | null
+          parent_type?: string | null
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json | null
+          spawned_from_task_id?: string | null
+          status?: string
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          linked_contact_id?: string | null
+          linked_property_id?: string | null
+          metadata?: Json
+          next_spawn_at?: string | null
+          parent_id?: string | null
+          parent_task_id?: string | null
+          parent_type?: string | null
+          pre_notify_hours?: number | null
+          recurrence_rule?: Json | null
+          spawned_from_task_id?: string | null
+          status?: string
+          tags?: string[]
+          task_type?: Database["public"]["Enums"]["task_kind"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_created_by_fkey1"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_linked_property_id_fkey"
+            columns: ["linked_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_spawned_from_task_id_fkey"
+            columns: ["spawned_from_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks_legacy: {
         Row: {
           completed_at: string | null
           created_at: string
@@ -2428,6 +3362,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      treasury_balance_snapshots: {
+        Row: {
+          account_balances: Json | null
+          created_at: string | null
+          date: string
+          id: string
+          total_balance: number
+        }
+        Insert: {
+          account_balances?: Json | null
+          created_at?: string | null
+          date: string
+          id?: string
+          total_balance?: number
+        }
+        Update: {
+          account_balances?: Json | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          total_balance?: number
+        }
+        Relationships: []
       }
       treasury_connections: {
         Row: {
@@ -2720,6 +3678,7 @@ export type Database = {
       user_owns_property: { Args: { p_property_id: string }; Returns: boolean }
     }
     Enums: {
+      activity_visibility: "admin_only" | "both"
       booking_source:
         | "direct"
         | "airbnb"
@@ -2728,10 +3687,47 @@ export type Database = {
         | "furnished_finder"
         | "hospitable"
         | "other"
+      contact_lifecycle_stage:
+        | "lead_new"
+        | "qualified"
+        | "in_discussion"
+        | "contract_sent"
+        | "onboarding"
+        | "active_owner"
+        | "paused"
+        | "churned"
+        | "lead_cold"
       conversation_type: "direct" | "announcement" | "email_log"
       help_article_status: "draft" | "published" | "archived"
       inquiry_status: "new" | "contacted" | "qualified" | "won" | "lost"
+      invoice_kind: "onboarding_fee" | "tech_fee" | "adhoc"
+      invoice_status: "draft" | "open" | "paid" | "uncollectible" | "void"
+      owner_fact_category:
+        | "communication"
+        | "background"
+        | "relationships"
+        | "property_knowledge"
+        | "business"
+        | "personal"
+        | "other"
+      owner_fact_source_type:
+        | "manual"
+        | "meeting"
+        | "email"
+        | "message"
+        | "document"
+        | "ai_summary"
       property_type: "str" | "ltr" | "arbitrage" | "mtr" | "co-hosting"
+      subscription_status:
+        | "active"
+        | "past_due"
+        | "canceled"
+        | "incomplete"
+        | "incomplete_expired"
+        | "trialing"
+        | "unpaid"
+        | "paused"
+      task_kind: "todo" | "call" | "meeting" | "email" | "milestone"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status:
         | "backlog"
@@ -2877,6 +3873,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_visibility: ["admin_only", "both"],
       booking_source: [
         "direct",
         "airbnb",
@@ -2886,10 +3883,51 @@ export const Constants = {
         "hospitable",
         "other",
       ],
+      contact_lifecycle_stage: [
+        "lead_new",
+        "qualified",
+        "in_discussion",
+        "contract_sent",
+        "onboarding",
+        "active_owner",
+        "paused",
+        "churned",
+        "lead_cold",
+      ],
       conversation_type: ["direct", "announcement", "email_log"],
       help_article_status: ["draft", "published", "archived"],
       inquiry_status: ["new", "contacted", "qualified", "won", "lost"],
+      invoice_kind: ["onboarding_fee", "tech_fee", "adhoc"],
+      invoice_status: ["draft", "open", "paid", "uncollectible", "void"],
+      owner_fact_category: [
+        "communication",
+        "background",
+        "relationships",
+        "property_knowledge",
+        "business",
+        "personal",
+        "other",
+      ],
+      owner_fact_source_type: [
+        "manual",
+        "meeting",
+        "email",
+        "message",
+        "document",
+        "ai_summary",
+      ],
       property_type: ["str", "ltr", "arbitrage", "mtr", "co-hosting"],
+      subscription_status: [
+        "active",
+        "past_due",
+        "canceled",
+        "incomplete",
+        "incomplete_expired",
+        "trialing",
+        "unpaid",
+        "paused",
+      ],
+      task_kind: ["todo", "call", "meeting", "email", "milestone"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: [
         "backlog",
@@ -2913,4 +3951,3 @@ export const Constants = {
     },
   },
 } as const
-

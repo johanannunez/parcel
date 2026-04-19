@@ -1,0 +1,156 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Drop zone */
+.dropZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 18px 12px;
+  border: 1.5px dashed #C9D5E0;
+  border-radius: 10px;
+  background: #F9FBFD;
+  color: #8A9AAB;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+  outline: none;
+}
+.dropZone:hover:not(.dropZoneDisabled),
+.dropZone:focus-visible:not(.dropZoneDisabled) {
+  border-color: #02AAEB;
+  background: rgba(2, 170, 235, 0.04);
+  color: #1B77BE;
+}
+.dropZoneOver {
+  border-color: #02AAEB;
+  background: rgba(2, 170, 235, 0.08);
+  color: #1B77BE;
+}
+.dropZoneDisabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.dropZoneText {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: inherit;
+}
+.dropZoneHint {
+  font-size: 10.5px;
+  color: #A8B5C2;
+}
+
+/* File chip list */
+.fileList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #D7DFE8;
+  background: #fff;
+  font-size: 12px;
+  color: #3C5266;
+  min-width: 0;
+}
+
+.chipPending {
+  border-color: #C2D8F0;
+  background: #F0F7FE;
+  color: #4A7FA8;
+}
+
+.chipError {
+  border-color: #F5C0BF;
+  background: #FEF6F6;
+  color: #C0392B;
+}
+
+.chipName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.chipSize {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  color: #8A9AAB;
+  white-space: nowrap;
+}
+
+.chipErrorMsg {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  color: #C0392B;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chipRemove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #8A9AAB;
+  cursor: pointer;
+  padding: 0;
+  transition: background 100ms ease, color 100ms ease;
+}
+.chipRemove:hover:not(:disabled) {
+  background: #F0F4F8;
+  color: #3C5266;
+}
+.chipError .chipRemove {
+  color: #C0392B;
+}
+.chipError .chipRemove:hover:not(:disabled) {
+  background: #fde8e8;
+}
+.chipRemove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Spinner for pending */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.chipSpinner {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid #C2D8F0;
+  border-top-color: #02AAEB;
+  animation: spin 700ms linear infinite;
+}

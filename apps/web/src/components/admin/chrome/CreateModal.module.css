@@ -131,6 +131,8 @@
   background: #FAFCFE;
   font-size: 11px;
   color: #8A9AAB;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 .footer kbd {
   font-family: "JetBrains Mono", monospace;

@@ -63,10 +63,6 @@ export function OverviewOnboarding({ data }: { data: OwnerDetailData }) {
         <header className={styles.launchpadHead}>
           <div className={styles.launchpadHeadLeft}>
             <div className={styles.launchpadHeadTitle}>Onboarding progress</div>
-            <span className={`${styles.healthPill} ${styles.healthDraft}`}>
-              <span className={styles.dot} />
-              On track
-            </span>
           </div>
           <Link
             href="/admin/properties?view=launchpad"

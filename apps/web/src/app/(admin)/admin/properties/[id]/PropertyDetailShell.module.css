@@ -1,0 +1,102 @@
+/*
+ * Shell styles for the property detail page.
+ * Mirrors the OwnerDetailShell layout pattern.
+ */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  background: #F6F8FB;
+  min-height: 100%;
+}
+
+/* --- Tabs strip ------------------------------------------------------ */
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 28px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E6ECF2;
+  overflow-x: auto;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: #647689;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 120ms ease;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: #0B1B2B;
+}
+
+.tabActive {
+  color: #1B77BE;
+  font-weight: 600;
+}
+
+.tabActive::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 2px;
+  background: #1B77BE;
+  border-radius: 2px 2px 0 0;
+}
+
+/* --- Content areas ---------------------------------------------------- */
+
+.content {
+  padding: 24px 28px 36px;
+  min-width: 0;
+}
+
+.contentWithRail {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 18px;
+  padding: 18px 24px 32px;
+  align-items: start;
+}
+
+.mainCol {
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .contentWithRail {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Overview placeholder -------------------------------------------- */
+
+.overviewPlaceholder {
+  background: #FFFFFF;
+  border: 1px solid #E6ECF2;
+  border-radius: 14px;
+  padding: 40px 32px;
+  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.04);
+}
+
+.placeholderText {
+  font-size: 13.5px;
+  color: #647689;
+  line-height: 1.6;
+  margin: 0;
+}

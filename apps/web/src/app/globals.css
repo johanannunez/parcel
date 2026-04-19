@@ -211,6 +211,10 @@ input[type="button"] {
   display: none;
 }
 
+/* ─── Admin area: hide scrollbars everywhere, keep scroll behavior ─── */
+[data-admin-root] *::-webkit-scrollbar { width: 0; height: 0; display: none; }
+[data-admin-root] * { scrollbar-width: none; -ms-overflow-style: none; }
+
 /* ─── Focus Indicators ─── */
 *:focus-visible {
   outline: 2px solid var(--color-brand);

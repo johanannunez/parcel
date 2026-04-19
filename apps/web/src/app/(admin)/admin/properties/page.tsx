@@ -4,6 +4,7 @@ import { normalizeUnit, shortenStreet } from "@/lib/address";
 import { getChecklistItemsForProperties, type ChecklistItem } from "@/lib/checklist";
 import { GridViewPage } from "./GridViewPage";
 import { HomesView } from "./HomesView";
+import { PropertiesStatusView } from "./StatusView";
 import type { HomesProperty, BookingSummary } from "./homes-types";
 
 export const metadata: Metadata = { title: "Properties (Admin)" };
@@ -15,9 +16,15 @@ export default async function AdminPropertiesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
+
   // URL routing:
-  //   ?view=launchpad  → spreadsheet-style Status board (onboarding progress).
+  //   ?mode=status     → Kanban status board (Plan D).
+  //   ?view=launchpad  → spreadsheet-style checklist board.
   //   ?view=details    → photo-based Homes view (Gallery or Table mode).
+  if (params.mode === "status") {
+    return <PropertiesStatusView />;
+  }
+
   const view = params.view === "launchpad" ? "launchpad" : "details";
 
   const supabase = await createClient();

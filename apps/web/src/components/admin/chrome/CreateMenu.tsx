@@ -4,13 +4,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   CheckSquare,
-  EnvelopeSimple,
-  CalendarBlank,
-  NotePencil,
-  House,
-  CurrencyDollar,
-  UserCircle,
-  Target,
+  AddressBook,
+  Kanban,
 } from "@phosphor-icons/react";
 import styles from "./CreateMenu.module.css";
 
@@ -22,21 +17,20 @@ export type CreateKind =
   | "property"
   | "invoice"
   | "owner"
-  | "lead";
+  | "contact"
+  | "project";
 
 const CONTEXTUAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
   { kind: "task",     label: "Task",     icon: <CheckSquare size={13} weight="duotone" />,     kbd: "T" },
-  { kind: "email",    label: "Email",    icon: <EnvelopeSimple size={13} weight="duotone" />,  kbd: "E" },
-  { kind: "meeting",  label: "Meeting",  icon: <CalendarBlank size={13} weight="duotone" />,   kbd: "M" },
-  { kind: "note",     label: "Note",     icon: <NotePencil size={13} weight="duotone" />,      kbd: "N" },
-  { kind: "property", label: "Property", icon: <House size={13} weight="duotone" />,           kbd: "P" },
-  { kind: "invoice",  label: "Invoice",  icon: <CurrencyDollar size={13} weight="duotone" />,  kbd: "I" },
 ];
 
 const GLOBAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
-  { kind: "owner", label: "Owner", icon: <UserCircle size={13} weight="duotone" />, kbd: "O" },
-  { kind: "lead",  label: "Lead",  icon: <Target size={13} weight="duotone" />,     kbd: "L" },
+  { kind: "contact", label: "Contact", icon: <AddressBook size={13} weight="duotone" />, kbd: "C" },
+  { kind: "project", label: "Project", icon: <Kanban size={13} weight="duotone" />,      kbd: "J" },
 ];
+
+const MENU_WIDTH = 210;
+const GAP = 8;
 
 export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | "topbar" } = {}) {
   const [open, setOpen] = useState(false);
@@ -52,13 +46,25 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
     if (!open || !btnRef.current) return;
     const updatePosition = () => {
       const rect = btnRef.current!.getBoundingClientRect();
-      const menuWidth = 210;
-      const gap = 8;
-      if (placement === "sidebar") {
-        setCoords({ top: rect.top, left: rect.right + gap });
+      const vw = window.innerWidth;
+      const narrowLayout = vw < 900;
+
+      let top: number;
+      let left: number;
+
+      if (placement === "topbar" || narrowLayout) {
+        top = rect.bottom + GAP;
+        left = rect.right - MENU_WIDTH;
       } else {
-        setCoords({ top: rect.bottom + gap, left: rect.right - menuWidth });
+        top = rect.top;
+        left = rect.right + GAP;
       }
+
+      if (left + MENU_WIDTH > vw - 8) left = vw - MENU_WIDTH - 8;
+      if (left < 8) left = 8;
+      if (top < 8) top = 8;
+
+      setCoords({ top, left });
     };
     updatePosition();
     window.addEventListener("scroll", updatePosition, true);
@@ -83,8 +89,7 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
   useEffect(() => {
     if (!open) return;
     const keyMap: Record<string, CreateKind> = {
-      t: "task", e: "email", m: "meeting", n: "note",
-      p: "property", i: "invoice", o: "owner", l: "lead",
+      t: "task", c: "contact", j: "project",
     };
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -115,7 +120,7 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
         ref={menuRef}
         className={styles.menu}
         role="menu"
-        style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 1000 }}
+        style={{ top: coords.top, left: coords.left }}
       >
         {CONTEXTUAL.map((it) => (
           <button

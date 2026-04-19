@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchOwnerDetail } from "@/lib/admin/owner-detail";
 import { fetchInternalNote } from "@/lib/admin/owner-facts-actions";
+import { fetchRecentActivity } from "@/lib/admin/detail-rail";
 import { createClient } from "@/lib/supabase/server";
 import { OwnerDetailShell } from "./OwnerDetailShell";
 import { OverviewTab } from "./OverviewTab";
@@ -11,6 +12,7 @@ import { SettingsTab } from "./SettingsTab";
 import { SETTINGS_SECTIONS, type SettingsSection } from "./settings-sections";
 import type { SessionRow } from "./settings/AccountSecuritySection";
 import type { ConnectionRow } from "./settings/DataPrivacySection";
+import { TasksTab } from "@/components/admin/tasks/TasksTab";
 
 export const metadata: Metadata = {
   title: "Owner Hub",
@@ -19,6 +21,7 @@ export const dynamic = "force-dynamic";
 
 type TabKey =
   | "overview"
+  | "tasks"
   | "properties"
   | "financials"
   | "activity"
@@ -27,6 +30,7 @@ type TabKey =
 
 const KNOWN_TABS: readonly TabKey[] = [
   "overview",
+  "tasks",
   "properties",
   "financials",
   "activity",
@@ -59,7 +63,18 @@ export default async function OwnerHubPage({
   const data = await fetchOwnerDetail(entityId);
   if (!data) notFound();
 
-  // Fetch the extras the Settings tab needs. Only hit these when the
+  // Fetch initial rail events server-side. Only skip for the settings tab.
+  // We use the contactId to call fetchRecentActivity (which resolves the
+  // profile_id internally). For the Realtime subscription the client
+  // component needs the profile_id directly. pass the primary member id.
+  const initialRailEvents =
+    tab !== "settings" && data.contactId
+      ? await fetchRecentActivity("contact", data.contactId, 8)
+      : [];
+  // realtimeId: the profile UUID that owner_timeline.owner_id references.
+  const realtimeId = data.primaryMember.id;
+
+  // Fetch the extras Settings > Personal info needs. Only hit these when the
   // Settings tab is active so other tabs don't pay the cost.
   let profileExtras: {
     preferredName: string | null;
@@ -149,8 +164,21 @@ export default async function OwnerHubPage({
   }
 
   return (
-    <OwnerDetailShell data={data}>
+    <OwnerDetailShell
+      data={data}
+      initialRailEvents={initialRailEvents}
+      realtimeId={realtimeId}
+    >
       {tab === "overview" ? <OverviewTab data={data} /> : null}
+      {tab === "tasks" ? (
+        data.contactId ? (
+          <TasksTab parentType="contact" parentId={data.contactId} />
+        ) : (
+          <div style={{ padding: 20, color: '#6b7280', fontSize: 13 }}>
+            Contact record not yet migrated for this owner.
+          </div>
+        )
+      ) : null}
       {tab === "properties" ? (
         <TabPlaceholder
           title="Properties. Rebuilding."

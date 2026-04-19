@@ -12,14 +12,18 @@ import {
   EnvelopeSimple,
   ChatCircle,
   ListChecks,
-  Target,
   BookOpenText,
+  Kanban,
+  MagnifyingGlass,
+  List as HamburgerIcon,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
 import { SidebarSearch } from "@/components/admin/chrome/SidebarSearch";
 import { CreateMenu } from "@/components/admin/chrome/CreateMenu";
 import { TopBarSearch } from "@/components/admin/chrome/TopBarSearch";
+import { openCommandPalette } from "@/components/admin/chrome/CommandPalette";
+import { openSidebarDrawer } from "@/components/admin/chrome/SidebarDrawer";
 import css from "./AdminSidebar.module.css";
 
 type NavItem = {
@@ -36,9 +40,9 @@ const navItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: <House size={18} weight="duotone" /> },
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/owners", label: "Owners", icon: <UsersThree size={18} weight="duotone" />, matchPrefix: "/admin/owners" },
+  { href: "/admin/contacts", label: "Contacts", icon: <UsersThree size={18} weight="duotone" />, matchPrefix: "/admin/contacts" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
-  { href: "/admin/leads", label: "Leads", icon: <Target size={18} weight="duotone" />, matchPrefix: "/admin/leads" },
+  { href: "/admin/projects", label: "Projects", icon: <Kanban size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
@@ -335,11 +339,11 @@ export function AdminTopBar({
   const pageTitle = (() => {
     if (!pathname) return "";
     if (pathname === "/admin") return "";
-    if (pathname.startsWith("/admin/owners")) return "Owners";
+    if (pathname.startsWith("/admin/contacts")) return "Contacts";
     if (pathname.startsWith("/admin/properties")) return "Properties";
     if (pathname.startsWith("/admin/inbox")) return "Inbox";
     if (pathname.startsWith("/admin/tasks")) return "Tasks";
-    if (pathname.startsWith("/admin/leads")) return "Leads";
+    if (pathname.startsWith("/admin/projects")) return "Projects";
     if (pathname.startsWith("/admin/help")) return "Help Center";
     if (pathname.startsWith("/admin/treasury")) return "Treasury";
     if (pathname.startsWith("/admin/calendar")) return "Calendar";
@@ -439,9 +443,9 @@ const adminRailItems: Array<{
   { href: "/admin", icon: <House size={20} weight="duotone" />, label: "Dashboard" },
   { href: "/admin/inbox", icon: <ChatCircle size={20} weight="duotone" />, label: "Inbox", matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
-  { href: "/admin/owners", icon: <UsersThree size={20} weight="duotone" />, label: "Owners", matchPrefix: "/admin/owners" },
+  { href: "/admin/contacts", icon: <UsersThree size={20} weight="duotone" />, label: "Contacts", matchPrefix: "/admin/contacts" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
-  { href: "/admin/leads", icon: <Target size={20} weight="duotone" />, label: "Leads", matchPrefix: "/admin/leads" },
+  { href: "/admin/projects", icon: <Kanban size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
 
@@ -480,6 +484,31 @@ export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { p
       >
         <Image src="/brand/logo-mark-white.png" alt="Parcel" width={24} height={24} />
       </Link>
+
+      {/* Search trigger (rail-only, opens global command palette) */}
+      <button
+        type="button"
+        aria-label="Open search"
+        onClick={() => openCommandPalette()}
+        className={css.railLink}
+        style={{
+          display: "flex",
+          width: "40px",
+          height: "40px",
+          margin: "0 auto 14px",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          color: "rgba(255,255,255,0.75)",
+          cursor: "pointer",
+          padding: 0,
+          fontFamily: "inherit",
+        }}
+      >
+        <MagnifyingGlass size={18} weight="duotone" />
+      </button>
 
       {/* Nav */}
       <nav style={{ display: "flex", flex: 1, flexDirection: "column", alignItems: "center", gap: "4px" }}>
@@ -560,6 +589,31 @@ export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { p
           );
         })}
       </nav>
+
+      {/* Hamburger: opens the full sidebar as a drawer */}
+      <button
+        type="button"
+        aria-label="Open sidebar"
+        onClick={() => openSidebarDrawer()}
+        className={css.railLink}
+        style={{
+          display: "flex",
+          width: "40px",
+          height: "40px",
+          margin: "8px auto 6px",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          color: "rgba(255,255,255,0.75)",
+          cursor: "pointer",
+          padding: 0,
+          fontFamily: "inherit",
+        }}
+      >
+        <HamburgerIcon size={18} weight="duotone" />
+      </button>
     </aside>
   );
 }

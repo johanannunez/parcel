@@ -6,6 +6,8 @@ import type { OwnerStatus } from "@/lib/admin/owners-list";
  * (which would drag `@/lib/supabase/server` into the client bundle).
  */
 
+export type OverviewState = 'lead' | 'onboarding' | 'operating' | 'dormant';
+
 export type OwnerDetailMember = {
   id: string;
   fullName: string;
@@ -63,8 +65,18 @@ export type OwnerDetailData = {
   propertyCount: number;
   activity: OwnerDetailActivityEntry[];
   status: OwnerStatus;
-  overviewState: "onboarding" | "operating";
+  overviewState: OverviewState;
   switcher: OwnerDetailSwitcherRow[];
+  // Contact-linked fields (present when a contacts row is linked via profile_id).
+  contactId: string | null;
+  source: string | null;
+  sourceDetail: string | null;
+  estimatedMrr: number | null;
+  stageChangedAt: string | null;
+  assignedTo: string | null;
+  assignedToName: string | null;
+  pausedAt: string | null;
+  lifetimePayouts: number | null;
 };
 
 /** Short month/year label: "Apr 2026". Safe for client code. */

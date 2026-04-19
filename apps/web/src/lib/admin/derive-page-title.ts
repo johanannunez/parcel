@@ -6,15 +6,15 @@ export type PageTitleInfo = {
 };
 
 const STATIC_ROUTES: Array<{ prefix: string; title: string; subtitle?: string }> = [
-  { prefix: "/admin/owners", title: "Owners", subtitle: "Search, invite, and manage your property owners." },
+  { prefix: "/admin/contacts", title: "Contacts", subtitle: "Leads and owners under Parcel management." },
   { prefix: "/admin/properties", title: "Properties", subtitle: "Every home under Parcel management." },
   { prefix: "/admin/inbox", title: "Inbox", subtitle: "All owner and guest conversations." },
   { prefix: "/admin/tasks", title: "Tasks", subtitle: "What you owe, what owners owe you." },
-  { prefix: "/admin/leads", title: "Leads", subtitle: "Prospective owners and inquiries." },
   { prefix: "/admin/help", title: "Help Center", subtitle: "Articles and onboarding content." },
   { prefix: "/admin/treasury", title: "Treasury", subtitle: "Cash, accounts, and financial health." },
   { prefix: "/admin/calendar", title: "Calendar", subtitle: "Bookings, blocks, and scheduling." },
   { prefix: "/admin/timeline", title: "Timeline", subtitle: "Activity across every owner and property." },
+  { prefix: "/admin/projects", title: "Projects", subtitle: "Internal initiatives, onboardings, and ideas." },
 ];
 
 export function derivePageTitle(pathname: string): PageTitleInfo {
