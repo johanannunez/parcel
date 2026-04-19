@@ -38,8 +38,13 @@ export function DetailRightRail({
   useEffect(() => {
     if (!realtimeId) return;
 
+    // owner_timeline currently has `owner_id` and `property_id` but no
+    // `project_id` column. Skip the Realtime subscription for projects and
+    // rely on the initial fetch until a project column exists.
+    if (parentType === "project") return;
+
     const supabase = createClient();
-    const filterColumn =
+    const filterColumn: "property_id" | "owner_id" =
       parentType === "property" ? "property_id" : "owner_id";
 
     const channel = supabase

@@ -46,10 +46,29 @@ export async function applyTemplateToProperty(args: {
   propertyId: string;
   firstDueAt?: string;
   assigneeId?: string | null;
-}): Promise<{ taskId: string; linkId: string }> {
+}): Promise<{ taskId: string | null; linkId: string; alreadyApplied: boolean }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('not authenticated');
+
+  // Check whether this (property, template) link already exists. If so, skip
+  // both the link upsert and the task insert so re-runs don't accumulate
+  // duplicate task rows.
+  const { data: existingLink, error: existingErr } = await supabase
+    .from('property_task_templates')
+    .select('property_id, template_id')
+    .eq('property_id', args.propertyId)
+    .eq('template_id', args.templateId)
+    .maybeSingle();
+  if (existingErr) throw existingErr;
+
+  if (existingLink) {
+    return {
+      taskId: null,
+      linkId: `${existingLink.property_id}:${existingLink.template_id}`,
+      alreadyApplied: true,
+    };
+  }
 
   const { data: t, error: tErr } = await supabase
     .from('task_templates')
@@ -85,6 +104,9 @@ export async function applyTemplateToProperty(args: {
     .single();
   if (taskErr) throw taskErr;
 
+  // Insert the link row. We already verified above that no link exists, so a
+  // plain insert is correct; keep the onConflict guard as a safety net in case
+  // of a race.
   const { data: link, error: linkErr } = await supabase
     .from('property_task_templates')
     .upsert(
@@ -104,7 +126,11 @@ export async function applyTemplateToProperty(args: {
 
   revalidatePath(`/admin/properties/${args.propertyId}`);
   revalidatePath('/admin/tasks');
-  return { taskId: task.id, linkId: `${link.property_id}:${link.template_id}` };
+  return {
+    taskId: task.id,
+    linkId: `${link.property_id}:${link.template_id}`,
+    alreadyApplied: false,
+  };
 }
 
 export async function applyAllDefaultTemplatesToProperty(
@@ -115,14 +141,16 @@ export async function applyAllDefaultTemplatesToProperty(
   let applied = 0;
   for (const t of templates) {
     try {
-      await applyTemplateToProperty({
+      const result = await applyTemplateToProperty({
         templateId: t.id,
         propertyId,
         assigneeId: assigneeId ?? null,
       });
-      applied++;
+      // Only count as applied when a new link+task pair was created. A template
+      // that was already linked to the property is a no-op.
+      if (!result.alreadyApplied) applied++;
     } catch {
-      // Duplicate or non-fatal error. Continue.
+      // Non-fatal error. Continue with the remaining templates.
     }
   }
   return { applied };

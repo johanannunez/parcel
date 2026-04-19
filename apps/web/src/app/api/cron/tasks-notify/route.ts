@@ -31,58 +31,100 @@ export async function GET(request: NextRequest) {
   const svc = createServiceClient();
   const now = new Date();
 
-  // Fetch all open tasks that have both a due date and a pre-notify window set.
-  const { data: candidates, error: fetchError } = await svc
-    .from('tasks')
-    .select('id, title, due_at, pre_notify_hours, assignee_id, parent_type, parent_id, metadata')
-    .neq('status', 'done')
-    .not('pre_notify_hours', 'is', null)
-    .not('due_at', 'is', null);
-
-  if (fetchError) {
-    console.error('[Cron/tasks-notify] Failed to fetch tasks:', fetchError);
-    return NextResponse.json({ error: fetchError.message }, { status: 500 });
-  }
+  // Paginate to avoid Supabase's 1000-row default limit silently dropping rows.
+  // Keep total runtime well under the 60s Vercel cron function timeout — if the
+  // queue grows too large, log a warning and stop processing early.
+  const PAGE_SIZE = 500;
+  const MAX_PAGES = 20; // 10,000 rows max per cron run
+  const SOFT_DEADLINE_MS = 50_000;
+  const startedAt = Date.now();
 
   let notified = 0;
+  let checked = 0;
+  let page = 0;
+  let offset = 0;
+  let truncated = false;
 
-  for (const t of candidates ?? []) {
-    const due = new Date(t.due_at as string);
-    const windowStart = new Date(due.getTime() - (t.pre_notify_hours as number) * 3_600_000);
-
-    // Skip if we haven't reached the notify window yet
-    if (now < windowStart) continue;
-    // Skip if the task is already past due (missed window)
-    if (now > due) continue;
-    // Skip if already flagged
-    const meta = (t.metadata ?? {}) as Record<string, unknown>;
-    if (meta.pre_notify_sent === true) continue;
-
-    const { error: updateError } = await svc
-      .from('tasks')
-      .update({
-        metadata: {
-          ...meta,
-          pre_notify_sent: true,
-          pre_notify_sent_at: now.toISOString(),
-        },
-      })
-      .eq('id', t.id);
-
-    if (updateError) {
-      console.error(`[Cron/tasks-notify] Failed to flag task ${t.id}:`, updateError);
-      continue;
+  while (page < MAX_PAGES) {
+    if (Date.now() - startedAt > SOFT_DEADLINE_MS) {
+      console.warn(
+        `[Cron/tasks-notify] Soft deadline reached after ${page} page(s). Stopping early.`,
+      );
+      truncated = true;
+      break;
     }
 
-    notified++;
+    const { data: batch, error: fetchError } = await svc
+      .from('tasks')
+      .select('id, title, due_at, pre_notify_hours, assignee_id, parent_type, parent_id, metadata')
+      .neq('status', 'done')
+      .not('pre_notify_hours', 'is', null)
+      .not('due_at', 'is', null)
+      .order('due_at', { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (fetchError) {
+      console.error('[Cron/tasks-notify] Failed to fetch tasks:', fetchError);
+      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    }
+
+    const rows = batch ?? [];
+    checked += rows.length;
+
+    for (const t of rows) {
+      const due = new Date(t.due_at as string);
+      const windowStart = new Date(due.getTime() - (t.pre_notify_hours as number) * 3_600_000);
+
+      // Skip if we haven't reached the notify window yet
+      if (now < windowStart) continue;
+      // Skip if the task is already past due (missed window)
+      if (now > due) continue;
+      // Skip if already flagged
+      const meta = (t.metadata ?? {}) as Record<string, unknown>;
+      if (meta.pre_notify_sent === true) continue;
+
+      const { error: updateError } = await svc
+        .from('tasks')
+        .update({
+          metadata: {
+            ...meta,
+            pre_notify_sent: true,
+            pre_notify_sent_at: now.toISOString(),
+          },
+        })
+        .eq('id', t.id);
+
+      if (updateError) {
+        console.error(`[Cron/tasks-notify] Failed to flag task ${t.id}:`, updateError);
+        continue;
+      }
+
+      notified++;
+    }
+
+    // Last page when we got back fewer than the full batch size.
+    if (rows.length < PAGE_SIZE) break;
+
+    offset += PAGE_SIZE;
+    page++;
   }
 
-  console.log(`[Cron/tasks-notify] Checked ${(candidates ?? []).length} tasks, notified ${notified}.`);
+  if (page >= MAX_PAGES) {
+    console.warn(
+      `[Cron/tasks-notify] Hit MAX_PAGES=${MAX_PAGES}. Queue may be larger than this run can process; consider increasing cadence.`,
+    );
+    truncated = true;
+  }
+
+  console.log(
+    `[Cron/tasks-notify] Checked ${checked} tasks, notified ${notified}${truncated ? ' (truncated)' : ''}.`,
+  );
 
   return NextResponse.json({
     ok: true,
-    checked: (candidates ?? []).length,
+    checked,
     preNotified: notified,
+    truncated,
     timestamp: now.toISOString(),
   });
 }

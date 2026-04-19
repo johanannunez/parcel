@@ -11,7 +11,8 @@ create table if not exists public.ai_insights (
   action_payload jsonb,
   dismissed_at   timestamptz,
   expires_at     timestamptz,
-  created_at     timestamptz not null default now()
+  created_at     timestamptz not null default now(),
+  constraint ai_insights_parent_agent_key unique (parent_type, parent_id, agent_key)
 );
 
 -- Composite index; omit now() from predicate so it stays immutable.
@@ -36,7 +37,7 @@ select 'property', p.id, 'setup_agent', 'recommendation',
   from properties p
  where p.setup_status = 'in_progress'
  limit 1
-on conflict do nothing;
+on conflict (parent_type, parent_id, agent_key) do nothing;
 
 -- Seed: contact in paused/churned stage.
 insert into ai_insights (parent_type, parent_id, agent_key, severity, title, body)
@@ -46,4 +47,4 @@ select 'contact', c.id, 'winback_agent', 'recommendation',
   from contacts c
  where c.lifecycle_stage in ('paused','churned')
  limit 1
-on conflict do nothing;
+on conflict (parent_type, parent_id, agent_key) do nothing;

@@ -4,8 +4,12 @@
 -- 1. Add lead_cold to the contact_lifecycle_stage enum
 alter type contact_lifecycle_stage add value if not exists 'lead_cold';
 
--- 2. Re-seed saved_views for contacts: delete old, insert canonical set
-delete from saved_views where entity_type = 'contact';
+-- 2. Re-seed saved_views for contacts: delete old canonical (shared/system) rows,
+-- then insert the canonical set. Personal views (owner_user_id is not null)
+-- are preserved.
+delete from saved_views
+ where entity_type = 'contact'
+   and owner_user_id is null;
 
 insert into saved_views (entity_type, key, name, is_shared, sort_order, filter_jsonb, sort, view_mode)
 values

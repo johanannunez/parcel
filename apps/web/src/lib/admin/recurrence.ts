@@ -14,7 +14,7 @@ export function nextOccurrence(from: Date, rule: RecurrenceRule): Date | null {
     const end = new Date(rule.ends_on);
     if (from >= end) return null;
   }
-  const next = new Date(from);
+  let next = new Date(from);
   const step = Math.max(1, rule.interval);
 
   switch (rule.freq) {
@@ -38,12 +38,16 @@ export function nextOccurrence(from: Date, rule: RecurrenceRule): Date | null {
       }
       break;
     }
-    case 'monthly':
-      next.setMonth(next.getMonth() + step);
-      if (rule.by_month_day) {
-        next.setDate(Math.min(rule.by_month_day, daysInMonth(next)));
-      }
+    case 'monthly': {
+      // Build the next month at day 1 to avoid overflow (e.g. Jan 31 + 1 month
+      // would otherwise roll into March). Then clamp the day to the target
+      // month's length.
+      const targetDay = rule.by_month_day ?? from.getDate();
+      next = new Date(from.getFullYear(), from.getMonth() + step, 1,
+        from.getHours(), from.getMinutes(), from.getSeconds(), from.getMilliseconds());
+      next.setDate(Math.min(targetDay, daysInMonth(next)));
       break;
+    }
     case 'yearly':
       next.setFullYear(next.getFullYear() + step);
       break;
