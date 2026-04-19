@@ -1,7 +1,8 @@
 .shell {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   background: #F4F5F7;
 }
 
@@ -11,9 +12,24 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   min-height: 44px;
+}
+
+.tabsRail {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: relative;
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+}
+
+.tabsRail::-webkit-scrollbar {
+  display: none;
 }
 
 .boardNavRight {
@@ -21,7 +37,6 @@
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
-  flex-wrap: wrap;
   justify-content: flex-end;
 }
 
