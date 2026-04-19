@@ -16,6 +16,32 @@ const SYSTEM_PROMPTS: Record<Exclude<Mode, 'custom'>, string> = {
     'Continue writing where the user left off. Keep the same tone and style. Reply with the continuation ONLY (not the original), no preamble.',
 };
 
+const MAX_TEXT_CHARS = 10_000;
+const MAX_INSTRUCTION_CHARS = 500;
+
+// Simple in-memory sliding-window rate limiter keyed by user id.
+// 20 requests / 60 seconds per user. Fine for a single-region
+// Fluid Compute instance; replace with a shared store if we scale out.
+const RATE_WINDOW_MS = 60_000;
+const RATE_LIMIT = 20;
+const rateHits = new Map<string, number[]>();
+
+function rateLimitCheck(userId: string): { allowed: boolean; retryInSec: number } {
+  const now = Date.now();
+  const windowStart = now - RATE_WINDOW_MS;
+  const prior = rateHits.get(userId) ?? [];
+  const recent = prior.filter((t) => t > windowStart);
+  if (recent.length >= RATE_LIMIT) {
+    const oldest = recent[0];
+    const retryInSec = Math.max(1, Math.ceil((oldest + RATE_WINDOW_MS - now) / 1000));
+    rateHits.set(userId, recent);
+    return { allowed: false, retryInSec };
+  }
+  recent.push(now);
+  rateHits.set(userId, recent);
+  return { allowed: true, retryInSec: 0 };
+}
+
 export async function POST(req: Request) {
   const supabase = await createClient();
   const {
@@ -34,6 +60,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
+  const rate = rateLimitCheck(user.id);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      {
+        error: 'rate limit exceeded',
+        retry_in_seconds: rate.retryInSec,
+      },
+      { status: 429, headers: { 'Retry-After': String(rate.retryInSec) } },
+    );
+  }
+
   let body: { mode: Mode; text: string; instruction?: string };
   try {
     body = await req.json();
@@ -44,6 +81,21 @@ export async function POST(req: Request) {
   const { mode, text, instruction } = body;
   if (!mode || !text) {
     return NextResponse.json({ error: 'mode and text are required' }, { status: 400 });
+  }
+
+  if (typeof text !== 'string' || text.length > MAX_TEXT_CHARS) {
+    return NextResponse.json(
+      { error: `text must be a string under ${MAX_TEXT_CHARS} characters` },
+      { status: 400 },
+    );
+  }
+  if (instruction !== undefined) {
+    if (typeof instruction !== 'string' || instruction.length > MAX_INSTRUCTION_CHARS) {
+      return NextResponse.json(
+        { error: `instruction must be a string under ${MAX_INSTRUCTION_CHARS} characters` },
+        { status: 400 },
+      );
+    }
   }
 
   const systemPrompt =

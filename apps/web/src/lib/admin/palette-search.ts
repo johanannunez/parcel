@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck -- some admin tables (projects) not yet in generated Supabase types
 import { createClient } from "@/lib/supabase/server";
 
 export type PaletteScope =

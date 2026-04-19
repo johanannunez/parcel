@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
 import type { LifecycleStage } from './contact-types';
+import { requireAdminUser } from './auth';
 
 export type CreateContactInput = {
   fullName: string;
@@ -18,11 +18,7 @@ export type CreateContactInput = {
 export async function createContact(
   input: CreateContactInput,
 ): Promise<{ id: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('not authenticated');
+  const { supabase, user } = await requireAdminUser();
 
   const metadata = input.notes?.trim()
     ? { notes: input.notes.trim() }
@@ -53,7 +49,7 @@ export async function updateContactStage(
   contactId: string,
   stage: LifecycleStage,
 ): Promise<void> {
-  const supabase = await createClient();
+  const { supabase } = await requireAdminUser();
   const { error } = await supabase
     .from('contacts')
     .update({ lifecycle_stage: stage })
@@ -85,7 +81,7 @@ export async function updateContactField(
   field: UpdatableContactField,
   value: string | number | null,
 ): Promise<void> {
-  const supabase = await createClient();
+  const { supabase } = await requireAdminUser();
   const column = FIELD_TO_COLUMN[field];
 
   const normalized =

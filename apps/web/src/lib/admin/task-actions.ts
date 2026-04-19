@@ -1,12 +1,14 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck — tasks table not yet in generated Supabase types
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
 import type { ParentType, TaskStatus, TaskType } from './task-types';
 import type { RecurrenceRule } from './recurrence';
 import { nextOccurrence } from './recurrence';
+import { sanitizeHtml } from './sanitize-html';
+import { requireAdminUser } from './auth';
+import type { Database } from '@/types/supabase';
+
+type TaskUpdate = Database['public']['Tables']['tasks']['Update'];
 
 export type CreateTaskInput = {
   title: string;
@@ -24,9 +26,7 @@ export type CreateTaskInput = {
 };
 
 export async function createTask(input: CreateTaskInput): Promise<{ id: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('not authenticated');
+  const { supabase, user } = await requireAdminUser();
 
   // Compute next_spawn_at when creating a recurring task
   let next_spawn_at: string | null = null;
@@ -34,17 +34,18 @@ export async function createTask(input: CreateTaskInput): Promise<{ id: string }
     next_spawn_at = nextOccurrence(new Date(input.dueAt), input.recurrenceRule)?.toISOString() ?? null;
   }
 
+  const trimmedDescription = input.description?.trim();
   const row = {
     title: input.title.trim(),
-    description: input.description?.trim() || null,
+    description: trimmedDescription ? sanitizeHtml(trimmedDescription) : null,
     parent_type: input.parentType ?? null,
     parent_id: input.parentId ?? null,
     parent_task_id: input.parentTaskId ?? null,
     assignee_id: input.assigneeId ?? null,
     created_by: user.id,
     due_at: input.dueAt ?? null,
-    task_type: input.taskType ?? null,
-    tags: input.tags && input.tags.length > 0 ? input.tags : null,
+    task_type: input.taskType ?? undefined,
+    tags: input.tags && input.tags.length > 0 ? input.tags : undefined,
     estimated_minutes: input.estimatedMinutes ?? null,
     recurrence_rule: input.recurrenceRule ?? null,
     pre_notify_hours: input.preNotifyHours ?? null,
@@ -80,15 +81,18 @@ export async function updateTask(
     estimatedMinutes: number | null;
   }>,
 ): Promise<void> {
-  const supabase = await createClient();
-  const update: Record<string, unknown> = {};
+  const { supabase } = await requireAdminUser();
+  const update: TaskUpdate = {};
   if (patch.title !== undefined) update.title = patch.title;
-  if (patch.description !== undefined) update.description = patch.description;
+  if (patch.description !== undefined) {
+    update.description =
+      patch.description === null ? null : sanitizeHtml(patch.description);
+  }
   if (patch.status !== undefined) update.status = patch.status;
   if (patch.assigneeId !== undefined) update.assignee_id = patch.assigneeId;
   if (patch.dueAt !== undefined) update.due_at = patch.dueAt;
-  if (patch.taskType !== undefined) update.task_type = patch.taskType;
-  if (patch.tags !== undefined) update.tags = patch.tags && patch.tags.length > 0 ? patch.tags : null;
+  if (patch.taskType !== undefined && patch.taskType !== null) update.task_type = patch.taskType;
+  if (patch.tags !== undefined) update.tags = patch.tags && patch.tags.length > 0 ? patch.tags : [];
   if (patch.estimatedMinutes !== undefined) update.estimated_minutes = patch.estimatedMinutes;
 
   const { error } = await supabase.from('tasks').update(update).eq('id', id);
@@ -97,7 +101,7 @@ export async function updateTask(
 }
 
 export async function completeTask(id: string): Promise<void> {
-  const supabase = await createClient();
+  const { supabase } = await requireAdminUser();
 
   // Fetch the task first so we know if it's recurring
   const { data: task, error: fetchError } = await supabase
@@ -116,7 +120,7 @@ export async function completeTask(id: string): Promise<void> {
 
   // Spawn next occurrence if recurring
   if (task.recurrence_rule && task.due_at) {
-    const rule = task.recurrence_rule as RecurrenceRule;
+    const rule = task.recurrence_rule as unknown as RecurrenceRule;
     const next = nextOccurrence(new Date(task.due_at), rule);
     if (next) {
       const nextDue = next.toISOString();
@@ -153,7 +157,7 @@ export async function uncompleteTask(id: string): Promise<void> {
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const supabase = await createClient();
+  const { supabase } = await requireAdminUser();
   const { error } = await supabase.from('tasks').delete().eq('id', id);
   if (error) throw error;
   revalidatePath('/admin/tasks');
