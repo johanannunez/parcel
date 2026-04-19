@@ -52,17 +52,6 @@ export function OverviewLead({ data }: { data: OwnerDetailData }) {
       </div>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionHead}>Next action</h2>
-        <p className={styles.sectionBody}>
-          The top open task for this contact will show here once the Tasks tab
-          is wired in. Click into Tasks to see all open items.
-        </p>
-        <Link href="?tab=tasks" className={styles.cta}>
-          Open tasks &rarr;
-        </Link>
-      </section>
-
-      <section className={styles.section}>
         <h2 className={styles.sectionHead}>Potential properties</h2>
         {propertyCount === 0 ? (
           <p className={styles.sectionBody}>No properties linked yet.</p>

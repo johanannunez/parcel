@@ -20,15 +20,12 @@ type PropertyRow = {
   created_at: string;
 };
 
-type TabKey = "overview" | "tasks" | "maintenance" | "activity" | "files" | "settings";
-const TAB_ORDER: TabKey[] = ["overview", "tasks", "maintenance", "activity", "files", "settings"];
+type TabKey = "overview" | "tasks" | "maintenance";
+const TAB_ORDER: TabKey[] = ["overview", "tasks", "maintenance"];
 const TAB_LABEL: Record<TabKey, string> = {
   overview: "Overview",
   tasks: "Tasks",
   maintenance: "Maintenance",
-  activity: "Activity",
-  files: "Files",
-  settings: "Settings",
 };
 
 export function PropertyDetailShell({
@@ -68,7 +65,7 @@ export function PropertyDetailShell({
   const title = property.address_line1 ?? label ?? "Property";
   const subtitle = [property.city, property.state].filter(Boolean).join(", ");
 
-  const showRail = activeTab !== "settings";
+  const showRail = true;
 
   return (
     <div className={styles.root}>

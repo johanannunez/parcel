@@ -27,8 +27,7 @@ export function OverviewDormant({ data }: { data: OwnerDetailData }) {
         <div className={styles.label}>Relationship</div>
         <div className={styles.title}>Paused {pausedLabel}</div>
         <p className={styles.body}>
-          Consider a quarterly check-in. 41% of paused owners reactivate within
-          6 months when they hear from their account manager first.
+          Consider a quarterly check-in to keep the relationship warm.
         </p>
       </section>
 

@@ -10,8 +10,8 @@ import { PropertyDetailShell } from "./PropertyDetailShell";
 export const metadata: Metadata = { title: "Property Detail" };
 export const dynamic = "force-dynamic";
 
-type TabKey = "overview" | "tasks" | "maintenance" | "activity" | "files" | "settings";
-const KNOWN_TABS: readonly TabKey[] = ["overview", "tasks", "maintenance", "activity", "files", "settings"];
+type TabKey = "overview" | "tasks" | "maintenance";
+const KNOWN_TABS: readonly TabKey[] = ["overview", "tasks", "maintenance"];
 
 export default async function PropertyDetailPage({
   params,
@@ -39,11 +39,8 @@ export default async function PropertyDetailPage({
 
   const label = propertyLabel(property);
 
-  // Fetch initial rail events server-side (skip on settings tab).
-  const initialRailEvents =
-    tab !== "settings"
-      ? await fetchRecentActivity("property", id, 8)
-      : [];
+  // Fetch initial rail events server-side.
+  const initialRailEvents = await fetchRecentActivity("property", id, 8);
 
   return (
     <PropertyDetailShell
@@ -59,29 +56,19 @@ export default async function PropertyDetailPage({
         <div style={{ padding: "24px" }}>
           <MaintenanceTemplatesPanelServer propertyId={property.id} />
         </div>
-      ) : tab === "activity" ? (
-        <div className="overviewPlaceholder" style={{ padding: "40px 32px", background: "#fff", border: "1px solid #E6ECF2", borderRadius: 14 }}>
-          <p style={{ fontSize: 13.5, color: "#647689", lineHeight: 1.6, margin: 0 }}>
-            Activity feed coming soon.
-          </p>
-        </div>
-      ) : tab === "files" ? (
-        <div className="overviewPlaceholder" style={{ padding: "40px 32px", background: "#fff", border: "1px solid #E6ECF2", borderRadius: 14 }}>
-          <p style={{ fontSize: 13.5, color: "#647689", lineHeight: 1.6, margin: 0 }}>
-            Files coming soon.
-          </p>
-        </div>
-      ) : tab === "settings" ? (
-        <div style={{ padding: "40px 32px", background: "#fff", border: "1px solid #E6ECF2", borderRadius: 14 }}>
-          <p style={{ fontSize: 13.5, color: "#647689", lineHeight: 1.6, margin: 0 }}>
-            Settings coming soon.
-          </p>
-        </div>
       ) : (
-        <div style={{ padding: "40px 32px", background: "#fff", border: "1px solid #E6ECF2", borderRadius: 14 }}>
-          <p style={{ fontSize: 13.5, color: "#647689", lineHeight: 1.6, margin: 0 }}>
-            Full property detail view is being built. The right rail is live now.
-          </p>
+        <div
+          style={{
+            padding: "32px",
+            background: "#F7FAFC",
+            border: "1px dashed #D4DEE8",
+            borderRadius: 14,
+            color: "#647689",
+            fontSize: 13.5,
+            lineHeight: 1.6,
+          }}
+        >
+          Detail view in progress. Recent activity is shown on the right.
         </div>
       )}
     </PropertyDetailShell>

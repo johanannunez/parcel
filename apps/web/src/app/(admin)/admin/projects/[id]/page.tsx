@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation';
 import { fetchProjectDetail } from '@/lib/admin/project-detail';
 import { ProjectDetailShell } from './ProjectDetailShell';
 import { OverviewTab } from './OverviewTab';
-import { ActivityTab } from './ActivityTab';
 import { FilesTab } from './FilesTab';
 import { SettingsTab } from './SettingsTab';
 import { TasksTab } from './TasksTab';
@@ -21,8 +20,6 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
   let body;
   if (tab === 'tasks') {
     body = <TasksTab projectId={project.id} taskCount={project.taskCount} taskDoneCount={project.taskDoneCount} />;
-  } else if (tab === 'activity') {
-    body = <ActivityTab projectId={project.id} />;
   } else if (tab === 'files') {
     body = <FilesTab projectId={project.id} />;
   } else if (tab === 'settings') {

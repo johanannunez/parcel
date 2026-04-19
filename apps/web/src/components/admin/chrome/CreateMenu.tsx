@@ -4,12 +4,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   CheckSquare,
-  EnvelopeSimple,
-  CalendarBlank,
-  NotePencil,
-  House,
-  CurrencyDollar,
-  UserCircle,
   AddressBook,
   Kanban,
 } from "@phosphor-icons/react";
@@ -28,16 +22,10 @@ export type CreateKind =
 
 const CONTEXTUAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
   { kind: "task",     label: "Task",     icon: <CheckSquare size={13} weight="duotone" />,     kbd: "T" },
-  { kind: "email",    label: "Email",    icon: <EnvelopeSimple size={13} weight="duotone" />,  kbd: "E" },
-  { kind: "meeting",  label: "Meeting",  icon: <CalendarBlank size={13} weight="duotone" />,   kbd: "M" },
-  { kind: "note",     label: "Note",     icon: <NotePencil size={13} weight="duotone" />,      kbd: "N" },
-  { kind: "property", label: "Property", icon: <House size={13} weight="duotone" />,           kbd: "P" },
-  { kind: "invoice",  label: "Invoice",  icon: <CurrencyDollar size={13} weight="duotone" />,  kbd: "I" },
 ];
 
 const GLOBAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
   { kind: "contact", label: "Contact", icon: <AddressBook size={13} weight="duotone" />, kbd: "C" },
-  { kind: "owner",   label: "Owner",   icon: <UserCircle size={13} weight="duotone" />,  kbd: "O" },
   { kind: "project", label: "Project", icon: <Kanban size={13} weight="duotone" />,      kbd: "J" },
 ];
 
@@ -101,8 +89,7 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
   useEffect(() => {
     if (!open) return;
     const keyMap: Record<string, CreateKind> = {
-      t: "task", e: "email", m: "meeting", n: "note",
-      p: "property", i: "invoice", o: "owner", c: "contact", j: "project",
+      t: "task", c: "contact", j: "project",
     };
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {

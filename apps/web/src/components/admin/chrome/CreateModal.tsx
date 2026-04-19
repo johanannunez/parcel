@@ -142,9 +142,8 @@ export function CreateModal() {
             <ContactForm onClose={() => setKind(null)} />
           ) : (
             <div className={styles.placeholder}>
-              <strong>{KIND_TITLES[kind]}</strong>
-              Form coming in the next plan — this chrome is ready. When the form for &ldquo;{kind}&rdquo;
-              ships, it will open here with the scope chip already filled in.
+              <strong>Not yet available</strong>
+              This create kind is not wired up yet.
             </div>
           )}
         </div>

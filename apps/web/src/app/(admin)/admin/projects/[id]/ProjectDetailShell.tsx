@@ -11,13 +11,12 @@ import {
 import type { ReactNode } from 'react';
 import styles from './ProjectDetailShell.module.css';
 
-const TABS = ['overview', 'tasks', 'activity', 'files', 'settings'] as const;
+const TABS = ['overview', 'tasks', 'files', 'settings'] as const;
 type Tab = typeof TABS[number];
 
 const TAB_LABEL: Record<Tab, string> = {
   overview: 'Overview',
   tasks: 'Tasks',
-  activity: 'Activity',
   files: 'Files',
   settings: 'Settings',
 };

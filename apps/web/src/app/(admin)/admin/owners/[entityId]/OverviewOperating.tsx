@@ -116,12 +116,12 @@ export function OverviewOperating({ data }: { data: OwnerDetailData }) {
           <div className={styles.healthMetric}>
             <div className={styles.healthMetricLabel}>Next touchpoint</div>
             <div className={styles.healthMetricValue}>None</div>
-            <div className={styles.healthMetricSub}>Nothing scheduled</div>
+            <div className={styles.healthMetricSub}>Coming soon</div>
           </div>
           <div className={styles.healthMetric}>
             <div className={styles.healthMetricLabel}>Avg response time</div>
             <div className={styles.healthMetricValue}>N/A</div>
-            <div className={styles.healthMetricSub}>Not enough data</div>
+            <div className={styles.healthMetricSub}>Coming soon</div>
           </div>
         </div>
       </section>

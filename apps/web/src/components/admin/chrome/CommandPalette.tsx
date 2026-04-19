@@ -7,11 +7,8 @@ import {
   MagnifyingGlass,
   X,
   CheckSquare,
-  EnvelopeSimple,
   CalendarBlank,
-  NotePencil,
   House,
-  CurrencyDollar,
   UserCircle,
   AddressBook,
   Kanban,
@@ -48,13 +45,7 @@ type CreateItem = {
 
 const CREATE_ITEMS: CreateItem[] = [
   { id: "c-task",     label: "Task",     icon: CheckSquare,     kbd: "T", createKind: "task" },
-  { id: "c-email",    label: "Email",    icon: EnvelopeSimple,  kbd: "E", createKind: "email" },
-  { id: "c-meeting",  label: "Meeting",  icon: CalendarBlank,   kbd: "M", createKind: "meeting" },
-  { id: "c-note",     label: "Note",     icon: NotePencil,      kbd: "N", createKind: "note" },
-  { id: "c-property", label: "Property", icon: House,           kbd: "P", createKind: "property" },
-  { id: "c-invoice",  label: "Invoice",  icon: CurrencyDollar,  kbd: "I", createKind: "invoice" },
   { id: "c-contact",  label: "Contact",  icon: AddressBook,     kbd: "C", createKind: "contact" },
-  { id: "c-owner",    label: "Owner",    icon: UserCircle,      kbd: "O", createKind: "owner" },
   { id: "c-project",  label: "Project",  icon: Kanban,          kbd: "J", createKind: "project" },
 ];
 
