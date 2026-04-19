@@ -39,3 +39,22 @@ export function isLeadStage(stage: LifecycleStage): boolean {
 export function isActiveStage(stage: LifecycleStage): boolean {
   return GROUP_MAP[stage] === 'active' || GROUP_MAP[stage] === 'onboarding';
 }
+
+export const STAGE_COLOR: Record<StageGroup, string> = {
+  lead: '#02AAEB',
+  onboarding: '#8B5CF6',
+  active: '#10B981',
+  cold: '#0369A1',
+  dormant: '#6B7280',
+};
+
+export function stageColor(stage: LifecycleStage): string {
+  return STAGE_COLOR[GROUP_MAP[stage]];
+}
+
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}

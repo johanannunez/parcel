@@ -11,13 +11,18 @@ import Map, {
 } from 'react-map-gl/mapbox';
 import Supercluster from 'supercluster';
 import { House, ListBullets, X } from '@phosphor-icons/react';
-
-type BBox = [number, number, number, number];
 import type { ContactProperty, ContactRow } from '@/lib/admin/contact-types';
-import { stageLabel, stageGroup } from '@/lib/admin/lifecycle-stage';
+import {
+  STAGE_COLOR,
+  initials,
+  stageGroup,
+  stageLabel,
+} from '@/lib/admin/lifecycle-stage';
 import { NotMappedModal } from './NotMappedModal';
 import styles from './ContactsMapView.module.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
+
+type BBox = [number, number, number, number];
 
 type Props = {
   rows: ContactRow[];
@@ -42,26 +47,11 @@ type PinFeature = {
   geometry: { type: 'Point'; coordinates: [number, number] };
 };
 
-const STAGE_COLOR: Record<ReturnType<typeof stageGroup>, string> = {
-  lead: '#02AAEB',
-  onboarding: '#8B5CF6',
-  active: '#10B981',
-  cold: '#0369A1',
-  dormant: '#6B7280',
-};
-
 const DEFAULT_VIEWPORT = {
   latitude: 39.5,
   longitude: -98.35,
   zoom: 3.5,
 };
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 export function ContactsMapView({ rows }: Props) {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;

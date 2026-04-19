@@ -5,28 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { X } from '@phosphor-icons/react';
 import type { ContactRow } from '@/lib/admin/contact-types';
-import { stageGroup, stageLabel } from '@/lib/admin/lifecycle-stage';
+import { initials, stageColor, stageLabel } from '@/lib/admin/lifecycle-stage';
 import styles from './NotMappedModal.module.css';
-
-const STAGE_COLOR: Record<ReturnType<typeof stageGroup>, string> = {
-  lead: '#02AAEB',
-  onboarding: '#8B5CF6',
-  active: '#10B981',
-  cold: '#0369A1',
-  dormant: '#6B7280',
-};
 
 type Props = {
   rows: ContactRow[];
   onClose: () => void;
 };
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 export function NotMappedModal({ rows, onClose }: Props) {
   useEffect(() => {
@@ -66,7 +51,7 @@ export function NotMappedModal({ rows, onClose }: Props) {
 
         <div className={styles.list}>
           {rows.map((r) => {
-            const color = STAGE_COLOR[stageGroup(r.lifecycleStage)];
+            const color = stageColor(r.lifecycleStage);
             return (
               <Link
                 key={r.id}
