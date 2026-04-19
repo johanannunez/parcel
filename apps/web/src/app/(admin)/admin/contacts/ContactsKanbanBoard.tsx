@@ -82,8 +82,14 @@ export function ContactsKanbanBoard({ columns, boardKey, enableDrag, onCardMove 
               </div>
             );
           }
+          const bodyBg = BODY_BG[col.stage.color] ?? BODY_BG.gray;
+          const borderC = BORDER_C[col.stage.color] ?? BORDER_C.gray;
           return (
-            <div key={col.stage.key} className={styles.col}>
+            <div
+              key={col.stage.key}
+              className={styles.col}
+              style={{ background: bodyBg, border: `1px solid ${borderC}` }}
+            >
               <ColumnBody
                 col={col}
                 enableDrag={enableDrag}
@@ -107,7 +113,7 @@ export function ContactsKanbanBoard({ columns, boardKey, enableDrag, onCardMove 
   );
 }
 
-// ── Column header gradients (mirrors StatusColumn) ─────────────────────────
+// ── Column palette (mirrors StatusColumn) ──────────────────────────────────
 
 const HEAD_BG: Record<string, string> = {
   blue:   'linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)',
@@ -116,6 +122,24 @@ const HEAD_BG: Record<string, string> = {
   amber:  'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
   red:    'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
   gray:   'linear-gradient(135deg, #64748B 0%, #334155 100%)',
+};
+
+const BODY_BG: Record<string, string> = {
+  blue:   'rgba(2, 170, 235, 0.05)',
+  violet: 'rgba(139, 92, 246, 0.05)',
+  green:  'rgba(16, 185, 129, 0.05)',
+  amber:  'rgba(245, 158, 11, 0.06)',
+  red:    'rgba(239, 68, 68, 0.05)',
+  gray:   'rgba(100, 116, 139, 0.06)',
+};
+
+const BORDER_C: Record<string, string> = {
+  blue:   'rgba(2, 170, 235, 0.22)',
+  violet: 'rgba(139, 92, 246, 0.22)',
+  green:  'rgba(16, 185, 129, 0.22)',
+  amber:  'rgba(245, 158, 11, 0.28)',
+  red:    'rgba(239, 68, 68, 0.26)',
+  gray:   'rgba(100, 116, 139, 0.20)',
 };
 
 // ── Collapsed rail ─────────────────────────────────────────────────────────
@@ -154,10 +178,10 @@ function ColumnBody({
   const { setNodeRef, isOver } = useDroppable({ id: col.stage.key });
 
   return (
-    <div ref={enableDrag ? setNodeRef : undefined} className={columnStyles.col} style={{ flex: 1 }}>
-      <header className={columnStyles.head} style={{ background: bg, borderRadius: '6px 6px 0 0' }}>
+    <div ref={enableDrag ? setNodeRef : undefined} className={columnStyles.col} style={{ gap: 0 }}>
+      <header className={columnStyles.head} style={{ background: bg, borderRadius: '8px 8px 0 0', padding: '10px 14px 12px' }}>
         <div className={columnStyles.topRow}>
-          <span className={columnStyles.name}>{col.stage.label}</span>
+          <span className={columnStyles.name} style={{ fontSize: 14, fontWeight: 700, letterSpacing: 0.1 }}>{col.stage.label}</span>
           <span className={columnStyles.headActions}>
             <span className={columnStyles.count}>{col.cards.length}</span>
             <button
@@ -181,7 +205,6 @@ function ColumnBody({
 
       <div
         className={`${styles.cards}${isOver && enableDrag ? ` ${styles.cardsOver}` : ''}`}
-        style={{ flex: 1 }}
       >
         {col.cards.map((card) =>
           enableDrag ? (

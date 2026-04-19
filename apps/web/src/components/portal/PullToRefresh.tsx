@@ -98,7 +98,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const showIndicator = pullDistance > 10 || refreshing;
 
   return (
-    <div ref={containerRef} className="relative min-h-full">
+    <div ref={containerRef} className="relative flex min-h-full flex-col">
       {/* Pull indicator */}
       {showIndicator && (
         <div
@@ -137,7 +137,10 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       {/* Content with pull offset */}
       <div
         style={{
-          minHeight: '100%',
+          flex: '1 1 auto',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
           transform: pullDistance > 0 ? `translateY(${pullDistance}px)` : "none",
           // eslint-disable-next-line react-hooks/refs
           transition: pulling.current ? "none" : "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",

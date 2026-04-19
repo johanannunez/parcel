@@ -36,7 +36,9 @@ export default async function ContactsLayout({ children }: { children: ReactNode
           />
           <ContactsViewSwitcher />
           <div className={styles.boardNav}>
-            <SavedViewsTabs views={views} />
+            <div className={styles.tabsRail}>
+              <SavedViewsTabs views={views} />
+            </div>
             <div className={styles.boardNavRight}>
               <ContactFilterBar
                 filterOptions={filterOptions}
