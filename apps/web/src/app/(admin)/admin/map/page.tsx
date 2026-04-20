@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import type { LifecycleStage } from '@/lib/admin/contact-types';
 import { AdminMapView } from './AdminMapView';
 
@@ -35,7 +35,7 @@ export type UnmappedOwner = {
 };
 
 export default async function AdminMapPage() {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const [mappedOwnersResult, unmappedOwnersResult, propertiesResult] = await Promise.all([
     supabase
