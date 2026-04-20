@@ -9,6 +9,7 @@ import {
   ChatCircle,
   List,
   Buildings,
+  MapTrifold,
   UserSwitch,
   ListChecks,
   BookOpenText,
@@ -70,6 +71,7 @@ const sheetItems: SheetNavItem[] = [
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { href: "/admin/contacts", label: "Contacts", icon: <UsersThree size={19} weight="duotone" />, matchPrefix: "/admin/contacts" },
+  { href: "/admin/map", label: "Map", icon: <MapTrifold size={19} weight="duotone" />, matchPrefix: "/admin/map" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
