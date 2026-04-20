@@ -389,6 +389,8 @@ export type Database = {
           email: string | null
           estimated_mrr: number | null
           full_name: string
+          home_lat: number | null
+          home_lng: number | null
           id: string
           last_activity_at: string | null
           lifecycle_stage: Database["public"]["Enums"]["contact_lifecycle_stage"]
@@ -409,6 +411,8 @@ export type Database = {
           email?: string | null
           estimated_mrr?: number | null
           full_name: string
+          home_lat?: number | null
+          home_lng?: number | null
           id?: string
           last_activity_at?: string | null
           lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
@@ -429,6 +433,8 @@ export type Database = {
           email?: string | null
           estimated_mrr?: number | null
           full_name?: string
+          home_lat?: number | null
+          home_lng?: number | null
           id?: string
           last_activity_at?: string | null
           lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
