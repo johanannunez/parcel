@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { geocodeAddress } from "@/lib/geocode";
 import { logTimelineEvent } from "@/lib/timeline";
 import { recordVersion } from "@/lib/wizard/version-history";
 import type { Json } from "@/types/supabase";
@@ -88,6 +89,22 @@ export async function saveAccount(
     .eq("id", user.id);
 
   if (error) return { error: error.message };
+
+  // Geocode owner home address and store on contacts record.
+  // Fire-and-forget: a geocoding failure must never break onboarding.
+  (async () => {
+    try {
+      const point = await geocodeAddress(v.street, v.city, v.state, v.zip);
+      if (!point) return;
+      const svcForGeo = createServiceClient();
+      await svcForGeo
+        .from('contacts')
+        .update({ home_lat: point.lat, home_lng: point.lng })
+        .eq('profile_id', user.id);
+    } catch {
+      // Intentionally swallowed — geocoding is best-effort.
+    }
+  })();
 
   // Log activity (fire-and-forget)
   const svc = createServiceClient();

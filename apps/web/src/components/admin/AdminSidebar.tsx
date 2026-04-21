@@ -14,6 +14,7 @@ import {
   ListChecks,
   BookOpenText,
   Kanban,
+  MapTrifold,
   MagnifyingGlass,
   List as HamburgerIcon,
 } from "@phosphor-icons/react";
@@ -41,6 +42,7 @@ const navItems: NavItem[] = [
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { href: "/admin/contacts", label: "Contacts", icon: <UsersThree size={18} weight="duotone" />, matchPrefix: "/admin/contacts" },
+  { href: "/admin/map", label: "Map", icon: <MapTrifold size={18} weight="duotone" />, matchPrefix: "/admin/map" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
   { href: "/admin/projects", label: "Projects", icon: <Kanban size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
@@ -444,6 +446,7 @@ const adminRailItems: Array<{
   { href: "/admin/inbox", icon: <ChatCircle size={20} weight="duotone" />, label: "Inbox", matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
   { href: "/admin/contacts", icon: <UsersThree size={20} weight="duotone" />, label: "Contacts", matchPrefix: "/admin/contacts" },
+  { href: "/admin/map", icon: <MapTrifold size={20} weight="duotone" />, label: "Map", matchPrefix: "/admin/map" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
   { href: "/admin/projects", icon: <Kanban size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
