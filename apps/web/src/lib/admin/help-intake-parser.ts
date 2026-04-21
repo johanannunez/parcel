@@ -20,6 +20,11 @@ function inlineMarkdown(text: string): string {
     .replace(/\*(.+?)\*/g, "<em>$1</em>");
 }
 
+// Escape HTML entities first, then apply inline markdown formatting.
+function processInline(text: string): string {
+  return inlineMarkdown(escapeHtml(text));
+}
+
 function markdownToHtml(markdown: string): string {
   const lines = markdown.split("\n");
   const out: string[] = [];
@@ -30,21 +35,21 @@ function markdownToHtml(markdown: string): string {
 
     if (t.startsWith("### ")) {
       if (inList) { out.push("</ul>"); inList = false; }
-      out.push(`<h3>${escapeHtml(t.slice(4))}</h3>`);
+      out.push(`<h3>${processInline(t.slice(4))}</h3>`);
     } else if (t.startsWith("## ")) {
       if (inList) { out.push("</ul>"); inList = false; }
-      out.push(`<h2>${escapeHtml(t.slice(3))}</h2>`);
+      out.push(`<h2>${processInline(t.slice(3))}</h2>`);
     } else if (t.startsWith("# ")) {
       if (inList) { out.push("</ul>"); inList = false; }
-      out.push(`<h1>${escapeHtml(t.slice(2))}</h1>`);
+      out.push(`<h1>${processInline(t.slice(2))}</h1>`);
     } else if (t.startsWith("- ")) {
       if (!inList) { out.push("<ul>"); inList = true; }
-      out.push(`<li>${inlineMarkdown(t.slice(2))}</li>`);
+      out.push(`<li>${processInline(t.slice(2))}</li>`);
     } else if (t === "") {
       if (inList) { out.push("</ul>"); inList = false; }
     } else {
       if (inList) { out.push("</ul>"); inList = false; }
-      out.push(`<p>${inlineMarkdown(t)}</p>`);
+      out.push(`<p>${processInline(t)}</p>`);
     }
   }
 
@@ -64,12 +69,12 @@ export function parseAlcoveDraft(raw: string): ParsedDraft | null {
 
   if (!titleMatch || !summaryMatch) return null;
 
-  // Extract CONTENT block: everything between "CONTENT:\n" and the next all-caps label
-  const contentStart = text.indexOf("\nCONTENT:\n");
+  // Handle CONTENT: at position 0 or after a newline.
+  const contentStart = text.search(/(?:^|\n)CONTENT:\n/);
+  const contentHeaderLen =
+    contentStart === 0 ? "CONTENT:\n".length : "\nCONTENT:\n".length;
   const afterContent =
-    contentStart !== -1
-      ? text.slice(contentStart + "\nCONTENT:\n".length)
-      : "";
+    contentStart !== -1 ? text.slice(contentStart + contentHeaderLen) : "";
   const nextLabelMatch = afterContent.match(/\n[A-Z][A-Z\s]+:/);
   const rawContent = nextLabelMatch
     ? afterContent.slice(0, nextLabelMatch.index).trim()

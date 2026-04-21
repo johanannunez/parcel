@@ -37,7 +37,7 @@ export function IntakePage({ categories }: { categories: Category[] }) {
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [readTime, setReadTime] = useState(5);
+  const [readTime, setReadTime] = useState<number | "">(5);
 
   const [isPending, startTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export function IntakePage({ categories }: { categories: Category[] }) {
       tagList.push("source:ai-intake");
     }
     fd.set("tags", tagList.join(", "));
-    fd.set("read_time_minutes", String(readTime));
+    fd.set("read_time_minutes", String(readTime !== "" ? readTime : 5));
     fd.set("status", status);
     return fd;
   }
@@ -264,12 +264,20 @@ READ TIME: 3
             min={1}
             max={60}
             value={readTime}
-            onChange={(e) => setReadTime(parseInt(e.target.value, 10) || 5)}
+            onChange={(e) =>
+              setReadTime(e.target.value === "" ? "" : parseInt(e.target.value, 10))
+            }
             className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
             style={fieldStyle}
           />
         </div>
       </div>
+
+      {categories.length === 0 && (
+        <p className="text-sm" style={{ color: "var(--color-error, #dc2626)" }}>
+          No help categories exist yet. Create at least one category before publishing an article.
+        </p>
+      )}
 
       {saveError && (
         <p className="text-sm" style={{ color: "var(--color-error, #dc2626)" }}>
