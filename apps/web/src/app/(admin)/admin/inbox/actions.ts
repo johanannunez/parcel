@@ -235,10 +235,12 @@ export async function sendBroadcast(args: {
 
   // If email delivery, send to all owners
   if (args.deliveryMethod === "portal_email") {
-    const { data: owners } = await svc
+    const { data: owners, error: ownersErr } = await svc
       .from("profiles")
       .select("email, full_name")
       .eq("role", "owner");
+
+    if (ownersErr) return { error: `Failed to fetch owners: ${ownersErr.message}` };
 
     if (owners?.length) {
       const emailPromises = owners.map((owner) => {
@@ -294,12 +296,13 @@ export async function sendBroadcast(args: {
 /**
  * Get the count of owners (for broadcast preview).
  */
-export async function getOwnerCount() {
+export async function getOwnerCount(): Promise<number | null> {
   const svc = createServiceClient();
-  const { count } = await svc
+  const { count, error } = await svc
     .from("profiles")
     .select("id", { count: "exact", head: true })
     .eq("role", "owner");
+  if (error) return null;
   return count ?? 0;
 }
 

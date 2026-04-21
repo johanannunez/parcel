@@ -81,7 +81,7 @@ export function StatusBoardClient({ viewKey, rows, insightsMap }: Props) {
     });
   }
 
-  const enableDrag = viewKey !== 'onboarding' && viewKey !== 'active-owners';
+  const enableDrag = viewKey !== 'onboarding' && viewKey !== 'active-owners' && viewKey !== 'offboarding';
 
   return (
     <ContactsKanbanBoard

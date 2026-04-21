@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import type { LifecycleStage } from './contact-types';
 import { requireAdminUser } from './auth';
 
+type DbLifecycleStage = LifecycleStage;
+
 export type CreateContactInput = {
   fullName: string;
   email?: string | null;
@@ -33,7 +35,7 @@ export async function createContact(
       company_name: input.companyName?.trim() || null,
       source: input.source?.trim() || null,
       estimated_mrr: input.estimatedMrr ?? null,
-      lifecycle_stage: input.lifecycleStage ?? 'lead_new',
+      lifecycle_stage: (input.lifecycleStage ?? 'lead_new') as DbLifecycleStage,
       metadata,
       assigned_to: user.id,
     })
@@ -52,7 +54,7 @@ export async function updateContactStage(
   const { supabase } = await requireAdminUser();
   const { error } = await supabase
     .from('contacts')
-    .update({ lifecycle_stage: stage })
+    .update({ lifecycle_stage: stage as DbLifecycleStage })
     .eq('id', contactId);
   if (error) throw error;
   revalidatePath('/admin/contacts');

@@ -7,6 +7,7 @@ import type {
   LifecycleStage,
 } from './contact-types';
 import { CONTACT_VIEW_MODES } from './contact-types';
+type DbLifecycleStage = LifecycleStage;
 
 type FetchOptions = {
   viewKey?: string;
@@ -133,7 +134,7 @@ export async function fetchContactSavedViewsWithCounts(): Promise<ContactSavedVi
     return supabase
       .from('contacts')
       .select('*', { count: 'exact', head: true })
-      .in('lifecycle_stage', v.filterStages)
+      .in('lifecycle_stage', v.filterStages as DbLifecycleStage[])
       .then((r) => r.count ?? 0);
   });
 
@@ -177,7 +178,7 @@ export async function fetchAdminContactsList({
     );
 
   if (activeView.filterStages.length > 0) {
-    query = query.in('lifecycle_stage', activeView.filterStages);
+    query = query.in('lifecycle_stage', activeView.filterStages as DbLifecycleStage[]);
   }
 
   if (activeView.lastActivityOlderThanDays) {

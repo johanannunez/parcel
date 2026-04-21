@@ -116,7 +116,7 @@ export function AdminMessagesShell({
   const [broadcastBody, setBroadcastBody] = useState("");
   const [broadcastDelivery, setBroadcastDelivery] = useState<"portal" | "portal_email">("portal");
   const [broadcastSending, setBroadcastSending] = useState(false);
-  const [ownerCount, setOwnerCount] = useState(0);
+  const [ownerCount, setOwnerCount] = useState<number | null>(0);
 
   // Filter conversations
   const filtered = initialConversations.filter((c) => {
@@ -743,8 +743,11 @@ export function AdminMessagesShell({
               className="mt-3 rounded-lg px-3 py-2 text-xs"
               style={{ backgroundColor: "var(--color-warm-gray-50)", color: "var(--color-text-secondary)" }}
             >
-              This will be sent to <strong style={{ color: "var(--color-text-primary)" }}>{ownerCount}</strong> owner{ownerCount !== 1 ? "s" : ""}
-              {broadcastDelivery === "portal_email" ? " (portal + email)" : " (portal only)"}.
+              {ownerCount === null
+                ? "Could not load owner count."
+                : <>This will be sent to <strong style={{ color: "var(--color-text-primary)" }}>{ownerCount}</strong> owner{ownerCount !== 1 ? "s" : ""}
+              {broadcastDelivery === "portal_email" ? " (portal + email)" : " (portal only)"}.</>
+              }
             </div>
 
             <div className="mt-4 flex justify-end gap-3">

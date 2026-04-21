@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo } from 'react';
+import { Phone, House } from '@phosphor-icons/react';
 import type { ContactRow } from '@/lib/admin/contact-types';
 import { useContactsFilters, matchesAssigneeFilter } from './ContactsFiltersProvider';
 import styles from './ActiveOwnersGrid.module.css';
@@ -25,7 +26,7 @@ function daysSince(iso: string | null): number | null {
 }
 
 function relativeTime(days: number | null): string {
-  if (days === null) return '—';
+  if (days === null) return '\u2014';
   if (days < 1) return 'today';
   if (days === 1) return '1d';
   if (days < 30) return `${days}d`;
@@ -42,8 +43,8 @@ function healthFor(days: number | null): HealthTone {
 
 const HEALTH_COPY: Record<HealthTone, string> = {
   healthy: 'Healthy',
-  attention: 'Needs attention',
-  risk: 'At risk',
+  attention: 'Needs Attention',
+  risk: 'At Risk',
 };
 
 export function ActiveOwnersGrid({ rows }: Props) {
@@ -64,7 +65,6 @@ export function ActiveOwnersGrid({ rows }: Props) {
     return <div className={styles.empty}>No active owners match the current filters.</div>;
   }
 
-  // Bucket for summary + optional sub-tabs later.
   const buckets: Record<HealthTone, number> = { healthy: 0, attention: 0, risk: 0 };
   for (const r of filteredRows) {
     buckets[healthFor(daysSince(r.lastActivityAt))]++;
@@ -88,7 +88,8 @@ export function ActiveOwnersGrid({ rows }: Props) {
         </span>
         <span className={styles.summarySep} aria-hidden />
         <span className={styles.summaryItem}>
-          <strong>{totalProperties}</strong> <span className={styles.muted}>properties under management</span>
+          <strong>{totalProperties}</strong>{' '}
+          <span className={styles.muted}>properties under management</span>
         </span>
       </div>
 
@@ -99,61 +100,102 @@ export function ActiveOwnersGrid({ rows }: Props) {
           const href = r.profileId
             ? `/admin/owners/${r.profileId}`
             : `/admin/contacts/${r.id}`;
-          return (
-            <Link key={r.id} href={href} className={styles.card}>
-              <header className={styles.head}>
-                <span className={styles.avatar} aria-hidden>
-                  {initials(r.fullName)}
-                </span>
-                <div className={styles.identity}>
-                  <div className={styles.name}>{r.fullName}</div>
-                  {r.companyName ? (
-                    <div className={styles.company}>{r.companyName}</div>
-                  ) : null}
-                </div>
-                <span
-                  className={styles.health}
-                  data-tone={health}
-                  title={HEALTH_COPY[health]}
-                  aria-label={HEALTH_COPY[health]}
-                />
-              </header>
 
-              <div className={styles.stats}>
-                <Stat label="Props" value={String(r.propertyCount)} />
-                <Stat
-                  label="Owner since"
-                  value={relativeTime(daysSince(r.stageChangedAt))}
-                />
-                <Stat label="Last" value={relativeTime(days)} />
+          const displayedProperties = r.properties.slice(0, 5);
+          const extraProperties = r.properties.length - 5;
+
+          return (
+            <Link key={r.id} href={href} className={styles.card} data-tone={health}>
+              {/* Colored gradient strip */}
+              <div className={styles.strip} data-tone={health}>
+                <span className={styles.stripName}>{r.fullName}</span>
+                <span className={styles.healthBadge}>{HEALTH_COPY[health]}</span>
               </div>
 
-              <footer className={styles.foot}>
-                <span className={styles.owner}>
-                  {r.assignedToName ? (
+              {/* Avatar overlapping strip */}
+              <div className={styles.avatarWrap}>
+                {r.avatarUrl ? (
+                  <img
+                    src={r.avatarUrl}
+                    alt={r.fullName}
+                    className={styles.avatarImg}
+                  />
+                ) : (
+                  <span className={styles.avatarInitials} aria-hidden>
+                    {initials(r.fullName)}
+                  </span>
+                )}
+              </div>
+
+              {/* Identity block */}
+              <div className={styles.identity}>
+                <div className={styles.name}>{r.fullName}</div>
+                {r.companyName ? (
+                  <div className={styles.company}>{r.companyName}</div>
+                ) : null}
+                {(r.phone || r.email) ? (
+                  <div className={styles.contactLine}>
+                    <Phone size={13} weight="regular" className={styles.phoneIcon} />
+                    {r.phone ? <span>{r.phone}</span> : null}
+                    {r.phone && r.email ? <span className={styles.bullet}>&middot;</span> : null}
+                    {r.email ? <span>{r.email}</span> : null}
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Properties strip */}
+              {(displayedProperties.length > 0 || r.propertyCount > 0) ? (
+                <div className={styles.propertiesList}>
+                  {displayedProperties.length > 0 ? (
                     <>
-                      <span className={styles.ownerDot} aria-hidden />
-                      {r.assignedToName}
+                      {displayedProperties.map((p) => {
+                        const addr =
+                          p.addressLine1 +
+                          (p.city ? `, ${p.city}` : '') +
+                          (p.state ? ` ${p.state}` : '');
+                        return (
+                          <div key={p.id} className={styles.propertyRow}>
+                            <House size={11} weight="regular" className={styles.houseIcon} />
+                            <span className={styles.propertyAddr}>{addr}</span>
+                          </div>
+                        );
+                      })}
+                      {extraProperties > 0 ? (
+                        <div className={styles.propertyMore}>+{extraProperties} more</div>
+                      ) : null}
                     </>
                   ) : (
-                    <span className={styles.muted}>Unassigned</span>
+                    <div className={styles.propertyRow}>
+                      <House size={11} weight="regular" className={styles.houseIcon} />
+                      <span className={styles.propertyAddr}>{r.propertyCount} properties</span>
+                    </div>
                   )}
+                </div>
+              ) : null}
+
+              {/* Footer stats */}
+              <footer className={styles.foot}>
+                <span className={styles.footStat}>
+                  Owner for {relativeTime(daysSince(r.stageChangedAt))}
                 </span>
-                {r.email ? <span className={styles.email}>{r.email}</span> : null}
+                <span className={styles.footDot} aria-hidden>·</span>
+                <span className={styles.footStat}>
+                  Last spoke {relativeTime(days)}
+                </span>
+                <span className={styles.footDot} aria-hidden>·</span>
+                {r.assignedToName ? (
+                  <span className={styles.footAssignee}>
+                    <span className={styles.assigneeDot} aria-hidden />
+                    {r.assignedToName}
+                  </span>
+                ) : (
+                  <span className={styles.footMuted}>Unassigned</span>
+                )}
               </footer>
             </Link>
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={styles.stat}>
-      <div className={styles.statLabel}>{label}</div>
-      <div className={styles.statValue}>{value}</div>
     </div>
   );
 }

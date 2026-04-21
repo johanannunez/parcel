@@ -3694,6 +3694,7 @@ export type Database = {
         | "contract_sent"
         | "onboarding"
         | "active_owner"
+        | "offboarding"
         | "paused"
         | "churned"
         | "lead_cold"
@@ -3890,6 +3891,7 @@ export const Constants = {
         "contract_sent",
         "onboarding",
         "active_owner",
+        "offboarding",
         "paused",
         "churned",
         "lead_cold",

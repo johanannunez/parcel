@@ -5,6 +5,7 @@ export type LifecycleStage =
   | 'contract_sent'
   | 'onboarding'
   | 'active_owner'
+  | 'offboarding'
   | 'lead_cold'
   | 'paused'
   | 'churned';

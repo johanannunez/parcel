@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import DOMPurify from "dompurify";
 
 /**
  * Renders help article content. Detects format automatically:
@@ -12,6 +15,7 @@ export function ArticleRenderer({ content }: { content: string }) {
 
   /* HTML content from Tiptap editor */
   if (trimmed.startsWith("<")) {
+    const clean = DOMPurify.sanitize(trimmed);
     return (
       <div
         className="article-renderer-html prose prose-sm max-w-none

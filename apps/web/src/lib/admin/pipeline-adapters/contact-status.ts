@@ -33,8 +33,8 @@ const STAGE_COLUMNS_ONBOARDING: ColDef[] = [
   { key: 'onboarding', color: 'blue', label: 'Onboarding' },
 ];
 
-// Onboarding milestone board buckets contacts by how long they've been in
-// the onboarding stage. These are time-based phases, not semantic milestones.
+// Onboarding milestone board buckets contacts by last touch point (lastActivityAt).
+// These are time-based phases, not semantic milestones.
 // When we have explicit step-tracking, swap this for real progress data.
 type OnboardingPhase = {
   key: string;
@@ -42,13 +42,14 @@ type OnboardingPhase = {
   color: StageDef['color'];
   minDays: number;
   maxDays: number | null;
+  sublabel: string;
 };
 
 const ONBOARDING_PHASES: OnboardingPhase[] = [
-  { key: 'onb_start',   label: 'Just Started', color: 'blue',   minDays: 0,   maxDays: 7 },
-  { key: 'onb_active',  label: 'Active',       color: 'blue',   minDays: 7,   maxDays: 30 },
-  { key: 'onb_stalled', label: 'Stalled',      color: 'amber',  minDays: 30,  maxDays: 60 },
-  { key: 'onb_long',    label: 'Long Stall',   color: 'red',    minDays: 60,  maxDays: null },
+  { key: 'onb_fresh',   label: 'Fresh',    color: 'blue'  as const, minDays: 0,  maxDays: 7,    sublabel: 'touched < 7 days ago' },
+  { key: 'onb_active',  label: 'Active',   color: 'blue'  as const, minDays: 7,  maxDays: 14,   sublabel: '7-14 days' },
+  { key: 'onb_stalled', label: 'Stalled',  color: 'amber' as const, minDays: 14, maxDays: 30,   sublabel: '14-30 days' },
+  { key: 'onb_cold',    label: 'Cold',     color: 'red'   as const, minDays: 30, maxDays: null, sublabel: '30+ days since contact' },
 ];
 
 const STAGE_COLUMNS_ACTIVE: ColDef[] = [
@@ -66,6 +67,7 @@ function columnsForView(viewKey: string): ColDef[] {
   if (viewKey === 'onboarding') return STAGE_COLUMNS_ONBOARDING;
   if (viewKey === 'active-owners') return STAGE_COLUMNS_ACTIVE;
   if (viewKey === 'archived') return STAGE_COLUMNS_ARCHIVED;
+  if (viewKey === 'offboarding') return [];
   // Default: lead pipeline (was the default start view in DB)
   return STAGE_COLUMNS_LEAD_PIPELINE;
 }
@@ -77,6 +79,9 @@ export function buildContactStatusBoard(
 ): StatusColumnData[] {
   if (viewKey === 'onboarding') {
     return buildOnboardingMilestoneBoard(rows, insightsByContact);
+  }
+  if (viewKey === 'offboarding') {
+    return buildOffboardingBoard(rows, insightsByContact);
   }
   const columns = columnsForView(viewKey);
 
@@ -146,6 +151,29 @@ function phaseForDays(days: number): OnboardingPhase {
   return ONBOARDING_PHASES[ONBOARDING_PHASES.length - 1];
 }
 
+type OffboardingPhase = {
+  key: string;
+  label: string;
+  color: StageDef['color'];
+  minDays: number;
+  maxDays: number | null;
+  sublabel: string;
+};
+
+const OFFBOARDING_PHASES: OffboardingPhase[] = [
+  { key: 'off_notice',    label: 'Notice Given',    color: 'amber' as const, minDays: 0,  maxDays: 14,  sublabel: '0-14 days' },
+  { key: 'off_wrapup',    label: 'Wrapping Up',     color: 'amber' as const, minDays: 14, maxDays: 30,  sublabel: '14-30 days' },
+  { key: 'off_financial', label: 'Financial Close', color: 'red'   as const, minDays: 30, maxDays: 60,  sublabel: '30-60 days' },
+  { key: 'off_complete',  label: 'Handoff Done',    color: 'gray'  as const, minDays: 60, maxDays: null, sublabel: '60+ days' },
+];
+
+function phaseForOffboarding(days: number): OffboardingPhase {
+  for (const p of OFFBOARDING_PHASES) {
+    if (days >= p.minDays && (p.maxDays === null || days < p.maxDays)) return p;
+  }
+  return OFFBOARDING_PHASES[OFFBOARDING_PHASES.length - 1];
+}
+
 function buildOnboardingMilestoneBoard(
   rows: ContactRow[],
   insightsByContact: Record<string, Insight[]>,
@@ -156,23 +184,21 @@ function buildOnboardingMilestoneBoard(
 
   return ONBOARDING_PHASES.map((phase) => {
     const inPhase = onboardingRows.filter((r) => {
-      const days = daysSince(r.stageChangedAt);
-      return phase === phaseForDays(days);
+      // Bucket by last touch point. Null lastActivityAt is treated as very old (Cold).
+      const activityDays = r.lastActivityAt ? daysSince(r.lastActivityAt) : 9999;
+      return phase === phaseForDays(activityDays);
     });
 
     const stage: StageDef = {
       key: phase.key,
       label: phase.label,
       color: phase.color,
-      sublabel:
-        phase.maxDays === null
-          ? `${phase.minDays}+ days`
-          : `${phase.minDays}-${phase.maxDays} days`,
+      sublabel: phase.sublabel,
     };
 
     const cards: StatusCardData[] = inPhase.map((r) => {
       const insight = insightsByContact[r.id]?.[0] ?? null;
-      const days = daysSince(r.stageChangedAt);
+      const activityDays = r.lastActivityAt ? daysSince(r.lastActivityAt) : 9999;
       return {
         id: r.id,
         href: r.profileId ? `/admin/owners/${r.profileId}` : `/admin/contacts/${r.id}`,
@@ -181,7 +207,7 @@ function buildOnboardingMilestoneBoard(
         coverGradient: null,
         coverEmoji: null,
         statusPill: null,
-        stageBadge: `${days}d`,
+        stageBadge: activityDays >= 9999 ? 'never' : `${activityDays}d`,
         name: r.fullName,
         subline: r.companyName ?? r.email ?? null,
         stats: [
@@ -204,5 +230,55 @@ function buildOnboardingMilestoneBoard(
     });
 
     return { stage, cards };
+  });
+}
+
+function buildOffboardingBoard(
+  rows: ContactRow[],
+  insightsByContact: Record<string, Insight[]>,
+): StatusColumnData[] {
+  const offboardingRows = rows.filter((r) => r.lifecycleStage === 'offboarding');
+
+  return OFFBOARDING_PHASES.map((phase) => {
+    const inPhase = offboardingRows.filter((r) => {
+      const days = daysSince(r.stageChangedAt);
+      return phase === phaseForOffboarding(days);
+    });
+
+    const stage: StageDef = {
+      key: phase.key,
+      label: phase.label,
+      color: phase.color,
+      sublabel: phase.sublabel,
+    };
+
+    const cards: StatusCardData[] = inPhase.map((r) => {
+      const insight = insightsByContact[r.id]?.[0] ?? null;
+      const days = daysSince(r.stageChangedAt);
+      return {
+        id: r.id,
+        href: r.profileId ? `/admin/owners/${r.profileId}` : `/admin/contacts/${r.id}`,
+        cardVariant: 'person',
+        coverUrl: null,
+        coverGradient: null,
+        coverEmoji: null,
+        statusPill: null,
+        stageBadge: `${days}d`,
+        name: r.fullName,
+        subline: r.companyName ?? r.email ?? null,
+        stats: [
+          { label: 'Props',     value: String(r.propertyCount) },
+          { label: 'Owner for', value: relativeDays(r.stageChangedAt) ?? '—' },
+          { label: 'Last',      value: relativeDays(r.lastActivityAt) ?? '—' },
+        ],
+        assigneeAvatars: r.assignedToName
+          ? [{ src: null, initials: initials(r.assignedToName), label: r.assignedToName }]
+          : [],
+        dueTag: null,
+        insight,
+      };
+    });
+
+    return { stage, cards, collapsed: false };
   });
 }

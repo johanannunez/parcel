@@ -1,17 +1,21 @@
+/* ── Outer wrapper ── matches ContactsKanbanBoard .board padding */
 .wrap {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 14px 24px;
 }
 
+/* ── Summary bar ── */
 .summary {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 14px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
+  border-left: 3px solid #02AAEB;
   border-radius: 8px;
   font-size: 12.5px;
   color: #374151;
@@ -65,68 +69,159 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
 }
 
+/* ── Grid ── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 10px;
 }
 
+/* ── Card ── */
 .card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   text-decoration: none;
   color: inherit;
-  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+  overflow: hidden;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
 }
 
-.card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 14px -8px rgba(15, 59, 107, 0.18);
-  transform: translateY(-1px);
+/* Health-tinted card borders + body tints */
+.card[data-tone='healthy'] {
+  border-color: rgba(16, 185, 129, 0.22);
+  background: rgba(16, 185, 129, 0.03);
 }
 
-.head {
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+.card[data-tone='attention'] {
+  border-color: rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.03);
+}
+
+.card[data-tone='risk'] {
+  border-color: rgba(239, 68, 68, 0.26);
+  background: rgba(239, 68, 68, 0.03);
+}
+
+/* Hover: health-tinted shadow */
+.card[data-tone='healthy']:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -6px rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.card[data-tone='attention']:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -6px rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+.card[data-tone='risk']:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -6px rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.42);
+}
+
+/* ── Gradient strip ── */
+.strip {
+  height: 44px;
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  padding: 0 14px;
+  flex-shrink: 0;
 }
 
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%);
-  color: #fff;
-  font-size: 12px;
+.strip[data-tone='healthy'] {
+  background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+}
+
+.strip[data-tone='attention'] {
+  background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+}
+
+.strip[data-tone='risk'] {
+  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+}
+
+.stripName {
+  font-size: 13.5px;
   font-weight: 600;
-  letter-spacing: 0.3px;
-  display: inline-flex;
+  color: #ffffff;
+  letter-spacing: -0.05px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.healthBadge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.1px;
+}
+
+/* ── Avatar overlapping strip ── */
+.avatarWrap {
+  margin-top: -22px;
+  margin-left: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%);
+  box-shadow: 0 2px 8px rgba(15, 59, 107, 0.14);
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatarInitials {
+  width: 100%;
+  height: 100%;
+  display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
 }
 
+/* ── Identity block ── */
 .identity {
+  padding: 6px 14px 0;
   min-width: 0;
 }
 
 .name {
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: #0F3B6B;
-  letter-spacing: -0.05px;
+  letter-spacing: -0.1px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .company {
-  font-size: 11.5px;
+  font-size: 12px;
   color: #6b7280;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -134,98 +229,113 @@
   margin-top: 1px;
 }
 
-.health {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.contactLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.contactLine span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.phoneIcon {
+  color: #6b7280;
   flex-shrink: 0;
 }
 
-.health[data-tone='healthy'] {
-  background: #10B981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+.bullet {
+  color: #d1d5db;
+  flex-shrink: 0;
 }
 
-.health[data-tone='attention'] {
-  background: #F59E0B;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
-}
-
-.health[data-tone='risk'] {
-  background: #EF4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px 0;
-  border-top: 1px dashed #f1f5f9;
-  border-bottom: 1px dashed #f1f5f9;
-}
-
-.stat {
+/* ── Properties list ── */
+.propertiesList {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 3px;
+  padding: 8px 14px 0;
+  margin-top: 2px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.06);
 }
 
-.statLabel {
-  font-size: 10px;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.statValue {
-  font-size: 13px;
-  font-weight: 600;
-  color: #0F3B6B;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.foot {
+.propertyRow {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  font-size: 11.5px;
-  color: #6b7280;
-}
-
-.owner {
-  display: inline-flex;
   align-items: center;
   gap: 5px;
   min-width: 0;
-  color: #374151;
-  font-weight: 500;
+}
+
+.houseIcon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.propertyAddr {
+  font-size: 11.5px;
+  color: #6b7280;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
-.ownerDot {
-  width: 6px;
-  height: 6px;
+.propertyMore {
+  font-size: 11px;
+  color: #9ca3af;
+  padding-left: 16px;
+}
+
+/* ── Footer stats ── */
+.foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 8px 14px 12px;
+  margin-top: auto;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.footStat {
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.footDot {
+  color: #d1d5db;
+  line-height: 1;
+}
+
+.footAssignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.assigneeDot {
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: #02AAEB;
   flex-shrink: 0;
 }
 
-.email {
-  color: #9ca3af;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 50%;
+.footMuted {
+  color: #d1d5db;
 }
 
+/* ── Empty state ── */
 .empty {
   padding: 40px 24px;
   text-align: center;
