@@ -75,13 +75,25 @@ export default async function AdminHelpPage() {
               {articles.length} {articles.length === 1 ? "article" : "articles"} total
             </p>
           </div>
-          <Link
-            href="/admin/help/new"
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors"
-            style={{ backgroundColor: "var(--color-brand)" }}
-          >
-            New Article
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/help/intake"
+              className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
+              style={{
+                borderColor: "var(--color-warm-gray-200)",
+                color: "var(--color-text-primary)",
+              }}
+            >
+              New from Alcove
+            </Link>
+            <Link
+              href="/admin/help/new"
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors"
+              style={{ backgroundColor: "var(--color-brand)" }}
+            >
+              New Article
+            </Link>
+          </div>
         </div>
 
         {/* Filter + Table */}
