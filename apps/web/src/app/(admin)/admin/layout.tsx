@@ -69,6 +69,7 @@ export default async function AdminLayout({
           avatarUrl={profile?.avatar_url ?? null}
           pendingBlockCount={pendingBlockCount ?? 0}
           signOutSlot={<AdminSignOutButton />}
+          showTestData={profile?.show_test_data ?? false}
         />
 
         <div

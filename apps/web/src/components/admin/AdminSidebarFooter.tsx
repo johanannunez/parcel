@@ -34,12 +34,14 @@ export function AdminSidebarFooter({
   initials,
   avatarUrl = null,
   signOutSlot,
+  showTestData = false,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
   avatarUrl?: string | null;
   signOutSlot: ReactNode;
+  showTestData?: boolean;
 }) {
   const { resolvedTheme, toggleTheme } = useTheme();
   const pathname = usePathname();
@@ -92,7 +94,7 @@ export function AdminSidebarFooter({
 
       {/* Action rows */}
       <div className="pt-1 pb-1">
-        <Link href="/portal/account" className="admin-footer-row">
+        <Link href="/admin/account" className="admin-footer-row">
           <GearSix size={15} weight="regular" className="shrink-0" />
           Account
         </Link>
