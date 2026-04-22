@@ -1733,6 +1733,7 @@ export type Database = {
           referral_source: string | null
           responsibility: string | null
           role: Database["public"]["Enums"]["user_role"]
+          show_test_data: boolean
           timezone: string | null
           updated_at: string
           years_investing: string | null
@@ -1755,6 +1756,7 @@ export type Database = {
           referral_source?: string | null
           responsibility?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          show_test_data?: boolean | null
           timezone?: string | null
           updated_at?: string
           years_investing?: string | null
@@ -1777,6 +1779,7 @@ export type Database = {
           referral_source?: string | null
           responsibility?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          show_test_data?: boolean | null
           timezone?: string | null
           updated_at?: string
           years_investing?: string | null
