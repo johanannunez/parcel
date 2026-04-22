@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { requireAdminUser } from './auth';
 
 export async function getShowTestData(): Promise<boolean> {
   const supabase = await createClient();
@@ -18,9 +19,7 @@ export async function getShowTestData(): Promise<boolean> {
 }
 
 export async function toggleShowTestDataAction(): Promise<void> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  const { supabase, user } = await requireAdminUser();
 
   const { data } = await supabase
     .from('profiles')

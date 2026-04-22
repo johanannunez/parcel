@@ -118,12 +118,17 @@ export async function fetchContactSavedViews(): Promise<ContactSavedView[]> {
 
 export async function fetchContactSavedViewsWithCounts(): Promise<ContactSavedView[]> {
   const supabase = await createClient();
+  const showTestData = await getShowTestData();
   const views = await fetchContactSavedViews();
 
   // Kick off all per-view count queries in parallel plus one total-count query.
-  const totalP = supabase
+  let totalQ = supabase
     .from('contacts')
     .select('*', { count: 'exact', head: true });
+  if (!showTestData) {
+    totalQ = totalQ.not('id', 'like', '0000%');
+  }
+  const totalP = totalQ;
 
   const perViewP = views.map((v) => {
     if (v.isPersonal) {
@@ -132,11 +137,14 @@ export async function fetchContactSavedViewsWithCounts(): Promise<ContactSavedVi
     if (v.filterStages.length === 0) {
       return totalP.then((r) => r.count ?? 0);
     }
-    return supabase
+    let countQuery = supabase
       .from('contacts')
       .select('*', { count: 'exact', head: true })
-      .in('lifecycle_stage', v.filterStages as DbLifecycleStage[])
-      .then((r) => r.count ?? 0);
+      .in('lifecycle_stage', v.filterStages as DbLifecycleStage[]);
+    if (!showTestData) {
+      countQuery = countQuery.not('id', 'like', '0000%');
+    }
+    return countQuery.then((r) => r.count ?? 0);
   });
 
   const counts = await Promise.all(perViewP);

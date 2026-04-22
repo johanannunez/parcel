@@ -255,6 +255,9 @@ export async function fetchAdminTasksList(
         default:
           cq = cq.neq('status', 'done');
       }
+      if (!showTestData) {
+        cq = cq.not('id', 'like', '0000%');
+      }
       return cq.then(({ count }) => count ?? 0);
     }),
   );
