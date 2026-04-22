@@ -6,6 +6,7 @@ import ProfileSection from "@/app/(portal)/portal/account/components/ProfileSect
 import SecuritySection from "@/app/(portal)/portal/account/components/SecuritySection";
 import { SessionsSection } from "@/app/(portal)/portal/account/components/SessionsSection";
 import { RegionSection } from "@/app/(portal)/portal/account/components/RegionSection";
+import { DeveloperSection } from "./DeveloperSection";
 
 export const metadata: Metadata = { title: "Admin Account" };
 export const dynamic = "force-dynamic";
@@ -71,6 +72,7 @@ export default async function AdminAccountPage() {
             <SecuritySection userEmail={user.email ?? ""} />
             <SessionsSection />
             <RegionSection timezone={profile?.timezone ?? ""} />
+            <DeveloperSection showTestData={profile?.show_test_data ?? false} />
           </div>
         </div>
       </div>
