@@ -122,3 +122,28 @@
   .title { font-size: 16px; }
   .sub { font-size: 11.5px; }
 }
+
+.testPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 10px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.18);
+  color: #f59e0b;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.testPill:hover {
+  background: rgba(245, 158, 11, 0.26);
+}
+
+.testPill:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

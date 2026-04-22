@@ -35,7 +35,7 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, avatar_url")
+    .select("role, full_name, avatar_url, show_test_data")
     .eq("id", user.id)
     .single();
 
@@ -80,7 +80,10 @@ export default async function AdminLayout({
         >
           {/* Desktop + tablet: the new rich top bar with title, subtitle, utility cluster, clock. */}
           <div className="hidden md:block">
-            <AdminTopBarNew notificationCount={pendingBlockCount ?? 0} />
+            <AdminTopBarNew
+              notificationCount={pendingBlockCount ?? 0}
+              showTestData={profile?.show_test_data ?? false}
+            />
           </div>
           {/* Mobile: keep the legacy compact header for now; responsive pass lands in Dispatch 8. */}
           <div className="md:hidden">

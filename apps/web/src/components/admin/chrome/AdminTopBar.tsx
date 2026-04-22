@@ -1,22 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell } from "@phosphor-icons/react";
+import { Bell, X } from "@phosphor-icons/react";
+import { toggleShowTestDataAction } from "@/lib/admin/test-data";
 import { derivePageTitle, type PageTitleInfo } from "@/lib/admin/derive-page-title";
 import { CreateMenu } from "./CreateMenu";
 import { useTopBarSlots } from "./TopBarSlotsContext";
 import styles from "./AdminTopBar.module.css";
 
-type Props = { notificationCount?: number };
+type Props = {
+  notificationCount?: number;
+  showTestData?: boolean;
+};
 
-export function AdminTopBar({ notificationCount = 0 }: Props) {
+export function AdminTopBar({ notificationCount = 0, showTestData = false }: Props) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const fallback = useMemo(() => derivePageTitle(pathname), [pathname]);
   const [override, setOverride] = useState<PageTitleInfo | null>(null);
   const [now, setNow] = useState(() => new Date());
   const { centerSlot, searchOverride } = useTopBarSlots();
+  const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -65,6 +70,19 @@ export function AdminTopBar({ notificationCount = 0 }: Props) {
             <CreateMenu placement="topbar" />
           </div>
         )}
+
+        {showTestData ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => startTransition(() => toggleShowTestDataAction())}
+            className={styles.testPill}
+            aria-label="Test data is visible — click to hide"
+          >
+            Test data on
+            <X size={11} weight="bold" />
+          </button>
+        ) : null}
 
         <button
           type="button"
