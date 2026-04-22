@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatRelative } from "@/lib/format";
+import { getShowTestData } from "@/lib/admin/test-data";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -9,16 +10,24 @@ export const metadata: Metadata = {
 
 export default async function AdminOverviewPage() {
   const supabase = await createClient();
+  const showTestData = await getShowTestData();
+
+  const ownersQ = supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "owner");
+
+  const propsQ = supabase
+    .from("properties")
+    .select("*", { count: "exact", head: true });
+
+  const filteredOwnersQ = showTestData ? ownersQ : ownersQ.not('id', 'like', '0000%');
+  const filteredPropsQ = showTestData ? propsQ : propsQ.not('id', 'like', '0000%');
 
   const [ownersResult, propertiesResult, inquiriesResult, blockResult, bookingsResult, payoutsResult, timelineResult, allProfilesResult] =
     await Promise.all([
-      supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("role", "owner"),
-      supabase
-        .from("properties")
-        .select("*", { count: "exact", head: true }),
+      filteredOwnersQ,
+      filteredPropsQ,
       supabase
         .from("inquiries")
         .select("*", { count: "exact", head: true })

@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import type { LifecycleStage } from '@/lib/admin/contact-types';
 import { AdminMapView } from './AdminMapView';
+import { getShowTestData } from '@/lib/admin/test-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,30 +37,35 @@ export type UnmappedOwner = {
 
 export default async function AdminMapPage() {
   const supabase = createServiceClient();
+  const showTestData = await getShowTestData();
+
+  const mappedContactsQ = supabase
+    .from('contacts')
+    .select('id, full_name, company_name, avatar_url, lifecycle_stage, home_lat, home_lng')
+    .not('home_lat', 'is', null)
+    .not('home_lng', 'is', null);
+
+  const unmappedContactsQ = supabase
+    .from('contacts')
+    .select('id, full_name, company_name, avatar_url, lifecycle_stage')
+    .is('home_lat', null);
+
+  const propertiesQ = supabase
+    .from('properties')
+    .select(
+      `id, address_line1, city, state, latitude, longitude, contact_id,
+       owner_contact:contacts!properties_contact_id_fkey(
+         id, full_name, lifecycle_stage
+       )`,
+    )
+    .not('latitude', 'is', null)
+    .not('longitude', 'is', null)
+    .not('contact_id', 'is', null);
 
   const [mappedOwnersResult, unmappedOwnersResult, propertiesResult] = await Promise.all([
-    supabase
-      .from('contacts')
-      .select('id, full_name, company_name, avatar_url, lifecycle_stage, home_lat, home_lng')
-      .not('home_lat', 'is', null)
-      .not('home_lng', 'is', null),
-
-    supabase
-      .from('contacts')
-      .select('id, full_name, company_name, avatar_url, lifecycle_stage')
-      .is('home_lat', null),
-
-    supabase
-      .from('properties')
-      .select(
-        `id, address_line1, city, state, latitude, longitude, contact_id,
-         owner_contact:contacts!properties_contact_id_fkey(
-           id, full_name, lifecycle_stage
-         )`,
-      )
-      .not('latitude', 'is', null)
-      .not('longitude', 'is', null)
-      .not('contact_id', 'is', null),
+    showTestData ? mappedContactsQ : mappedContactsQ.not('id', 'like', '0000%'),
+    showTestData ? unmappedContactsQ : unmappedContactsQ.not('id', 'like', '0000%'),
+    showTestData ? propertiesQ : propertiesQ.not('id', 'like', '0000%'),
   ]);
 
   const owners: OwnerMapPin[] = (mappedOwnersResult.data ?? []).map((r) => ({

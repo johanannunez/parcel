@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { getShowTestData } from "@/lib/admin/test-data";
 import { normalizeUnit, shortenStreet } from "@/lib/address";
 import { getChecklistItemsForProperties, type ChecklistItem } from "@/lib/checklist";
 import { GridViewPage } from "./GridViewPage";
@@ -28,14 +29,21 @@ export default async function AdminPropertiesPage({
   const view = params.view === "launchpad" ? "launchpad" : "details";
 
   const supabase = await createClient();
+  const showTestData = await getShowTestData();
+
+  let propertiesQuery = supabase
+    .from("properties")
+    .select(
+      "id, address_line1, address_line2, city, state, postal_code, name, bedrooms, bathrooms, half_bathrooms, guest_capacity, home_type, parking_spaces, currently_rented, cover_photo_url, square_feet, owner_id, created_at",
+    )
+    .order("created_at", { ascending: true });
+
+  if (!showTestData) {
+    propertiesQuery = propertiesQuery.not('id', 'like', '0000%');
+  }
 
   const [{ data: properties }, { data: propertyOwnersData }] = await Promise.all([
-    supabase
-      .from("properties")
-      .select(
-        "id, address_line1, address_line2, city, state, postal_code, name, bedrooms, bathrooms, half_bathrooms, guest_capacity, home_type, parking_spaces, currently_rented, cover_photo_url, square_feet, owner_id, created_at",
-      )
-      .order("created_at", { ascending: true }),
+    propertiesQuery,
     supabase.from("property_owners").select("property_id, owner_id"),
   ]);
 
