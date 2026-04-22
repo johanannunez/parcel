@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { getShowTestData } from './test-data';
 import type {
   ContactProperty,
   ContactRow,
@@ -156,6 +157,7 @@ export async function fetchAdminContactsList({
   activeView: ContactSavedView;
 }> {
   const supabase = await createClient();
+  const showTestData = await getShowTestData();
   const views = await fetchContactSavedViews();
   const activeView =
     views.find((v) => v.key === viewKey) ??
@@ -176,6 +178,10 @@ export async function fetchAdminContactsList({
        property_count:properties!properties_contact_id_fkey(count),
        properties!properties_contact_id_fkey(id, address_line1, city, state, latitude, longitude)`,
     );
+
+  if (!showTestData) {
+    query = query.not('id', 'like', '0000%');
+  }
 
   if (activeView.filterStages.length > 0) {
     query = query.in('lifecycle_stage', activeView.filterStages as DbLifecycleStage[]);

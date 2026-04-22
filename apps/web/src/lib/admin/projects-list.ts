@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck -- projects table not yet in generated Supabase types
 import { createClient } from '@/lib/supabase/server';
+import { getShowTestData } from './test-data';
 import type {
   ProjectRow,
   ProjectSavedView,
@@ -18,6 +19,7 @@ export async function fetchAdminProjectsList(
   activeView: ProjectSavedView;
 }> {
   const supabase = await createClient();
+  const showTestData = await getShowTestData();
 
   const { data: viewsRaw } = await supabase
     .from('saved_views')
@@ -60,6 +62,10 @@ export async function fetchAdminProjectsList(
     query = query.not('status', 'in', `(${activeFilter.exclude_status.map((s) => `"${s}"`).join(',')})`);
   }
   if (opts.search) query = query.ilike('name', `%${opts.search.trim()}%`);
+
+  if (!showTestData) {
+    query = query.not('id', 'like', '0000%');
+  }
 
   const { data, error } = await query;
   if (error) throw error;

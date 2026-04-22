@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getShowTestData } from "./test-data";
 
 export type OwnerStatus = "active" | "invited" | "not_invited" | "setting_up";
 
@@ -42,6 +43,19 @@ export type OwnerRow = {
  */
 export async function fetchAdminOwnersList(): Promise<OwnerRow[]> {
   const supabase = await createClient();
+  const showTestData = await getShowTestData();
+
+  const profilesQuery = supabase
+    .from("profiles")
+    .select(
+      "id, full_name, email, phone, avatar_url, created_at, onboarding_completed_at, entity_id",
+    )
+    .eq("role", "owner")
+    .order("created_at", { ascending: true });
+
+  const filteredProfilesQuery = showTestData
+    ? profilesQuery
+    : profilesQuery.not("id", "like", "0000%");
 
   const [
     { data: profiles },
@@ -49,13 +63,7 @@ export async function fetchAdminOwnersList(): Promise<OwnerRow[]> {
     { data: properties },
     { data: coOwned },
   ] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select(
-        "id, full_name, email, phone, avatar_url, created_at, onboarding_completed_at, entity_id",
-      )
-      .eq("role", "owner")
-      .order("created_at", { ascending: true }),
+    filteredProfilesQuery,
     supabase.from("entities").select("id, name"),
     supabase.from("properties").select("id, owner_id"),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

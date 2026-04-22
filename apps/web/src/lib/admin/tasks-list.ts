@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { bucketForDue, BUCKET_ORDER, type DueBucket } from './due-buckets';
+import { getShowTestData } from './test-data';
 import type {
   Task,
   TaskGroup,
@@ -18,6 +19,7 @@ export async function fetchAdminTasksList(
   opts: Options = {},
 ): Promise<TasksFetchResult> {
   const supabase = await createClient();
+  const showTestData = await getShowTestData();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('not authenticated');
@@ -87,6 +89,10 @@ export async function fetchAdminTasksList(
     // Wrap in double quotes to avoid PostgREST .or() grammar issues if search is extended later.
     const safe = opts.search.trim().replaceAll('"', '""');
     query = query.ilike('title', `%${safe}%`);
+  }
+
+  if (!showTestData) {
+    query = query.not('id', 'like', '0000%');
   }
 
   const { data, error } = await query;
