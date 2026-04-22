@@ -52,8 +52,11 @@ function ThemePill() {
             key={seg.value}
             type="button"
             onClick={() => setTheme(seg.value)}
-            className="flex flex-1 items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
-            style={isActive ? seg.activeStyle : { color: "rgba(255,255,255,0.38)" }}
+            className="flex flex-1 items-center justify-center rounded-full px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1"
+            style={{
+              ...(isActive ? seg.activeStyle : { color: "rgba(255,255,255,0.38)" }),
+              transition: "background-color 150ms ease, color 150ms ease",
+            }}
             aria-label={seg.ariaLabel}
           >
             {seg.icon}
@@ -81,15 +84,17 @@ function TestDataPill({ showTestData }: { showTestData: boolean }) {
             try {
               await toggleShowTestDataAction();
             } catch (err) {
-              console.error('Failed to toggle test data:', err);
+              console.error("Failed to toggle test data:", err);
             }
           });
         }}
-        className="flex items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
-        style={showTestData
-          ? { background: "rgba(52,211,153,0.18)", color: "#34d399" }
-          : { color: "rgba(255,255,255,0.38)" }
-        }
+        className="flex items-center justify-center rounded-full px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1"
+        style={{
+          ...(showTestData ? { background: "rgba(52,211,153,0.18)", color: "#34d399" } : { color: "rgba(255,255,255,0.38)" }),
+          transition: "background-color 150ms ease, color 150ms ease",
+          opacity: pending ? 0.5 : 1,
+          cursor: pending ? "wait" : "pointer",
+        }}
         aria-label="Show test data"
         aria-pressed={showTestData}
       >
@@ -105,15 +110,17 @@ function TestDataPill({ showTestData }: { showTestData: boolean }) {
             try {
               await toggleShowTestDataAction();
             } catch (err) {
-              console.error('Failed to toggle test data:', err);
+              console.error("Failed to toggle test data:", err);
             }
           });
         }}
-        className="flex items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
-        style={!showTestData
-          ? { background: "rgba(248,113,113,0.18)", color: "#f87171" }
-          : { color: "rgba(255,255,255,0.38)" }
-        }
+        className="flex items-center justify-center rounded-full px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1"
+        style={{
+          ...(!showTestData ? { background: "rgba(248,113,113,0.18)", color: "#f87171" } : { color: "rgba(255,255,255,0.38)" }),
+          transition: "background-color 150ms ease, color 150ms ease",
+          opacity: pending ? 0.5 : 1,
+          cursor: pending ? "wait" : "pointer",
+        }}
         aria-label="Hide test data"
         aria-pressed={!showTestData}
       >
