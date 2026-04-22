@@ -35,9 +35,9 @@ function ThemePill() {
   const { theme, setTheme } = useTheme();
 
   const segs = [
-    { value: "light" as const, icon: <Sun size={15} weight="regular" />, activeStyle: { background: "rgba(251,191,36,0.18)", color: "#fbbf24" } },
-    { value: "dark"  as const, icon: <Moon size={15} weight="regular" />, activeStyle: { background: "rgba(96,165,250,0.18)", color: "#60a5fa" } },
-    { value: "system" as const, icon: <Monitor size={15} weight="regular" />, activeStyle: { background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,1)" } },
+    { value: "light" as const, icon: <Sun size={15} weight="regular" />, activeStyle: { background: "rgba(251,191,36,0.18)", color: "#fbbf24" }, ariaLabel: "Set theme: light" },
+    { value: "dark"  as const, icon: <Moon size={15} weight="regular" />, activeStyle: { background: "rgba(96,165,250,0.18)", color: "#60a5fa" }, ariaLabel: "Set theme: dark" },
+    { value: "system" as const, icon: <Monitor size={15} weight="regular" />, activeStyle: { background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,1)" }, ariaLabel: "Set theme: system" },
   ] as const;
 
   return (
@@ -54,7 +54,7 @@ function ThemePill() {
             onClick={() => setTheme(seg.value)}
             className="flex flex-1 items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
             style={isActive ? seg.activeStyle : { color: "rgba(255,255,255,0.38)" }}
-            aria-label={seg.value}
+            aria-label={seg.ariaLabel}
           >
             {seg.icon}
           </button>
@@ -76,7 +76,15 @@ function TestDataPill({ showTestData }: { showTestData: boolean }) {
       <button
         type="button"
         disabled={pending}
-        onClick={() => { if (!showTestData) startTransition(() => toggleShowTestDataAction()); }}
+        onClick={() => {
+          if (!showTestData) startTransition(async () => {
+            try {
+              await toggleShowTestDataAction();
+            } catch (err) {
+              console.error('Failed to toggle test data:', err);
+            }
+          });
+        }}
         className="flex items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
         style={showTestData
           ? { background: "rgba(52,211,153,0.18)", color: "#34d399" }
@@ -92,7 +100,15 @@ function TestDataPill({ showTestData }: { showTestData: boolean }) {
       <button
         type="button"
         disabled={pending}
-        onClick={() => { if (showTestData) startTransition(() => toggleShowTestDataAction()); }}
+        onClick={() => {
+          if (showTestData) startTransition(async () => {
+            try {
+              await toggleShowTestDataAction();
+            } catch (err) {
+              console.error('Failed to toggle test data:', err);
+            }
+          });
+        }}
         className="flex items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
         style={!showTestData
           ? { background: "rgba(248,113,113,0.18)", color: "#f87171" }
