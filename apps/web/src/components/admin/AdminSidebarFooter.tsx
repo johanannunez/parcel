@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTransition } from "react";
 import {
-  Sun,
-  Moon,
-  Question,
   GearSix,
   UserSwitch,
+  Sun,
+  Moon,
+  Monitor,
+  Flask,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { toggleShowTestDataAction } from "@/lib/admin/test-data";
 
 function getPortalUrl(pathname: string): string {
   const map: Array<[string, string]> = [
@@ -28,6 +31,95 @@ function getPortalUrl(pathname: string): string {
   return "/portal/dashboard";
 }
 
+function ThemePill() {
+  const { theme, setTheme } = useTheme();
+
+  const segs = [
+    { value: "light" as const, icon: <Sun size={15} weight="regular" />, activeStyle: { background: "rgba(251,191,36,0.18)", color: "#fbbf24" } },
+    { value: "dark"  as const, icon: <Moon size={15} weight="regular" />, activeStyle: { background: "rgba(96,165,250,0.18)", color: "#60a5fa" } },
+    { value: "system" as const, icon: <Monitor size={15} weight="regular" />, activeStyle: { background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,1)" } },
+  ] as const;
+
+  return (
+    <div
+      className="flex flex-1 items-center gap-0.5 rounded-full p-0.5"
+      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+    >
+      {segs.map((seg) => {
+        const isActive = theme === seg.value;
+        return (
+          <button
+            key={seg.value}
+            type="button"
+            onClick={() => setTheme(seg.value)}
+            className="flex flex-1 items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
+            style={isActive ? seg.activeStyle : { color: "rgba(255,255,255,0.38)" }}
+            aria-label={seg.value}
+          >
+            {seg.icon}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TestDataPill({ showTestData }: { showTestData: boolean }) {
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <div
+      className="flex items-center gap-0.5 rounded-full p-0.5"
+      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+    >
+      {/* On segment — Flask, green when active */}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => { if (!showTestData) startTransition(() => toggleShowTestDataAction()); }}
+        className="flex items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
+        style={showTestData
+          ? { background: "rgba(52,211,153,0.18)", color: "#34d399" }
+          : { color: "rgba(255,255,255,0.38)" }
+        }
+        aria-label="Show test data"
+        aria-pressed={showTestData}
+      >
+        <Flask size={15} weight="regular" />
+      </button>
+
+      {/* Off segment — Flask with backslash overlay, red when active */}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => { if (showTestData) startTransition(() => toggleShowTestDataAction()); }}
+        className="flex items-center justify-center rounded-full px-2.5 py-1.5 transition-colors"
+        style={!showTestData
+          ? { background: "rgba(248,113,113,0.18)", color: "#f87171" }
+          : { color: "rgba(255,255,255,0.38)" }
+        }
+        aria-label="Hide test data"
+        aria-pressed={!showTestData}
+      >
+        <span className="relative inline-flex items-center justify-center">
+          <Flask size={15} weight="regular" />
+          <span
+            className="pointer-events-none absolute rounded-sm"
+            style={{
+              top: "50%",
+              left: "50%",
+              width: "140%",
+              height: "1px",
+              background: "currentColor",
+              transform: "translate(-50%, -50%) rotate(45deg)",
+            }}
+          />
+        </span>
+      </button>
+    </div>
+  );
+}
+
 export function AdminSidebarFooter({
   userName,
   userEmail,
@@ -43,7 +135,6 @@ export function AdminSidebarFooter({
   signOutSlot: ReactNode;
   showTestData?: boolean;
 }) {
-  const { resolvedTheme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const portalHref = getPortalUrl(pathname ?? "");
 
@@ -113,23 +204,11 @@ export function AdminSidebarFooter({
           Portal
         </Link>
 
-        <Link href="/help" className="admin-footer-row">
-          <Question size={15} weight="regular" className="shrink-0" />
-          Help
-        </Link>
-
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="admin-footer-row"
-        >
-          {resolvedTheme === "dark" ? (
-            <Sun size={15} weight="regular" className="shrink-0" />
-          ) : (
-            <Moon size={15} weight="regular" className="shrink-0" />
-          )}
-          {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
-        </button>
+        {/* Theme + Test data controls */}
+        <div className="flex gap-1.5 px-1 pt-1 pb-0.5">
+          <ThemePill />
+          <TestDataPill showTestData={showTestData} />
+        </div>
 
         {signOutSlot}
       </div>
