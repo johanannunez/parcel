@@ -369,12 +369,9 @@ function IdentityBand({
         <button
           type="button"
           className={styles.ghostBtn}
-          onClick={() => {
-            // TODO: hook up real impersonation in a later dispatch
-            window.alert(
-              "Impersonation will be wired up in the Settings + Account system plan.",
-            );
-          }}
+          disabled
+          title="Coming soon"
+          style={{ opacity: 0.45, cursor: "not-allowed" }}
         >
           <SignIn size={14} weight="bold" />
           Impersonate

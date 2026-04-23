@@ -494,6 +494,8 @@ function ViewRow({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerAnchor, setPickerAnchor] = useState<DOMRect | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const iconBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -536,12 +538,23 @@ function ViewRow({
   }
 
   function onDelete() {
-    if (!confirm(`Delete "${view.name}"? This can't be undone.`)) return;
+    setDeleteError(null);
+    setConfirming(true);
+  }
+
+  function onDeleteConfirm() {
     startTransition(async () => {
       const result = await deleteSavedView({ id: view.id });
-      if (!result.ok) { alert(result.error); return; }
+      if (!result.ok) { setDeleteError(result.error); return; }
+      setConfirming(false);
+      setDeleteError(null);
       router.refresh();
     });
+  }
+
+  function onDeleteCancel() {
+    setConfirming(false);
+    setDeleteError(null);
   }
 
   if (editing) {
@@ -596,6 +609,39 @@ function ViewRow({
             )
           : null}
       </>
+    );
+  }
+
+  if (confirming) {
+    return (
+      <div className={`${styles.viewRow} ${hidden ? styles.viewRowHidden : ''}`} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+          <span style={{ fontSize: 12, color: 'var(--color-text-secondary, #6b7280)', flex: 1 }}>
+            Delete <strong style={{ color: 'var(--color-text-primary, #111827)' }}>{view.name}</strong>? This cannot be undone.
+          </span>
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={onDeleteCancel}
+              disabled={pending}
+              style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, border: '1px solid var(--color-border, #e5e7eb)', background: 'transparent', color: 'var(--color-text-secondary, #6b7280)', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onDeleteConfirm}
+              disabled={pending}
+              style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer', fontWeight: 600 }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+        {deleteError ? (
+          <span style={{ fontSize: 11, color: '#dc2626' }}>{deleteError}</span>
+        ) : null}
+      </div>
     );
   }
 

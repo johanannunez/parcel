@@ -11,17 +11,21 @@ import {
  * makes sense to render. Boards with a single supported mode show no switcher.
  */
 const BOARD_SUPPORTED: Record<string, PipelineViewMode[]> = {
-  'lead-pipeline': ['status', 'compact', 'map'], // kanban + list + map (property pins)
-  'onboarding':    ['status', 'compact', 'map'], // kanban + list + map
-  'active-owners': ['status', 'compact', 'map'], // grid + list + map
-  'archived':      ['status', 'compact'],        // kanban by state (cold/paused/churned)
+  'lead-pipeline':   ['status', 'compact', 'map'],
+  'onboarding':      ['status', 'compact', 'map'],
+  'active-owners':   ['status', 'compact', 'map'],
+  'offboarding':     ['status', 'compact'],
+  'archived':        ['status', 'compact'],
+  'owners-archived': ['status', 'compact'],
 };
 
 const BOARD_DEFAULT: Record<string, PipelineViewMode> = {
-  'lead-pipeline': 'status',
-  'onboarding':    'status',
-  'active-owners': 'status', // 'status' renders the Active Owners grid
-  'archived':      'status',
+  'lead-pipeline':   'status',
+  'onboarding':      'status',
+  'active-owners':   'status',
+  'offboarding':     'status',
+  'archived':        'status',
+  'owners-archived': 'compact',
 };
 
 export function ContactsViewSwitcher() {

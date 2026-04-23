@@ -104,6 +104,8 @@ export async function createSavedView(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath('/admin/contacts');
+  revalidatePath('/admin/leads');
+  revalidatePath('/admin/owners');
   return { ok: true, data: { id: data.id } };
 }
 
@@ -144,6 +146,8 @@ export async function renameSavedView(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath('/admin/contacts');
+  revalidatePath('/admin/leads');
+  revalidatePath('/admin/owners');
   return { ok: true, data: null };
 }
 
@@ -168,6 +172,8 @@ export async function deleteSavedView(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath('/admin/contacts');
+  revalidatePath('/admin/leads');
+  revalidatePath('/admin/owners');
   return { ok: true, data: null };
 }
 

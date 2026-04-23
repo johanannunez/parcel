@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Users as UsersIcon,
 } from "@phosphor-icons/react";
+import ConfirmModal from "@/components/admin/ConfirmModal";
 import { addProperty, type AddPropertyState } from "./actions";
 import {
   EMPTY_WIZARD,
@@ -67,6 +68,7 @@ export function AddPropertyWizard() {
   const [currentKey, setCurrentKey] = useState<SectionKey>("welcome");
   const [hydrated, setHydrated] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const stepRef = useRef<HTMLDivElement>(null);
 
   // Hydrate from localStorage on mount.
@@ -156,15 +158,13 @@ export function AddPropertyWizard() {
 
   const clearDraft = () => {
     if (typeof window === "undefined") return;
-    if (
-      window.confirm(
-        "Clear all the information you have entered so far? This cannot be undone.",
-      )
-    ) {
-      localStorage.removeItem(STORAGE_KEY);
-      setData(EMPTY_WIZARD);
-      setCurrentKey("welcome");
-    }
+    setShowClearConfirm(true);
+  };
+
+  const doClearDraft = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setData(EMPTY_WIZARD);
+    setCurrentKey("welcome");
   };
 
   return (
@@ -978,6 +978,16 @@ export function AddPropertyWizard() {
           )}
         </div>
       </form>
+
+      <ConfirmModal
+        open={showClearConfirm}
+        title="Clear your progress?"
+        description="All information you have entered will be lost. This cannot be undone."
+        confirmLabel="Clear everything"
+        variant="danger"
+        onConfirm={() => { setShowClearConfirm(false); doClearDraft(); }}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </div>
   );
 }

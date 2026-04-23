@@ -7,14 +7,15 @@ import { motion, LayoutGroup } from "motion/react";
 import {
   House,
   UsersThree,
+  Handshake,
   Buildings,
   Wallet,
   EnvelopeSimple,
   ChatCircle,
   ListChecks,
   BookOpenText,
-  Kanban,
-  MapTrifold,
+  FolderOpen,
+  Funnel,
   MagnifyingGlass,
   List as HamburgerIcon,
 } from "@phosphor-icons/react";
@@ -41,10 +42,10 @@ const navItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: <House size={18} weight="duotone" /> },
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/contacts", label: "Contacts", icon: <UsersThree size={18} weight="duotone" />, matchPrefix: "/admin/contacts" },
-  { href: "/admin/map", label: "Map", icon: <MapTrifold size={18} weight="duotone" />, matchPrefix: "/admin/map" },
+  { href: "/admin/leads", label: "Leads", icon: <Funnel size={18} weight="duotone" />, matchPrefix: "/admin/leads" },
+  { href: "/admin/owners", label: "Owners", icon: <Handshake size={18} weight="duotone" />, matchPrefix: "/admin/owners" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
-  { href: "/admin/projects", label: "Projects", icon: <Kanban size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
+  { href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
@@ -341,6 +342,8 @@ export function AdminTopBar({
   const pageTitle = (() => {
     if (!pathname) return "";
     if (pathname === "/admin") return "";
+    if (pathname.startsWith("/admin/leads")) return "Leads";
+    if (pathname.startsWith("/admin/owners")) return "Owners";
     if (pathname.startsWith("/admin/contacts")) return "Contacts";
     if (pathname.startsWith("/admin/properties")) return "Properties";
     if (pathname.startsWith("/admin/inbox")) return "Inbox";
@@ -445,10 +448,10 @@ const adminRailItems: Array<{
   { href: "/admin", icon: <House size={20} weight="duotone" />, label: "Dashboard" },
   { href: "/admin/inbox", icon: <ChatCircle size={20} weight="duotone" />, label: "Inbox", matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
-  { href: "/admin/contacts", icon: <UsersThree size={20} weight="duotone" />, label: "Contacts", matchPrefix: "/admin/contacts" },
-  { href: "/admin/map", icon: <MapTrifold size={20} weight="duotone" />, label: "Map", matchPrefix: "/admin/map" },
+  { href: "/admin/leads", icon: <Funnel size={20} weight="duotone" />, label: "Leads", matchPrefix: "/admin/leads" },
+  { href: "/admin/owners", icon: <Handshake size={20} weight="duotone" />, label: "Owners", matchPrefix: "/admin/owners" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
-  { href: "/admin/projects", icon: <Kanban size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
+  { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
 

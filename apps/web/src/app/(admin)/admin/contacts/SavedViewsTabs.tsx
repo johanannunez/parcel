@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, useTransition } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { DotsThree } from '@phosphor-icons/react';
 import type { ContactSavedView } from '@/lib/admin/contact-types';
 import { deleteSavedView, renameSavedView } from './actions';
@@ -11,10 +12,17 @@ import styles from './SavedViewsTabs.module.css';
 
 export function SavedViewsTabs({ views }: { views: ContactSavedView[] }) {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { hiddenViews } = useContactsFilters();
   const activeViewId = searchParams?.get('view_id') ?? null;
   const activeKey = searchParams?.get('view') ?? 'lead-pipeline';
   const mode = searchParams?.get('mode');
+
+  const basePath = pathname?.startsWith('/admin/owners')
+    ? '/admin/owners'
+    : pathname?.startsWith('/admin/leads')
+    ? '/admin/leads'
+    : '/admin/contacts';
 
   const visibleViews = views.filter(
     (v) => v.isPersonal || !hiddenViews.includes(v.key),
@@ -24,7 +32,7 @@ export function SavedViewsTabs({ views }: { views: ContactSavedView[] }) {
     const params = new URLSearchParams();
     params.set('view', key);
     if (mode) params.set('mode', mode);
-    return `/admin/contacts?${params.toString()}`;
+    return `${basePath}?${params.toString()}`;
   }
 
   function hrefForPersonal(view: ContactSavedView): string {
@@ -36,7 +44,7 @@ export function SavedViewsTabs({ views }: { views: ContactSavedView[] }) {
     if (sp.assignee) params.set('assignee', sp.assignee);
     if (sp.q) params.set('q', sp.q);
     params.set('view_id', view.id);
-    return `/admin/contacts?${params.toString()}`;
+    return `${basePath}?${params.toString()}`;
   }
 
   return (
@@ -90,148 +98,157 @@ function TabItem({
   );
 }
 
+type MenuState = 'idle' | 'renaming' | 'confirming';
+
 function PersonalMenu({ view }: { view: ContactSavedView }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [renaming, setRenaming] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const [menuState, setMenuState] = useState<MenuState>('idle');
   const [name, setName] = useState(view.name);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  function closeMenu() {
+    setOpen(false);
+    setMenuState('idle');
+    setError(null);
+  }
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) {
-        setOpen(false);
-        setRenaming(false);
+      if (
+        !btnRef.current?.contains(e.target as Node) &&
+        !menuRef.current?.contains(e.target as Node)
+      ) {
+        closeMenu();
       }
     };
     window.addEventListener('mousedown', handler);
     return () => window.removeEventListener('mousedown', handler);
   }, [open]);
 
+  function openMenu() {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setMenuStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+        left: 'auto',
+      });
+    }
+    setOpen((v) => !v);
+    setMenuState('idle');
+    setError(null);
+  }
+
   function onRename() {
     setName(view.name);
-    setRenaming(true);
+    setMenuState('renaming');
     setError(null);
   }
 
   function submitRename(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed) {
-      setError('Name required.');
-      return;
-    }
-    if (trimmed === view.name) {
-      setOpen(false);
-      setRenaming(false);
-      return;
-    }
+    if (!trimmed) { setError('Name is required.'); return; }
+    if (trimmed === view.name) { closeMenu(); return; }
     startTransition(async () => {
       const result = await renameSavedView({ id: view.id, name: trimmed });
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      setOpen(false);
-      setRenaming(false);
+      if (!result.ok) { setError(result.error); return; }
+      closeMenu();
       router.refresh();
     });
   }
 
-  function onDelete() {
-    if (!confirm(`Delete the "${view.name}" view? This can't be undone.`)) return;
+  function confirmDelete() {
     startTransition(async () => {
       const result = await deleteSavedView({ id: view.id });
       if (!result.ok) {
-        alert(result.error);
+        setMenuState('idle');
+        setError(result.error);
         return;
       }
-      setOpen(false);
+      closeMenu();
       router.refresh();
     });
   }
 
-  return (
-    <div className={styles.menuWrap} ref={wrapRef}>
-      <button
-        type="button"
-        className={`${styles.menuBtn} ${open ? styles.menuBtnOpen : ''}`}
-        aria-label={`More options for ${view.name}`}
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        <DotsThree size={16} weight="bold" />
-      </button>
-      {open ? (
-        <div className={styles.menu} role="menu">
-          {renaming ? (
+  const menuContent = open
+    ? createPortal(
+        <div className={styles.menu} style={menuStyle} ref={menuRef} role="menu">
+          {menuState === 'renaming' ? (
             <form className={styles.renameForm} onSubmit={submitRename}>
               <input
                 autoFocus
                 type="text"
                 value={name}
                 maxLength={60}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (error) setError(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setRenaming(false);
-                    setOpen(false);
-                  }
-                }}
+                onChange={(e) => { setName(e.target.value); if (error) setError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Escape') closeMenu(); }}
                 className={styles.renameInput}
                 placeholder="View name"
               />
               {error ? <div className={styles.renameError}>{error}</div> : null}
               <div className={styles.renameActions}>
-                <button
-                  type="button"
-                  className={styles.renameCancel}
-                  onClick={() => {
-                    setRenaming(false);
-                    setOpen(false);
-                  }}
-                  disabled={pending}
-                >
+                <button type="button" className={styles.renameCancel} onClick={closeMenu} disabled={pending}>
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className={styles.renameSubmit}
-                  disabled={pending || !name.trim()}
-                >
+                <button type="submit" className={styles.renameSubmit} disabled={pending || !name.trim()}>
                   {pending ? 'Saving…' : 'Save'}
                 </button>
               </div>
             </form>
+          ) : menuState === 'confirming' ? (
+            <div className={styles.confirmState}>
+              <p className={styles.confirmText}>
+                Delete <strong>{view.name}</strong>?
+              </p>
+              <p className={styles.confirmSub}>This cannot be undone.</p>
+              <div className={styles.confirmActions}>
+                <button type="button" className={styles.confirmCancel} onClick={() => { setMenuState('idle'); setError(null); }} disabled={pending}>
+                  Cancel
+                </button>
+                <button type="button" className={styles.confirmDelete} onClick={confirmDelete} disabled={pending}>
+                  {pending ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+              {error ? <div className={styles.renameError} style={{ marginTop: 6 }}>{error}</div> : null}
+            </div>
           ) : (
             <>
-              <button
-                type="button"
-                className={styles.menuItem}
-                onClick={onRename}
-                disabled={pending}
-              >
+              {error ? <div className={styles.inlineError}>{error}</div> : null}
+              <button type="button" className={styles.menuItem} onClick={onRename} disabled={pending}>
                 Rename
               </button>
-              <button
-                type="button"
-                className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                onClick={onDelete}
-                disabled={pending}
-              >
+              <button type="button" className={`${styles.menuItem} ${styles.menuItemDanger}`} onClick={() => { setMenuState('confirming'); setError(null); }} disabled={pending}>
                 Delete
               </button>
             </>
           )}
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <div className={styles.menuWrap}>
+      <button
+        ref={btnRef}
+        type="button"
+        className={`${styles.menuBtn} ${open ? styles.menuBtnOpen : ''}`}
+        aria-label={`More options for ${view.name}`}
+        aria-expanded={open}
+        onClick={openMenu}
+        onMouseDown={(e) => e.preventDefault()}
+      >
+        <DotsThree size={16} weight="bold" />
+      </button>
+      {menuContent}
     </div>
   );
 }
