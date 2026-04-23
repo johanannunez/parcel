@@ -292,3 +292,66 @@ export function mapPlatformToSource(
   if (!platform) return "other";
   return PLATFORM_MAP[platform.toLowerCase()] ?? "other";
 }
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+export interface HospitableReview {
+  id: string;
+  public?: { rating?: number; review?: string };
+  private?: { feedback?: string | null };
+  reviewed_at?: string;
+  guest?: { first_name?: string };
+}
+
+export async function getPropertyReviews(
+  propertyId: string,
+  limit = 20,
+): Promise<HospitableReview[]> {
+  if (!hasHospitable()) return [];
+  try {
+    const res = await request<PaginatedResponse<HospitableReview>>(
+      `/properties/${propertyId}/reviews`,
+      { params: { per_page: String(limit), include: 'guest' }, revalidate: 3600 },
+    );
+    return res.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Messages / Conversations
+// ---------------------------------------------------------------------------
+
+export interface HospitableMessage {
+  id: string;
+  body?: string;
+  from?: 'guest' | 'host';
+  created_at?: string;
+}
+
+export interface HospitableConversation {
+  id: string;
+  property_id?: string;
+  guest?: { first_name?: string };
+  messages?: HospitableMessage[];
+  last_message_at?: string;
+}
+
+export async function getPropertyConversations(
+  propertyId: string,
+  limit = 10,
+): Promise<HospitableConversation[]> {
+  if (!hasHospitable()) return [];
+  try {
+    const res = await request<PaginatedResponse<HospitableConversation>>('/conversations', {
+      params: { 'properties[]': propertyId, per_page: String(limit) },
+      revalidate: 3600,
+    });
+    return res.data ?? [];
+  } catch {
+    return [];
+  }
+}
