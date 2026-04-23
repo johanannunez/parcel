@@ -80,6 +80,7 @@ export function GuestIntelligence({ ownerUpdates, houseActions }: Props) {
   const [activeInsight, setActiveInsight] = useState<EnrichedInsight | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [isRefreshing, startRefresh] = useTransition();
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   const handleDismiss = (insightId: string) => {
     setDismissed((prev) => new Set([...prev, insightId]));
@@ -87,9 +88,14 @@ export function GuestIntelligence({ ownerUpdates, houseActions }: Props) {
   };
 
   const handleRefresh = () => {
+    setRefreshError(null);
     startRefresh(async () => {
-      await triggerGuestIntelligenceSync();
-      window.location.reload();
+      try {
+        await triggerGuestIntelligenceSync();
+        window.location.reload();
+      } catch (err) {
+        setRefreshError(err instanceof Error ? err.message : 'Sync failed. Check the server logs.');
+      }
     });
   };
 
@@ -100,15 +106,22 @@ export function GuestIntelligence({ ownerUpdates, houseActions }: Props) {
     <>
       <div className={styles.header}>
         <span />
-        <button
-          type="button"
-          className={styles.refreshBtn}
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-        >
-          <ArrowsClockwise size={13} weight={isRefreshing ? 'bold' : 'regular'} />
-          {isRefreshing ? 'Refreshing…' : 'Refresh'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {refreshError && (
+            <span style={{ fontSize: '12px', color: 'var(--color-error, #e05252)' }}>
+              {refreshError}
+            </span>
+          )}
+          <button
+            type="button"
+            className={styles.refreshBtn}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <ArrowsClockwise size={13} weight={isRefreshing ? 'bold' : 'regular'} />
+            {isRefreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       <div className={styles.cols}>

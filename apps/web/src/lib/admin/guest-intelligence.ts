@@ -119,8 +119,11 @@ async function analyzeProperty(
   if (!apiKey) throw new Error('OPENROUTER_API_PARCEL is not set');
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -134,6 +137,7 @@ async function analyzeProperty(
         ],
       }),
     });
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       const body = await res.text();
