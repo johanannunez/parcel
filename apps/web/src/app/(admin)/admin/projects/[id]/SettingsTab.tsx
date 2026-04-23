@@ -9,6 +9,7 @@ import {
   PROJECT_STATUS_LABEL,
 } from '@/lib/admin/project-types';
 import { updateProject, archiveProject } from '@/lib/admin/project-actions';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 import styles from './SettingsTab.module.css';
 
 const TYPES: ProjectType[] = [
@@ -32,6 +33,7 @@ export function SettingsTab({ project }: { project: ProjectRow }) {
   const [isArchiving, startArchiveTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const router = useRouter();
 
   const handleSave = () => {
@@ -57,7 +59,10 @@ export function SettingsTab({ project }: { project: ProjectRow }) {
   };
 
   const handleArchive = () => {
-    if (!confirm('Archive this project? It will be hidden from active views.')) return;
+    setShowArchiveConfirm(true);
+  };
+
+  const doArchive = () => {
     startArchiveTransition(async () => {
       try {
         await archiveProject(project.id);
@@ -167,6 +172,16 @@ export function SettingsTab({ project }: { project: ProjectRow }) {
           {isArchiving ? 'Archiving...' : 'Archive project'}
         </button>
       </div>
+
+      <ConfirmModal
+        open={showArchiveConfirm}
+        title="Archive project?"
+        description="This project will be hidden from active views. You can restore it later."
+        confirmLabel="Archive"
+        variant="danger"
+        onConfirm={() => { setShowArchiveConfirm(false); doArchive(); }}
+        onCancel={() => setShowArchiveConfirm(false)}
+      />
     </div>
   );
 }

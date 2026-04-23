@@ -18,6 +18,7 @@ import {
 import { BlockDetailModal } from "./BlockDetailModal";
 import { cancelBlockRequest } from "./actions";
 import type { BlockRequest } from "./types";
+import ConfirmModal from "@/components/admin/ConfirmModal";
 
 /**
  * Three-group accordion for the owner's own reservations. Rendered
@@ -274,12 +275,16 @@ function Row({
   const label = labelForBlockStatus(status);
   const [pending, startTransition] = useTransition();
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const range = formatRange(request.start_date, request.end_date);
   const nights = calcNights(request.start_date, request.end_date);
 
   const handleCancel = () => {
-    if (!confirm("Cancel this reservation?")) return;
+    setShowCancelConfirm(true);
+  };
+
+  const doCancelRequest = () => {
     setCancelError(null);
     startTransition(async () => {
       const result = await cancelBlockRequest({ id: request.id });
@@ -370,6 +375,16 @@ function Row({
           {cancelError}
         </div>
       ) : null}
+
+      <ConfirmModal
+        open={showCancelConfirm}
+        title="Cancel reservation?"
+        description="This will cancel your block request. This cannot be undone."
+        confirmLabel="Cancel reservation"
+        variant="danger"
+        onConfirm={() => { setShowCancelConfirm(false); doCancelRequest(); }}
+        onCancel={() => setShowCancelConfirm(false)}
+      />
     </div>
   );
 }
