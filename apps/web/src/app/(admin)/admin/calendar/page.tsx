@@ -64,18 +64,6 @@ export default async function AdminCalendarPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-          Calendar
-        </h1>
-        <p
-          className="mt-2 text-sm"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          All bookings and blocks across every property.
-        </p>
-      </div>
-
       {/* Stats */}
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label={`Bookings in ${monthName.split(" ")[0]}`} value={String(bookingsThisMonth.count ?? 0)} />

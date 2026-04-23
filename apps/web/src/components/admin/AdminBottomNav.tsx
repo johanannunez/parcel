@@ -18,6 +18,10 @@ import {
   Power,
   Sun,
   Moon,
+  CalendarBlank,
+  FolderOpen,
+  Funnel,
+  Handshake,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -70,8 +74,10 @@ const sheetItems: SheetNavItem[] = [
   { href: "/admin", label: "Dashboard", icon: <House size={19} weight="duotone" /> },
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/contacts", label: "Contacts", icon: <UsersThree size={19} weight="duotone" />, matchPrefix: "/admin/contacts" },
-  { href: "/admin/map", label: "Map", icon: <MapTrifold size={19} weight="duotone" />, matchPrefix: "/admin/map" },
+  { href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={19} weight="duotone" />, matchPrefix: "/admin/calendar" },
+  { href: "/admin/projects", label: "Projects", icon: <FolderOpen size={19} weight="duotone" />, matchPrefix: "/admin/projects" },
+  { href: "/admin/leads", label: "Leads", icon: <Funnel size={19} weight="duotone" />, matchPrefix: "/admin/leads" },
+  { href: "/admin/owners", label: "Owners", icon: <Handshake size={19} weight="duotone" />, matchPrefix: "/admin/owners" },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
 ];

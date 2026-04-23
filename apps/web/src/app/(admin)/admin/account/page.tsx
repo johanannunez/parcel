@@ -41,28 +41,6 @@ export default async function AdminAccountPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
       <div className="flex flex-col gap-8">
-        {/* Header */}
-        <header>
-          <p
-            className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-            style={{ color: "var(--color-text-tertiary)" }}
-          >
-            Admin settings
-          </p>
-          <h1
-            className="mt-2 text-[34px] font-semibold leading-tight tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Account
-          </h1>
-          <p
-            className="mt-2 max-w-2xl text-base"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            Manage your admin profile and security settings.
-          </p>
-        </header>
-
         {/* Two-column layout */}
         <div className="flex flex-col lg:flex-row lg:gap-10">
           <AccountNav />

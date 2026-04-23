@@ -22,6 +22,7 @@ import {
   Crown,
   Briefcase,
   Bell,
+  CalendarBlank,
 } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
@@ -66,11 +67,12 @@ const navEntries: NavEntry[] = [
   { kind: "item", href: "/admin", label: "Dashboard", icon: <House size={18} weight="duotone" /> },
   { kind: "item", href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { kind: "item", href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
+  { kind: "item", href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/calendar" },
+  { kind: "item", href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
   { kind: "item", href: "/admin/leads", label: "Leads", icon: <Funnel size={18} weight="duotone" />, matchPrefix: "/admin/leads" },
   { kind: "item", href: "/admin/owners", label: "Owners", icon: <Handshake size={18} weight="duotone" />, matchPrefix: "/admin/owners" },
   { kind: "item", href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
-  { kind: "item", href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
-  { kind: "item", href: "/admin/help", label: "Playbook", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
+  { kind: "item", href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
 /* ─── Token constants ─── */
@@ -619,7 +621,7 @@ export function AdminTopBar({
     if (pathname.startsWith("/admin/tasks")) return "Tasks";
     if (pathname.startsWith("/admin/projects")) return "Projects";
     if (pathname.startsWith("/admin/map")) return "Map";
-    if (pathname.startsWith("/admin/help")) return "Playbook";
+    if (pathname.startsWith("/admin/help")) return "Help Center";
     if (pathname.startsWith("/admin/treasury")) return "Treasury";
     if (pathname.startsWith("/admin/calendar")) return "Calendar";
     if (pathname.startsWith("/admin/timeline")) return "Timeline";
@@ -718,11 +720,12 @@ const adminRailItems: Array<{
   { href: "/admin", icon: <House size={20} weight="duotone" />, label: "Dashboard" },
   { href: "/admin/inbox", icon: <ChatCircle size={20} weight="duotone" />, label: "Inbox", matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
+  { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
+  { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
   { href: "/admin/leads", icon: <Funnel size={20} weight="duotone" />, label: "Leads", matchPrefix: "/admin/leads" },
   { href: "/admin/owners", icon: <Handshake size={20} weight="duotone" />, label: "Owners", matchPrefix: "/admin/owners" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
-  { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
-  { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Playbook", matchPrefix: "/admin/help" },
+  { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
 
 export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { pendingBlockCount?: number }) {

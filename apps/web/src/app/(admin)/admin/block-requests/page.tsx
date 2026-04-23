@@ -52,26 +52,6 @@ export default async function AdminBlockRequestsPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
     <div className="flex flex-col gap-10">
-      <header>
-        <p
-          className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-          style={{ color: "var(--color-text-tertiary)" }}
-        >
-          Admin
-        </p>
-        <h1 className="mt-2 text-[32px] font-semibold leading-tight tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-          Reservations to verify
-        </h1>
-        <p
-          className="mt-2 max-w-2xl text-base"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Owners requesting time in their own homes. Check each range for
-          conflicts against existing bookings and confirm clear, then mirror
-          the dates in Hospitable.
-        </p>
-      </header>
-
       {pending.length > 0 ? (
         <section className="flex flex-col gap-3">
           <h2

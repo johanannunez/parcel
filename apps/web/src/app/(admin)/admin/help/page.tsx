@@ -60,22 +60,7 @@ export default async function AdminHelpPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
       <div className="flex flex-col gap-8">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1
-              className="text-3xl font-semibold tracking-tight"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              Help Center
-            </h1>
-            <p
-              className="mt-2 text-sm"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {articles.length} {articles.length === 1 ? "article" : "articles"} total
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
             <Link
               href="/admin/help/intake"
               className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
@@ -94,7 +79,6 @@ export default async function AdminHelpPage() {
               New Article
             </Link>
           </div>
-        </div>
 
         {/* Filter + Table */}
         <HelpArticleFilter articles={sorted} />

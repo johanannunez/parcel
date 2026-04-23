@@ -84,21 +84,6 @@ export default async function AdminTimelinePage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
       <div className="flex flex-col gap-10">
-        <div>
-          <h1
-            className="text-3xl font-semibold tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            Timeline
-          </h1>
-          <p
-            className="mt-2 text-sm"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            Activity feed across all owners. Manage visibility, milestones, and audit trail.
-          </p>
-        </div>
-
         <AdminTimelineView
           entries={entries}
           profileMap={profileMap}
