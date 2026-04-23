@@ -68,7 +68,6 @@ export default async function AdminLayout({
           initials={initials}
           avatarUrl={profile?.avatar_url ?? null}
           pendingBlockCount={pendingBlockCount ?? 0}
-          signOutSlot={<AdminSignOutButton />}
           showTestData={profile?.show_test_data ?? false}
         />
 
@@ -82,7 +81,6 @@ export default async function AdminLayout({
           {/* Desktop + tablet: the new rich top bar with title, subtitle, utility cluster, clock. */}
           <div className="hidden md:block">
             <AdminTopBarNew
-              notificationCount={pendingBlockCount ?? 0}
               showTestData={profile?.show_test_data ?? false}
             />
           </div>
@@ -118,7 +116,6 @@ export default async function AdminLayout({
           initials={initials}
           avatarUrl={profile?.avatar_url ?? null}
           pendingBlockCount={pendingBlockCount ?? 0}
-          signOutSlot={<AdminSignOutButton />}
         />
       </div>
       </TopBarSlotsProvider>

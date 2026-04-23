@@ -52,6 +52,7 @@ export function NotificationPopover() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AdminNotificationsResponse | null>(null);
+  const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -66,11 +67,16 @@ export function NotificationPopover() {
   }, []);
 
   useEffect(() => {
-    const toggle = () =>
+    const toggle = (e: Event) => {
+      const rect = (e as CustomEvent<{ rect?: DOMRect }>).detail?.rect;
+      if (rect) {
+        setAnchor({ top: rect.top, left: rect.right + 12 });
+      }
       setOpen((prev) => {
         if (!prev) fetchData();
         return !prev;
       });
+    };
     window.addEventListener("admin:notifications-toggle", toggle);
     return () => window.removeEventListener("admin:notifications-toggle", toggle);
   }, [fetchData]);
@@ -103,7 +109,12 @@ export function NotificationPopover() {
         className={styles.scrim}
         onMouseDown={() => setOpen(false)}
       />
-      <div className={styles.popover} role="dialog" aria-label="Notifications">
+      <div
+        className={styles.popover}
+        role="dialog"
+        aria-label="Notifications"
+        style={anchor ? { top: anchor.top, left: anchor.left, right: "auto" } : undefined}
+      >
         <div className={styles.header}>
           <span className={styles.headerTitle}>Notifications</span>
         </div>

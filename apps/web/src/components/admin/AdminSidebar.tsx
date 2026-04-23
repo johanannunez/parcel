@@ -20,6 +20,7 @@ import {
   FunnelSimple,
   Crown,
   Briefcase,
+  Bell,
 } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
@@ -400,16 +401,14 @@ export function AdminSidebar({
   userEmail,
   initials,
   avatarUrl = null,
-  pendingBlockCount: _pendingBlockCount,
-  signOutSlot,
-  showTestData = false,
+  pendingBlockCount,
+  showTestData: _showTestData = false,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
   avatarUrl?: string | null;
   pendingBlockCount: number;
-  signOutSlot: ReactNode;
   showTestData?: boolean;
 }) {
   const pathname = usePathname();
@@ -475,7 +474,7 @@ export function AdminSidebar({
         </Link>
       </div>
 
-      {/* Search + Create */}
+      {/* Search + Notifications + Create */}
       <div
         style={{
           display: "flex",
@@ -485,6 +484,63 @@ export function AdminSidebar({
         }}
       >
         <SidebarSearch />
+        <button
+          type="button"
+          aria-label="Notifications"
+          onClick={(e) => {
+            const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+            window.dispatchEvent(new CustomEvent("admin:notifications-toggle", { detail: { rect } }));
+          }}
+          style={{
+            position: "relative",
+            flexShrink: 0,
+            width: "36px",
+            height: "36px",
+            borderRadius: "10px",
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            color: "rgba(255,255,255,0.72)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.13)";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.16)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
+          }}
+        >
+          <Bell size={16} weight="duotone" />
+          {pendingBlockCount > 0 ? (
+            <span
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: "-4px",
+                right: "-4px",
+                minWidth: "16px",
+                height: "16px",
+                background: "#F97316",
+                borderRadius: "8px",
+                border: "2px solid #0B1D36",
+                color: "#fff",
+                fontSize: "9px",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "0 4px",
+                pointerEvents: "none",
+              }}
+            >
+              {pendingBlockCount > 9 ? "9+" : pendingBlockCount}
+            </span>
+          ) : null}
+        </button>
         <CreateMenu />
       </div>
 
@@ -544,8 +600,6 @@ export function AdminSidebar({
         userEmail={userEmail}
         initials={initials}
         avatarUrl={avatarUrl}
-        signOutSlot={signOutSlot}
-        showTestData={showTestData}
       />
     </aside>
   );

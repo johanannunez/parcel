@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  padding: 22px 28px;
+  padding: 14px 28px;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -21,22 +21,9 @@
     radial-gradient(circle at 80% 70%, rgba(255,255,255,0.04), transparent 50%);
   pointer-events: none;
 }
+
 .titleWrap { display: flex; flex-direction: column; gap: 2px; z-index: 1; min-width: 0; flex-shrink: 0; }
 
-.centerInline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 1;
-  min-width: 0;
-}
-
-.searchSlot {
-  display: flex;
-  align-items: center;
-  z-index: 1;
-  min-width: 0;
-}
 .crumb {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11.5px; color: rgba(255,255,255,0.68);
@@ -46,18 +33,129 @@
 .crumb:hover { color: #fff; }
 .title { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: #fff; }
 .sub { font-size: 13px; color: rgba(255,255,255,0.72); }
-.right { margin-left: auto; display: flex; align-items: center; gap: 10px; z-index: 1; }
-.iconBtn {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.1);
+
+/* Right column — clock row on top, utilities row below */
+.right {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 1;
+}
+
+/* Toggle + clock on the same line */
+.clockRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Single-line clock: date | divider | time ● */
+.clock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+.clockDate {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.82);
+}
+.clockSuffix {
+  font-size: 8.5px;
+  vertical-align: baseline;
+  font-weight: 600;
+  opacity: 0.65;
+  letter-spacing: 0.03em;
+}
+.clockDivider {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  background: rgba(255,255,255,0.35);
+  flex-shrink: 0;
+}
+.clockTime {
+  font-size: 11px;
+  font-weight: 700;
   color: #fff;
-  display: flex; align-items: center; justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+.live {
+  display: inline-flex;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ADE80;
+  box-shadow: 0 0 0 3px rgba(74,222,128,0.22);
+  flex-shrink: 0;
+}
+
+/* Bottom utilities row: search pill + icon buttons */
+.utilities {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+/* Search pill that triggers ⌘K */
+.searchPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.82);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  width: 200px;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.searchPill:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.42);
+  color: #fff;
+}
+.searchPillLabel {
+  flex: 1;
+  text-align: left;
+}
+.searchPillKbd {
+  color: rgba(255,255,255,0.55);
+  font-size: 12px;
+}
+
+/* Icon button — circular pill matching portal style */
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.28);
+  color: rgba(255,255,255,0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
   cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.iconBtn:hover { background: rgba(255,255,255,0.16); }
+.iconBtn:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.42);
+  color: #fff;
+}
+
 .badge {
   position: absolute;
   top: -5px; right: -5px;
@@ -72,28 +170,21 @@
   padding: 0 4px;
   pointer-events: none;
 }
-.clock {
-  display: flex; flex-direction: column; align-items: flex-end;
-  line-height: 1.2;
-  padding: 0 4px 0 8px;
-  border-left: 1px solid rgba(255,255,255,0.12);
-  margin-left: 4px;
-}
-.clockDate { font-size: 12px; color: rgba(255,255,255,0.72); font-weight: 500; }
-.clockTime {
-  font-size: 13px; color: #fff; font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  display: flex; align-items: center; gap: 6px;
-}
-.live {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #4ADE80;
-  box-shadow: 0 0 0 3px rgba(74,222,128,0.22);
+
+.centerInline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
-/* Compact Search + Create cluster. Visible on tablet/mobile; hidden on desktop
- * where the sidebar hosts the full SidebarSearch + CreateMenu row. */
+.searchSlot {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Compact create-menu cluster — hidden on desktop (sidebar handles it) */
 .compactUtils {
   display: flex;
   align-items: center;
@@ -104,46 +195,55 @@
 }
 
 @media (max-width: 1100px) {
-  .centerInline {
-    display: none;
-  }
+  .centerInline { display: none; }
 }
 
 @media (max-width: 900px) {
-  .searchSlot {
-    display: none;
-  }
+  .searchPill { display: none; }
+  .searchSlot { display: none; }
 }
 
 @media (max-width: 768px) {
-  .root { padding: 14px 16px; gap: 12px; }
-  .right { gap: 6px; }
-  .clock { display: none; }
+  .root { padding: 10px 16px; gap: 12px; }
   .title { font-size: 16px; }
   .sub { font-size: 11.5px; }
+  .clock { display: none; }
 }
 
-.testPill {
+.testToggle {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px 3px 10px;
+  padding: 3px 8px 3px 7px;
   border-radius: 999px;
-  background: rgba(245, 158, 11, 0.18);
-  color: #f59e0b;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  border: 1px solid rgba(245, 158, 11, 0.3);
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+.testToggle:disabled { opacity: 0.5; cursor: default; }
+
+/* Off state: ghost pill, barely there */
+.testToggleOff {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.45);
+}
+.testToggleOff:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.26);
+  color: rgba(255, 255, 255, 0.72);
 }
 
-.testPill:hover {
+/* On state: amber glow */
+.testToggleOn {
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+}
+.testToggleOn:hover:not(:disabled) {
   background: rgba(245, 158, 11, 0.26);
-}
-
-.testPill:disabled {
-  opacity: 0.5;
-  cursor: default;
+  border-color: rgba(245, 158, 11, 0.5);
 }
