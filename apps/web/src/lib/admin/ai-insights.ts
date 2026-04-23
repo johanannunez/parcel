@@ -27,7 +27,10 @@ export async function fetchInsightsByParent(
     .in('parent_id', parentIds)
     .is('dismissed_at', null)
     .order('created_at', { ascending: false });
-  if (error) throw error;
+  if (error) {
+    console.error('[ai-insights] fetch error:', error.code, error.message);
+    return {};
+  }
   const map: Record<string, Insight[]> = {};
   for (const r of data ?? []) {
     if (!map[r.parent_id]) map[r.parent_id] = [];

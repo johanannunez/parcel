@@ -74,7 +74,10 @@ export async function fetchContactSavedViews(): Promise<ContactSavedView[]> {
   }
 
   const { data, error } = await query.order('sort_order');
-  if (error) throw error;
+  if (error) {
+    console.error('[contacts-list] saved_views fetch error:', error.code, error.message);
+    return [];
+  }
 
   const views: ContactSavedView[] = [];
   for (const row of data ?? []) {
@@ -234,7 +237,10 @@ export async function fetchAdminContactsList({
   }
 
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    console.error('[contacts-list] contacts fetch error:', error.code, error.message);
+    return { rows: [], views, activeView };
+  }
 
   const rows: ContactRow[] = (data ?? []).map((r) => {
     const assignedProfile =

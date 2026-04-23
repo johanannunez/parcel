@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useCallback } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { ShieldCheck, Copy, CheckCircle } from "@phosphor-icons/react";
 import { verifySetupCode, type MfaVerifyState } from "./actions";
 
@@ -34,7 +34,7 @@ export function MfaSetupForm({ enrollment, enrollError }: MfaSetupFormProps) {
     return () => clearInterval(timer);
   }, [isLocked]);
 
-  const handleCopySecret = useCallback(async () => {
+  const handleCopySecret = async () => {
     if (!enrollment?.secret) return;
     try {
       await navigator.clipboard.writeText(enrollment.secret);
@@ -43,7 +43,7 @@ export function MfaSetupForm({ enrollment, enrollError }: MfaSetupFormProps) {
     } catch {
       // Clipboard API may not be available
     }
-  }, [enrollment?.secret]);
+  };
 
   // Enrollment error (passed from server component)
   if (enrollError || !enrollment) {

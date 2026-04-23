@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { mapPlatformToSource } from "@/lib/hospitable";
+import { logTimelineEvent } from "@/lib/timeline";
 
 /**
  * Hospitable webhook receiver.
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
   // Find the supabase property linked to this hospitable property
   const { data: prop } = await supabase
     .from("properties")
-    .select("id")
+    .select("id, owner_id")
     .eq("hospitable_property_id", propertyId)
     .maybeSingle();
 
@@ -146,6 +147,24 @@ export async function POST(req: NextRequest) {
       { error: error.message },
       { status: 500 },
     );
+  }
+
+  if (prop.owner_id) {
+    const isCancelled = status === "cancelled";
+    const arrival = new Date(dates.arrival).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const departure = new Date(dates.departure).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    void logTimelineEvent({
+      ownerId: prop.owner_id,
+      eventType: isCancelled ? "booking_cancelled" : "booking_created",
+      category: "calendar",
+      propertyId: prop.id,
+      title: isCancelled
+        ? `Booking cancelled: ${arrival} – ${departure}`
+        : `New booking: ${arrival} – ${departure}`,
+      body: guestName ? `Guest: ${guestName}` : undefined,
+      visibility: "owner",
+      metadata: { source, reservationId },
+    });
   }
 
   return NextResponse.json({ ok: true, upserted: reservationId });

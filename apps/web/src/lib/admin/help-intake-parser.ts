@@ -1,10 +1,16 @@
+export type ContentType = "help" | "policy" | "blog" | "flagship";
+
 export type ParsedDraft = {
   title: string;
   summary: string;
-  content: string; // HTML, ready for HelpArticleEditor (Tiptap)
+  content: string;
   tags: string[];
   suggestedCategory: string;
   readTimeMinutes: number;
+  contentType: ContentType;
+  suggestedSlug: string;
+  suggestedPortalPath: string | null;
+  needsVisual: boolean;
 };
 
 function escapeHtml(text: string): string {
@@ -20,7 +26,6 @@ function inlineMarkdown(text: string): string {
     .replace(/\*(.+?)\*/g, "<em>$1</em>");
 }
 
-// Escape HTML entities first, then apply inline markdown formatting.
 function processInline(text: string): string {
   return inlineMarkdown(escapeHtml(text));
 }
@@ -57,8 +62,9 @@ function markdownToHtml(markdown: string): string {
   return out.join("\n");
 }
 
+const VALID_CONTENT_TYPES: ContentType[] = ["help", "policy", "blog", "flagship"];
+
 export function parseAlcoveDraft(raw: string): ParsedDraft | null {
-  // Strip optional --- delimiters
   const text = raw.replace(/^---\s*\n?/, "").replace(/\n?---\s*$/, "").trim();
 
   const titleMatch = text.match(/^TITLE:\s*(.+)$/m);
@@ -66,10 +72,13 @@ export function parseAlcoveDraft(raw: string): ParsedDraft | null {
   const tagsMatch = text.match(/^TAGS:\s*(.+)$/m);
   const categoryMatch = text.match(/^CATEGORY:\s*(.+)$/m);
   const readTimeMatch = text.match(/^READ\s*TIME:\s*(\d+)/im);
+  const contentTypeMatch = text.match(/^CONTENT_TYPE:\s*(.+)$/m);
+  const slugMatch = text.match(/^SLUG:\s*(.+)$/m);
+  const portalPathMatch = text.match(/^PORTAL_PATH:\s*(.+)$/m);
+  const needsVisualMatch = text.match(/^NEEDS_VISUAL:\s*(true|false)/im);
 
   if (!titleMatch || !summaryMatch) return null;
 
-  // Handle CONTENT: at position 0 or after a newline.
   const contentStart = text.search(/(?:^|\n)CONTENT:\n/);
   const contentHeaderLen =
     contentStart === 0 ? "CONTENT:\n".length : "\nCONTENT:\n".length;
@@ -80,6 +89,23 @@ export function parseAlcoveDraft(raw: string): ParsedDraft | null {
     ? afterContent.slice(0, nextLabelMatch.index).trim()
     : afterContent.trim();
 
+  const rawContentType = contentTypeMatch
+    ? contentTypeMatch[1].trim().toLowerCase()
+    : "help";
+  const contentType: ContentType = VALID_CONTENT_TYPES.includes(rawContentType as ContentType)
+    ? (rawContentType as ContentType)
+    : "help";
+
+  const suggestedSlug = slugMatch ? slugMatch[1].trim() : "";
+
+  const rawPortalPath = portalPathMatch ? portalPathMatch[1].trim() : "";
+  const suggestedPortalPath =
+    rawPortalPath && rawPortalPath.toLowerCase() !== "none" ? rawPortalPath : null;
+
+  const needsVisual = needsVisualMatch
+    ? needsVisualMatch[1].toLowerCase() === "true"
+    : false;
+
   return {
     title: titleMatch[1].trim(),
     summary: summaryMatch[1].trim(),
@@ -89,5 +115,9 @@ export function parseAlcoveDraft(raw: string): ParsedDraft | null {
       : [],
     suggestedCategory: categoryMatch ? categoryMatch[1].trim() : "",
     readTimeMinutes: readTimeMatch ? parseInt(readTimeMatch[1], 10) : 5,
+    contentType,
+    suggestedSlug,
+    suggestedPortalPath,
+    needsVisual,
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 
 type DataPoint = {
   date: string;
@@ -207,24 +207,21 @@ export default function BalanceChart({ data }: { data: DataPoint[] }) {
   }
 
   // Hover
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
-      if (!hasData || !svgRef.current) return;
-      const rect = svgRef.current.getBoundingClientRect();
-      const scaleX = width / rect.width;
-      const mouseX = (e.clientX - rect.left) * scaleX;
-      const relX = mouseX - padLeft;
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!hasData || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = width / rect.width;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const relX = mouseX - padLeft;
 
-      if (relX < 0 || relX > chartW) {
-        setHoverIndex(null);
-        return;
-      }
+    if (relX < 0 || relX > chartW) {
+      setHoverIndex(null);
+      return;
+    }
 
-      const idx = Math.round((relX / chartW) * (chartData.length - 1));
-      setHoverIndex(Math.max(0, Math.min(chartData.length - 1, idx)));
-    },
-    [hasData, chartData.length, chartW],
-  );
+    const idx = Math.round((relX / chartW) * (chartData.length - 1));
+    setHoverIndex(Math.max(0, Math.min(chartData.length - 1, idx)));
+  };
 
   // Change calculations
   const firstBalance = chartData.length > 0 ? chartData[0].balance : 0;

@@ -267,6 +267,23 @@ export async function decideBlockRequest(
     },
   }).then(() => {}, () => {});
 
+  if (updated) {
+    const approved = parsed.data.decision === "approved";
+    const range = updated.start_date === updated.end_date
+      ? formatDate(updated.start_date)
+      : `${formatDate(updated.start_date)} to ${formatDate(updated.end_date)}`;
+    void logTimelineEvent({
+      ownerId: updated.owner_id,
+      eventType: approved ? "block_request_approved" : "block_request_denied",
+      category: "calendar",
+      title: approved
+        ? `Block request approved: ${range}`
+        : `Block request denied: ${range}`,
+      visibility: "owner",
+      createdBy: user.id,
+    });
+  }
+
   revalidatePath("/admin/block-requests");
   revalidatePath("/portal/reserve");
   return { ok: true };

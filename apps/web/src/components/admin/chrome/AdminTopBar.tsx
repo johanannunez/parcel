@@ -109,7 +109,7 @@ function TestDataToggle({
       title={on ? "Hide test data" : "Show test data"}
     >
       <Flask size={11} weight={on ? "fill" : "regular"} />
-      <span>{on ? "Test data on" : "Test data"}</span>
+      <span>{on ? "Test on" : "Test off"}</span>
       {on && <X size={9} weight="bold" style={{ opacity: 0.7 }} />}
     </button>
   );

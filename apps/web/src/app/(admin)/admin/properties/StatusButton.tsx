@@ -65,7 +65,7 @@ export function StatusButton({
         <RocketLaunch size={14} weight="duotone" className={styles.icon} />
         <span className={styles.trail} aria-hidden />
       </span>
-      <span className={styles.label}>Status</span>
+      <span className={styles.label}>Launchpad</span>
       <span className={styles.shine} aria-hidden />
     </Link>
   );

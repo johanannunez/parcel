@@ -3,6 +3,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logTimelineEvent } from "@/lib/timeline";
 
 export async function inviteOwner(
   ownerId: string,
@@ -88,6 +89,17 @@ export async function inviteOwner(
       description: `Owner invited with email ${realEmail}`,
     },
   }).then(() => {}, () => {});
+
+  void logTimelineEvent({
+    ownerId,
+    eventType: "welcome",
+    category: "account",
+    title: "Welcome to Parcel",
+    body: `Invited as ${realEmail}`,
+    visibility: "owner",
+    isPinned: true,
+    createdBy: user.id,
+  });
 
   revalidatePath("/admin/owners");
 

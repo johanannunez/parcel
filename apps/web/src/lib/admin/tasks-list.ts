@@ -96,7 +96,10 @@ export async function fetchAdminTasksList(
   }
 
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    console.error('[tasks-list] tasks fetch error:', error.code, error.message);
+    return { groups: [], views, activeView, totalCount: 0 };
+  }
 
   const byType: Record<'contact' | 'property' | 'project', string[]> = {
     contact: [],

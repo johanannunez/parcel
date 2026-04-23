@@ -124,6 +124,7 @@ export default async function EditArticlePage({
         <ArticleForm
           categories={categories}
           action={handleUpdate}
+          articleId={id}
           initialData={{
             title: article.title,
             slug: article.slug,
@@ -134,6 +135,8 @@ export default async function EditArticlePage({
             read_time_minutes: article.read_time_minutes ?? 5,
             related_portal_path: article.related_portal_path,
             status: article.status,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            content_type: (article as any).content_type ?? "help",
           }}
         />
 

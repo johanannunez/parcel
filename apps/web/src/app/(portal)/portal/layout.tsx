@@ -194,7 +194,7 @@ export default async function PortalLayout({
             avatarUrl={displayAvatar}
             isAdmin={isAdmin}
             setupIncomplete={setupIncomplete}
-            signOutSlot={<SignOutButton />}
+            signOutSlot={<SignOutButton iconOnly />}
             unreadMessageCount={unreadMessageCount}
           />
 

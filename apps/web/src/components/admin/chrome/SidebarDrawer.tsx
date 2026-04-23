@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -24,7 +24,6 @@ type Props = {
   initials: string;
   avatarUrl?: string | null;
   pendingBlockCount: number;
-  signOutSlot: ReactNode;
 };
 
 export function SidebarDrawer({
@@ -33,7 +32,6 @@ export function SidebarDrawer({
   initials,
   avatarUrl = null,
   pendingBlockCount,
-  signOutSlot,
 }: Props) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -109,7 +107,6 @@ export function SidebarDrawer({
           initials={initials}
           avatarUrl={avatarUrl}
           pendingBlockCount={pendingBlockCount}
-          signOutSlot={signOutSlot}
         />
       </div>
     </div>

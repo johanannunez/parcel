@@ -20,8 +20,8 @@ async function fetchProjectStatusRows(): Promise<ProjectStatusRow[]> {
       .order('created_at', { ascending: false });
     // Gracefully return empty if the table doesn't exist yet (Plan C not merged).
     if (error) {
-      if (error.code === '42P01') return []; // relation does not exist
-      throw error;
+      console.error('[projects/StatusView] fetch error:', error.code, error.message);
+      return [];
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ((data as any[]) ?? []).map((r) => ({

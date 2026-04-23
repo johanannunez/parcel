@@ -1,14 +1,15 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import { SquaresFour, Table as TableIcon } from "@phosphor-icons/react";
+import { Kanban as KanbanIcon, SquaresFour, Table as TableIcon } from "@phosphor-icons/react";
 import styles from "./HomesViewSwitcher.module.css";
 
-export type HomesViewKey = "gallery" | "table";
+export type HomesViewKey = "kanban" | "gallery" | "table";
 
 type TabDef = { key: HomesViewKey; label: string; onClick: () => void };
 
 const ICONS: Record<HomesViewKey, React.ReactNode> = {
+  kanban: <KanbanIcon size={14} weight="duotone" />,
   gallery: <SquaresFour size={14} weight="duotone" />,
   table: <TableIcon size={14} weight="duotone" />,
 };

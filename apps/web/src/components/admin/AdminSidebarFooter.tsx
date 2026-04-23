@@ -3,17 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTransition } from "react";
-import {
-  GearSix,
-  UserSwitch,
-  Sun,
-  Moon,
-  Monitor,
-  Flask,
-} from "@phosphor-icons/react";
-import type { ReactNode } from "react";
+import { GearSix, UserSwitch, Power, Sun, Moon, Monitor } from "@phosphor-icons/react";
 import { useTheme } from "@/components/ThemeProvider";
-import { toggleShowTestDataAction } from "@/lib/admin/test-data";
+import { signOut } from "@/app/(portal)/portal/actions";
 
 function getPortalUrl(pathname: string): string {
   const map: Array<[string, string]> = [
@@ -31,139 +23,31 @@ function getPortalUrl(pathname: string): string {
   return "/portal/dashboard";
 }
 
-function ThemePill() {
-  const { theme, setTheme } = useTheme();
-
-  const segs = [
-    { value: "light" as const, icon: <Sun size={15} weight="regular" />, activeStyle: { background: "rgba(251,191,36,0.18)", color: "#fbbf24" }, ariaLabel: "Set theme: light" },
-    { value: "dark"  as const, icon: <Moon size={15} weight="regular" />, activeStyle: { background: "rgba(96,165,250,0.18)", color: "#60a5fa" }, ariaLabel: "Set theme: dark" },
-    { value: "system" as const, icon: <Monitor size={15} weight="regular" />, activeStyle: { background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,1)" }, ariaLabel: "Set theme: system" },
-  ] as const;
-
-  return (
-    <div
-      className="flex flex-1 items-center gap-0.5 rounded-full p-0.5"
-      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
-    >
-      {segs.map((seg) => {
-        const isActive = theme === seg.value;
-        return (
-          <button
-            key={seg.value}
-            type="button"
-            onClick={() => setTheme(seg.value)}
-            className="flex flex-1 items-center justify-center rounded-full px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1"
-            style={{
-              ...(isActive ? seg.activeStyle : { color: "rgba(255,255,255,0.38)" }),
-              transition: "background-color 150ms ease, color 150ms ease",
-            }}
-            aria-label={seg.ariaLabel}
-          >
-            {seg.icon}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function TestDataPill({ showTestData }: { showTestData: boolean }) {
-  const [pending, startTransition] = useTransition();
-
-  return (
-    <div
-      className="flex items-center gap-0.5 rounded-full p-0.5"
-      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
-    >
-      {/* On segment — Flask, green when active */}
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => {
-          if (!showTestData) startTransition(async () => {
-            try {
-              await toggleShowTestDataAction();
-            } catch (err) {
-              console.error("Failed to toggle test data:", err);
-            }
-          });
-        }}
-        className="flex items-center justify-center rounded-full px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1"
-        style={{
-          ...(showTestData ? { background: "rgba(52,211,153,0.18)", color: "#34d399" } : { color: "rgba(255,255,255,0.38)" }),
-          transition: "background-color 150ms ease, color 150ms ease",
-          opacity: pending ? 0.5 : 1,
-          cursor: pending ? "wait" : "pointer",
-        }}
-        aria-label="Show test data"
-        aria-pressed={showTestData}
-      >
-        <Flask size={15} weight="regular" />
-      </button>
-
-      {/* Off segment — Flask with backslash overlay, red when active */}
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => {
-          if (showTestData) startTransition(async () => {
-            try {
-              await toggleShowTestDataAction();
-            } catch (err) {
-              console.error("Failed to toggle test data:", err);
-            }
-          });
-        }}
-        className="flex items-center justify-center rounded-full px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1"
-        style={{
-          ...(!showTestData ? { background: "rgba(248,113,113,0.18)", color: "#f87171" } : { color: "rgba(255,255,255,0.38)" }),
-          transition: "background-color 150ms ease, color 150ms ease",
-          opacity: pending ? 0.5 : 1,
-          cursor: pending ? "wait" : "pointer",
-        }}
-        aria-label="Hide test data"
-        aria-pressed={!showTestData}
-      >
-        <span className="relative inline-flex items-center justify-center">
-          <Flask size={15} weight="regular" />
-          <span
-            className="pointer-events-none absolute rounded-sm"
-            style={{
-              top: "50%",
-              left: "50%",
-              width: "140%",
-              height: "1px",
-              background: "currentColor",
-              transform: "translate(-50%, -50%) rotate(45deg)",
-            }}
-          />
-        </span>
-      </button>
-    </div>
-  );
-}
+const THEME_SEGS = [
+  { value: "light" as const, icon: <Sun size={14} weight="regular" />, activeStyle: { background: "rgba(251,191,36,0.18)", color: "#fbbf24" }, label: "Light" },
+  { value: "dark"  as const, icon: <Moon size={14} weight="regular" />, activeStyle: { background: "rgba(96,165,250,0.18)", color: "#60a5fa" }, label: "Dark" },
+  { value: "system" as const, icon: <Monitor size={14} weight="regular" />, activeStyle: { background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,1)" }, label: "System" },
+] as const;
 
 export function AdminSidebarFooter({
   userName,
   userEmail,
   initials,
   avatarUrl = null,
-  signOutSlot,
-  showTestData = false,
 }: {
   userName: string;
   userEmail: string;
   initials: string;
   avatarUrl?: string | null;
-  signOutSlot: ReactNode;
-  showTestData?: boolean;
 }) {
   const pathname = usePathname();
   const portalHref = getPortalUrl(pathname ?? "");
+  const { theme, setTheme } = useTheme();
+  const [signOutPending, startSignOut] = useTransition();
 
   return (
     <div
-      className="mx-3 mb-3 mt-auto border-t pt-2"
+      className="mx-3 mb-6 mt-auto border-t pt-2"
       style={{ borderColor: "rgba(255,255,255,0.08)" }}
     >
       {/* Identity row */}
@@ -181,59 +65,115 @@ export function AdminSidebarFooter({
         ) : (
           <span
             className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-wide"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.08)",
-              color: "white",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
+            style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "white", border: "1px solid rgba(255,255,255,0.1)" }}
           >
             {initials}
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <div
-            className="truncate text-[13.5px] font-semibold leading-tight"
-            style={{ color: "#E0EDF8" }}
-          >
+          <div className="truncate text-[13.5px] font-semibold leading-tight" style={{ color: "#E0EDF8" }}>
             {userName}
           </div>
-          <div
-            className="mt-px truncate text-[11.5px] leading-tight"
-            style={{ color: "rgba(255,255,255,0.40)" }}
-          >
+          <div className="mt-px truncate text-[11.5px] leading-tight" style={{ color: "rgba(255,255,255,0.40)" }}>
             {userEmail}
           </div>
         </div>
       </Link>
 
-      {/* Action rows */}
-      <div className="pt-1 pb-1">
-        <Link href="/admin/account" className="admin-footer-row">
+      {/* Account + Portal two-column cards */}
+      <div className="flex gap-1.5 px-0.5 pb-1 pt-0.5">
+        <Link
+          href="/admin/account"
+          className="flex flex-1 items-center justify-center gap-[7px] rounded-[10px] py-2 px-1.5 text-[12.5px] font-medium focus-visible:ring-2 focus-visible:ring-white/40"
+          style={{
+            color: "rgba(255,255,255,0.50)",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            transition: "background-color 150ms ease, color 150ms ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.09)"; e.currentTarget.style.color = "rgba(255,255,255,0.85)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(255,255,255,0.50)"; }}
+        >
           <GearSix size={15} weight="regular" className="shrink-0" />
           Account
         </Link>
-
         <Link
           href={portalHref}
-          className="my-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold"
+          className="flex flex-1 items-center justify-center gap-[7px] rounded-[10px] py-2 px-1.5 text-[12.5px] font-medium focus-visible:ring-2 focus-visible:ring-white/40"
           style={{
-            background: "linear-gradient(135deg, #02AAEB 0%, #1B77BE 100%)",
-            color: "#fff",
-            boxShadow: "0 2px 8px rgba(2, 170, 235, 0.25)",
-            textDecoration: "none",
+            color: "rgba(96,185,235,0.85)",
+            background: "linear-gradient(135deg, rgba(2,170,235,0.15) 0%, rgba(27,119,190,0.15) 100%)",
+            border: "1px solid rgba(2,170,235,0.22)",
+            transition: "background-color 150ms ease, color 150ms ease",
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(2,170,235,0.22) 0%, rgba(27,119,190,0.22) 100%)"; e.currentTarget.style.color = "#7dd3fc"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(2,170,235,0.15) 0%, rgba(27,119,190,0.15) 100%)"; e.currentTarget.style.color = "rgba(96,185,235,0.85)"; }}
         >
-          <UserSwitch size={15} weight="duotone" className="shrink-0" style={{ color: "#fff" }} />
+          <UserSwitch size={15} weight="duotone" className="shrink-0" />
           Portal
         </Link>
+      </div>
 
-        {/* Theme + Test data controls */}
-        <div className="flex gap-1.5 px-1 pt-1 pb-0.5">
-          <ThemePill />
-          <TestDataPill showTestData={showTestData} />
+      {/* Bottom two-up: Theme + Sign out */}
+      <div className="mt-2 flex gap-1.5 px-0.5 pb-0.5">
+        {/* Theme selector */}
+        <div
+          className="flex flex-1 items-center gap-0.5 rounded-xl p-0.5"
+          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          {THEME_SEGS.map((seg) => {
+            const isActive = theme === seg.value;
+            return (
+              <button
+                key={seg.value}
+                type="button"
+                onClick={() => setTheme(seg.value)}
+                className="flex flex-1 items-center justify-center rounded-lg py-[7px] focus-visible:ring-2 focus-visible:ring-white/40"
+                style={{
+                  ...(isActive ? seg.activeStyle : { color: "rgba(255,255,255,0.38)" }),
+                  transition: "background-color 150ms ease, color 150ms ease",
+                }}
+                aria-label={`Set theme: ${seg.label}`}
+              >
+                {seg.icon}
+              </button>
+            );
+          })}
         </div>
 
-        {signOutSlot}
+        {/* Sign out */}
+        <button
+          type="button"
+          disabled={signOutPending}
+          onClick={() => startSignOut(() => signOut())}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl focus-visible:ring-2 focus-visible:ring-white/40"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: signOutPending ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.45)",
+            fontSize: "12px",
+            fontWeight: 500,
+            transition: "background-color 150ms ease, color 150ms ease, border-color 150ms ease",
+            cursor: signOutPending ? "wait" : "pointer",
+          }}
+          onMouseEnter={(e) => {
+            if (!signOutPending) {
+              const el = e.currentTarget;
+              el.style.background = "rgba(248,113,113,0.12)";
+              el.style.color = "#f87171";
+              el.style.borderColor = "rgba(248,113,113,0.20)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget;
+            el.style.background = "rgba(255,255,255,0.06)";
+            el.style.color = signOutPending ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.45)";
+            el.style.borderColor = "rgba(255,255,255,0.08)";
+          }}
+        >
+          <Power size={14} weight="regular" />
+          {signOutPending ? "Signing out…" : "Sign out"}
+        </button>
       </div>
     </div>
   );

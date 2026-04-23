@@ -18,7 +18,10 @@ export async function fetchContactSources(activeOnly = false): Promise<ContactSo
     query = query.eq('active', true);
   }
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    console.error('[contact-sources] fetch error:', error.code, error.message);
+    return [];
+  }
   return (data ?? []).map((r) => ({
     id: r.id,
     label: r.label,

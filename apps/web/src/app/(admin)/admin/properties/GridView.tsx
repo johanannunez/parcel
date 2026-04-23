@@ -503,13 +503,17 @@ export function GridView({
 
   const globalStats = useMemo(() => computeChecklistStats(globalItems), [globalItems]);
 
+  const hasProperties = visibleProperties.length > 0;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%", flex: 1 }}>
       <div className={css.gridWrapper}>
         <div
           className={css.grid}
           style={{
-            gridTemplateColumns: `${LABEL_WIDTH}px repeat(${visibleProperties.length}, minmax(${COLUMN_WIDTH}px, 1fr))`,
+            gridTemplateColumns: hasProperties
+              ? `${LABEL_WIDTH}px repeat(${visibleProperties.length}, minmax(${COLUMN_WIDTH}px, 1fr))`
+              : `${LABEL_WIDTH}px 1fr`,
             width: "100%",
           }}
         >
@@ -595,7 +599,23 @@ export function GridView({
             {globalStats.total > 0 && <CornerStatusBar items={globalItems} />}
           </div>
 
-          {/* Per-property header cells */}
+          {/* Per-property header cells (or empty-state placeholder) */}
+          {!hasProperties && (
+            <div
+              style={{
+                height: `${HEADER_HEIGHT}px`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderBottom: "1px solid var(--color-warm-gray-200)",
+                color: "var(--color-text-tertiary)",
+                fontSize: "13px",
+                fontWeight: 500,
+              }}
+            >
+              No properties yet
+            </div>
+          )}
           {visibleProperties.map((p) => {
             const items = Array.from(itemsMap.get(p.id)?.values() ?? []);
             const stats = computeChecklistStats(items);
@@ -774,17 +794,28 @@ export function GridView({
                   {templates.length}
                 </span>
               </button>,
-              // Category band fills across every property column
-              ...visibleProperties.map((p) => (
-                <div
-                  key={`band-${category}-${p.id}`}
-                  className={css.categoryBandFill}
-                  style={{
-                    height: `${CATEGORY_BAND_HEIGHT}px`,
-                    backgroundColor: meta.band,
-                  }}
-                />
-              )),
+              // Category band fills across every property column (or empty placeholder)
+              ...(hasProperties
+                ? visibleProperties.map((p) => (
+                    <div
+                      key={`band-${category}-${p.id}`}
+                      className={css.categoryBandFill}
+                      style={{
+                        height: `${CATEGORY_BAND_HEIGHT}px`,
+                        backgroundColor: meta.band,
+                      }}
+                    />
+                  ))
+                : [
+                    <div
+                      key={`band-${category}-empty`}
+                      className={css.categoryBandFill}
+                      style={{
+                        height: `${CATEGORY_BAND_HEIGHT}px`,
+                        backgroundColor: meta.band,
+                      }}
+                    />,
+                  ]),
             ];
 
             // Item rows (skipped when collapsed)
@@ -855,34 +886,44 @@ export function GridView({
                     )}
                   </div>,
                 );
-                visibleProperties.forEach((p) => {
-                  const item = itemsMap.get(p.id)?.get(template.item_key);
-                  const propertyLabel = p.unit
-                    ? `${p.unit}, ${p.street}, ${p.location}`
-                    : `${p.street}, ${p.location}`;
-                  const ownerNames = p.owners
-                    .map((o) => o.shortName ?? o.name ?? "Unknown")
-                    .filter(Boolean);
+                if (hasProperties) {
+                  visibleProperties.forEach((p) => {
+                    const item = itemsMap.get(p.id)?.get(template.item_key);
+                    const propertyLabel = p.unit
+                      ? `${p.unit}, ${p.street}, ${p.location}`
+                      : `${p.street}, ${p.location}`;
+                    const ownerNames = p.owners
+                      .map((o) => o.shortName ?? o.name ?? "Unknown")
+                      .filter(Boolean);
+                    nodes.push(
+                      <div
+                        key={`cell-${template.item_key}-${p.id}`}
+                        className={css.cell}
+                        style={{ height: `${ROW_HEIGHT}px`, backgroundColor: rowBg }}
+                      >
+                        {item && (
+                          category === "documents" ? (
+                            <DocumentCell
+                              item={item}
+                              propertyLabel={propertyLabel}
+                              ownerNames={ownerNames}
+                            />
+                          ) : (
+                            <StatusPill item={item} />
+                          )
+                        )}
+                      </div>,
+                    );
+                  });
+                } else {
                   nodes.push(
                     <div
-                      key={`cell-${template.item_key}-${p.id}`}
+                      key={`cell-${template.item_key}-empty`}
                       className={css.cell}
                       style={{ height: `${ROW_HEIGHT}px`, backgroundColor: rowBg }}
-                    >
-                      {item && (
-                        category === "documents" ? (
-                          <DocumentCell
-                            item={item}
-                            propertyLabel={propertyLabel}
-                            ownerNames={ownerNames}
-                          />
-                        ) : (
-                          <StatusPill item={item} />
-                        )
-                      )}
-                    </div>,
+                    />,
                   );
-                });
+                }
               });
             }
 

@@ -12,7 +12,7 @@ export default async function HelpIntakePage() {
 
   const { data: categories } = await service
     .from("help_categories")
-    .select("id, name")
+    .select("id, name, slug")
     .order("sort_order", { ascending: true });
 
   return (

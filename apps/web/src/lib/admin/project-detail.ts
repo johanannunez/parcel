@@ -19,7 +19,10 @@ export async function fetchProjectDetail(id: string): Promise<ProjectRow | null>
     .eq('id', id)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    console.error('[project-detail] fetch error:', error.code, error.message);
+    return null;
+  }
   if (!data) return null;
 
   // Fetch task counts

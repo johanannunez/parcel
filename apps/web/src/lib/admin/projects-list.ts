@@ -68,7 +68,10 @@ export async function fetchAdminProjectsList(
   }
 
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    console.error('[projects-list] projects fetch error:', error.code, error.message);
+    return { rows: [], views, activeView };
+  }
 
   // Fetch task counts for all projects in this view (tasks uses parent_type/parent_id)
   const projectIds = (data ?? []).map((r) => r.id as string);

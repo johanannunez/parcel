@@ -86,6 +86,11 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
     return () => window.removeEventListener("mousedown", handler);
   }, [open]);
 
+  function dispatch(kind: CreateKind) {
+    window.dispatchEvent(new CustomEvent("admin:create-open", { detail: { kind } }));
+    setOpen(false);
+  }
+
   useEffect(() => {
     if (!open) return;
     const keyMap: Record<string, CreateKind> = {
@@ -105,11 +110,6 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [open]);
-
-  function dispatch(kind: CreateKind) {
-    window.dispatchEvent(new CustomEvent("admin:create-open", { detail: { kind } }));
-    setOpen(false);
-  }
 
   const wrapClass =
     placement === "topbar" ? `${styles.wrap} ${styles.wrapTopbar}` : styles.wrap;

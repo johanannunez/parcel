@@ -15,7 +15,7 @@ import { usePropertiesMode } from "./PropertiesModeContext";
 import { PropertiesSkeleton } from "./PropertiesSkeletons";
 import type { HomesMode } from "./homes-types";
 
-type Dest = "status" | "gallery" | "table";
+export type Dest = "launchpad" | "kanban" | "gallery" | "table";
 
 type Ctx = {
   navigateTo: (dest: Dest) => void;
@@ -27,9 +27,9 @@ const PropertiesNavContext = createContext<Ctx | null>(null);
 /**
  * Owns the "are we navigating to a different route?" state for the whole
  * properties section. Gallery ↔ Table is the instant path (same component,
- * no route swap). Going to or from Status is a real route swap, so we
- * kick it through useTransition and render a destination-shaped skeleton
- * until React finishes rendering the new page.
+ * no route swap). Going to/from Launchpad or Kanban is a real route swap,
+ * so we kick it through useTransition and render a skeleton until React
+ * finishes rendering the new page.
  */
 export function PropertiesNavProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -37,24 +37,26 @@ export function PropertiesNavProvider({ children }: { children: ReactNode }) {
   const { setMode } = usePropertiesMode();
 
   const view = searchParams?.get("view") ?? "";
-  const onStatusView = view === "launchpad";
+  const modeParam = searchParams?.get("mode") ?? "";
+  const onLaunchpadView = view === "launchpad";
+  const onKanbanView = modeParam === "status";
 
   const [isPending, startTransition] = useTransition();
   const [pendingDest, setPendingDest] = useState<Dest | null>(null);
 
-  // Clear the pending marker once the route actually lands.
   useEffect(() => {
     if (!isPending) setPendingDest(null);
   }, [isPending]);
 
   const navigateTo = useCallback(
     (dest: Dest) => {
-      const goingToStatus = dest === "status";
-      const needsRouteSwap = onStatusView || goingToStatus;
+      const goingToLaunchpad = dest === "launchpad";
+      const goingToKanban = dest === "kanban";
+      const needsRouteSwap =
+        onLaunchpadView || onKanbanView || goingToLaunchpad || goingToKanban;
 
       if (!needsRouteSwap) {
-        // Gallery ↔ Table: instant, no skeleton, no delay. Same component,
-        // just toggling display modes. URL stays in sync via replaceState.
+        // Gallery ↔ Table: instant, no skeleton, no delay.
         setMode(dest as HomesMode);
         const url = new URL(window.location.href);
         url.searchParams.set("view", "details");
@@ -67,16 +69,15 @@ export function PropertiesNavProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Route swap (to or from Status): preseed mode where applicable so
-      // the new page lands on the correct tab, then transition the URL
-      // change so useTransition's isPending covers the render wait.
-      if (!goingToStatus) {
+      if (!goingToLaunchpad && !goingToKanban) {
         setMode(dest as HomesMode);
       }
       setPendingDest(dest);
       startTransition(() => {
-        if (goingToStatus) {
+        if (goingToLaunchpad) {
           router.push("/admin/properties?view=launchpad", { scroll: false });
+        } else if (goingToKanban) {
+          router.push("/admin/properties?mode=status", { scroll: false });
         } else {
           router.push(
             `/admin/properties?view=details&mode=${dest}`,
@@ -85,7 +86,7 @@ export function PropertiesNavProvider({ children }: { children: ReactNode }) {
         }
       });
     },
-    [onStatusView, router, setMode],
+    [onLaunchpadView, onKanbanView, router, setMode],
   );
 
   const value = useMemo<Ctx>(
@@ -106,7 +107,6 @@ export function PropertiesNavProvider({ children }: { children: ReactNode }) {
 export function usePropertiesNav(): Ctx {
   const ctx = useContext(PropertiesNavContext);
   if (!ctx) {
-    // Silent fallback so components outside a provider still render.
     return { navigateTo: () => {}, pendingDest: null };
   }
   return ctx;

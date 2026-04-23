@@ -2,7 +2,7 @@
 
 import styles from "./PropertiesSkeletons.module.css";
 
-type Dest = "status" | "gallery" | "table";
+type Dest = "launchpad" | "kanban" | "gallery" | "table";
 
 export function PropertiesSkeleton({ dest }: { dest: Dest }) {
   return (
@@ -10,7 +10,8 @@ export function PropertiesSkeleton({ dest }: { dest: Dest }) {
       <div className={styles.content}>
         {dest === "gallery" && <GallerySkeleton />}
         {dest === "table" && <TableSkeleton />}
-        {dest === "status" && <StatusSkeleton />}
+        {dest === "launchpad" && <StatusSkeleton />}
+        {dest === "kanban" && <KanbanSkeleton />}
       </div>
     </div>
   );
@@ -59,6 +60,22 @@ function TableSkeleton() {
           <div className={`${styles.shim} ${styles.td} ${styles.narrow}`} />
           <div className={`${styles.shim} ${styles.td} ${styles.narrow}`} />
           <div className={`${styles.shim} ${styles.td} ${styles.pill}`} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function KanbanSkeleton() {
+  const stageCounts = [3, 0, 0, 2, 1];
+  return (
+    <div style={{ display: "flex", gap: "12px", padding: "16px", overflow: "hidden", alignItems: "flex-start" }}>
+      {stageCounts.map((count, i) => (
+        <div key={i} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div className={`${styles.shim}`} style={{ height: "32px", borderRadius: "8px" }} />
+          {Array.from({ length: Math.max(count, 1) }).map((_, j) => (
+            <div key={j} className={styles.card} />
+          ))}
         </div>
       ))}
     </div>

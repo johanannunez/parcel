@@ -92,29 +92,8 @@ export function SidebarFooter({
         </div>
       </Link>
 
-      {/* Action rows */}
-      <div className="pt-1 pb-1">
-        <Link href="/portal/account" className="sidebar-footer-row">
-          <GearSix size={18} weight="duotone" className="shrink-0" />
-          Account
-        </Link>
-
-        {isAdmin ? (
-          <Link
-            href={adminHref}
-            className="my-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold"
-            style={{
-              background: "linear-gradient(135deg, #F6A825 0%, #D4860A 100%)",
-              color: "#fff",
-              boxShadow: "0 2px 8px rgba(196, 120, 10, 0.28)",
-              textDecoration: "none",
-            }}
-          >
-            <ShieldStar size={18} weight="duotone" className="shrink-0" style={{ color: "#fff" }} />
-            Admin
-          </Link>
-        ) : null}
-
+      {/* Theme toggle */}
+      <div className="py-0.5">
         <button
           type="button"
           onClick={toggleTheme}
@@ -127,6 +106,37 @@ export function SidebarFooter({
           )}
           {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
         </button>
+      </div>
+
+      {/* Icon action row */}
+      <div
+        className="mt-1 flex items-center gap-0.5 rounded-xl px-1 py-1"
+        style={{ backgroundColor: "var(--color-warm-gray-50, #fafaf9)" }}
+      >
+        <Link
+          href="/portal/account"
+          title="Account settings"
+          className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-[var(--color-warm-gray-100)]"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          <GearSix size={17} weight="duotone" />
+        </Link>
+
+        <div className="flex-1" />
+
+        {isAdmin ? (
+          <Link
+            href={adminHref}
+            title="Switch to Admin"
+            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+            style={{
+              background: "linear-gradient(135deg, #F6A825 0%, #D4860A 100%)",
+              color: "#fff",
+            }}
+          >
+            <ShieldStar size={17} weight="duotone" />
+          </Link>
+        ) : null}
 
         {signOutSlot}
       </div>

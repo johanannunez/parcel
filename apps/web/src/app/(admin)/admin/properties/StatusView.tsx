@@ -3,6 +3,7 @@ import { shortenStreet, normalizeUnit } from '@/lib/address';
 import { StatusBoard } from '@/components/admin/pipeline/StatusBoard';
 import { MetricsBar, type MetricTile } from '@/components/admin/pipeline/MetricsBar';
 import { fetchInsightsByParent } from '@/lib/admin/ai-insights';
+import { getShowTestData } from '@/lib/admin/test-data';
 import {
   buildPropertyStatusBoard,
   type PropertyStatusRow,
@@ -10,25 +11,33 @@ import {
 
 async function fetchPropertyStatusRows(): Promise<PropertyStatusRow[]> {
   const supabase = await createClient();
-  const { data: properties, error } = await supabase
+  const showTestData = await getShowTestData();
+
+  let query = supabase
     .from('properties')
     .select(
       `id, name, address_line1, address_line2, city, state,
        cover_photo_url, setup_status, active,
        bedrooms, bathrooms, created_at,
-       financial_baseline,
        owner:profiles!properties_owner_id_fkey(full_name)`,
     )
     .order('created_at', { ascending: true });
-  if (error) throw error;
+
+  if (!showTestData) {
+    query = query.not('id', 'like', '0000%');
+  }
+
+  const { data: properties, error } = await query;
+
+  if (error) {
+    console.error('[properties/StatusView] fetch error:', error.code, error.message);
+    return [];
+  }
 
   return (properties ?? []).map((p) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ownerProfile = (p as any).owner as { full_name?: string | null } | null;
     const ownerNames = ownerProfile?.full_name ? [ownerProfile.full_name] : [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fb = (p as any).financial_baseline as { estimated_monthly_revenue?: number } | null;
-    const estimatedMrr = fb?.estimated_monthly_revenue ?? null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const line2 = (p as any).address_line2 as string | null;
 
@@ -42,7 +51,7 @@ async function fetchPropertyStatusRows(): Promise<PropertyStatusRow[]> {
       coverPhotoUrl: p.cover_photo_url ?? null,
       setupStatus: p.setup_status ?? null,
       active: p.active ?? false,
-      estimatedMrr,
+      estimatedMrr: null,
       ownerNames,
       bedrooms: p.bedrooms ?? null,
       bathrooms: p.bathrooms ?? null,

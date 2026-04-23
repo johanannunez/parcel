@@ -1,7 +1,10 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useEffect, useTransition } from "react";
 import { HelpArticleEditor } from "@/components/help/HelpArticleEditor";
+import { checkSlugExists } from "./actions";
+import { PORTAL_ROUTE_GROUPS } from "./portal-routes";
+import type { ContentType } from "@/lib/admin/help-intake-parser";
 
 type Category = { id: string; name: string };
 
@@ -15,7 +18,17 @@ type ArticleData = {
   read_time_minutes?: number;
   related_portal_path?: string | null;
   status?: string;
+  content_type?: string;
 };
+
+type SlugStatus = "idle" | "checking" | "available" | "taken";
+
+const CONTENT_TYPE_OPTIONS: { value: ContentType; label: string }[] = [
+  { value: "help", label: "Help" },
+  { value: "policy", label: "Policy" },
+  { value: "blog", label: "Blog" },
+  { value: "flagship", label: "Flagship" },
+];
 
 function slugify(text: string): string {
   return text
@@ -32,23 +45,77 @@ const fieldStyle = {
 
 const labelStyle = { color: "var(--color-text-secondary)" };
 
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <span
+        className="shrink-0 text-[10px] font-bold uppercase tracking-widest"
+        style={{ color: "var(--color-text-tertiary, #9ca3af)" }}
+      >
+        {label}
+      </span>
+      <div className="h-px flex-1" style={{ backgroundColor: "var(--color-warm-gray-100)" }} />
+    </div>
+  );
+}
+
+function SlugStatusBadge({ status }: { status: SlugStatus }) {
+  if (status === "idle") return null;
+  if (status === "checking")
+    return (
+      <span className="text-[11px]" style={{ color: "var(--color-text-tertiary, #9ca3af)" }}>
+        Checking...
+      </span>
+    );
+  if (status === "available")
+    return (
+      <span className="text-[11px] font-medium" style={{ color: "var(--color-success, #16a34a)" }}>
+        Available
+      </span>
+    );
+  return (
+    <span className="text-[11px] font-medium" style={{ color: "var(--color-error, #dc2626)" }}>
+      Already in use
+    </span>
+  );
+}
+
 export function ArticleForm({
   categories,
   action,
   initialData,
+  articleId,
 }: {
   categories: Category[];
   action: (formData: FormData) => Promise<void>;
   initialData?: ArticleData;
+  articleId?: string;
 }) {
+  const [contentType, setContentType] = useState<ContentType>(
+    (initialData?.content_type as ContentType) ?? "help"
+  );
   const [slug, setSlug] = useState(initialData?.slug ?? "");
   const [slugManual, setSlugManual] = useState(!!initialData?.slug);
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
   const [articleContent, setArticleContent] = useState(initialData?.content ?? "");
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
+  useEffect(() => {
+    if (!slug.trim() || contentType === "flagship") {
+      setSlugStatus("idle");
+      return;
+    }
+    setSlugStatus("checking");
+    const timer = setTimeout(async () => {
+      const exists = await checkSlugExists(slug, articleId);
+      setSlugStatus(exists ? "taken" : "available");
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [slug, contentType, articleId]);
+
   function handleTitleChange(title: string) {
-    if (!slugManual) {
+    if (!slugManual && contentType !== "flagship") {
       setSlug(slugify(title));
     }
   }
@@ -64,8 +131,45 @@ export function ArticleForm({
     });
   }
 
+  const showPortalPath = contentType !== "blog";
+
   return (
-    <form ref={formRef} action={handleSubmit} className="flex flex-col gap-6">
+    <form ref={formRef} action={handleSubmit} className="flex flex-col gap-5">
+      <input type="hidden" name="content_type" value={contentType} />
+
+      {/* Content type */}
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
+          Content Type
+        </span>
+        <div className="flex gap-2">
+          {CONTENT_TYPE_OPTIONS.map((opt) => {
+            const active = contentType === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setContentType(opt.value)}
+                className="rounded-md px-3 py-1.5 text-xs font-semibold transition-all"
+                style={
+                  active
+                    ? { backgroundColor: "var(--color-brand)", color: "#fff" }
+                    : {
+                        backgroundColor: "var(--color-warm-gray-50, #fafaf9)",
+                        border: "1px solid var(--color-warm-gray-200)",
+                        color: "var(--color-text-secondary)",
+                      }
+                }
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <SectionDivider label="Article" />
+
       {/* Title */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
@@ -85,9 +189,12 @@ export function ArticleForm({
 
       {/* Slug */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
-          Slug
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
+            Slug
+          </label>
+          <SlugStatusBadge status={slugStatus} />
+        </div>
         <input
           name="slug"
           type="text"
@@ -95,13 +202,28 @@ export function ArticleForm({
           value={slug}
           onChange={(e) => handleSlugChange(e.target.value)}
           className="rounded-lg border px-4 py-2.5 text-sm font-mono outline-none transition-colors"
-          style={fieldStyle}
-          placeholder="how-to-submit-a-property"
+          style={{
+            ...fieldStyle,
+            borderColor:
+              contentType === "flagship"
+                ? "var(--color-warning, #d97706)"
+                : slugStatus === "taken"
+                ? "var(--color-error, #dc2626)"
+                : slugStatus === "available"
+                ? "var(--color-success, #16a34a)"
+                : "var(--color-warm-gray-200)",
+          }}
+          placeholder={contentType === "flagship" ? "e.g. owners or how-it-works" : "how-to-submit-a-property"}
         />
+        {contentType === "flagship" && (
+          <p className="text-[11px]" style={{ color: "var(--color-warning, #d97706)" }}>
+            Flagship slugs are premium namespace. Enter one manually — short and deliberate.
+          </p>
+        )}
       </div>
 
-      {/* Category + Status row */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      {/* Category + Status */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
             Category
@@ -138,6 +260,8 @@ export function ArticleForm({
         </div>
       </div>
 
+      <SectionDivider label="Content" />
+
       {/* Summary */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
@@ -145,10 +269,9 @@ export function ArticleForm({
         </label>
         <textarea
           name="summary"
-          rows={2}
           defaultValue={initialData?.summary ?? ""}
-          className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors resize-none"
-          style={fieldStyle}
+          className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
+          style={{ ...fieldStyle, minHeight: "72px", resize: "vertical" }}
           placeholder="A brief description shown in search results..."
         />
       </div>
@@ -165,8 +288,10 @@ export function ArticleForm({
         <input type="hidden" name="content" value={articleContent} />
       </div>
 
-      {/* Tags + Read Time row */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <SectionDivider label="Discovery" />
+
+      {/* Tags + Read Time */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
             Tags
@@ -179,14 +304,14 @@ export function ArticleForm({
             style={fieldStyle}
             placeholder="getting-started, properties, billing"
           />
-          <span className="text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-[11px]" style={{ color: "var(--color-text-tertiary, #9ca3af)" }}>
             Comma-separated
           </span>
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
-            Read Time (minutes)
+            Read Time (min)
           </label>
           <input
             name="read_time_minutes"
@@ -200,29 +325,41 @@ export function ArticleForm({
         </div>
       </div>
 
-      {/* Related Portal Path */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
-          Related Portal Path (optional)
-        </label>
-        <input
-          name="related_portal_path"
-          type="text"
-          defaultValue={initialData?.related_portal_path ?? ""}
-          className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
-          style={fieldStyle}
-          placeholder="/portal/properties"
-        />
-        <span className="text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
-          Link this article to a portal page for contextual help
-        </span>
-      </div>
+      {/* Portal Path */}
+      {showPortalPath && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
+            Portal Path (optional)
+          </label>
+          <select
+            name="related_portal_path"
+            defaultValue={initialData?.related_portal_path ?? ""}
+            className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
+            style={fieldStyle}
+          >
+            <option value="">— No portal path —</option>
+            {PORTAL_ROUTE_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.routes.map((r) => (
+                  <option key={r.path} value={r.path}>
+                    {r.label} ({r.path})
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <span className="text-[11px]" style={{ color: "var(--color-text-tertiary, #9ca3af)" }}>
+            Links this article to a portal page for contextual help.
+          </span>
+        </div>
+      )}
 
-      {/* Submit */}
-      <div className="flex justify-end pt-2">
+      <SectionDivider label="Publish" />
+
+      <div className="flex justify-end pb-2">
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || slugStatus === "taken"}
           className="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-opacity disabled:opacity-50"
           style={{ backgroundColor: "var(--color-brand)" }}
         >

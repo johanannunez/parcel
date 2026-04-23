@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUnit, shortenStreet } from "@/lib/address";
+import { getShowTestData } from "@/lib/admin/test-data";
 import { PropertiesLayoutClient } from "./PropertiesLayoutClient";
 
 export default async function PropertiesLayout({
@@ -9,16 +10,23 @@ export default async function PropertiesLayout({
   children: ReactNode;
 }) {
   const supabase = await createClient();
+  const showTestData = await getShowTestData();
 
   // Lightweight fetch just for the top-bar search popover. The full property
   // detail fetch still lives in page.tsx.
+  let propertiesQuery = supabase
+    .from("properties")
+    .select(
+      "id, address_line1, address_line2, city, state, postal_code, owner_id, created_at",
+    )
+    .order("created_at", { ascending: true });
+
+  if (!showTestData) {
+    propertiesQuery = propertiesQuery.not("id", "like", "0000%");
+  }
+
   const [{ data: properties }, { data: propertyOwnersData }] = await Promise.all([
-    supabase
-      .from("properties")
-      .select(
-        "id, address_line1, address_line2, city, state, postal_code, owner_id, created_at",
-      )
-      .order("created_at", { ascending: true }),
+    propertiesQuery,
     supabase.from("property_owners").select("property_id, owner_id"),
   ]);
 

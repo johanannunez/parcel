@@ -30,6 +30,16 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+export async function checkSlugExists(slug: string, excludeId?: string): Promise<boolean> {
+  await verifyAdmin();
+  const service = createServiceClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (service.from("help_articles") as any).select("id").eq("slug", slug);
+  if (excludeId) query = query.neq("id", excludeId);
+  const { data } = await query.maybeSingle();
+  return !!data;
+}
+
 export async function createArticle(formData: FormData) {
   await verifyAdmin();
   const service = createServiceClient();
@@ -43,17 +53,16 @@ export async function createArticle(formData: FormData) {
   const readTime = parseInt(formData.get("read_time_minutes") as string, 10) || 5;
   const relatedPath = (formData.get("related_portal_path") as string) || null;
   const status = (formData.get("status") as string) || "draft";
+  const contentType = (formData.get("content_type") as string) || "help";
 
   const tags = tagsRaw
-    ? tagsRaw
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean)
+    ? tagsRaw.split(",").map((t) => t.trim()).filter(Boolean)
     : [];
 
   if (!categoryId) throw new Error("Category is required");
 
-  const { error } = await service.from("help_articles").insert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (service.from("help_articles") as any).insert({
     title,
     slug,
     category_id: categoryId,
@@ -63,6 +72,7 @@ export async function createArticle(formData: FormData) {
     read_time_minutes: readTime,
     related_portal_path: relatedPath,
     status: status as "draft" | "published" | "archived",
+    content_type: contentType,
     published_at: status === "published" ? new Date().toISOString() : null,
   });
 
@@ -87,17 +97,14 @@ export async function updateArticle(id: string, formData: FormData) {
   const readTime = parseInt(formData.get("read_time_minutes") as string, 10) || 5;
   const relatedPath = (formData.get("related_portal_path") as string) || null;
   const status = (formData.get("status") as string) || "draft";
+  const contentType = (formData.get("content_type") as string) || "help";
 
   const tags = tagsRaw
-    ? tagsRaw
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean)
+    ? tagsRaw.split(",").map((t) => t.trim()).filter(Boolean)
     : [];
 
-  // Check if transitioning to published
-  const { data: existing } = await service
-    .from("help_articles")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existing } = await (service.from("help_articles") as any)
     .select("status, published_at")
     .eq("id", id)
     .single();
@@ -107,8 +114,8 @@ export async function updateArticle(id: string, formData: FormData) {
       ? new Date().toISOString()
       : existing?.published_at ?? null;
 
-  const { error } = await service
-    .from("help_articles")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (service.from("help_articles") as any)
     .update({
       title,
       slug,
@@ -119,6 +126,7 @@ export async function updateArticle(id: string, formData: FormData) {
       read_time_minutes: readTime,
       related_portal_path: relatedPath,
       status: status as "draft" | "published" | "archived",
+      content_type: contentType,
       published_at: publishedAt,
     })
     .eq("id", id);
