@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/guest-intelligence",
-      "schedule": "0 13,23 * * *"
+      "schedule": "0 13 * * *"
     }
   ]
 }
