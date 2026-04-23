@@ -4,8 +4,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import type { DashboardTask, DashboardTaskFilter } from '@/lib/admin/dashboard-tasks';
-import { filterDashboardTasks } from '@/lib/admin/dashboard-tasks';
+import type { DashboardTask, DashboardTaskFilter } from '@/lib/admin/dashboard-tasks-client';
+import { filterDashboardTasks } from '@/lib/admin/dashboard-tasks-client';
 import styles from './DashboardTaskSurface.module.css';
 
 const FILTERS: { key: DashboardTaskFilter; label: string }[] = [
