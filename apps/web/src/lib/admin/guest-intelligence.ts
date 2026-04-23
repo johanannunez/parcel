@@ -197,19 +197,38 @@ async function writeInsights(
 
 export async function runGuestIntelligenceSync(): Promise<{ processed: number; skipped: number }> {
   const supabase = createServiceClient();
-  const properties = await getProperties();
+  const hospProperties = await getProperties();
+
+  // Map Hospitable property IDs to Supabase property IDs.
+  // ai_insights.parent_id must use Supabase IDs so the dashboard can join them.
+  const hospIds = hospProperties.map((p) => p.id);
+  const { data: dbProperties } = await supabase
+    .from('properties')
+    .select('id, hospitable_property_id')
+    .in('hospitable_property_id', hospIds);
+
+  const hospToSupabase = new Map<string, string>();
+  for (const p of dbProperties ?? []) {
+    if (p.hospitable_property_id) hospToSupabase.set(p.hospitable_property_id, p.id);
+  }
 
   let processed = 0;
   let skipped = 0;
 
-  for (const prop of properties) {
+  for (const prop of hospProperties) {
+    const supabaseId = hospToSupabase.get(prop.id);
+    if (!supabaseId) {
+      skipped++;
+      continue;
+    }
+
     const propertyName = prop.public_name ?? prop.name;
 
     await supabase
       .from('ai_insights')
       .delete()
       .eq('parent_type', 'property')
-      .eq('parent_id', prop.id)
+      .eq('parent_id', supabaseId)
       .like('agent_key', 'guest_intelligence:%');
 
     const result = await analyzeProperty(prop.id, propertyName);
@@ -219,8 +238,8 @@ export async function runGuestIntelligenceSync(): Promise<{ processed: number; s
     }
 
     await Promise.all([
-      writeInsights(supabase, prop.id, result.ownerUpdates, 'owner_update'),
-      writeInsights(supabase, prop.id, result.houseActionItems, 'house_action'),
+      writeInsights(supabase, supabaseId, result.ownerUpdates, 'owner_update'),
+      writeInsights(supabase, supabaseId, result.houseActionItems, 'house_action'),
     ]);
 
     processed++;
