@@ -2,6 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { runGuestIntelligenceSync } from './guest-intelligence';
+
+export async function triggerGuestIntelligenceSync(): Promise<{ processed: number; skipped: number }> {
+  const result = await runGuestIntelligenceSync();
+  revalidatePath('/admin');
+  return result;
+}
 
 export async function dismissInsight(insightId: string): Promise<void> {
   const supabase = await createClient();

@@ -39,7 +39,7 @@ function PropertyCard({ card }: { card: PropertyHealthCard }) {
       )}
       <div className={styles.body}>
         <div>
-          <div className={styles.name}>{card.name}</div>
+          <div className={styles.name}>{card.address ?? card.name}</div>
           <div className={styles.location}>{card.city}, {card.state}</div>
         </div>
         <div className={styles.cats}>

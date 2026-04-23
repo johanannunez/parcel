@@ -22,24 +22,19 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className={styles.page}>
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Property Health</h2>
-        <PropertyHealthGrid cards={propertyCards} />
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Attention Queue</h2>
-        <AttentionQueue items={attentionItems} />
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Tasks</h2>
+      <div className={styles.midRow}>
         <DashboardTaskSurface tasks={tasks} />
-      </section>
+        <AttentionQueue items={attentionItems} />
+      </div>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Guest Intelligence</h2>
         <GuestIntelligence ownerUpdates={ownerUpdates} houseActions={houseActions} />
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Property Health</h2>
+        <PropertyHealthGrid cards={propertyCards} />
       </section>
     </div>
   );

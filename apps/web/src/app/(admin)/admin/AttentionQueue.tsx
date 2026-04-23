@@ -20,45 +20,55 @@ function formatDays(days: number): string {
 export function AttentionQueue({ items }: { items: AttentionItem[] }) {
   if (items.length === 0) {
     return (
-      <div className={styles.allClear}>
-        <span>✓</span>
-        <span>All checklist items are clear. Great work.</span>
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <span className={styles.headerLabel}>Attention Queue</span>
+        </div>
+        <div className={styles.allClear}>
+          <span>✓</span>
+          <span>All checklist items are clear.</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.wrap}>
-      {BUCKETS.map((bucket) => {
-        const bucketItems = items.filter((i) => i.status === bucket.status);
-        if (bucketItems.length === 0) return null;
-        return (
-          <div key={bucket.status} className={styles.bucket}>
-            <div className={styles.bucketHeader}>
-              <span className={`${styles.dot} ${bucket.dotCls}`} />
-              <span className={styles.bucketLabel}>{bucket.label}</span>
-              <span className={styles.bucketCount}>({bucketItems.length})</span>
+    <div className={styles.card}>
+      <div className={styles.header}>
+        <span className={styles.headerLabel}>Attention Queue</span>
+      </div>
+      <div className={styles.wrap}>
+        {BUCKETS.map((bucket) => {
+          const bucketItems = items.filter((i) => i.status === bucket.status);
+          if (bucketItems.length === 0) return null;
+          return (
+            <div key={bucket.status} className={styles.bucket}>
+              <div className={styles.bucketHeader}>
+                <span className={`${styles.dot} ${bucket.dotCls}`} />
+                <span className={styles.bucketLabel}>{bucket.label}</span>
+                <span className={styles.bucketCount}>({bucketItems.length})</span>
+              </div>
+              <div className={styles.list}>
+                {bucketItems.map((item, i) => (
+                  <Link
+                    key={`${item.propertyId}-${item.itemLabel}-${i}`}
+                    href={item.propertyHref}
+                    className={styles.row}
+                  >
+                    <div className={styles.rowMain}>
+                      <span className={styles.itemLabel}>{item.itemLabel}</span>
+                      <span className={styles.propName}>{item.propertyName}</span>
+                    </div>
+                    <span className={styles.catBadge}>{item.category}</span>
+                    <span className={styles.days}>{formatDays(item.daysInStatus)}</span>
+                    <span className={styles.arrow}>›</span>
+                  </Link>
+                ))}
+              </div>
             </div>
-            <div className={styles.list}>
-              {bucketItems.map((item, i) => (
-                <Link
-                  key={`${item.propertyId}-${item.itemLabel}-${i}`}
-                  href={item.propertyHref}
-                  className={styles.row}
-                >
-                  <div className={styles.rowMain}>
-                    <span className={styles.itemLabel}>{item.itemLabel}</span>
-                    <span className={styles.propName}>{item.propertyName}</span>
-                  </div>
-                  <span className={styles.catBadge}>{item.category}</span>
-                  <span className={styles.days}>{formatDays(item.daysInStatus)}</span>
-                  <span className={styles.arrow}>›</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

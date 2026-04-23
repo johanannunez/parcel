@@ -1,11 +1,25 @@
 /* apps/web/src/app/(admin)/admin/page.module.css */
 .page {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 40px 24px 80px;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 40px;
+}
+
+/* Tasks + Attention Queue sit side by side */
+.midRow {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .midRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .section { display: flex; flex-direction: column; gap: 16px; }

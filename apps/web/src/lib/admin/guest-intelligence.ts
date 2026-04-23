@@ -1,11 +1,10 @@
 // apps/web/src/lib/admin/guest-intelligence.ts
 import 'server-only';
-import Anthropic from '@anthropic-ai/sdk';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getProperties, getPropertyReviews, getPropertyConversations } from '@/lib/hospitable';
 import type { InsightPayload } from './insight-types';
 
-const anthropic = new Anthropic();
+const OPENROUTER_MODEL = 'anthropic/claude-haiku-4-5';
 
 type ClaudeInsight = {
   title: string;
@@ -73,14 +72,20 @@ function buildFeedbackText(
   const parts: string[] = [];
 
   for (const r of reviews) {
-    if (!r.public_review && !r.private_feedback) continue;
+    // 'public' and 'private' are reserved words — bracket notation required
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = r as any;
+    const publicReview = (raw['public'] as { review?: string } | undefined)?.review;
+    const privateFeedback = (raw['private'] as { feedback?: string | null } | undefined)?.feedback;
+    if (!publicReview && !privateFeedback) continue;
     const name = r.guest?.first_name ?? 'Guest';
-    const date = r.created_at
-      ? new Date(r.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+    const date = r.reviewed_at
+      ? new Date(r.reviewed_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
       : 'Unknown date';
-    const rating = r.rating ? ` (${r.rating}/5 stars)` : '';
-    if (r.public_review) parts.push(`[REVIEW] ${name}, ${date}${rating}: "${r.public_review}"`);
-    if (r.private_feedback) parts.push(`[PRIVATE FEEDBACK] ${name}, ${date}: "${r.private_feedback}"`);
+    const rating = (raw['public'] as { rating?: number } | undefined)?.rating;
+    const ratingStr = rating ? ` (${rating}/5 stars)` : '';
+    if (publicReview) parts.push(`[REVIEW] ${name}, ${date}${ratingStr}: "${publicReview}"`);
+    if (privateFeedback) parts.push(`[PRIVATE FEEDBACK] ${name}, ${date}: "${privateFeedback}"`);
   }
 
   for (const conv of conversations) {
@@ -110,19 +115,38 @@ async function analyzeProperty(
   const feedbackText = buildFeedbackText(reviews, conversations);
   if (feedbackText === 'No guest feedback available.') return null;
 
+  const apiKey = process.env.OPENROUTER_API_PARCEL;
+  if (!apiKey) throw new Error('OPENROUTER_API_PARCEL is not set');
+
   try {
-    const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildUserPrompt(propertyName, feedbackText) }],
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        max_tokens: 2000,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: buildUserPrompt(propertyName, feedbackText) },
+        ],
+      }),
     });
 
-    const text = msg.content.find((b) => b.type === 'text')?.text ?? '';
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`OpenRouter error ${res.status}: ${body}`);
+    }
+
+    const data = await res.json() as { choices: Array<{ message: { content: string } }> };
+    const text = data.choices[0]?.message?.content ?? '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     return JSON.parse(jsonMatch[0]) as ClaudeResponse;
-  } catch {
+  } catch (err) {
+    console.error('[gi] openrouter error:', err);
     return null;
   }
 }

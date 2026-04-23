@@ -1,8 +1,8 @@
 /* apps/web/src/app/(admin)/admin/PropertyHealthGrid.module.css */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
 }
 
 .card {
@@ -23,21 +23,21 @@
 
 .cover {
   width: 100%;
-  height: 110px;
+  height: 72px;
   object-fit: cover;
   background: linear-gradient(135deg, #0F3B6B 0%, #02AAEB 100%);
   display: block;
 }
 
 .body {
-  padding: 14px 16px 16px;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .name {
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #0F3B6B;
   white-space: nowrap;
@@ -46,7 +46,7 @@
 }
 
 .location {
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: #6b7280;
   margin-top: 1px;
 }
@@ -54,22 +54,22 @@
 .cats {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .catRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .catLabel {
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #9ca3af;
-  width: 68px;
+  width: 52px;
   flex-shrink: 0;
 }
 

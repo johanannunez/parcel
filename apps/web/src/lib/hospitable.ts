@@ -299,13 +299,10 @@ export function mapPlatformToSource(
 
 export interface HospitableReview {
   id: string;
-  property_id?: string;
+  public?: { rating?: number; review?: string };
+  private?: { feedback?: string | null };
+  reviewed_at?: string;
   guest?: { first_name?: string };
-  rating?: number;
-  public_review?: string;
-  private_feedback?: string;
-  created_at?: string;
-  replied_at?: string | null;
 }
 
 export async function getPropertyReviews(
@@ -314,10 +311,10 @@ export async function getPropertyReviews(
 ): Promise<HospitableReview[]> {
   if (!hasHospitable()) return [];
   try {
-    const res = await request<PaginatedResponse<HospitableReview>>('/reviews', {
-      params: { 'properties[]': propertyId, per_page: String(limit) },
-      revalidate: 3600,
-    });
+    const res = await request<PaginatedResponse<HospitableReview>>(
+      `/properties/${propertyId}/reviews`,
+      { params: { per_page: String(limit), include: 'guest' }, revalidate: 3600 },
+    );
     return res.data ?? [];
   } catch {
     return [];

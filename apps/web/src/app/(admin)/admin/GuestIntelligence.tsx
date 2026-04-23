@@ -5,7 +5,7 @@ import { useState, useTransition } from 'react';
 import { ArrowsClockwise, X } from '@phosphor-icons/react';
 import type { Insight } from '@/lib/admin/ai-insights';
 import type { InsightPayload } from '@/lib/admin/insight-types';
-import { dismissInsight } from '@/lib/admin/insight-actions';
+import { dismissInsight, triggerGuestIntelligenceSync } from '@/lib/admin/insight-actions';
 import { InsightDetailPanel } from './InsightDetailPanel';
 import styles from './GuestIntelligence.module.css';
 
@@ -88,7 +88,7 @@ export function GuestIntelligence({ ownerUpdates, houseActions }: Props) {
 
   const handleRefresh = () => {
     startRefresh(async () => {
-      await fetch('/api/cron/guest-intelligence', { method: 'POST' });
+      await triggerGuestIntelligenceSync();
       window.location.reload();
     });
   };

@@ -70,18 +70,21 @@ export function DashboardTaskSurface({ tasks }: { tasks: DashboardTask[] }) {
   const visible = filterDashboardTasks(tasks, filter);
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.tabs}>
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            className={`${styles.tab} ${filter === f.key ? styles.tabActive : ''}`}
-            onClick={() => setFilter(f.key)}
-          >
-            {f.label}
-          </button>
-        ))}
+    <div className={styles.card}>
+      <div className={styles.header}>
+        <span className={styles.headerLabel}>Tasks</span>
+        <div className={styles.tabs}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`${styles.tab} ${filter === f.key ? styles.tabActive : ''}`}
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={styles.list}>

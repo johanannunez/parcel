@@ -12,6 +12,7 @@ export type CategoryHealth = {
 export type PropertyHealthCard = {
   id: string;
   name: string;
+  address: string | null;
   city: string;
   state: string;
   coverPhotoUrl: string | null;
@@ -117,6 +118,7 @@ export async function fetchDashboardData(): Promise<{
     propertyCards.push({
       id: p.id,
       name,
+      address: p.address_line1?.trim() ?? null,
       city: p.city,
       state: p.state,
       coverPhotoUrl: p.cover_photo_url ?? null,
