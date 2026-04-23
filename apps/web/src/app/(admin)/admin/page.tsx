@@ -1,10 +1,11 @@
 // apps/web/src/app/(admin)/admin/page.tsx
 import type { Metadata } from 'next';
-import { fetchDashboardData } from '@/lib/admin/dashboard-data';
+import { fetchDashboardData, fetchGuestIntelligenceInsights } from '@/lib/admin/dashboard-data';
 import { fetchDashboardTasks } from '@/lib/admin/dashboard-tasks';
 import { PropertyHealthGrid } from './PropertyHealthGrid';
 import { AttentionQueue } from './AttentionQueue';
 import { DashboardTaskSurface } from './DashboardTaskSurface';
+import { GuestIntelligence } from './GuestIntelligence';
 import styles from './page.module.css';
 
 export const metadata: Metadata = { title: 'Dashboard' };
@@ -15,6 +16,9 @@ export default async function AdminDashboardPage() {
     fetchDashboardData(),
     fetchDashboardTasks(),
   ]);
+
+  const propertyRefs = propertyCards.map((c) => ({ id: c.id, name: c.name }));
+  const { ownerUpdates, houseActions } = await fetchGuestIntelligenceInsights(propertyRefs);
 
   return (
     <div className={styles.page}>
@@ -31,6 +35,11 @@ export default async function AdminDashboardPage() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Tasks</h2>
         <DashboardTaskSurface tasks={tasks} />
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Guest Intelligence</h2>
+        <GuestIntelligence ownerUpdates={ownerUpdates} houseActions={houseActions} />
       </section>
     </div>
   );

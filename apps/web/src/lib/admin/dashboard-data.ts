@@ -157,3 +157,63 @@ export async function fetchDashboardData(): Promise<{
 
   return { propertyCards, attentionItems };
 }
+
+import { fetchInsightsByParentWithPayload } from '@/lib/admin/ai-insights';
+import type { InsightPayload } from '@/lib/admin/insight-types';
+import type { Insight } from '@/lib/admin/ai-insights';
+
+export type EnrichedInsight = Insight & {
+  payload: InsightPayload;
+  propertyId: string;
+  propertyName: string;
+};
+
+export async function fetchGuestIntelligenceInsights(
+  properties: Array<{ id: string; name: string }>,
+): Promise<{ ownerUpdates: EnrichedInsight[]; houseActions: EnrichedInsight[] }> {
+  if (properties.length === 0) return { ownerUpdates: [], houseActions: [] };
+
+  const propIds = properties.map((p) => p.id);
+  const insightMap = await fetchInsightsByParentWithPayload('property', propIds);
+
+  const ownerUpdates: EnrichedInsight[] = [];
+  const houseActions: EnrichedInsight[] = [];
+
+  for (const prop of properties) {
+    const insights = insightMap[prop.id] ?? [];
+    const guestInsights = insights.filter((i) => i.agentKey.startsWith('guest_intelligence:'));
+    for (const ins of guestInsights) {
+      const payload = ins.actionPayload as InsightPayload | null;
+      if (!payload) continue;
+      const enriched: EnrichedInsight = {
+        id: ins.id,
+        parentType: ins.parentType,
+        parentId: ins.parentId,
+        agentKey: ins.agentKey,
+        severity: ins.severity,
+        title: ins.title,
+        body: ins.body,
+        actionLabel: ins.actionLabel,
+        createdAt: ins.createdAt,
+        payload,
+        propertyId: prop.id,
+        propertyName: prop.name,
+      };
+      if (payload.bucket === 'owner_update') ownerUpdates.push(enriched);
+      else houseActions.push(enriched);
+    }
+  }
+
+  const severityOrder: Record<string, number> = { warning: 0, recommendation: 1, info: 2, success: 3 };
+  const sortFn = (a: EnrichedInsight, b: EnrichedInsight) => {
+    const aRank = a.payload.isCritical ? -1 : (severityOrder[a.severity] ?? 3);
+    const bRank = b.payload.isCritical ? -1 : (severityOrder[b.severity] ?? 3);
+    if (aRank !== bRank) return aRank - bRank;
+    return b.payload.sourceCount - a.payload.sourceCount;
+  };
+
+  return {
+    ownerUpdates: ownerUpdates.sort(sortFn),
+    houseActions: houseActions.sort(sortFn),
+  };
+}
