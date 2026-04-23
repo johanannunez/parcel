@@ -1,6 +1,5 @@
 // apps/web/src/app/(admin)/admin/PropertyHealthGrid.tsx
 import Link from 'next/link';
-import Image from 'next/image';
 import type { PropertyHealthCard, CategoryHealth } from '@/lib/admin/dashboard-data';
 import styles from './PropertyHealthGrid.module.css';
 
@@ -33,7 +32,8 @@ function PropertyCard({ card }: { card: PropertyHealthCard }) {
   return (
     <Link href={card.href} className={`${styles.card} ${borderCls}`}>
       {card.coverPhotoUrl ? (
-        <Image src={card.coverPhotoUrl} alt={card.name} width={400} height={110} className={styles.cover} />
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={card.coverPhotoUrl} alt={card.name} className={styles.cover} />
       ) : (
         <div className={styles.cover} />
       )}
