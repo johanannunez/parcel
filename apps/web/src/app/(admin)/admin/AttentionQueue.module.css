@@ -1,0 +1,108 @@
+/* apps/web/src/app/(admin)/admin/AttentionQueue.module.css */
+.wrap { display: flex; flex-direction: column; gap: 24px; }
+
+.bucket { display: flex; flex-direction: column; gap: 0; }
+
+.bucketHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dotRed   { background: #ef4444; }
+.dotAmber { background: #f59e0b; }
+.dotBlue  { background: #02AAEB; }
+
+.bucketLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+}
+
+.bucketCount {
+  font-size: 10.5px;
+  color: #9ca3af;
+}
+
+.list {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-top: 1px solid #f3f4f6;
+  text-decoration: none;
+  transition: background 100ms ease;
+}
+.row:first-child { border-top: none; }
+.row:hover { background: #fafbfc; }
+
+.rowMain { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.itemLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0F3B6B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.propName {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.catBadge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.days {
+  font-size: 11.5px;
+  color: #9ca3af;
+  white-space: nowrap;
+  min-width: 50px;
+  text-align: right;
+}
+
+.arrow {
+  color: #d1d5db;
+  font-size: 14px;
+}
+
+.allClear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  color: #15803d;
+  font-size: 13px;
+  font-weight: 500;
+}
