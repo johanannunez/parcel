@@ -64,3 +64,68 @@ export async function fetchCommunications(
     actionItems: payload?.actionItems ?? [],
   };
 }
+
+export type UnresolvedCaller = {
+  phone: string;
+  claudeSummary: string | null;
+  createdAt: string;
+};
+
+export type CommunicationsDashboardData = {
+  recentActionItems: Array<{
+    id: string;
+    title: string;
+    body: string;
+    entityType: string;
+    entityId: string;
+    createdAt: string;
+  }>;
+  unresolvedCallers: UnresolvedCaller[];
+};
+
+export async function fetchCommunicationsDashboard(): Promise<CommunicationsDashboardData> {
+  const supabase = await createClient();
+
+  const [insightsResult, unresolvedResult] = await Promise.all([
+    supabase
+      .from('ai_insights')
+      .select('id, parent_type, parent_id, title, body, created_at')
+      .like('agent_key', 'communication:%')
+      .eq('severity', 'recommendation')
+      .is('dismissed_at', null)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    (supabase as any)
+      .from('communication_events')
+      .select('phone_from, claude_summary, created_at')
+      .eq('entity_type', 'unknown')
+      .not('tier', 'eq', 'noise')
+      .not('processed_at', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(10),
+  ]);
+
+  const recentActionItems = (insightsResult.data ?? []).map((r: Record<string, unknown>) => ({
+    id: r.id as string,
+    title: r.title as string,
+    body: r.body as string,
+    entityType: r.parent_type as string,
+    entityId: r.parent_id as string,
+    createdAt: r.created_at as string,
+  }));
+
+  const seenPhones = new Set<string>();
+  const unresolvedCallers: UnresolvedCaller[] = [];
+  for (const r of unresolvedResult.data ?? []) {
+    if (!seenPhones.has(r.phone_from)) {
+      seenPhones.add(r.phone_from);
+      unresolvedCallers.push({
+        phone: r.phone_from,
+        claudeSummary: r.claude_summary,
+        createdAt: r.created_at,
+      });
+    }
+  }
+
+  return { recentActionItems, unresolvedCallers };
+}
