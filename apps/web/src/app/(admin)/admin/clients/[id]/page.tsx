@@ -14,6 +14,8 @@ import { SETTINGS_SECTIONS, type SettingsSection } from "@/app/(admin)/admin/own
 import type { SessionRow } from "@/app/(admin)/admin/owners/[entityId]/settings/AccountSecuritySection";
 import type { ConnectionRow } from "@/app/(admin)/admin/owners/[entityId]/settings/DataPrivacySection";
 import { fetchClientMeetings } from "@/lib/admin/client-meetings";
+import { IntelligenceTab } from "./IntelligenceTab";
+import { fetchInsightsByParent } from "@/lib/admin/ai-insights";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +73,12 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     client.profileId && tab === "meetings"
       ? await fetchClientMeetings(client.profileId)
       : [];
+
+  const contactInsights = tab === "intelligence"
+    ? await fetchInsightsByParent("contact", [id])
+    : {};
+  const insightList = contactInsights[id] ?? [];
+  const generatedAt = insightList[0]?.createdAt ?? null;
 
   // Fetch settings data only when the settings tab is active and owner data exists.
   let profileExtras: { preferredName: string | null; contactMethod: StoredContactMethod; timezone: string | null } =
@@ -186,9 +194,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
       case "intelligence":
         return (
-          <TabPlaceholder
-            title="Intelligence"
-            body="AI-powered relationship insights are coming in Phase 2."
+          <IntelligenceTab
+            contactId={id}
+            insights={insightList}
+            generatedAt={generatedAt}
           />
         );
 
