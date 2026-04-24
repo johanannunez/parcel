@@ -278,12 +278,17 @@ export async function generateClientIntelligence(contactId: string): Promise<voi
   // Delete old client intelligence insights before inserting fresh ones.
   // We cannot upsert here because risk_signals/recommendations/themes can have
   // multiple rows per agent_key, which would conflict on the unique constraint.
-  await serviceClient
+  const { error: deleteError } = await serviceClient
     .from("ai_insights")
     .delete()
     .eq("parent_type", "contact")
     .eq("parent_id", contactId)
     .like("agent_key", "client_intelligence:%");
+
+  if (deleteError) {
+    console.error("[client-intelligence] delete error:", deleteError.message);
+    return;
+  }
 
   const { error } = await serviceClient.from("ai_insights").insert(rows);
   if (error) {
