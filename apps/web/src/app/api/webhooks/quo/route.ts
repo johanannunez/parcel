@@ -1,6 +1,6 @@
 // apps/web/src/app/api/webhooks/quo/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { createServiceClient } from '@/lib/supabase/service';
 import { resolvePhone } from '@/lib/admin/resolve-phone';
 import { normalizePhone } from '@/lib/admin/normalize-phone';
@@ -17,14 +17,23 @@ const HANDLED_EVENTS = new Set([
 
 function verifySignature(body: string, signature: string, secret: string): boolean {
   const expected = createHmac('sha256', secret).update(body).digest('hex');
-  return expected === signature;
+  try {
+    return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const secret = process.env.QUO_WEBHOOK_SECRET;
   const rawBody = await req.text();
 
-  if (secret) {
+  if (!secret) {
+    if (process.env.NODE_ENV !== 'development') {
+      console.error('[quo-webhook] QUO_WEBHOOK_SECRET not configured');
+      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+  } else {
     const sig = req.headers.get('x-openphone-signature') ?? '';
     if (!verifySignature(rawBody, sig, secret)) {
       console.warn('[quo-webhook] invalid signature');
@@ -58,10 +67,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (event === 'call.recording.completed') {
     const recordingUrl = (data.recordingUrl ?? data.url) as string | undefined;
     if (recordingUrl) {
-      await supabase
+      const { error: recordingError } = await supabase
         .from('communication_events')
         .update({ recording_url: recordingUrl })
         .eq('quo_id', quoId);
+      if (recordingError) {
+        console.error('[quo-webhook] recording update error:', recordingError.code, recordingError.message);
+      }
     }
     return NextResponse.json({ ok: true });
   }
@@ -69,10 +81,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (event === 'call.summary.completed') {
     const summary = (data.summary ?? data.text) as string | undefined;
     if (summary) {
-      await supabase
+      const { error: summaryError } = await supabase
         .from('communication_events')
         .update({ quo_summary: summary })
         .eq('quo_id', quoId);
+      if (summaryError) {
+        console.error('[quo-webhook] summary update error:', summaryError.code, summaryError.message);
+      }
     }
     return NextResponse.json({ ok: true });
   }
@@ -81,13 +96,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const phoneFrom = normalizePhone((data.from as string | undefined) ?? '');
   const phoneTo = normalizePhone((data.to as string | undefined) ?? '');
 
-  if (!phoneFrom) {
-    return NextResponse.json({ ok: true, skipped: 'no phone_from' });
-  }
-
-  const isInbound = event !== 'message.delivered';
   const channel: 'call' | 'sms' = event === 'call.transcript.completed' ? 'call' : 'sms';
-  const direction: 'inbound' | 'outbound' = isInbound ? 'inbound' : 'outbound';
+  let direction: 'inbound' | 'outbound';
+  if (channel === 'call') {
+    direction = (data.direction as string | undefined) === 'outbound' ? 'outbound' : 'inbound';
+  } else {
+    direction = event === 'message.delivered' ? 'outbound' : 'inbound';
+  }
+  const isInbound = direction === 'inbound';
 
   const rawTranscript =
     channel === 'call'
@@ -107,7 +123,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .maybeSingle();
 
   if (!adminProfile) {
-    console.error('[quo-webhook] no admin profile found');
+    console.error('[quo-webhook] no admin profile found — cannot insert communication_events row (profile_id is NOT NULL). Skipping event', quoId);
     return NextResponse.json({ ok: true, skipped: 'no admin profile' });
   }
 
