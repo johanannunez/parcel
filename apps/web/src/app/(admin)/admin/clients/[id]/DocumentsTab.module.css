@@ -1,0 +1,119 @@
+.root { padding: 24px; max-width: 720px; }
+
+.header { margin-bottom: 24px; }
+.title { font-size: 1.0625rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 4px; }
+.subtitle { font-size: 0.875rem; color: var(--color-text-muted); margin: 0; }
+
+.emptyState { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 64px 24px; text-align: center; }
+.emptyIcon { color: var(--color-text-muted); opacity: 0.4; }
+.emptyTitle { font-size: 1rem; font-weight: 600; color: var(--color-text-primary); margin: 0; }
+.emptyBody { font-size: 0.875rem; color: var(--color-text-muted); max-width: 380px; margin: 0; line-height: 1.6; }
+
+.categories { display: flex; flex-direction: column; gap: 20px; }
+
+.category {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--color-border) 30%, transparent);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.categoryIcon { color: var(--color-brand); }
+
+.categoryTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.categoryCount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-border) 60%, transparent);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.docList { display: flex; flex-direction: column; }
+
+.docRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 120ms ease;
+}
+.docRow:last-child { border-bottom: none; }
+.docRow:hover { background: color-mix(in srgb, var(--color-brand) 4%, transparent); }
+
+.docIcon { color: var(--color-text-muted); flex-shrink: 0; }
+
+.docMain { flex: 1; min-width: 0; }
+
+.docName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.docMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.docProperty {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.docDate {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pillPending { background: color-mix(in srgb, #6366f1 15%, transparent); color: #6366f1; }
+.pillSigned { background: color-mix(in srgb, #059669 15%, transparent); color: #059669; }
+.pillExpired { background: color-mix(in srgb, #dc2626 12%, transparent); color: #dc2626; }
+
+.downloadBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  color: var(--color-brand);
+  text-decoration: none;
+  transition: background 120ms ease;
+  flex-shrink: 0;
+}
+.downloadBtn:hover { background: color-mix(in srgb, var(--color-brand) 10%, transparent); }

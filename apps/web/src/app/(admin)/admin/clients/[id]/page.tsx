@@ -17,6 +17,8 @@ import { IntelligenceTab } from "./IntelligenceTab";
 import { fetchInsightsByParent } from "@/lib/admin/ai-insights";
 import { BillingTab } from "./BillingTab";
 import { fetchClientBilling } from "@/lib/admin/client-billing";
+import { DocumentsTab } from "./DocumentsTab";
+import { fetchClientDocuments } from "@/lib/admin/client-documents";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +86,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
   const billingData = tab === "billing" && client.profileId
     ? await fetchClientBilling(client.profileId, client.id, client.properties.length)
     : null;
+
+  const clientDocuments = tab === "documents" && client.profileId
+    ? await fetchClientDocuments(client.profileId)
+    : [];
 
   // Fetch settings data only when the settings tab is active and owner data exists.
   let profileExtras: { preferredName: string | null; contactMethod: StoredContactMethod; timezone: string | null } =
@@ -215,12 +221,15 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         );
 
       case "documents":
-        return (
-          <TabPlaceholder
-            title="Documents"
-            body="Document management is coming in Phase 2."
-          />
-        );
+        if (!client!.profileId) {
+          return (
+            <TabPlaceholder
+              title="Documents"
+              body="Documents are available once the client begins onboarding."
+            />
+          );
+        }
+        return <DocumentsTab documents={clientDocuments} />;
 
       case "settings":
         if (!ownerData) {
