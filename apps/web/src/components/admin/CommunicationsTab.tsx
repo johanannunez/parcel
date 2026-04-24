@@ -32,7 +32,11 @@ function EventRow({ event }: { event: CommunicationEvent }) {
 
   return (
     <div className={styles.eventRow}>
-      <div className={styles.eventHeader} onClick={() => hasContent && setExpanded((v) => !v)}>
+      <div
+          className={styles.eventHeader}
+          data-clickable={hasContent ? 'true' : undefined}
+          onClick={() => hasContent && setExpanded((v) => !v)}
+        >
         <div className={styles.eventMeta}>
           <Icon size={16} weight="duotone" className={styles.channelIcon} />
           <span className={styles.eventLabel}>
@@ -55,9 +59,13 @@ function EventRow({ event }: { event: CommunicationEvent }) {
           )}
         </div>
         {hasContent && (
-          <button className={styles.expandBtn} aria-label="Toggle transcript">
-            {expanded ? <CaretUp size={14} /> : <CaretDown size={14} />}
-          </button>
+          <button
+              className={styles.expandBtn}
+              aria-label="Toggle transcript"
+              onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+            >
+              {expanded ? <CaretUp size={14} /> : <CaretDown size={14} />}
+            </button>
         )}
       </div>
       {expanded && event.rawTranscript && (

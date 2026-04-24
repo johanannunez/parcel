@@ -29,11 +29,11 @@
   font-size: 13px;
   line-height: 1.6;
   color: var(--text-primary);
-  margin: 0 0 12px;
+  margin: 0;
 }
 
 .actionItems {
-  margin: 0;
+  margin: 12px 0 0;
   padding: 0 0 0 16px;
   list-style: disc;
   font-size: 13px;
@@ -58,11 +58,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  cursor: pointer;
   user-select: none;
 }
 
-.eventHeader:hover {
+.eventHeader[data-clickable='true'] {
+  cursor: pointer;
+}
+
+.eventHeader[data-clickable='true']:hover {
   background: color-mix(in srgb, var(--text-primary) 4%, transparent);
 }
 
