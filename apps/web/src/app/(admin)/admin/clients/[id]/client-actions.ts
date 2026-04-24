@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Database } from "@/types/supabase";
-import type { LifecycleStage } from "@/lib/admin/contact-types";
 
 type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
 
@@ -45,7 +44,7 @@ type UpdateClientFields = Partial<{
   companyName: string;
   estimatedMrr: number | null;
   assignedTo: string | null;
-  lifecycleStage: LifecycleStage;
+  lifecycleStage: Database["public"]["Enums"]["contact_lifecycle_stage"];
 }>;
 
 export async function updateClientFields(
@@ -63,8 +62,7 @@ export async function updateClientFields(
   if (fields.estimatedMrr !== undefined) update.estimated_mrr = fields.estimatedMrr;
   if (fields.assignedTo !== undefined) update.assigned_to = fields.assignedTo;
   if (fields.lifecycleStage !== undefined) {
-    update.lifecycle_stage =
-      fields.lifecycleStage as Database["public"]["Enums"]["contact_lifecycle_stage"];
+    update.lifecycle_stage = fields.lifecycleStage;
     update.stage_changed_at = new Date().toISOString();
   }
 

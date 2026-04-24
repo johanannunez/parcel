@@ -82,12 +82,36 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
       entityId = profile.entity_id;
       onboardingCompletedAt = profile.onboarding_completed_at ?? null;
 
-      const { data: props } = await supabase
-        .from("properties")
-        .select(
-          "id, name, address_line1, city, state, setup_status, active, bedrooms, bathrooms, created_at"
-        )
-        .eq("owner_id", profileId);
+      // Fetch both direct-owner properties and co-owned properties from the
+      // junction table, then deduplicate by ID — same pattern as owner-detail.ts.
+      const [{ data: primaryProps }, { data: coOwnedProps }] = await Promise.all([
+        supabase
+          .from("properties")
+          .select("id")
+          .eq("owner_id", profileId),
+        (supabase as any)
+          .from("property_owners")
+          .select("property_id")
+          .eq("owner_id", profileId) as Promise<{
+          data: Array<{ property_id: string }> | null;
+        }>,
+      ]);
+
+      const propertyIds = Array.from(
+        new Set([
+          ...(primaryProps ?? []).map((p: { id: string }) => p.id),
+          ...(coOwnedProps ?? []).map((p) => p.property_id),
+        ]),
+      );
+
+      const { data: props } = propertyIds.length > 0
+        ? await supabase
+            .from("properties")
+            .select(
+              "id, name, address_line1, city, state, setup_status, active, bedrooms, bathrooms, created_at"
+            )
+            .in("id", propertyIds)
+        : { data: [] as any[] };
 
       properties = (props ?? []).map((p) => ({
         id: p.id,
@@ -102,7 +126,6 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
         createdAt: p.created_at as string,
       }));
 
-      const propertyIds = properties.map((p) => p.id);
       if (propertyIds.length > 0) {
         const { data: payouts } = await supabase
           .from("payouts")
@@ -127,7 +150,7 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
     avatarUrl: (contact.avatar_url as string | null) ?? null,
     source: (contact.source as string | null) ?? null,
     lifecycleStage: contact.lifecycle_stage as LifecycleStage,
-    stageChangedAt: contact.stage_changed_at,
+    stageChangedAt: contact.stage_changed_at ?? "",
     estimatedMrr: contact.estimated_mrr == null ? null : Number(contact.estimated_mrr),
     assignedTo: (contact.assigned_to as string | null) ?? null,
     assignedToName,
