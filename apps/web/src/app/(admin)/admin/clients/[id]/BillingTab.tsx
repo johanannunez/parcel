@@ -180,7 +180,7 @@ export function BillingTab({ billing }: { billing: ClientBilling }) {
               <div className={`${styles.paymentSub} ${paymentMethod.isExpiringSoon ? styles.paymentExpiring : ""}`}>
                 {paymentMethod.isExpiringSoon && <Warning size={13} weight="fill" />}
                 Expires {paymentMethod.expMonth}/{paymentMethod.expYear}
-                {paymentMethod.isExpiringSoon ? " — expiring soon" : ""}
+                {paymentMethod.isExpiringSoon ? " (expiring soon)" : ""}
               </div>
             </div>
           </div>
