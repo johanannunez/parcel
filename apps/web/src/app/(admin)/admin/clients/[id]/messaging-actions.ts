@@ -37,6 +37,9 @@ export async function togglePinMessage(
   pinned: boolean,
 ): Promise<{ ok: boolean }> {
   const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user?.id) return { ok: false };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from("client_messages")

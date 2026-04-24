@@ -22,17 +22,17 @@ function formatTime(iso: string): string {
 
 function MessageBubble({
   message,
-  contactId,
+  onPin,
 }: {
   message: ClientMessage;
-  contactId: string;
+  onPin: (id: string, currentlyPinned: boolean) => void;
 }) {
   const [isPinning, startPinTransition] = useTransition();
   const isAdmin = message.senderType === "admin";
 
   function handlePin() {
     startPinTransition(async () => {
-      await togglePinMessage(message.id, contactId, message.pinned);
+      onPin(message.id, message.pinned);
     });
   }
 
@@ -62,14 +62,26 @@ function MessageBubble({
   );
 }
 
-export function MessagingTab({ contactId, messages }: Props) {
+export function MessagingTab({ contactId, messages: initialMessages }: Props) {
+  const [localMessages, setLocalMessages] = useState<ClientMessage[]>(initialMessages);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const pinned = messages.filter((m) => m.pinned);
-  const thread = messages.filter((m) => !m.pinned);
+  const pinned = localMessages.filter((m) => m.pinned);
+  const thread = localMessages.filter((m) => !m.pinned);
+
+  function handlePin(messageId: string, currentlyPinned: boolean) {
+    setLocalMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, pinned: !currentlyPinned } : m)),
+    );
+    togglePinMessage(messageId, contactId, currentlyPinned).catch(() => {
+      setLocalMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, pinned: currentlyPinned } : m)),
+      );
+    });
+  }
 
   function handleSend() {
     if (!body.trim()) return;
@@ -101,7 +113,7 @@ export function MessagingTab({ contactId, messages }: Props) {
             Pinned
           </div>
           {pinned.map((m) => (
-            <MessageBubble key={m.id} message={m} contactId={contactId} />
+            <MessageBubble key={m.id} message={m} onPin={handlePin} />
           ))}
         </div>
       )}
@@ -116,7 +128,7 @@ export function MessagingTab({ contactId, messages }: Props) {
           </div>
         ) : (
           thread.map((m) => (
-            <MessageBubble key={m.id} message={m} contactId={contactId} />
+            <MessageBubble key={m.id} message={m} onPin={handlePin} />
           ))
         )}
       </div>
