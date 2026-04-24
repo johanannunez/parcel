@@ -12,6 +12,8 @@ import { TopBarSlotsProvider } from "@/components/admin/chrome/TopBarSlotsContex
 import { CommandPalette } from "@/components/admin/chrome/CommandPalette";
 import { SidebarDrawer } from "@/components/admin/chrome/SidebarDrawer";
 import { NotificationPopover } from "@/components/admin/chrome/NotificationPopover";
+import { HelpSupportModal } from "@/components/admin/HelpSupportModal";
+import { AdminAIChatTrigger } from "@/components/admin/AdminAIChatTrigger";
 
 /**
  * Admin layout with dark vertical sidebar.
@@ -110,6 +112,8 @@ export default async function AdminLayout({
         <CreateModal />
         <CommandPalette />
         <NotificationPopover />
+        <HelpSupportModal />
+        <AdminAIChatTrigger />
         <SidebarDrawer
           userName={fullName}
           userEmail={user.email ?? ""}
