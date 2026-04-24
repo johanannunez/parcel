@@ -12,6 +12,7 @@ import {
   BookOpenText,
   FolderOpen,
   Users,
+  Wrench,
   MagnifyingGlass,
   List as HamburgerIcon,
   CaretDown,
@@ -64,6 +65,7 @@ const navEntries: NavEntry[] = [
   { kind: "item", href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/calendar" },
   { kind: "item", href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
   { kind: "item", href: "/admin/clients", label: "Clients", icon: <Users size={18} weight="duotone" />, matchPrefix: "/admin/clients" },
+  { kind: "item", href: "/admin/vendors", label: "Vendors", icon: <Wrench size={18} weight="duotone" />, matchPrefix: "/admin/vendors" },
   { kind: "item", href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
   { kind: "item", href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
@@ -715,6 +717,7 @@ const adminRailItems: Array<{
   { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
   { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
   { href: "/admin/clients", icon: <Users size={20} weight="duotone" />, label: "Clients", matchPrefix: "/admin/clients" },
+  { href: "/admin/vendors", icon: <Wrench size={20} weight="duotone" />, label: "Vendors", matchPrefix: "/admin/vendors" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
