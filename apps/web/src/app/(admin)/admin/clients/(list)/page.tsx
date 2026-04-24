@@ -1,8 +1,8 @@
 import { fetchAdminContactsList } from '@/lib/admin/contacts-list';
-import { ContactsListView } from '../contacts/ContactsListView';
-import { ContactsStatusView } from '../contacts/StatusView';
-import { ActiveOwnersGrid } from '../contacts/ActiveOwnersGrid';
-import { ContactsMapView } from '../contacts/ContactsMapView';
+import { ContactsListView } from '../../contacts/ContactsListView';
+import { ContactsStatusView } from '../../contacts/StatusView';
+import { ActiveOwnersGrid } from '../../contacts/ActiveOwnersGrid';
+import { ContactsMapView } from '../../contacts/ContactsMapView';
 
 type Props = {
   searchParams: Promise<{
