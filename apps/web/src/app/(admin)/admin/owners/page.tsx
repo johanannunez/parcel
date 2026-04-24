@@ -19,7 +19,7 @@ import styles from '../contacts/ContactsLayout.module.css';
 
 export const dynamic = 'force-dynamic';
 
-const OWNERS_VIEW_KEYS = ['active-owners', 'offboarding', 'owners-archived'];
+const OWNERS_VIEW_KEYS = ['active-owners', 'offboarding', 'archived'];
 
 type Props = {
   searchParams: Promise<{
