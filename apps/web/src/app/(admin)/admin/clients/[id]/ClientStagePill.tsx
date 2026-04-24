@@ -15,7 +15,7 @@ const STAGE_CONFIG: Record<LifecycleStage, { label: string; variant: string }> =
 };
 
 export function ClientStagePill({ stage }: { stage: LifecycleStage }) {
-  const config = STAGE_CONFIG[stage] ?? { label: stage, variant: "gray" };
+  const config = STAGE_CONFIG[stage];
   return (
     <span className={`${styles.pill} ${styles[config.variant]}`}>
       {config.label}
