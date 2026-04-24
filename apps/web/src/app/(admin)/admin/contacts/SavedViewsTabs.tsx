@@ -22,6 +22,8 @@ export function SavedViewsTabs({ views }: { views: ContactSavedView[] }) {
     ? '/admin/owners'
     : pathname?.startsWith('/admin/leads')
     ? '/admin/leads'
+    : pathname?.startsWith('/admin/clients')
+    ? '/admin/clients'
     : '/admin/contacts';
 
   const visibleViews = views.filter(

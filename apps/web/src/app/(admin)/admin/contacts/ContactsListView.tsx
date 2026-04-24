@@ -11,6 +11,7 @@ import styles from './ContactsListView.module.css';
 type Props = {
   rows: ContactRow[];
   activeView: ContactSavedView;
+  basePath?: string;
 };
 
 const STAGE_PILL_CLASS: Record<ReturnType<typeof stageGroup>, string> = {
@@ -40,7 +41,7 @@ function relativeTime(iso: string | null): string {
   return `${Math.floor(months / 12)}y`;
 }
 
-export function ContactsListView({ rows, activeView }: Props) {
+export function ContactsListView({ rows, activeView, basePath = '/admin/contacts' }: Props) {
   const [search, setSearch] = useState('');
   const { sources, assignees } = useContactsFilters();
 
@@ -87,7 +88,7 @@ export function ContactsListView({ rows, activeView }: Props) {
         {filtered.map((r) => {
           const href = r.profileId
             ? `/admin/owners/${r.profileId}`
-            : `/admin/contacts/${r.id}`;
+            : `${basePath}/${r.id}`;
           const pillClass = STAGE_PILL_CLASS[stageGroup(r.lifecycleStage)];
           return (
             <Link key={r.id} href={href} className={styles.row}>
