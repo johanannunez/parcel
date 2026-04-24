@@ -199,6 +199,18 @@ export function HelpSupportModal() {
             aria-hidden
           />
 
+          {/* Centering wrapper — keeps motion.div free of translate(-50%,-50%) so spring transforms compose cleanly */}
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 201,
+              pointerEvents: "none",
+            }}
+          >
           <motion.div
             role="dialog"
             aria-label="Help and Support"
@@ -208,10 +220,6 @@ export function HelpSupportModal() {
             exit={{ scale: 0.93, opacity: 0, y: -10 }}
             transition={{ type: "spring", damping: 28, stiffness: 320 }}
             style={{
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
               width: "420px",
               maxWidth: "calc(100vw - 32px)",
               maxHeight: "80vh",
@@ -223,7 +231,7 @@ export function HelpSupportModal() {
               borderRadius: "20px",
               boxShadow:
                 "0 0 0 1px rgba(255,255,255,0.04), 0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)",
-              zIndex: 201,
+              pointerEvents: "auto",
               display: "flex",
               flexDirection: "column",
             }}
@@ -467,6 +475,7 @@ export function HelpSupportModal() {
               </AnimatePresence>
             </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
