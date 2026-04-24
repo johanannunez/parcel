@@ -100,9 +100,9 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
-.pillPending { background: color-mix(in srgb, #6366f1 15%, transparent); color: #6366f1; }
-.pillSigned { background: color-mix(in srgb, #059669 15%, transparent); color: #059669; }
-.pillExpired { background: color-mix(in srgb, #dc2626 12%, transparent); color: #dc2626; }
+.pillPending { background: color-mix(in srgb, var(--color-brand) 15%, transparent); color: var(--color-brand); }
+.pillSigned { background: color-mix(in srgb, var(--color-success) 15%, transparent); color: var(--color-success); }
+.pillExpired { background: color-mix(in srgb, var(--color-error) 12%, transparent); color: var(--color-error); }
 
 .downloadBtn {
   display: inline-flex;

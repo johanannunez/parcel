@@ -1,3 +1,4 @@
+import type { ElementType } from "react";
 import {
   FileText,
   FilePdf,
@@ -12,7 +13,7 @@ import {
 import type { ClientDocument } from "@/lib/admin/client-documents";
 import styles from "./DocumentsTab.module.css";
 
-const CATEGORY_META: Record<ClientDocument["category"], { label: string; icon: React.ElementType }> = {
+const CATEGORY_META: Record<ClientDocument["category"], { label: string; icon: ElementType }> = {
   legal: { label: "Legal", icon: Scales },
   financial: { label: "Financial", icon: Wallet },
   property: { label: "Property-specific", icon: Buildings },
