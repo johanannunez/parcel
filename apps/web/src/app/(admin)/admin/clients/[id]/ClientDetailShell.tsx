@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { PencilSimple } from "@phosphor-icons/react";
@@ -39,7 +39,7 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function ClientDetailShell({
+function ClientDetailContent({
   client,
   children,
 }: {
@@ -115,5 +115,19 @@ export function ClientDetailShell({
         onClose={() => setDrawerOpen(false)}
       />
     </div>
+  );
+}
+
+export function ClientDetailShell({
+  client,
+  children,
+}: {
+  client: ClientDetail;
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<div className={styles.shell} />}>
+      <ClientDetailContent client={client}>{children}</ClientDetailContent>
+    </Suspense>
   );
 }

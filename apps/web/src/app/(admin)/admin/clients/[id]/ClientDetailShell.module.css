@@ -24,14 +24,20 @@
   min-width: 0;
 }
 
+/* Avatar shadow: navy base lift + brand-light glow */
+:root {
+  --avatar-shadow-base: 0 2px 4px color-mix(in srgb, var(--color-navy) 6%, transparent);
+  --avatar-shadow-glow: 0 10px 24px -14px color-mix(in srgb, var(--color-brand-light) 40%, transparent);
+  --avatar-shadow: var(--avatar-shadow-base), var(--avatar-shadow-glow);
+}
+
 .avatar {
   width: 52px;
   height: 52px;
   border-radius: 14px;
   object-fit: cover;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.06),
-    0 10px 24px -14px rgba(2, 170, 235, 0.40);
+  box-shadow: var(--avatar-shadow);
 }
 
 .avatarFallback {
@@ -48,8 +54,7 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   font-family: inherit;
-  box-shadow: 0 2px 4px rgba(11, 27, 43, 0.06),
-    0 10px 24px -14px rgba(2, 170, 235, 0.40);
+  box-shadow: var(--avatar-shadow);
 }
 
 .nameBlock {
