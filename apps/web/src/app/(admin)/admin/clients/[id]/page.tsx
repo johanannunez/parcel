@@ -6,7 +6,6 @@ import { fetchInternalNote } from "@/lib/admin/owner-facts-actions";
 import { ClientDetailShell } from "./ClientDetailShell";
 import { PropertiesTab } from "./PropertiesTab";
 import { OverviewTab } from "@/app/(admin)/admin/owners/[entityId]/OverviewTab";
-import { FinancialsTab } from "@/app/(admin)/admin/owners/[entityId]/FinancialsTab";
 import { TabPlaceholder } from "@/app/(admin)/admin/owners/[entityId]/TabPlaceholder";
 import { MeetingsTab } from "@/app/(admin)/admin/owners/[entityId]/MeetingsTab";
 import { SettingsTab } from "@/app/(admin)/admin/owners/[entityId]/SettingsTab";
@@ -16,6 +15,8 @@ import type { ConnectionRow } from "@/app/(admin)/admin/owners/[entityId]/settin
 import { fetchClientMeetings } from "@/lib/admin/client-meetings";
 import { IntelligenceTab } from "./IntelligenceTab";
 import { fetchInsightsByParent } from "@/lib/admin/ai-insights";
+import { BillingTab } from "./BillingTab";
+import { fetchClientBilling } from "@/lib/admin/client-billing";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     : {};
   const insightList = contactInsights[id] ?? [];
   const generatedAt = insightList[0]?.createdAt ?? null;
+
+  const billingData = tab === "billing" && client.profileId
+    ? await fetchClientBilling(client.profileId, client.id, client.properties.length)
+    : null;
 
   // Fetch settings data only when the settings tab is active and owner data exists.
   let profileExtras: { preferredName: string | null; contactMethod: StoredContactMethod; timezone: string | null } =
@@ -182,15 +187,15 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         );
 
       case "billing":
-        if (ownerData) {
-          return <FinancialsTab ownerId={ownerData.primaryMember.id} />;
+        if (!client!.profileId || !billingData) {
+          return (
+            <TabPlaceholder
+              title="Billing"
+              body="Billing is available once the client completes onboarding."
+            />
+          );
         }
-        return (
-          <TabPlaceholder
-            title="Billing"
-            body="Billing and invoice history are available once the client completes onboarding."
-          />
-        );
+        return <BillingTab billing={billingData} />;
 
       case "intelligence":
         return (
