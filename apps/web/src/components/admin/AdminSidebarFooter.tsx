@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTransition } from "react";
-import { GearSix, UserSwitch, Power, Sun, Moon, Monitor } from "@phosphor-icons/react";
+import { useTransition, useState, useRef, useEffect } from "react";
+import { GearSix, UserSwitch, Power, Sun, Moon, Monitor, CaretDown, Check } from "@phosphor-icons/react";
 import { useTheme } from "@/components/ThemeProvider";
 import { signOut } from "@/app/(portal)/portal/actions";
 
@@ -23,11 +23,117 @@ function getPortalUrl(pathname: string): string {
   return "/portal/dashboard";
 }
 
-const THEME_SEGS = [
-  { value: "light" as const, icon: <Sun size={14} weight="regular" />, activeStyle: { background: "rgba(251,191,36,0.18)", color: "#fbbf24" }, label: "Light" },
-  { value: "dark"  as const, icon: <Moon size={14} weight="regular" />, activeStyle: { background: "rgba(96,165,250,0.18)", color: "#60a5fa" }, label: "Dark" },
-  { value: "system" as const, icon: <Monitor size={14} weight="regular" />, activeStyle: { background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,1)" }, label: "System" },
+const THEME_OPTIONS = [
+  { value: "light" as const, icon: <Sun size={13} weight="regular" />, label: "Light" },
+  { value: "dark" as const, icon: <Moon size={13} weight="regular" />, label: "Dark" },
+  { value: "system" as const, icon: <Monitor size={13} weight="regular" />, label: "System" },
 ] as const;
+
+function ThemeDropdown() {
+  const { theme, setTheme } = useTheme();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [open]);
+
+  const current = THEME_OPTIONS.find((o) => o.value === theme) ?? THEME_OPTIONS[1];
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "5px",
+          padding: "5px 8px",
+          borderRadius: "8px",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          color: "rgba(255,255,255,0.60)",
+          fontSize: "12px",
+          fontWeight: 500,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          transition: "background 150ms ease, border-color 150ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.10)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.16)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+        }}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center" }}>{current.icon}</span>
+        {current.label}
+        <CaretDown size={10} weight="bold" style={{ opacity: 0.5 }} />
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 6px)",
+            left: 0,
+            background: "var(--color-navy)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: "10px",
+            padding: "4px",
+            minWidth: "120px",
+            boxShadow: "0 -4px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+            zIndex: 50,
+          }}
+        >
+          {THEME_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { setTheme(opt.value); setOpen(false); }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "7px",
+                width: "100%",
+                padding: "6px 8px",
+                borderRadius: "6px",
+                background: theme === opt.value ? "rgba(255,255,255,0.08)" : "transparent",
+                border: "none",
+                color: theme === opt.value ? "rgba(255,255,255,0.90)" : "rgba(255,255,255,0.55)",
+                fontSize: "12.5px",
+                fontWeight: theme === opt.value ? 600 : 400,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                textAlign: "left",
+                transition: "background 120ms ease, color 120ms ease",
+              }}
+              onMouseEnter={(e) => {
+                if (theme !== opt.value) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+              }}
+              onMouseLeave={(e) => {
+                if (theme !== opt.value) e.currentTarget.style.background = "transparent";
+              }}
+            >
+              <span style={{ display: "inline-flex", alignItems: "center" }}>{opt.icon}</span>
+              <span style={{ flex: 1 }}>{opt.label}</span>
+              {theme === opt.value && (
+                <Check size={11} weight="bold" style={{ color: "var(--color-brand-light)" }} />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function AdminSidebarFooter({
   userName,
@@ -42,7 +148,6 @@ export function AdminSidebarFooter({
 }) {
   const pathname = usePathname();
   const portalHref = getPortalUrl(pathname ?? "");
-  const { theme, setTheme } = useTheme();
   const [signOutPending, startSignOut] = useTransition();
 
   return (
@@ -50,7 +155,7 @@ export function AdminSidebarFooter({
       className="mx-3 mb-6 mt-auto border-t pt-2"
       style={{ borderColor: "rgba(255,255,255,0.08)" }}
     >
-      {/* Identity row */}
+      {/* Identity row — entire row links to account, gear icon as visual cue */}
       <Link
         href="/admin/account"
         className="flex items-center gap-2.5 rounded-lg px-3 pb-1.5 pt-2.5 transition-colors hover:bg-[rgba(255,255,255,0.04)]"
@@ -78,33 +183,20 @@ export function AdminSidebarFooter({
             {userEmail}
           </div>
         </div>
+        <GearSix size={15} weight="regular" style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
       </Link>
 
-      {/* Account + Portal two-column cards */}
-      <div className="flex gap-1.5 px-0.5 pb-1 pt-0.5">
-        <Link
-          href="/admin/account"
-          className="flex flex-1 items-center justify-center gap-[7px] rounded-[10px] py-2 px-1.5 text-[12.5px] font-medium focus-visible:ring-2 focus-visible:ring-white/40"
-          style={{
-            color: "rgba(255,255,255,0.50)",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            transition: "background-color 150ms ease, color 150ms ease",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.09)"; e.currentTarget.style.color = "rgba(255,255,255,0.85)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(255,255,255,0.50)"; }}
-        >
-          <GearSix size={15} weight="regular" className="shrink-0" />
-          Account
-        </Link>
+      {/* Portal — full width */}
+      <div className="px-0.5 pb-1 pt-0.5">
         <Link
           href={portalHref}
-          className="flex flex-1 items-center justify-center gap-[7px] rounded-[10px] py-2 px-1.5 text-[12.5px] font-medium focus-visible:ring-2 focus-visible:ring-white/40"
+          className="flex w-full items-center justify-center gap-[7px] rounded-[10px] py-2 px-1.5 text-[12.5px] font-medium focus-visible:ring-2 focus-visible:ring-white/40"
           style={{
             color: "rgba(96,185,235,0.85)",
             background: "linear-gradient(135deg, rgba(2,170,235,0.15) 0%, rgba(27,119,190,0.15) 100%)",
             border: "1px solid rgba(2,170,235,0.22)",
-            transition: "background-color 150ms ease, color 150ms ease",
+            transition: "background 150ms ease, color 150ms ease",
+            textDecoration: "none",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(2,170,235,0.22) 0%, rgba(27,119,190,0.22) 100%)"; e.currentTarget.style.color = "#7dd3fc"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(2,170,235,0.15) 0%, rgba(27,119,190,0.15) 100%)"; e.currentTarget.style.color = "rgba(96,185,235,0.85)"; }}
@@ -114,64 +206,29 @@ export function AdminSidebarFooter({
         </Link>
       </div>
 
-      {/* Bottom two-up: Theme + Sign out */}
-      <div className="mt-2 flex gap-1.5 px-0.5 pb-0.5">
-        {/* Theme selector */}
-        <div
-          className="flex flex-1 items-center gap-0.5 rounded-xl p-0.5"
-          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
-        >
-          {THEME_SEGS.map((seg) => {
-            const isActive = theme === seg.value;
-            return (
-              <button
-                key={seg.value}
-                type="button"
-                onClick={() => setTheme(seg.value)}
-                className="flex flex-1 items-center justify-center rounded-lg py-[7px] focus-visible:ring-2 focus-visible:ring-white/40"
-                style={{
-                  ...(isActive ? seg.activeStyle : { color: "rgba(255,255,255,0.38)" }),
-                  transition: "background-color 150ms ease, color 150ms ease",
-                }}
-                aria-label={`Set theme: ${seg.label}`}
-              >
-                {seg.icon}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Sign out */}
+      {/* Theme dropdown + bare sign out */}
+      <div className="mt-1 flex items-center px-0.5 pb-0.5">
+        <ThemeDropdown />
         <button
           type="button"
           disabled={signOutPending}
           onClick={() => startSignOut(() => signOut())}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl focus-visible:ring-2 focus-visible:ring-white/40"
+          className="ml-auto flex items-center gap-1.5"
           style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            color: signOutPending ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.45)",
+            background: "none",
+            border: "none",
+            color: signOutPending ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.40)",
             fontSize: "12px",
             fontWeight: 500,
-            transition: "background-color 150ms ease, color 150ms ease, border-color 150ms ease",
             cursor: signOutPending ? "wait" : "pointer",
+            fontFamily: "inherit",
+            padding: "5px 4px",
+            transition: "color 150ms ease",
           }}
-          onMouseEnter={(e) => {
-            if (!signOutPending) {
-              const el = e.currentTarget;
-              el.style.background = "rgba(248,113,113,0.12)";
-              el.style.color = "#f87171";
-              el.style.borderColor = "rgba(248,113,113,0.20)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget;
-            el.style.background = "rgba(255,255,255,0.06)";
-            el.style.color = signOutPending ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.45)";
-            el.style.borderColor = "rgba(255,255,255,0.08)";
-          }}
+          onMouseEnter={(e) => { if (!signOutPending) e.currentTarget.style.color = "#f87171"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = signOutPending ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.40)"; }}
         >
-          <Power size={14} weight="regular" />
+          <Power size={13} weight="regular" />
           {signOutPending ? "Signing out…" : "Sign out"}
         </button>
       </div>
