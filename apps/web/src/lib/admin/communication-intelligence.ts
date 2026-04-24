@@ -218,7 +218,7 @@ export async function runCommunicationIntelligenceSync(): Promise<{
         ? 'sms'
         : 'mixed';
 
-    await (supabase as any)
+    const { error: evUpdateError } = await (supabase as any)
       .from('communication_events')
       .update({
         processed_at: now,
@@ -226,6 +226,9 @@ export async function runCommunicationIntelligenceSync(): Promise<{
         claude_summary: analysis.summary,
       })
       .in('id', eventIds);
+    if (evUpdateError) {
+      console.error('[comm-intel] event update error:', evUpdateError.message);
+    }
 
     if (
       analysis.tier !== 'noise' &&
@@ -243,7 +246,7 @@ export async function runCommunicationIntelligenceSync(): Promise<{
         channel,
       };
 
-      await (supabase as any).from('ai_insights').upsert(
+      const { error: insightError } = await (supabase as any).from('ai_insights').upsert(
         {
           parent_type: group.entityType,
           parent_id: group.entityId,
@@ -259,6 +262,9 @@ export async function runCommunicationIntelligenceSync(): Promise<{
         },
         { onConflict: 'parent_type,parent_id,agent_key' }
       );
+      if (insightError) {
+        console.error('[comm-intel] insight upsert error:', insightError.message);
+      }
     }
 
     processed++;
