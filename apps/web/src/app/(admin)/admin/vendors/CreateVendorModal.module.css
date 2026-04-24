@@ -1,0 +1,99 @@
+/* apps/web/src/app/(admin)/admin/vendors/CreateVendorModal.module.css */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--surface-elevated);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+}
+
+.closeBtn:hover { color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
+
+.form { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+
+.label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+.input, .textarea {
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.input:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+}
+
+.textarea { resize: vertical; }
+
+.error { font-size: 13px; color: var(--color-error); }
+
+.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+
+.cancelBtn {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.cancelBtn:hover { background: color-mix(in srgb, var(--text-primary) 5%, transparent); }
+
+.submitBtn {
+  background: var(--color-accent-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+}
+
+.submitBtn:hover { opacity: 0.9; }
+.submitBtn:disabled { opacity: 0.5; cursor: default; }
