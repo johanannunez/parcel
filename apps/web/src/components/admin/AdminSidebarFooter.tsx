@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTransition, useState, useRef, useEffect } from "react";
-import { GearSix, UserSwitch, Power, Sun, Moon, Monitor, CaretDown, Check } from "@phosphor-icons/react";
+import { GearSix, UserSwitch, Power, Sun, Moon, Monitor, CaretDown, Check, Question } from "@phosphor-icons/react";
 import { useTheme } from "@/components/ThemeProvider";
 import { signOut } from "@/app/(portal)/portal/actions";
 
@@ -204,6 +204,36 @@ export function AdminSidebarFooter({
           <UserSwitch size={15} weight="duotone" className="shrink-0" />
           Portal
         </Link>
+      </div>
+
+      {/* Help & Support */}
+      <div className="px-0.5 pb-0.5 pt-0.5">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent("admin:help-support"))}
+          className="flex w-full items-center justify-center gap-[7px] rounded-[10px] py-2 px-1.5 text-[12.5px] font-medium focus-visible:ring-2 focus-visible:ring-white/40"
+          style={{
+            color: "rgba(255,255,255,0.45)",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            transition: "background 150ms ease, color 150ms ease, border-color 150ms ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.09)";
+            e.currentTarget.style.color = "rgba(255,255,255,0.75)";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+            e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+          }}
+        >
+          <Question size={14} weight="regular" className="shrink-0" />
+          Help & Support
+        </button>
       </div>
 
       {/* Theme dropdown + bare sign out */}
