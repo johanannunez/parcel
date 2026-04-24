@@ -53,7 +53,7 @@ export async function fetchCommunications(
 
   const events = (data ?? []).map(mapRow);
 
-  const insightMap = await fetchInsightsByParentWithPayload(entityType, [entityId]);
+  const insightMap = await fetchInsightsByParentWithPayload(entityType, [entityId]).catch(() => ({} as Record<string, never[]>));
   const insights = insightMap[entityId] ?? [];
   const commInsight = insights.find((i) => i.agentKey.startsWith('communication:'));
   const payload = commInsight?.actionPayload as CommunicationInsightPayload | undefined;

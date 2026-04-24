@@ -15,6 +15,7 @@ import {
 } from '@/lib/admin/contact-actions';
 import { CommunicationsTab } from '@/components/admin/CommunicationsTab';
 import type { CommunicationEvent } from '@/lib/admin/communication-types';
+import { CustomSelect } from '@/components/admin/CustomSelect';
 import styles from './ContactDetailShell.module.css';
 
 type TabKey = 'overview' | 'communications';
@@ -78,7 +79,7 @@ export function ContactDetailShell({
     } else {
       params.set('tab', next);
     }
-    router.push(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`, { scroll: false });
   }
 
   function handleStage(next: LifecycleStage) {
@@ -312,20 +313,14 @@ function SelectField({
   onSave: (value: string) => void;
 }) {
   return (
-    <label className={styles.field}>
+    <div className={styles.field}>
       <span className={styles.fieldLabel}>{label}</span>
-      <select
-        className={`${styles.fieldInput} ${styles.fieldSelect}`}
+      <CustomSelect
         defaultValue={value}
-        onChange={(e) => onSave(e.currentTarget.value)}
-      >
-        <option value="">Select source</option>
-        {options.map((o) => (
-          <option key={o.slug} value={o.slug}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+        onChange={onSave}
+        placeholder="Select source"
+        options={options.map((o) => ({ value: o.slug, label: o.label }))}
+      />
+    </div>
   );
 }
