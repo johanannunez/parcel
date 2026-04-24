@@ -6,6 +6,8 @@ import { PropertiesTab } from "./PropertiesTab";
 import { OverviewTab } from "@/app/(admin)/admin/owners/[entityId]/OverviewTab";
 import { FinancialsTab } from "@/app/(admin)/admin/owners/[entityId]/FinancialsTab";
 import { TabPlaceholder } from "@/app/(admin)/admin/owners/[entityId]/TabPlaceholder";
+import { MeetingsTab } from "@/app/(admin)/admin/owners/[entityId]/MeetingsTab";
+import { fetchClientMeetings } from "@/lib/admin/client-meetings";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +54,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     ? await fetchOwnerDetail(client.entityId)
     : null;
 
+  const clientMeetings =
+    client.profileId && tab === "meetings"
+      ? await fetchClientMeetings(client.profileId)
+      : [];
+
   function renderTab(): React.ReactNode {
     switch (tab) {
       case "overview":
@@ -67,22 +74,24 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         return <PropertiesTab properties={client!.properties} />;
 
       case "meetings":
-        if (ownerData) {
-          // MeetingsTab requires a pre-fetched meetings array from owner_meetings.
-          // That fetch is not yet wired to the clients route. Placeholder until Phase 2.
+        if (!client!.profileId) {
           return (
             <TabPlaceholder
               title="Meetings"
-              body="Meeting history and scheduling are accessible from the Owners section while the clients hub is in early access."
-              linkHref={`/admin/owners/${client!.entityId}`}
-              linkLabel="Open in Owners"
+              body="Available once the client begins onboarding."
             />
           );
         }
         return (
-          <TabPlaceholder
-            title="Meetings"
-            body="Available once the client begins onboarding."
+          <MeetingsTab
+            ownerId={client!.profileId}
+            ownerFirstName={client!.fullName.split(" ")[0] ?? client!.fullName}
+            ownerEmail={client!.email ?? ""}
+            meetings={clientMeetings}
+            properties={client!.properties.map((p) => ({
+              id: p.id,
+              label: p.label,
+            }))}
           />
         );
 
