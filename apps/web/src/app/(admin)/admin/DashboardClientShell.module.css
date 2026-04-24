@@ -1,0 +1,14 @@
+/* DashboardClientShell.module.css */
+
+.shell {
+  position: relative;
+  min-height: 100%;
+  background: var(--dash-canvas);
+}
+
+.customizerAnchor {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}

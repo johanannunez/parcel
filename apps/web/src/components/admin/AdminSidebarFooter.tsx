@@ -26,7 +26,7 @@ function getPortalUrl(pathname: string): string {
 const THEME_OPTIONS = [
   { value: "light" as const, icon: <Sun size={14} weight="regular" />, label: "Light mode" },
   { value: "dark" as const, icon: <Moon size={14} weight="regular" />, label: "Dark mode" },
-  { value: "system" as const, icon: <Monitor size={14} weight="regular" />, label: "System" },
+  { value: "system" as const, icon: <Monitor size={14} weight="regular" />, label: "Match system" },
 ] as const;
 
 function ThemeRow() {
@@ -228,7 +228,7 @@ export function AdminSidebarFooter({
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent("admin:help-support"))}
-          className="flex w-full items-center gap-2.5 px-[14px] py-2 text-[13px] font-medium transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+          className="flex w-full items-center gap-2.5 px-[14px] py-2 text-[13px] font-medium"
           style={{
             background: "none",
             border: "none",
@@ -236,6 +236,15 @@ export function AdminSidebarFooter({
             cursor: "pointer",
             fontFamily: "inherit",
             textAlign: "left",
+            transition: "background 120ms ease, color 120ms ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+            e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "none";
+            e.currentTarget.style.color = "rgba(255,255,255,0.55)";
           }}
         >
           <Question size={15} weight="regular" style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
@@ -258,10 +267,10 @@ export function AdminSidebarFooter({
             cursor: signOutPending ? "wait" : "pointer",
             fontFamily: "inherit",
             textAlign: "left",
-            transition: "color 150ms ease",
+            transition: "background 120ms ease, color 150ms ease",
           }}
-          onMouseEnter={(e) => { if (!signOutPending) e.currentTarget.style.color = "rgba(239,68,68,1)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = signOutPending ? "rgba(239,68,68,0.4)" : "rgba(239,68,68,0.75)"; }}
+          onMouseEnter={(e) => { if (!signOutPending) { e.currentTarget.style.color = "rgba(239,68,68,1)"; e.currentTarget.style.background = "rgba(239,68,68,0.08)"; } }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = signOutPending ? "rgba(239,68,68,0.4)" : "rgba(239,68,68,0.75)"; e.currentTarget.style.background = "none"; }}
         >
           <Power size={15} weight="regular" style={{ flexShrink: 0 }} />
           {signOutPending ? "Signing out…" : "Sign out"}
