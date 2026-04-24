@@ -148,6 +148,7 @@ create table if not exists public.communication_events (
   entity_id          uuid,
   process_after      timestamptz,
   processed_at       timestamptz,
+  quo_summary        text,
   tier               text check (tier in ('action_required', 'fyi', 'noise')),
   claude_summary     text,
   created_at         timestamptz not null default now()
@@ -454,7 +455,8 @@ git commit -m "feat: add contact resolver resolvePhone()"
 - Create: `apps/web/src/app/api/webhooks/quo/route.ts`
 
 The webhook receives three event types from Quo (OpenPhone):
-- `call.transcription.completed`: inbound call with transcript
+- `call.transcript.completed`: inbound call with transcript
+- `call.summary.completed`: Quo's built-in AI summary (store as `quo_summary` on the event row, use as extra context in the Claude prompt)
 - `message.received`: inbound SMS
 - `message.delivered`: outbound SMS (context only, no processing trigger)
 
@@ -504,7 +506,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   if (
-    event !== 'call.transcription.completed' &&
+    event !== 'call.transcript.completed' &&
+    event !== 'call.summary.completed' &&
     event !== 'message.received' &&
     event !== 'message.delivered'
   ) {
@@ -528,7 +531,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const isInbound = event !== 'message.delivered';
-  const channel: 'call' | 'sms' = event === 'call.transcription.completed' ? 'call' : 'sms';
+  const isSummaryEvent = event === 'call.summary.completed';
+  const channel: 'call' | 'sms' = (event === 'call.transcript.completed' || isSummaryEvent) ? 'call' : 'sms';
   const direction: 'inbound' | 'outbound' = isInbound ? 'inbound' : 'outbound';
 
   const rawTranscript =
@@ -2340,7 +2344,8 @@ Wait for the Vercel deployment to complete before registering the webhook.
 2. Click **Add webhook**
 3. URL: `https://www.theparcelco.com/api/webhooks/quo`
 4. Select these events:
-   - `call.transcription.completed`
+   - `call.transcript.completed`
+   - `call.summary.completed`
    - `message.received`
    - `message.delivered`
 5. Copy the **signing secret** Quo generates and add it to Doppler as `QUO_WEBHOOK_SECRET` (Step 1 above)

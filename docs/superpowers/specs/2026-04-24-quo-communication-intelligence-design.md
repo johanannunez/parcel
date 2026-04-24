@@ -139,7 +139,8 @@ export type ResolvedEntity =
 
 | Event | Action |
 |---|---|
-| `call.transcription.completed` | Save full transcript to `communication_events` |
+| `call.transcript.completed` | Save full transcript to `communication_events` |
+| `call.summary.completed` | Save Quo's built-in AI summary to `communication_events.quo_summary` |
 | `message.received` | Save inbound SMS body to `communication_events` |
 | `message.delivered` | Save outbound SMS body (context for thread reconstruction) |
 
