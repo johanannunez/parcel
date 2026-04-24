@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { PaperPlaneRight, PushPin, User, Buildings } from "@phosphor-icons/react";
 import { sendClientMessage, togglePinMessage } from "./messaging-actions";
 import type { ClientMessage } from "@/lib/admin/client-messages";
@@ -64,6 +64,10 @@ function MessageBubble({
 
 export function MessagingTab({ contactId, messages: initialMessages }: Props) {
   const [localMessages, setLocalMessages] = useState<ClientMessage[]>(initialMessages);
+
+  useEffect(() => {
+    setLocalMessages(initialMessages);
+  }, [initialMessages]);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
