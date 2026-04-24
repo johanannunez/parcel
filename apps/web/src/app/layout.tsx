@@ -1,9 +1,31 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { IBM_Plex_Mono, Sora, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import ThemeProvider from "@/components/ThemeProvider";
 import PostHogProvider from "@/components/PostHogProvider";
 import "./globals.css";
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-ibm-plex-mono",
+  display: "swap",
+});
+
+const sora = Sora({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+  variable: "--font-sora",
+  display: "swap",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
 
 const generalSans = localFont({
   src: [
@@ -153,7 +175,7 @@ export default function RootLayout({
           media="(prefers-color-scheme: dark)"
         />
       </head>
-      <body className={`${generalSans.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${generalSans.variable} ${ibmPlexMono.variable} ${sora.variable} ${plusJakartaSans.variable} antialiased`} suppressHydrationWarning>
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{

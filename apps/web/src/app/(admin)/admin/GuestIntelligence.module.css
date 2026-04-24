@@ -12,15 +12,15 @@
   gap: 6px;
   padding: 6px 14px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-card);
   font-size: 12px;
   font-weight: 500;
-  color: #374151;
+  color: var(--dash-text-hi);
   cursor: pointer;
   transition: background 100ms, border-color 100ms;
 }
-.refreshBtn:hover { background: #f9fafb; border-color: #d1d5db; }
+.refreshBtn:hover { background: var(--dash-inset); border-color: var(--dash-chip-hover); }
 .refreshBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .cols {
@@ -38,23 +38,23 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #9ca3af;
+  color: var(--dash-text-lo);
   margin-bottom: 10px;
 }
 
 .cardList { display: flex; flex-direction: column; gap: 8px; }
 
 .card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--dash-border);
   border-radius: 12px;
   padding: 14px 16px;
-  background: #fff;
+  background: var(--dash-card);
   cursor: pointer;
   text-align: left;
   transition: box-shadow 130ms, border-color 130ms;
   width: 100%;
 }
-.card:hover { box-shadow: 0 2px 12px rgba(15,59,107,0.08); border-color: #cbd5e1; }
+.card:hover { border-color: var(--dash-chip-hover); }
 
 .cardTop {
   display: flex;
@@ -79,37 +79,37 @@
 .badgeWarning        { background: #fef3c7; color: #92400e; }
 .badgeCritical       { background: #fee2e2; color: #991b1b; }
 
-.sourceCount { font-size: 11px; color: #9ca3af; }
+.sourceCount { font-size: 11px; color: var(--dash-text-med); }
 
 .dismissBtn {
   background: none;
   border: none;
   cursor: pointer;
-  color: #d1d5db;
+  color: var(--dash-text-lo);
   padding: 2px;
   font-size: 14px;
   line-height: 1;
   transition: color 100ms;
   flex-shrink: 0;
 }
-.dismissBtn:hover { color: #6b7280; }
+.dismissBtn:hover { color: var(--dash-text-med); }
 
 .cardTitle {
   font-size: 13px;
   font-weight: 600;
-  color: #0F3B6B;
+  color: var(--dash-text-hi);
   line-height: 1.35;
   margin-bottom: 4px;
 }
 
-.propName { font-size: 11px; color: #9ca3af; }
+.propName { font-size: 11px; color: var(--dash-text-lo); }
 
 .empty {
   padding: 20px;
   text-align: center;
-  color: #9ca3af;
+  color: var(--dash-text-med);
   font-size: 12.5px;
-  background: #f9fafb;
+  background: var(--dash-inset);
   border-radius: 10px;
-  border: 1px dashed #e5e7eb;
+  border: 1px dashed var(--dash-border);
 }

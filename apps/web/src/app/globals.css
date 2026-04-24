@@ -82,6 +82,55 @@
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 1px rgba(0, 0, 0, 0.4);
 }
 
+/* ─── Dashboard Tokens ─── */
+:root {
+  --dash-canvas: #f6f5f3;
+  --dash-card: #ffffff;
+  --dash-card-alt: #f3f2f0;
+  --dash-border: #e5e7eb;
+  --dash-border-subtle: #eeede9;
+  --dash-text-hi: #111827;
+  --dash-text-med: #6b7280;
+  --dash-text-lo: #9ca3af;
+  --dash-inset: #ece9e5;
+  --dash-chip-hover: #d1cec9;
+  --dash-row-alt: rgba(0, 0, 0, 0.02);
+  --dash-accent: #f5a623;
+  --dash-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --dash-shadow-hover:
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --dash-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+:root.dark {
+  --dash-canvas: #0a0b0e;
+  --dash-card: #111318;
+  --dash-card-alt: #131418;
+  --dash-border: #1e2028;
+  --dash-border-subtle: #181920;
+  --dash-text-hi: #e5e7eb;
+  --dash-text-med: #9ca3af;
+  --dash-text-lo: #6b7280;
+  --dash-inset: #0f1015;
+  --dash-chip-hover: #2a2d38;
+  --dash-row-alt: rgba(255, 255, 255, 0.02);
+  --dash-accent: #f5a623;
+  --dash-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --dash-shadow-hover:
+    0 2px 8px rgba(0, 0, 0, 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --dash-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 /* ─── Tailwind Theme ─── */
 @theme inline {
   --font-sans: var(--font-general-sans), "General Sans", system-ui, sans-serif;
@@ -214,6 +263,14 @@ input[type="button"] {
 /* ─── Admin area: hide scrollbars everywhere, keep scroll behavior ─── */
 [data-admin-root] *::-webkit-scrollbar { width: 0; height: 0; display: none; }
 [data-admin-root] * { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* ─── Auth pages: full-viewport, no scroll ─── */
+html:has(.auth-page-root),
+body:has(.auth-page-root) {
+  overflow: hidden;
+  height: 100%;
+  background: #e8f2fa;
+}
 
 /* ─── Focus Indicators ─── */
 *:focus-visible {
