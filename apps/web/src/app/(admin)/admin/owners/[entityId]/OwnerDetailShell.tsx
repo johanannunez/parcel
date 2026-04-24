@@ -23,7 +23,8 @@ type TabKey =
   | "financials"
   | "activity"
   | "files"
-  | "settings";
+  | "settings"
+  | "communications";
 
 const TAB_ORDER: TabKey[] = [
   "overview",
@@ -33,6 +34,7 @@ const TAB_ORDER: TabKey[] = [
   "activity",
   "files",
   "settings",
+  "communications",
 ];
 
 const TAB_LABEL: Record<TabKey, string> = {
@@ -43,6 +45,7 @@ const TAB_LABEL: Record<TabKey, string> = {
   activity: "Activity",
   files: "Files",
   settings: "Settings",
+  communications: "Communications",
 };
 
 const STATUS_PILL_CLASS: Record<OwnerStatus, string> = {

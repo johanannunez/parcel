@@ -13,6 +13,8 @@ import { SETTINGS_SECTIONS, type SettingsSection } from "./settings-sections";
 import type { SessionRow } from "./settings/AccountSecuritySection";
 import type { ConnectionRow } from "./settings/DataPrivacySection";
 import { TasksTab } from "@/components/admin/tasks/TasksTab";
+import { CommunicationsTab } from "@/components/admin/CommunicationsTab";
+import { fetchCommunications } from "@/lib/admin/fetch-communications";
 
 export const metadata: Metadata = {
   title: "Owner Hub",
@@ -26,7 +28,8 @@ type TabKey =
   | "financials"
   | "activity"
   | "files"
-  | "settings";
+  | "settings"
+  | "communications";
 
 const KNOWN_TABS: readonly TabKey[] = [
   "overview",
@@ -36,6 +39,7 @@ const KNOWN_TABS: readonly TabKey[] = [
   "activity",
   "files",
   "settings",
+  "communications",
 ];
 
 type StoredContactMethod = "email" | "sms" | "phone" | "whatsapp" | null;
@@ -163,6 +167,11 @@ export default async function OwnerHubPage({
     };
   }
 
+  const communicationsData =
+    tab === "communications"
+      ? await fetchCommunications("owner", entityId)
+      : null;
+
   return (
     <OwnerDetailShell
       data={data}
@@ -213,6 +222,13 @@ export default async function OwnerHubPage({
           sessions={sessions}
           connections={connections}
           entityDetail={entityDetail}
+        />
+      ) : null}
+      {tab === "communications" && communicationsData ? (
+        <CommunicationsTab
+          events={communicationsData.events}
+          latestSummary={communicationsData.latestSummary}
+          actionItems={communicationsData.actionItems}
         />
       ) : null}
     </OwnerDetailShell>
