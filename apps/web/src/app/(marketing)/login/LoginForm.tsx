@@ -2,49 +2,86 @@
 
 import { useActionState } from "react";
 import { PasswordField } from "@/components/auth/PasswordField";
+import { useTypewriterPlaceholder } from "@/components/auth/useTypewriterPlaceholder";
 import { login, type LoginState } from "./actions";
 
 const initialState: LoginState = {};
 
+const fieldInputStyle: React.CSSProperties = {
+  width: "100%",
+  border: "1.5px solid #dce8f0",
+  borderRadius: "10px",
+  padding: "11px 14px",
+  fontSize: "14px",
+  fontFamily: "inherit",
+  color: "#1a1a1a",
+  background: "#f7fbfd",
+  outline: "none",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: "11px",
+  fontWeight: 600,
+  textTransform: "uppercase",
+  letterSpacing: "0.07em",
+  color: "#6b7280",
+};
+
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const [state, formAction, pending] = useActionState(login, initialState);
+  const { emailPlaceholder, onFocus, onBlur } = useTypewriterPlaceholder();
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <input type="hidden" name="redirect" value={redirectTo} />
 
-      <div className="flex flex-col gap-2">
-        <label
-          htmlFor="email"
-          className="text-xs font-medium uppercase tracking-wider"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Email
-        </label>
+      <div style={{ marginBottom: "14px" }}>
+        <div style={{ marginBottom: "6px" }}>
+          <label htmlFor="email" style={labelStyle}>
+            Email
+          </label>
+        </div>
         <input
           id="email"
           name="email"
           type="email"
           autoComplete="email"
           required
-          className="rounded-lg border border-[var(--color-warm-gray-200)] bg-[var(--color-white)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
-          style={{ color: "var(--color-text-primary)" }}
+          placeholder={emailPlaceholder}
+          style={fieldInputStyle}
+          onFocus={(e) => {
+            onFocus();
+            e.target.style.borderColor = "var(--color-brand)";
+            e.target.style.background = "#ffffff";
+          }}
+          onBlur={(e) => {
+            onBlur();
+            e.target.style.borderColor = "#dce8f0";
+            e.target.style.background = "#f7fbfd";
+          }}
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between">
-          <label
-            htmlFor="password"
-            className="text-xs font-medium uppercase tracking-wider"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
+      <div style={{ marginBottom: "14px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            marginBottom: "6px",
+          }}
+        >
+          <label htmlFor="password" style={labelStyle}>
             Password
           </label>
           <a
             href="/forgot-password"
-            className="text-xs font-medium transition-colors hover:opacity-80"
-            style={{ color: "var(--color-brand)" }}
+            style={{
+              fontSize: "12px",
+              color: "var(--color-brand)",
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
           >
             Forgot password?
           </a>
@@ -59,8 +96,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
 
       {state.error ? (
         <p
-          className="text-sm"
-          style={{ color: "var(--color-error)" }}
+          style={{ fontSize: "13px", color: "var(--color-error)", marginBottom: "8px" }}
           role="alert"
         >
           {state.error}
@@ -70,8 +106,24 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded-lg px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-        style={{ backgroundColor: "var(--color-brand)" }}
+        style={{
+          width: "100%",
+          background:
+            "linear-gradient(135deg, #02aaeb 0%, #1b77be 60%, #155fa0 100%)",
+          color: "white",
+          border: "none",
+          borderRadius: "10px",
+          padding: "13px",
+          fontSize: "14.5px",
+          fontWeight: 600,
+          fontFamily: "inherit",
+          cursor: pending ? "not-allowed" : "pointer",
+          marginTop: "18px",
+          letterSpacing: "-0.01em",
+          boxShadow: "0 4px 16px rgba(27,119,190,0.28)",
+          opacity: pending ? 0.65 : 1,
+          transition: "opacity 0.15s ease",
+        }}
       >
         {pending ? "Signing in..." : "Sign in"}
       </button>

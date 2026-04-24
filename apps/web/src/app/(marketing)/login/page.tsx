@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Lora } from "next/font/google";
 import { LoginForm } from "./LoginForm";
+import { AuthLeftPanel } from "@/components/auth/AuthLeftPanel";
+
+const lora = Lora({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-lora",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Log in",
@@ -17,37 +26,90 @@ export default async function LoginPage({
   const { redirect } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--color-off-white)] px-6 py-24">
-      <div className="w-full max-w-md">
-        <h1
-          className="mb-2 text-3xl font-semibold tracking-tight"
-          style={{ color: "var(--color-text-primary)" }}
-        >
-          Welcome back
-        </h1>
-        <p
-          className="mb-10 text-sm"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Log in to your Parcel owner portal to manage your properties.
-        </p>
+    <div
+      className={`${lora.variable} auth-page-root`}
+      style={{
+        height: "100vh",
+        overflow: "hidden",
+        background: "#e8f2fa",
+        display: "grid",
+        gridTemplateColumns: "1fr 400px",
+        maxWidth: "1100px",
+        margin: "0 auto",
+        padding: "0 48px",
+        gap: "64px",
+        alignItems: "stretch",
+      }}
+    >
+      <AuthLeftPanel />
 
-        <LoginForm redirectTo={redirect ?? "/portal/dashboard"} />
-
-        <p
-          className="mt-8 text-center text-sm"
-          style={{ color: "var(--color-text-secondary)" }}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "44px 0",
+        }}
+      >
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "20px",
+            boxShadow:
+              "0 1px 3px rgba(0,0,0,0.05), 0 8px 28px rgba(0,0,0,0.09), 0 20px 60px rgba(27,119,190,0.07)",
+            padding: "42px 38px 34px",
+            width: "100%",
+          }}
         >
-          New to Parcel?{" "}
-          <Link
-            href="/signup"
-            className="font-medium underline-offset-4 hover:underline"
-            style={{ color: "var(--color-brand)" }}
-          >
-            Create an account
-          </Link>
-        </p>
+            <h2
+              style={{
+                fontFamily: "var(--font-lora), Georgia, serif",
+                fontSize: "27px",
+                fontWeight: 700,
+                color: "#1a1a1a",
+                textAlign: "center",
+                letterSpacing: "-0.02em",
+                marginBottom: "6px",
+              }}
+            >
+              Welcome back
+            </h2>
+            <p
+              style={{
+                fontSize: "13.5px",
+                color: "#6b7280",
+                textAlign: "center",
+                marginBottom: "28px",
+                lineHeight: 1.5,
+              }}
+            >
+              Log in to your Parcel owner portal.
+            </p>
+
+            <LoginForm redirectTo={redirect ?? "/portal/dashboard"} />
+
+            <p
+              style={{
+                textAlign: "center",
+                marginTop: "16px",
+                fontSize: "13px",
+                color: "#6b7280",
+              }}
+            >
+              New to Parcel?{" "}
+              <Link
+                href="/signup"
+                style={{
+                  color: "var(--color-brand)",
+                  fontWeight: 500,
+                  textDecoration: "none",
+                }}
+              >
+                Create an account
+              </Link>
+            </p>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

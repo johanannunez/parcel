@@ -30,10 +30,10 @@ export async function login(
   }
 
   if (data.user) {
-    // Check if account was soft-deleted (30-day grace period)
+    // Fetch role + soft-delete status in one query
     const { data: profile } = await supabase
       .from("profiles")
-      .select("deleted_at")
+      .select("deleted_at, role")
       .eq("id", data.user.id)
       .single();
 
@@ -68,6 +68,20 @@ export async function login(
       visibility: "admin_only",
       metadata: { ip: ip ?? undefined, device: ua?.slice(0, 100) ?? undefined },
     });
+
+    // Validate redirect is internal to prevent open-redirect attacks.
+    // A valid redirect starts with "/" but not "//" (which browsers treat as protocol-relative).
+    const isInternalRedirect = redirectTo.startsWith("/") && !redirectTo.startsWith("//");
+    const safeRedirect = isInternalRedirect ? redirectTo : "/portal/dashboard";
+
+    // If no specific destination was requested (still on the default), route by role.
+    // If the user was sent here from a specific page (e.g., /portal/settings), honor that.
+    const destination =
+      safeRedirect === "/portal/dashboard" && profile?.role === "admin"
+        ? "/admin"
+        : safeRedirect;
+
+    redirect(destination);
   }
 
   redirect(redirectTo);

@@ -9,6 +9,7 @@ type PasswordFieldProps = {
   autoComplete?: string;
   required?: boolean;
   minLength?: number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 export function PasswordField({
@@ -17,11 +18,13 @@ export function PasswordField({
   autoComplete,
   required,
   minLength,
+  onChange,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   return (
-    <div className="relative">
+    <div style={{ position: "relative" }}>
       <input
         id={id}
         name={name}
@@ -29,8 +32,23 @@ export function PasswordField({
         autoComplete={autoComplete}
         required={required}
         minLength={minLength}
-        className="w-full rounded-lg border border-[var(--color-warm-gray-200)] bg-[var(--color-white)] px-4 py-3 pr-12 text-base outline-none transition-colors focus:border-[var(--color-brand)]"
-        style={{ color: "var(--color-text-primary)" }}
+        placeholder={visible ? "Your password" : "••••••••••••"}
+        onChange={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          width: "100%",
+          border: `1.5px solid ${focused ? "var(--color-brand)" : "#dce8f0"}`,
+          borderRadius: "10px",
+          padding: "11px 14px",
+          paddingRight: "44px",
+          fontSize: "14px",
+          fontFamily: "inherit",
+          color: "#1a1a1a",
+          background: focused ? "#ffffff" : "#f7fbfd",
+          outline: "none",
+          transition: "border-color 0.15s ease, background 0.15s ease",
+        }}
       />
       <button
         type="button"
@@ -38,13 +56,25 @@ export function PasswordField({
         aria-label={visible ? "Hide password" : "Show password"}
         aria-pressed={visible}
         tabIndex={-1}
-        className="absolute inset-y-0 right-0 flex items-center justify-center rounded-r-lg px-3 transition-colors hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-0"
-        style={{ color: "var(--color-text-tertiary)" }}
+        style={{
+          position: "absolute",
+          insetBlock: 0,
+          right: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 12px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          color: "#6b7280",
+          borderRadius: "0 10px 10px 0",
+        }}
       >
         {visible ? (
-          <EyeSlash size={18} weight="regular" />
+          <EyeSlash size={17} weight="regular" />
         ) : (
-          <Eye size={18} weight="regular" />
+          <Eye size={17} weight="regular" />
         )}
       </button>
     </div>
