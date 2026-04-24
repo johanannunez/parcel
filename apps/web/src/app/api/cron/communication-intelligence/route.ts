@@ -1,6 +1,6 @@
-// apps/web/src/app/api/cron/guest-intelligence/route.ts
+// apps/web/src/app/api/cron/communication-intelligence/route.ts
 import { NextResponse } from 'next/server';
-import { runGuestIntelligenceSync } from '@/lib/admin/guest-intelligence';
+import { runCommunicationIntelligenceSync } from '@/lib/admin/communication-intelligence';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -15,10 +15,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const result = await runGuestIntelligenceSync();
+    const result = await runCommunicationIntelligenceSync();
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    console.error('[guest-intelligence] sync error:', err);
+    console.error('[communication-intelligence] sync error:', err);
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }
 }

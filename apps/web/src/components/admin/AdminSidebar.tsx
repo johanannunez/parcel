@@ -6,21 +6,16 @@ import { usePathname } from "next/navigation";
 import { motion, LayoutGroup, AnimatePresence } from "motion/react";
 import {
   House,
-  UsersThree,
-  Handshake,
   Buildings,
-  EnvelopeSimple,
   ChatCircle,
   ListChecks,
   BookOpenText,
   FolderOpen,
-  Funnel,
+  Users,
+  Wrench,
   MagnifyingGlass,
   List as HamburgerIcon,
   CaretDown,
-  FunnelSimple,
-  Crown,
-  Briefcase,
   Bell,
   CalendarBlank,
 } from "@phosphor-icons/react";
@@ -69,8 +64,8 @@ const navEntries: NavEntry[] = [
   { kind: "item", href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { kind: "item", href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/calendar" },
   { kind: "item", href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
-  { kind: "item", href: "/admin/leads", label: "Leads", icon: <Funnel size={18} weight="duotone" />, matchPrefix: "/admin/leads" },
-  { kind: "item", href: "/admin/owners", label: "Owners", icon: <Handshake size={18} weight="duotone" />, matchPrefix: "/admin/owners" },
+  { kind: "item", href: "/admin/clients", label: "Clients", icon: <Users size={18} weight="duotone" />, matchPrefix: "/admin/clients" },
+  { kind: "item", href: "/admin/vendors", label: "Vendors", icon: <Wrench size={18} weight="duotone" />, matchPrefix: "/admin/vendors" },
   { kind: "item", href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
   { kind: "item", href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
@@ -613,8 +608,7 @@ export function AdminTopBar({
   const pageTitle = (() => {
     if (!pathname) return "";
     if (pathname === "/admin") return "";
-    if (pathname.startsWith("/admin/leads")) return "Leads";
-    if (pathname.startsWith("/admin/owners")) return "Owners";
+    if (pathname.startsWith("/admin/clients")) return "Clients";
     if (pathname.startsWith("/admin/contacts")) return "Contacts";
     if (pathname.startsWith("/admin/properties")) return "Properties";
     if (pathname.startsWith("/admin/inbox")) return "Inbox";
@@ -722,8 +716,8 @@ const adminRailItems: Array<{
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
   { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
   { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
-  { href: "/admin/leads", icon: <Funnel size={20} weight="duotone" />, label: "Leads", matchPrefix: "/admin/leads" },
-  { href: "/admin/owners", icon: <Handshake size={20} weight="duotone" />, label: "Owners", matchPrefix: "/admin/owners" },
+  { href: "/admin/clients", icon: <Users size={20} weight="duotone" />, label: "Clients", matchPrefix: "/admin/clients" },
+  { href: "/admin/vendors", icon: <Wrench size={20} weight="duotone" />, label: "Vendors", matchPrefix: "/admin/vendors" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
@@ -792,12 +786,7 @@ export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { p
       {/* Nav */}
       <nav style={{ display: "flex", flex: 1, flexDirection: "column", alignItems: "center", gap: "4px" }}>
         {adminRailItems.map((item) => {
-          const isCrmItem = item.matchPrefix === "/admin/contacts";
-          const active = isCrmItem
-            ? ["/admin/contacts", "/admin/owners", "/admin/companies"].some(
-                (p) => pathname?.startsWith(p)
-              )
-            : item.matchPrefix
+          const active = item.matchPrefix
             ? pathname?.startsWith(item.matchPrefix)
             : pathname === item.href;
 

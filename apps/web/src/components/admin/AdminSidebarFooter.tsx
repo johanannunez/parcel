@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTransition, useState, useRef, useEffect } from "react";
-import { GearSix, UserSwitch, Power, Sun, Moon, Monitor, CaretDown, Check, Question } from "@phosphor-icons/react";
+import { GearSix, UserSwitch, Power, Sun, Moon, Monitor, CaretRight, Check, Question } from "@phosphor-icons/react";
 import { useTheme } from "@/components/ThemeProvider";
 import { signOut } from "@/app/(portal)/portal/actions";
 
@@ -24,12 +24,12 @@ function getPortalUrl(pathname: string): string {
 }
 
 const THEME_OPTIONS = [
-  { value: "light" as const, icon: <Sun size={13} weight="regular" />, label: "Light" },
-  { value: "dark" as const, icon: <Moon size={13} weight="regular" />, label: "Dark" },
-  { value: "system" as const, icon: <Monitor size={13} weight="regular" />, label: "System" },
+  { value: "light" as const, icon: <Sun size={14} weight="regular" />, label: "Light mode" },
+  { value: "dark" as const, icon: <Moon size={14} weight="regular" />, label: "Dark mode" },
+  { value: "system" as const, icon: <Monitor size={14} weight="regular" />, label: "System" },
 ] as const;
 
-function ThemeDropdown() {
+function ThemeRow() {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -42,53 +42,60 @@ function ThemeDropdown() {
     return () => document.removeEventListener("mousedown", handleOutside);
   }, [open]);
 
-  const current = THEME_OPTIONS.find((o) => o.value === theme) ?? THEME_OPTIONS[1];
+  const current = THEME_OPTIONS.find((o) => o.value === theme) ?? THEME_OPTIONS[2];
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button
         type="button"
+        aria-expanded={open}
+        aria-haspopup="listbox"
         onClick={() => setOpen(!open)}
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "5px",
-          padding: "5px 8px",
-          borderRadius: "8px",
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          color: "rgba(255,255,255,0.60)",
-          fontSize: "12px",
+          gap: "10px",
+          width: "100%",
+          padding: "8px 14px",
+          background: "none",
+          border: "none",
+          color: "rgba(255,255,255,0.55)",
+          fontSize: "13px",
           fontWeight: 500,
           cursor: "pointer",
           fontFamily: "inherit",
-          transition: "background 150ms ease, border-color 150ms ease",
+          textAlign: "left",
+          transition: "background 120ms ease, color 120ms ease",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.10)";
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.16)";
+          e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+          e.currentTarget.style.color = "rgba(255,255,255,0.8)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+          e.currentTarget.style.background = "none";
+          e.currentTarget.style.color = "rgba(255,255,255,0.55)";
         }}
       >
-        <span style={{ display: "inline-flex", alignItems: "center" }}>{current.icon}</span>
-        {current.label}
-        <CaretDown size={10} weight="bold" style={{ opacity: 0.5 }} />
+        <span style={{ display: "inline-flex", alignItems: "center", color: "rgba(255,255,255,0.35)", flexShrink: 0 }}>
+          {current.icon}
+        </span>
+        <span style={{ flex: 1 }}>{current.label}</span>
+        <CaretRight size={11} weight="bold" style={{ opacity: 0.25, flexShrink: 0 }} />
       </button>
 
       {open && (
         <div
+          role="listbox"
+          aria-label="Theme"
           style={{
             position: "absolute",
-            bottom: "calc(100% + 6px)",
-            left: 0,
+            bottom: "calc(100% + 4px)",
+            left: "12px",
+            right: "12px",
             background: "var(--color-navy)",
             border: "1px solid rgba(255,255,255,0.12)",
             borderRadius: "10px",
             padding: "4px",
-            minWidth: "120px",
             boxShadow: "0 -4px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
             zIndex: 50,
           }}
@@ -96,14 +103,16 @@ function ThemeDropdown() {
           {THEME_OPTIONS.map((opt) => (
             <button
               key={opt.value}
+              role="option"
+              aria-selected={theme === opt.value}
               type="button"
               onClick={() => { setTheme(opt.value); setOpen(false); }}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "7px",
+                gap: "8px",
                 width: "100%",
-                padding: "6px 8px",
+                padding: "7px 9px",
                 borderRadius: "6px",
                 background: theme === opt.value ? "rgba(255,255,255,0.08)" : "transparent",
                 border: "none",
@@ -186,79 +195,75 @@ export function AdminSidebarFooter({
         <GearSix size={15} weight="regular" style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
       </Link>
 
-      {/* Portal — full width */}
-      <div className="px-0.5 pb-1 pt-0.5">
+      {/* Flat action list */}
+      <div className="pb-1 pt-1">
+        {/* Section label */}
+        <div
+          style={{
+            fontSize: "9.5px",
+            fontWeight: 600,
+            letterSpacing: "0.07em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.22)",
+            padding: "4px 14px 6px",
+          }}
+        >
+          WORKSPACE
+        </div>
+
+        {/* Portal */}
         <Link
           href={portalHref}
-          className="flex w-full items-center justify-center gap-[7px] rounded-[10px] py-2 px-1.5 text-[12.5px] font-medium focus-visible:ring-2 focus-visible:ring-white/40"
-          style={{
-            color: "rgba(96,185,235,0.85)",
-            background: "linear-gradient(135deg, rgba(2,170,235,0.15) 0%, rgba(27,119,190,0.15) 100%)",
-            border: "1px solid rgba(2,170,235,0.22)",
-            transition: "background 150ms ease, color 150ms ease",
-            textDecoration: "none",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(2,170,235,0.22) 0%, rgba(27,119,190,0.22) 100%)"; e.currentTarget.style.color = "#7dd3fc"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(2,170,235,0.15) 0%, rgba(27,119,190,0.15) 100%)"; e.currentTarget.style.color = "rgba(96,185,235,0.85)"; }}
+          className="flex w-full items-center gap-2.5 px-[14px] py-2 text-[13px] font-medium transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+          style={{ color: "rgba(96,185,235,0.9)", textDecoration: "none" }}
         >
-          <UserSwitch size={15} weight="duotone" className="shrink-0" />
-          Portal
+          <UserSwitch size={15} weight="duotone" style={{ color: "rgba(96,185,235,0.9)", flexShrink: 0 }} />
+          Switch to Portal
         </Link>
-      </div>
 
-      {/* Help & Support */}
-      <div className="px-0.5 pb-0.5 pt-0.5">
+        {/* Micro divider */}
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 12px" }} />
+
+        {/* Help & Support */}
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent("admin:help-support"))}
-          className="flex w-full items-center justify-center gap-[7px] rounded-[10px] py-2 px-1.5 text-[12.5px] font-medium focus-visible:ring-2 focus-visible:ring-white/40"
+          className="flex w-full items-center gap-2.5 px-[14px] py-2 text-[13px] font-medium transition-colors hover:bg-[rgba(255,255,255,0.04)]"
           style={{
-            color: "rgba(255,255,255,0.45)",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "none",
+            border: "none",
+            color: "rgba(255,255,255,0.55)",
             cursor: "pointer",
             fontFamily: "inherit",
-            transition: "background 150ms ease, color 150ms ease, border-color 150ms ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.09)";
-            e.currentTarget.style.color = "rgba(255,255,255,0.75)";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-            e.currentTarget.style.color = "rgba(255,255,255,0.45)";
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+            textAlign: "left",
           }}
         >
-          <Question size={14} weight="regular" className="shrink-0" />
+          <Question size={15} weight="regular" style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
           Help & Support
         </button>
-      </div>
 
-      {/* Theme dropdown + bare sign out */}
-      <div className="mt-1 flex items-center px-0.5 pb-0.5">
-        <ThemeDropdown />
+        {/* Theme row */}
+        <ThemeRow />
+
+        {/* Sign out */}
         <button
           type="button"
           disabled={signOutPending}
           onClick={() => startSignOut(() => signOut())}
-          className="ml-auto flex items-center gap-1.5"
+          className="flex w-full items-center gap-2.5 px-[14px] py-2 text-[13px] font-medium"
           style={{
             background: "none",
             border: "none",
-            color: signOutPending ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.40)",
-            fontSize: "12px",
-            fontWeight: 500,
+            color: signOutPending ? "rgba(239,68,68,0.4)" : "rgba(239,68,68,0.75)",
             cursor: signOutPending ? "wait" : "pointer",
             fontFamily: "inherit",
-            padding: "5px 4px",
+            textAlign: "left",
             transition: "color 150ms ease",
           }}
-          onMouseEnter={(e) => { if (!signOutPending) e.currentTarget.style.color = "#f87171"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = signOutPending ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.40)"; }}
+          onMouseEnter={(e) => { if (!signOutPending) e.currentTarget.style.color = "rgba(239,68,68,1)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = signOutPending ? "rgba(239,68,68,0.4)" : "rgba(239,68,68,0.75)"; }}
         >
-          <Power size={13} weight="regular" />
+          <Power size={15} weight="regular" style={{ flexShrink: 0 }} />
           {signOutPending ? "Signing out…" : "Sign out"}
         </button>
       </div>

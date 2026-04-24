@@ -1,0 +1,17 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gray   { background: rgba(107, 114, 128, 0.12); color: var(--color-text-secondary); }
+.amber  { background: rgba(245, 158, 11, 0.12);  color: #92600a; }
+.green  { background: rgba(22, 163, 74, 0.12);   color: var(--color-success); }
+.orange { background: rgba(234, 88, 12, 0.12);   color: #9a3412; }
+.slate  { background: rgba(107, 114, 128, 0.08); color: var(--color-text-tertiary); }

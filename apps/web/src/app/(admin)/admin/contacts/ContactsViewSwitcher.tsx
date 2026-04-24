@@ -16,7 +16,6 @@ const BOARD_SUPPORTED: Record<string, PipelineViewMode[]> = {
   'active-owners':   ['status', 'compact', 'map'],
   'offboarding':     ['status', 'compact'],
   'archived':        ['status', 'compact'],
-  'owners-archived': ['status', 'compact'],
 };
 
 const BOARD_DEFAULT: Record<string, PipelineViewMode> = {
@@ -25,7 +24,6 @@ const BOARD_DEFAULT: Record<string, PipelineViewMode> = {
   'active-owners':   'status',
   'offboarding':     'status',
   'archived':        'status',
-  'owners-archived': 'compact',
 };
 
 export function ContactsViewSwitcher() {

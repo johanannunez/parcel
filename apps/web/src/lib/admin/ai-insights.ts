@@ -4,7 +4,7 @@ export type InsightSeverity = 'info' | 'recommendation' | 'warning' | 'success';
 
 export type Insight = {
   id: string;
-  parentType: 'contact' | 'property' | 'project';
+  parentType: 'contact' | 'property' | 'project' | 'vendor' | 'owner';
   parentId: string;
   agentKey: string;
   severity: InsightSeverity;

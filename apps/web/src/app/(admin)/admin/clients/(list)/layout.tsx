@@ -6,18 +6,24 @@ import {
 } from '@/lib/admin/contacts-list';
 import { fetchContactSources } from '@/lib/admin/contact-sources';
 import { createClient } from '@/lib/supabase/server';
-import { SavedViewsTabs } from './SavedViewsTabs';
-import { ContactsViewSwitcher } from './ContactsViewSwitcher';
-import { ContactFilterBar } from './ContactFilterBar';
-import { ContactsFiltersProvider } from './ContactsFiltersProvider';
-import { BoardToolsProvider } from './BoardToolsContext';
-import styles from './ContactsLayout.module.css';
+import { SavedViewsTabs } from '../../contacts/SavedViewsTabs';
+import { ContactsViewSwitcher } from '../../contacts/ContactsViewSwitcher';
+import { ContactFilterBar } from '../../contacts/ContactFilterBar';
+import { ContactsFiltersProvider } from '../../contacts/ContactsFiltersProvider';
+import { BoardToolsProvider } from '../../contacts/BoardToolsContext';
+import styles from '../../contacts/ContactsLayout.module.css';
 
 export const dynamic = 'force-dynamic';
 
-const CONTACTS_VIEW_KEYS = ['lead-pipeline', 'onboarding', 'active-owners', 'offboarding', 'archived'];
+const CLIENTS_VIEW_KEYS = [
+  'lead-pipeline',
+  'onboarding',
+  'active-owners',
+  'offboarding',
+  'archived',
+];
 
-export default async function ContactsLayout({ children }: { children: ReactNode }) {
+export default async function ClientsLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
   const [{ data: authData }, allViews, filterOptions, allSources] =
     await Promise.all([
@@ -29,9 +35,9 @@ export default async function ContactsLayout({ children }: { children: ReactNode
   const currentUserId = authData.user?.id ?? null;
 
   const views = allViews.filter((v) => {
-    if (!v.isPersonal) return CONTACTS_VIEW_KEYS.includes(v.key);
+    if (!v.isPersonal) return CLIENTS_VIEW_KEYS.includes(v.key);
     const baseView = v.searchParams?.view;
-    return baseView ? CONTACTS_VIEW_KEYS.includes(baseView) : true;
+    return baseView ? CLIENTS_VIEW_KEYS.includes(baseView) : true;
   });
 
   return (
@@ -39,7 +45,7 @@ export default async function ContactsLayout({ children }: { children: ReactNode
       <BoardToolsProvider>
         <div className={styles.shell}>
           <PageTitle
-            title="Contacts"
+            title="Clients"
             subtitle="Leads and owners under Parcel management"
           />
           <ContactsViewSwitcher />

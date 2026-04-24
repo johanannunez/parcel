@@ -12,3 +12,5 @@ export type InsightPayload = {
   suggestedFixes: string[];
   isCritical?: boolean;
 };
+
+export type { CommunicationInsightPayload } from './communication-types';
