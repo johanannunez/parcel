@@ -19,6 +19,8 @@ import { BillingTab } from "./BillingTab";
 import { fetchClientBilling } from "@/lib/admin/client-billing";
 import { DocumentsTab } from "./DocumentsTab";
 import { fetchClientDocuments } from "@/lib/admin/client-documents";
+import { MessagingTab } from "./MessagingTab";
+import { fetchClientMessages } from "@/lib/admin/client-messages";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +91,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
   const clientDocuments = tab === "documents" && client.profileId
     ? await fetchClientDocuments(client.profileId)
+    : [];
+
+  const clientMessages = tab === "messaging"
+    ? await fetchClientMessages(id)
     : [];
 
   // Fetch settings data only when the settings tab is active and owner data exists.
@@ -213,12 +219,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         );
 
       case "messaging":
-        return (
-          <TabPlaceholder
-            title="Messaging"
-            body="Direct messaging is coming in Phase 2."
-          />
-        );
+        return <MessagingTab contactId={id} messages={clientMessages} />;
 
       case "documents":
         if (!client!.profileId) {
