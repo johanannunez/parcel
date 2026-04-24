@@ -148,6 +148,7 @@ create table if not exists public.communication_events (
   entity_id          uuid,
   process_after      timestamptz,
   processed_at       timestamptz,
+  recording_url      text,
   quo_summary        text,
   tier               text check (tier in ('action_required', 'fyi', 'noise')),
   claude_summary     text,
@@ -302,6 +303,8 @@ export type CommunicationEvent = {
   phoneTo: string;
   rawTranscript: string | null;
   durationSeconds: number | null;
+  recordingUrl: string | null;
+  quoSummary: string | null;
   entityType: 'owner' | 'contact' | 'vendor' | 'unknown' | null;
   entityId: string | null;
   processAfter: string | null;
@@ -454,13 +457,16 @@ git commit -m "feat: add contact resolver resolvePhone()"
 **Files:**
 - Create: `apps/web/src/app/api/webhooks/quo/route.ts`
 
-The webhook receives three event types from Quo (OpenPhone):
-- `call.transcript.completed`: inbound call with transcript
-- `call.summary.completed`: Quo's built-in AI summary (store as `quo_summary` on the event row, use as extra context in the Claude prompt)
+The webhook receives five event types from Quo (OpenPhone):
+- `call.transcript.completed`: inbound call with full transcript — inserts the event row
+- `call.recording.completed`: recording URL ready — updates the existing call row (same call ID)
+- `call.summary.completed`: Quo's built-in AI summary — updates the existing call row (same call ID)
 - `message.received`: inbound SMS
 - `message.delivered`: outbound SMS (context only, no processing trigger)
 
-Quo signs requests with HMAC-SHA256. The signature is sent in the `x-openphone-signature` header over the raw request body, using `QUO_WEBHOOK_SECRET`.
+`call.recording.completed` and `call.summary.completed` always fire after `call.transcript.completed` for the same call. They update the existing row by `quo_id` rather than inserting.
+
+Quo signs requests with HMAC-SHA256. The signature is in the `x-openphone-signature` header, computed over the raw request body using `QUO_WEBHOOK_SECRET`.
 
 - [ ] **Step 1: Write the webhook handler**
 
@@ -473,6 +479,14 @@ import { resolvePhone } from '@/lib/admin/resolve-phone';
 import { normalizePhone } from '@/lib/admin/normalize-phone';
 
 export const dynamic = 'force-dynamic';
+
+const HANDLED_EVENTS = new Set([
+  'call.transcript.completed',
+  'call.recording.completed',
+  'call.summary.completed',
+  'message.received',
+  'message.delivered',
+]);
 
 function verifySignature(body: string, signature: string, secret: string): boolean {
   const expected = createHmac('sha256', secret).update(body).digest('hex');
@@ -501,17 +515,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const event = payload.type as string | undefined;
   const data = payload.data as Record<string, unknown> | undefined;
 
-  if (!event || !data) {
-    return NextResponse.json({ ok: true, skipped: 'missing event or data' });
-  }
-
-  if (
-    event !== 'call.transcript.completed' &&
-    event !== 'call.summary.completed' &&
-    event !== 'message.received' &&
-    event !== 'message.delivered'
-  ) {
-    return NextResponse.json({ ok: true, skipped: event });
+  if (!event || !data || !HANDLED_EVENTS.has(event)) {
+    return NextResponse.json({ ok: true, skipped: event ?? 'missing event' });
   }
 
   const quoId = (data.id ?? data.callId ?? data.messageId) as string | undefined;
@@ -519,11 +524,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true, skipped: 'no id' });
   }
 
-  const phoneFrom = normalizePhone(
-    (event === 'message.delivered'
-      ? (data.from as string | undefined)
-      : (data.from as string | undefined)) ?? ''
-  );
+  const supabase = createServiceClient();
+
+  // call.recording.completed and call.summary.completed update an existing row.
+  // The transcript event has already inserted it via call.transcript.completed.
+  if (event === 'call.recording.completed') {
+    const recordingUrl = (data.recordingUrl ?? data.url) as string | undefined;
+    if (recordingUrl) {
+      await supabase
+        .from('communication_events')
+        .update({ recording_url: recordingUrl })
+        .eq('quo_id', quoId);
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  if (event === 'call.summary.completed') {
+    const summary = (data.summary ?? data.text) as string | undefined;
+    if (summary) {
+      await supabase
+        .from('communication_events')
+        .update({ quo_summary: summary })
+        .eq('quo_id', quoId);
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  // Insert path: call.transcript.completed, message.received, message.delivered
+  const phoneFrom = normalizePhone((data.from as string | undefined) ?? '');
   const phoneTo = normalizePhone((data.to as string | undefined) ?? '');
 
   if (!phoneFrom) {
@@ -531,8 +559,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const isInbound = event !== 'message.delivered';
-  const isSummaryEvent = event === 'call.summary.completed';
-  const channel: 'call' | 'sms' = (event === 'call.transcript.completed' || isSummaryEvent) ? 'call' : 'sms';
+  const channel: 'call' | 'sms' = event === 'call.transcript.completed' ? 'call' : 'sms';
   const direction: 'inbound' | 'outbound' = isInbound ? 'inbound' : 'outbound';
 
   const rawTranscript =
@@ -544,8 +571,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     channel === 'call' ? ((data.duration as number | undefined) ?? null) : null;
 
   const resolved = isInbound ? await resolvePhone(phoneFrom) : null;
-
-  const supabase = createServiceClient();
 
   const { data: adminProfile } = await supabase
     .from('profiles')
@@ -1040,7 +1065,7 @@ Renders the full communication history for any entity — owners, contacts, or v
 // apps/web/src/components/admin/CommunicationsTab.tsx
 'use client';
 import { useState } from 'react';
-import { PhoneCall, ChatText, CaretDown, CaretUp, Lightning } from '@phosphor-icons/react';
+import { PhoneCall, ChatText, CaretDown, CaretUp, Lightning, Play } from '@phosphor-icons/react';
 import type { CommunicationEvent } from '@/lib/admin/communication-types';
 import styles from './CommunicationsTab.module.css';
 
@@ -1080,6 +1105,18 @@ function EventRow({ event }: { event: CommunicationEvent }) {
             {event.durationSeconds ? ` (${formatDuration(event.durationSeconds)})` : ''}
           </span>
           <span className={styles.eventDate}>{formatDate(event.createdAt)}</span>
+          {event.recordingUrl && (
+            <a
+              href={event.recordingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.playBtn}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Play recording"
+            >
+              <Play size={12} weight="fill" /> Recording
+            </a>
+          )}
         </div>
         {hasContent && (
           <button className={styles.expandBtn} aria-label="Toggle transcript">
@@ -1226,6 +1263,23 @@ export function CommunicationsTab({ events, latestSummary, actionItems }: Props)
   color: var(--text-tertiary);
 }
 
+.playBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent-primary);
+  background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
+  border-radius: 100px;
+  padding: 2px 8px;
+  text-decoration: none;
+}
+
+.playBtn:hover {
+  background: color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
+}
+
 .expandBtn {
   background: none;
   border: none;
@@ -1318,6 +1372,8 @@ function mapRow(r: Record<string, unknown>): CommunicationEvent {
     phoneTo: r.phone_to as string,
     rawTranscript: (r.raw_transcript as string | null) ?? null,
     durationSeconds: (r.duration_seconds as number | null) ?? null,
+    recordingUrl: (r.recording_url as string | null) ?? null,
+    quoSummary: (r.quo_summary as string | null) ?? null,
     entityType: (r.entity_type as CommunicationEvent['entityType']) ?? null,
     entityId: (r.entity_id as string | null) ?? null,
     processAfter: (r.process_after as string | null) ?? null,
@@ -2345,6 +2401,7 @@ Wait for the Vercel deployment to complete before registering the webhook.
 3. URL: `https://www.theparcelco.com/api/webhooks/quo`
 4. Select these events:
    - `call.transcript.completed`
+   - `call.recording.completed`
    - `call.summary.completed`
    - `message.received`
    - `message.delivered`
