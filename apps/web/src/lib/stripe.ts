@@ -271,6 +271,73 @@ export type InvoiceRow = {
   items: Array<{ description: string; amount_cents: number; quantity: number }>;
 };
 
+export type StripePaymentMethod = {
+  id: string;
+  type: "card" | "us_bank_account" | "other";
+  brand: string | null;
+  last4: string | null;
+  expMonth: number | null;
+  expYear: number | null;
+  isExpiringSoon: boolean;
+};
+
+export async function fetchPaymentMethod(profileId: string): Promise<StripePaymentMethod | null> {
+  if (!isStripeConfigured()) return null;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const supabase = (await createClient()) as any;
+  const { data: customer } = await supabase
+    .from("stripe_customers")
+    .select("stripe_customer_id")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  if (!customer?.stripe_customer_id) return null;
+
+  try {
+    const stripe = getStripe();
+    const paymentMethods = await stripe.customers.listPaymentMethods(customer.stripe_customer_id, { limit: 1 });
+    const pm = paymentMethods.data[0];
+    if (!pm) return null;
+
+    const now = new Date();
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+    if (pm.type === "card" && pm.card) {
+      const expYear = pm.card.exp_year;
+      const expMonth = pm.card.exp_month;
+      const expiryDate = new Date(expYear, expMonth - 1, 1);
+      const isExpiringSoon = expiryDate.getTime() - now.getTime() < thirtyDaysMs;
+      return {
+        id: pm.id,
+        type: "card",
+        brand: pm.card.brand,
+        last4: pm.card.last4,
+        expMonth,
+        expYear,
+        isExpiringSoon,
+      };
+    }
+
+    if (pm.type === "us_bank_account" && pm.us_bank_account) {
+      return {
+        id: pm.id,
+        type: "us_bank_account",
+        brand: pm.us_bank_account.bank_name ?? null,
+        last4: pm.us_bank_account.last4,
+        expMonth: null,
+        expYear: null,
+        isExpiringSoon: false,
+      };
+    }
+
+    return { id: pm.id, type: "other", brand: null, last4: null, expMonth: null, expYear: null, isExpiringSoon: false };
+  } catch (err) {
+    console.error("[stripe] fetchPaymentMethod error:", err);
+    return null;
+  }
+}
+
 export async function listInvoicesForOwner(
   ownerId: string,
 ): Promise<InvoiceRow[]> {

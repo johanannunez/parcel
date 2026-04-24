@@ -97,6 +97,8 @@ export type SettingsTabProps = {
     ein: string | null;
     notes: string | null;
   } | null;
+  /** Override the base path for section routing. Defaults to /admin/owners/:id. */
+  basePath?: string;
 };
 
 export function SettingsTab({
@@ -107,10 +109,13 @@ export function SettingsTab({
   sessions,
   connections,
   entityDetail,
+  basePath,
 }: SettingsTabProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { primaryMember, entity } = data;
+
+  const resolvedBasePath = basePath ?? `/admin/owners/${entity.id}`;
 
   function switchSection(next: SettingsSection) {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
@@ -120,7 +125,7 @@ export function SettingsTab({
     } else {
       params.set("section", next);
     }
-    router.replace(`/admin/owners/${entity.id}?${params.toString()}`, {
+    router.replace(`${resolvedBasePath}?${params.toString()}`, {
       scroll: false,
     });
   }
