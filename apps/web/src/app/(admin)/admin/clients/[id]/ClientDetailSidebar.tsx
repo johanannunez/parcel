@@ -10,15 +10,12 @@ import {
   type ChangeEvent,
 } from "react";
 import {
-  EnvelopeSimple,
   LinkedinLogo,
   InstagramLogo,
   FacebookLogo,
   XLogo,
   Globe,
   X as XIcon,
-  Phone,
-  ChatCentered,
   CheckCircle,
   XCircle,
   CopySimple,
@@ -880,10 +877,11 @@ function AssignedField({
 
 type ContactMethod = "email" | "phone" | "text" | "whatsapp";
 
-const CONTACT_METHODS: { key: ContactMethod; Icon: React.ComponentType<{ size?: number; weight?: "regular" | "fill" | "bold" | "duotone" | "light" | "thin" }>; label: string }[] = [
-  { key: "email", Icon: EnvelopeSimple, label: "Email" },
-  { key: "phone", Icon: Phone,          label: "Phone" },
-  { key: "text",  Icon: ChatCentered,   label: "Text"  },
+const CONTACT_METHODS: { key: ContactMethod; label: string }[] = [
+  { key: "email",    label: "Email"    },
+  { key: "phone",    label: "Phone"    },
+  { key: "text",     label: "SMS"      },
+  { key: "whatsapp", label: "WhatsApp" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1096,7 +1094,6 @@ export function ClientDetailSidebar({
   const [email,       setEmail]        = useState(client.email       ?? "");
   const [emailVerified, setEmailVerified] = useState(client.emailVerified);
   const [phone,       setPhone]        = useState(client.phone       ?? "");
-  const [company,     setCompany]      = useState(client.companyName ?? "");
   const source = client.source ?? "";
   const [addressFmt,  setAddressFmt]   = useState(client.addressFormatted ?? null);
   const [social,      setSocial]       = useState<SocialLinks>(client.social ?? {});
@@ -1107,7 +1104,6 @@ export function ClientDetailSidebar({
   const [feePercent,    setFeePercent]    = useState(
     client.managementFeePercent !== null ? String(client.managementFeePercent) : ""
   );
-  const [newsletter,    setNewsletter]    = useState(client.newsletterSubscribed);
   const [socialModalOpen, setSocialModalOpen] = useState(false);
 
   // Saved-field tracker
@@ -1167,11 +1163,6 @@ export function ClientDetailSidebar({
     await save({ phone: val });
     markSaved("phone");
   };
-  const saveCompany = async (val: string) => {
-    setCompany(val);
-    await save({ companyName: val });
-    markSaved("company");
-  };
   const saveAddress = async (formatted: string, components: AddressComponents) => {
     setAddressFmt(formatted);
     await save({ addressFormatted: formatted, addressComponents: components });
@@ -1214,23 +1205,11 @@ export function ClientDetailSidebar({
     setContactMethod(next);
     await save({ preferredContactMethod: next });
   };
-  const saveNewsletter = async () => {
-    const next = !newsletter;
-    setNewsletter(next);
-    await save({ newsletterSubscribed: next });
-  };
 
   const hasPortal = client.profileId !== null;
-  const sidebarRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (sidebarRef.current) {
-      sidebarRef.current.scrollTop = 0;
-    }
-  }, [client.id]);
 
   return (
-    <aside ref={sidebarRef} className={styles.sidebar}>
+    <aside className={styles.sidebar}>
 
       {/* ── Person chips (multi-member only) ─────────────────────────────── */}
       {members.length > 1 && (
@@ -1314,15 +1293,6 @@ export function ClientDetailSidebar({
         isSaved={savedFields.has("phone")}
       />
 
-      <EditableField
-        label="Company"
-        value={company}
-        placeholder="Company name"
-        copyValue={company || undefined}
-        onSave={saveCompany}
-        isSaved={savedFields.has("company")}
-      />
-
       <AddressField
         value={addressFmt}
         components={client.addressComponents}
@@ -1351,7 +1321,7 @@ export function ClientDetailSidebar({
       <div className={styles.fieldRow}>
         <span className={styles.fieldLabel}>Prefers</span>
         <div className={styles.contactMethodRow}>
-          {CONTACT_METHODS.map(({ key, Icon, label }) => (
+          {CONTACT_METHODS.map(({ key, label }) => (
             <button
               key={key}
               type="button"
@@ -1359,45 +1329,23 @@ export function ClientDetailSidebar({
               aria-pressed={contactMethod === key}
               className={`${styles.methodBtn} ${contactMethod === key ? styles.methodBtnActive : ""}`}
               onClick={() => saveContactMethod(key)}
-              title={label}
             >
-              <Icon size={15} weight={contactMethod === key ? "fill" : "regular"} />
-              <span>{label}</span>
+              {label}
             </button>
           ))}
         </div>
       </div>
 
-      <div className={styles.fieldRowPair}>
-        <div className={styles.fieldPairItem}>
-          <div className={styles.fieldRow}>
-            <span className={styles.fieldLabel}>Portal</span>
-            <div className={styles.fieldValue}>
-              <span className={`${styles.portalStatus} ${hasPortal ? styles.portalStatusActive : styles.portalStatusNone}`}>
-                {hasPortal ? (
-                  <><CheckCircle size={13} weight="fill" /> Has access</>
-                ) : (
-                  <><XCircle size={13} weight="regular" /> No access</>
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className={styles.fieldPairItem}>
-          <div className={styles.fieldRow}>
-            <span className={styles.fieldLabel}>Newsletter</span>
-            <div className={styles.fieldValue}>
-              <button
-                type="button"
-                className={`${styles.newsletterToggle} ${newsletter ? styles.newsletterToggleOn : ""}`}
-                onClick={saveNewsletter}
-                aria-pressed={newsletter}
-                aria-label="Toggle newsletter subscription"
-              >
-                {newsletter ? "Subscribed" : "Off"}
-              </button>
-            </div>
-          </div>
+      <div className={styles.fieldRow}>
+        <span className={styles.fieldLabel}>Portal</span>
+        <div className={styles.fieldValue}>
+          <span className={`${styles.portalStatus} ${hasPortal ? styles.portalStatusActive : styles.portalStatusNone}`}>
+            {hasPortal ? (
+              <><CheckCircle size={13} weight="fill" /> Has access</>
+            ) : (
+              <><XCircle size={13} weight="regular" /> No access</>
+            )}
+          </span>
         </div>
       </div>
 
