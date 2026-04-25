@@ -305,6 +305,9 @@ export async function deleteContactSource(id: string): Promise<ActionResult> {
 export async function markContractSigned(
   contactId: string,
 ): Promise<ActionResult> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contactId)) {
+    return { ok: false, error: 'Invalid contact ID.' };
+  }
   const auth = await getAdminUser();
   if (!auth.ok) return auth;
   const { supabase } = auth;

@@ -65,7 +65,8 @@ export async function seedOnboardingTasks(contactId: string): Promise<void> {
     })),
   );
 
-  await (supabase as any).from('tasks').insert(rows);
+  const { error: insertError } = await (supabase as any).from('tasks').insert(rows);
+  if (insertError) throw new Error(`Failed to seed onboarding tasks: ${insertError.message}`);
 
   revalidatePath('/admin/tasks');
   revalidatePath('/admin/owners');
