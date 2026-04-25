@@ -244,6 +244,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
             ownerId={client!.profileId}
             ownerFirstName={client!.fullName.split(" ")[0] ?? client!.fullName}
             ownerEmail={client!.email ?? ""}
+            ownerPhone={client!.phone ?? null}
             meetings={clientMeetings}
             properties={client!.properties.map((p) => ({
               id: p.id,

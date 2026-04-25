@@ -1,0 +1,265 @@
+.root {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* LEFT PANEL */
+.leftPanel {
+  width: 280px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-right: 1px solid var(--color-warm-gray-200);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Mini-cal wrapper — remove card border from MeetingsMiniCal */
+.calWrapper {
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.calWrapper > * {
+  border: none !important;
+  border-radius: 0 !important;
+  width: 100% !important;
+  padding-bottom: 0 !important;
+}
+
+/* Stats strip */
+.statsStrip {
+  display: flex;
+  border-top: 1px solid var(--color-warm-gray-100);
+  border-bottom: 1px solid var(--color-warm-gray-100);
+  flex-shrink: 0;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7px 0;
+  gap: 1px;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--color-warm-gray-100);
+}
+
+.statVal {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.statValBlue { color: var(--color-brand); }
+.statValGreen { color: #059669; }
+
+.statLabel {
+  font-size: 9px;
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* New meeting button */
+.newBtn {
+  margin: 10px 12px;
+  padding: 9px 14px;
+  background: var(--color-brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.newBtn:hover {
+  background: #155F9E;
+}
+
+/* Meeting list */
+.meetingList {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+.listSection {
+  padding: 8px 12px 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.listCount {
+  background: var(--color-warm-gray-200);
+  color: var(--color-text-secondary);
+  border-radius: 10px;
+  padding: 0 5px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* Meeting rows */
+.meetingRow {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transition: background 0.1s;
+}
+
+.meetingRow:hover {
+  background: var(--color-warm-gray-50);
+}
+
+.meetingRowSelected {
+  background: #EFF6FF;
+  border-left-color: var(--color-brand);
+}
+
+.meetingRowSelectedPhone {
+  background: #F0FDF4;
+  border-left-color: #059669;
+}
+
+.meetingRowSelectedInPerson {
+  background: #FFFBEB;
+  border-left-color: #C97820;
+}
+
+.rowIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rowIconVideo { background: #EFF6FF; color: var(--color-brand); }
+.rowIconPhone { background: #ECFDF5; color: #059669; }
+.rowIconInPerson { background: #FEF9EC; color: #C97820; }
+
+.rowBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.35;
+}
+
+.rowMeta {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statusPill {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 10px;
+}
+
+.statusUpcoming { background: #EFF6FF; color: var(--color-brand); }
+.statusCompleted { background: #ECFDF5; color: #059669; }
+.statusCancelled { background: var(--color-warm-gray-100); color: var(--color-text-tertiary); }
+
+/* RIGHT PANEL */
+.rightPanel {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Empty state */
+.emptyRoot {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--color-text-tertiary);
+  padding: 40px;
+}
+
+.emptyTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.emptyBody {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.emptyNewBtn {
+  margin-top: 8px;
+  padding: 10px 20px;
+  background: var(--color-brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.emptyNewBtn:hover {
+  background: #155F9E;
+}
+
+@media (max-width: 700px) {
+  .root {
+    flex-direction: column;
+  }
+  .leftPanel {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-warm-gray-200);
+    max-height: 300px;
+  }
+}
