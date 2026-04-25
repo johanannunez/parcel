@@ -317,7 +317,14 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
   }
 
   return (
-    <ClientDetailShell client={client} adminProfiles={adminProfiles} nextMeeting={nextMeeting}>
+    <ClientDetailShell
+      client={client}
+      adminProfiles={adminProfiles}
+      nextMeeting={nextMeeting}
+      entityInfo={entityInfo}
+      members={members}
+      activeContactId={activeContactId as string}
+    >
       {renderTab()}
     </ClientDetailShell>
   );

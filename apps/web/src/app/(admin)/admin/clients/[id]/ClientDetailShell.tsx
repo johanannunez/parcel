@@ -20,7 +20,7 @@ import {
   subMonths,
   format as formatDate,
 } from "date-fns";
-import type { ClientDetail } from "@/lib/admin/client-detail";
+import type { ClientDetail, EntityInfo, EntityMember } from "@/lib/admin/client-detail";
 import type { NextMeeting } from "@/lib/admin/client-meetings";
 import type { AdminProfile } from "./client-actions";
 import { updateClientFields } from "./client-actions";
@@ -441,6 +441,231 @@ function FollowUpCell({
 }
 
 // ---------------------------------------------------------------------------
+// Skeleton loader
+// ---------------------------------------------------------------------------
+
+function SkBone({ w, h, style }: { w?: string | number; h?: number; style?: React.CSSProperties }) {
+  return (
+    <div
+      className={styles.skBone}
+      style={{ width: w ?? "100%", height: h ?? 12, ...style }}
+    />
+  );
+}
+
+function SkCard({ children }: { children: React.ReactNode }) {
+  return <div className={styles.skCard}>{children}</div>;
+}
+
+function TabSkeleton({ tab }: { tab: TabKey }) {
+  switch (tab) {
+    case "overview":
+      return (
+        <div className={styles.skContent}>
+          <div className={styles.skRow2}>
+            <SkCard>
+              <SkBone w="45%" h={9} />
+              <SkBone w="55%" h={26} />
+              <SkBone w="70%" h={9} />
+            </SkCard>
+            <SkCard>
+              <SkBone w="45%" h={9} />
+              <SkBone w="40%" h={26} />
+              <SkBone w="60%" h={9} />
+            </SkCard>
+          </div>
+          <SkCard>
+            <SkBone w="30%" h={9} />
+            <SkBone h={10} />
+            <SkBone w="88%" h={10} />
+            <SkBone w="72%" h={10} />
+          </SkCard>
+          <SkCard>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={styles.skListRow}>
+                <SkBone style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }} />
+                <div className={styles.skFlex1}>
+                  <SkBone w="50%" h={11} />
+                  <SkBone w="28%" h={9} />
+                </div>
+              </div>
+            ))}
+          </SkCard>
+        </div>
+      );
+
+    case "properties":
+      return (
+        <div className={styles.skContent}>
+          {[0, 1, 2].map((i) => (
+            <SkCard key={i}>
+              <div className={styles.skListRow}>
+                <SkBone style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0 }} />
+                <div className={styles.skFlex1}>
+                  <SkBone w="55%" h={13} />
+                  <SkBone w="35%" h={9} />
+                </div>
+                <SkBone style={{ width: 70, height: 24, borderRadius: 6 }} />
+              </div>
+            </SkCard>
+          ))}
+        </div>
+      );
+
+    case "tasks":
+      return (
+        <div className={styles.skContent}>
+          <div className={styles.skTopBar}>
+            <SkBone w={160} h={11} />
+            <SkBone w={110} h={30} style={{ borderRadius: 7 }} />
+          </div>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className={styles.skTaskRow}>
+              <SkBone style={{ width: 16, height: 16, borderRadius: 4, flexShrink: 0 }} />
+              <div className={styles.skFlex1}>
+                <SkBone w={`${55 + (i * 9) % 35}%`} h={12} />
+                <SkBone w="22%" h={9} />
+              </div>
+              <SkBone style={{ width: 60, height: 20, borderRadius: 10 }} />
+            </div>
+          ))}
+        </div>
+      );
+
+    case "meetings":
+      return (
+        <div className={styles.skContent}>
+          <div className={styles.skTopBar}>
+            <SkBone w={120} h={11} />
+            <SkBone w={140} h={30} style={{ borderRadius: 7 }} />
+          </div>
+          {[0, 1, 2].map((i) => (
+            <SkCard key={i}>
+              <div className={styles.skMeetingRow}>
+                <SkBone style={{ width: 38, height: 38, borderRadius: 9, flexShrink: 0 }} />
+                <div className={styles.skFlex1}>
+                  <SkBone w="48%" h={13} />
+                  <SkBone w="32%" h={9} />
+                </div>
+                <SkBone style={{ width: 65, height: 22, borderRadius: 5 }} />
+              </div>
+            </SkCard>
+          ))}
+        </div>
+      );
+
+    case "intelligence":
+      return (
+        <div className={styles.skContent}>
+          <SkCard>
+            <SkBone w="28%" h={9} />
+            <SkBone h={10} />
+            <SkBone w="91%" h={10} />
+            <SkBone w="65%" h={10} />
+          </SkCard>
+          {[0, 1, 2].map((i) => (
+            <SkCard key={i}>
+              <div className={styles.skInsightRow}>
+                <SkBone style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 4, flexShrink: 0 }} />
+                <div className={styles.skFlex1}>
+                  <SkBone w="52%" h={12} />
+                  <SkBone h={9} />
+                  <SkBone w="78%" h={9} />
+                </div>
+              </div>
+            </SkCard>
+          ))}
+        </div>
+      );
+
+    case "messaging":
+      return (
+        <div className={styles.skContent} style={{ gap: 10 }}>
+          {[44, 62, 38, 55, 48].map((pct, i) => (
+            <div key={i} className={[styles.skMessageRow, i % 2 === 1 ? styles.skMessageRowRight : ""].join(" ")}>
+              <div className={styles.skBubble} style={{ width: `${pct}%` }}>
+                <SkBone h={9} />
+                {i % 2 === 0 && <SkBone w="75%" h={9} />}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+
+    case "documents":
+      return (
+        <div className={styles.skContent}>
+          <div className={styles.skDocGrid}>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <SkCard key={i}>
+                <SkBone style={{ width: 40, height: 40, borderRadius: 8 }} />
+                <SkBone w="70%" h={11} />
+                <SkBone w="45%" h={9} />
+              </SkCard>
+            ))}
+          </div>
+        </div>
+      );
+
+    case "billing":
+      return (
+        <div className={styles.skContent}>
+          <div className={styles.skRow3}>
+            {[0, 1, 2].map((i) => (
+              <SkCard key={i}>
+                <SkBone w="42%" h={9} />
+                <SkBone w="58%" h={28} />
+                <SkBone w="35%" h={9} />
+              </SkCard>
+            ))}
+          </div>
+          <SkCard>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className={styles.skTableRow}>
+                <SkBone w="28%" h={10} />
+                <SkBone w="18%" h={10} />
+                <SkBone w="14%" h={10} />
+              </div>
+            ))}
+          </SkCard>
+        </div>
+      );
+
+    case "settings":
+      return (
+        <div className={styles.skContent}>
+          {[0, 1, 2].map((s) => (
+            <SkCard key={s}>
+              <SkBone w="22%" h={13} />
+              <div className={styles.skFormField}>
+                <SkBone w="18%" h={9} />
+                <SkBone h={36} style={{ borderRadius: 7 }} />
+              </div>
+              <div className={styles.skFormField}>
+                <SkBone w="14%" h={9} />
+                <SkBone h={36} style={{ borderRadius: 7 }} />
+              </div>
+            </SkCard>
+          ))}
+        </div>
+      );
+
+    default:
+      return (
+        <div className={styles.skContent}>
+          {[0, 1, 2].map((i) => (
+            <SkCard key={i}>
+              <SkBone w="38%" h={12} />
+              <SkBone h={10} />
+              <SkBone w="72%" h={10} />
+            </SkCard>
+          ))}
+        </div>
+      );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Inner component
 // ---------------------------------------------------------------------------
 
@@ -448,11 +673,17 @@ function ClientDetailContent({
   client,
   adminProfiles,
   nextMeeting,
+  entityInfo,
+  members,
+  activeContactId,
   children,
 }: {
   client: ClientDetail;
   adminProfiles: AdminProfile[];
   nextMeeting: NextMeeting;
+  entityInfo: EntityInfo;
+  members: EntityMember[];
+  activeContactId: string;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -460,6 +691,13 @@ function ClientDetailContent({
   const rawTab = searchParams.get("tab");
   const activeTab: TabKey =
     rawTab && TAB_KEYS.includes(rawTab) ? (rawTab as TabKey) : "overview";
+
+  const [isTabPending, startTabTransition] = useTransition();
+  const [pendingTab, setPendingTab] = useState<TabKey | null>(null);
+
+  useEffect(() => {
+    if (!isTabPending) setPendingTab(null);
+  }, [isTabPending]);
 
   const shellRef = useRef<HTMLDivElement>(null);
 
@@ -602,14 +840,25 @@ function ClientDetailContent({
                 key={tab.key}
                 type="button"
                 className={styles.tab}
-                data-active={activeTab === tab.key ? "true" : "false"}
-                onClick={() => router.replace(`?tab=${tab.key}`, { scroll: false })}
+                data-label={tab.label}
+                data-active={(pendingTab ? tab.key === pendingTab : activeTab === tab.key) ? "true" : "false"}
+                onClick={() => {
+                  if (tab.key !== activeTab) {
+                    setPendingTab(tab.key);
+                    startTabTransition(() => router.replace(`?tab=${tab.key}`, { scroll: false }));
+                  }
+                }}
               >
                 {tab.label}
               </button>
             ))}
           </nav>
-          <main className={styles.content}>{children}</main>
+          <div className={styles.contentWrapper}>
+            {isTabPending && pendingTab
+              ? <TabSkeleton tab={pendingTab} />
+              : <main className={styles.content}>{children}</main>
+            }
+          </div>
         </div>
       </div>
 
@@ -633,11 +882,17 @@ export function ClientDetailShell({
   client,
   adminProfiles,
   nextMeeting,
+  entityInfo,
+  members,
+  activeContactId,
   children,
 }: {
   client: ClientDetail;
   adminProfiles: AdminProfile[];
   nextMeeting: NextMeeting;
+  entityInfo: EntityInfo;
+  members: EntityMember[];
+  activeContactId: string;
   children: React.ReactNode;
 }) {
   return (
@@ -646,6 +901,9 @@ export function ClientDetailShell({
         client={client}
         adminProfiles={adminProfiles}
         nextMeeting={nextMeeting}
+        entityInfo={entityInfo}
+        members={members}
+        activeContactId={activeContactId}
       >
         {children}
       </ClientDetailContent>
