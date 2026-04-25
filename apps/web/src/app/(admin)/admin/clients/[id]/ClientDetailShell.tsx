@@ -637,6 +637,8 @@ function ClientDetailContent({
   const rawTab = searchParams.get("tab");
   const activeTab: TabKey =
     rawTab && TAB_KEYS.includes(rawTab) ? (rawTab as TabKey) : "overview";
+  const rawSection = searchParams.get("section");
+  const rawPerson = searchParams.get("person");
 
   const [isTabPending, startTabTransition] = useTransition();
   const [pendingTab, setPendingTab] = useState<TabKey | null>(null);
@@ -717,7 +719,10 @@ function ClientDetailContent({
                         key={m.id}
                         type="button"
                         className={`${styles.personChip} ${m.id === activeContactId ? styles.personChipActive : ''}`}
-                        onClick={() => router.replace(`?tab=${activeTab}&person=${m.id}`, { scroll: false })}
+                        onClick={() => {
+                          const sectionSuffix = rawSection ? `&section=${rawSection}` : "";
+                          router.replace(`?tab=${activeTab}&person=${m.id}${sectionSuffix}`, { scroll: false });
+                        }}
                       >
                         {m.avatarUrl ? (
                           <img src={m.avatarUrl} alt={m.fullName} className={styles.personChipAvatar} />
@@ -804,7 +809,8 @@ function ClientDetailContent({
                 onClick={() => {
                   if (tab.key !== activeTab) {
                     setPendingTab(tab.key);
-                    startTabTransition(() => router.replace(`?tab=${tab.key}`, { scroll: false }));
+                    const personSuffix = rawPerson ? `&person=${rawPerson}` : "";
+                    startTabTransition(() => router.replace(`?tab=${tab.key}${personSuffix}`, { scroll: false }));
                   }
                 }}
               >
