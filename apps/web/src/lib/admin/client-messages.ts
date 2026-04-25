@@ -60,6 +60,7 @@ export async function fetchEntityMessages(contactIds: string[]): Promise<ClientM
       sender:profiles(full_name)
     `)
     .in("contact_id", contactIds)
+    .order("pinned", { ascending: false })
     .order("created_at", { ascending: true });
 
   if (error) {

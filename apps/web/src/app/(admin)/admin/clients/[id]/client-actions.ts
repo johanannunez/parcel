@@ -305,6 +305,7 @@ export async function addPersonToEntity(
       email: input.email ?? null,
       phone: input.phone ?? null,
       entity_id: entityId,
+      lifecycle_stage: "lead_new",
     })
     .select("id")
     .single();
@@ -354,6 +355,16 @@ export async function removePersonFromEntity(
   if (entityError) {
     console.error("[removePersonFromEntity] entity error:", entityError.message);
     return { ok: false, error: "Failed to create new entity for removed person." };
+  }
+
+  // Re-check count before mutating (narrow the TOCTOU window)
+  const { count: countNow } = await (supabase as any)
+    .from("contacts")
+    .select("id", { count: "exact", head: true })
+    .eq("entity_id", entityId);
+
+  if ((countNow ?? 0) <= 1) {
+    return { ok: false, error: "Cannot remove the only person in an entity." };
   }
 
   const { error: updateError } = await (supabase as any)

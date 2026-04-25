@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminUser } from "@/lib/admin/auth";
 
 export async function sendClientMessage(
   contactId: string,
@@ -8,10 +8,15 @@ export async function sendClientMessage(
 ): Promise<{ ok: boolean; message: string }> {
   if (!body.trim()) return { ok: false, message: "Message cannot be empty." };
 
-  const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getUser();
-  const adminId = authData.user?.id;
-  if (!adminId) return { ok: false, message: "Not authenticated." };
+  let supabase: Awaited<ReturnType<typeof requireAdminUser>>["supabase"];
+  let adminId: string;
+  try {
+    const auth = await requireAdminUser();
+    supabase = auth.supabase;
+    adminId = auth.user.id;
+  } catch {
+    return { ok: false, message: "Not authorized." };
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from("client_messages").insert({
@@ -36,9 +41,12 @@ export async function togglePinMessage(
   contactId: string,
   pinned: boolean,
 ): Promise<{ ok: boolean }> {
-  const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getUser();
-  if (!authData.user?.id) return { ok: false };
+  let supabase: Awaited<ReturnType<typeof requireAdminUser>>["supabase"];
+  try {
+    ({ supabase } = await requireAdminUser());
+  } catch {
+    return { ok: false };
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
