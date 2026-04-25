@@ -190,3 +190,73 @@
 }
 .sendBtn:hover:not(:disabled) { opacity: 0.88; }
 .sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+
+.filterBar {
+  display: flex;
+  gap: 6px;
+  padding: 12px 20px 4px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+
+.filterBtn:hover {
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-primary);
+}
+
+.filterBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.filterBtnActive {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+
+.filterBtnActive:hover {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+/* ── Contact label (All view) ────────────────────────────────────────────── */
+
+.contactLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 10%, transparent);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Compose target label ────────────────────────────────────────────────── */
+
+.composeTarget {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  padding: 0 0 6px;
+}

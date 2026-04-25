@@ -4,11 +4,14 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { PaperPlaneRight, PushPin, User, Buildings } from "@phosphor-icons/react";
 import { sendClientMessage, togglePinMessage } from "./messaging-actions";
 import type { ClientMessage } from "@/lib/admin/client-messages";
+import type { EntityMember } from "@/lib/admin/client-detail";
 import styles from "./MessagingTab.module.css";
 
 type Props = {
   contactId: string;
   messages: ClientMessage[];
+  members: EntityMember[];
+  activeContactId: string;
 };
 
 function formatTime(iso: string): string {
@@ -22,23 +25,28 @@ function formatTime(iso: string): string {
 
 function MessageBubble({
   message,
+  contactLabel,
   onPin,
 }: {
   message: ClientMessage;
-  onPin: (id: string, currentlyPinned: boolean) => void;
+  contactLabel?: string;
+  onPin: (id: string, messageContactId: string, currentlyPinned: boolean) => void;
 }) {
   const [isPinning, startPinTransition] = useTransition();
   const isAdmin = message.senderType === "admin";
 
   function handlePin() {
     startPinTransition(async () => {
-      onPin(message.id, message.pinned);
+      onPin(message.id, message.contactId, message.pinned);
     });
   }
 
   return (
     <div className={`${styles.bubble} ${isAdmin ? styles.bubbleAdmin : styles.bubbleClient}`}>
       <div className={styles.bubbleHeader}>
+        {contactLabel && (
+          <span className={styles.contactLabel}>{contactLabel}</span>
+        )}
         <span className={styles.senderName}>
           {isAdmin ? (
             <><Buildings size={12} className={styles.senderIcon} /> {message.senderName}</>
@@ -62,25 +70,40 @@ function MessageBubble({
   );
 }
 
-export function MessagingTab({ contactId, messages: initialMessages }: Props) {
+export function MessagingTab({ contactId, messages: initialMessages, members, activeContactId }: Props) {
   const [localMessages, setLocalMessages] = useState<ClientMessage[]>(initialMessages);
 
   useEffect(() => {
     setLocalMessages(initialMessages);
   }, [initialMessages]);
+
+  const [filterContactId, setFilterContactId] = useState<string | "all">(activeContactId);
+
+  useEffect(() => {
+    setFilterContactId(activeContactId);
+  }, [activeContactId]);
+
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const pinned = localMessages.filter((m) => m.pinned);
-  const thread = localMessages.filter((m) => !m.pinned);
+  const filteredMessages =
+    filterContactId === "all"
+      ? localMessages
+      : localMessages.filter((m) => m.contactId === filterContactId);
 
-  function handlePin(messageId: string, currentlyPinned: boolean) {
+  const pinned = filteredMessages.filter((m) => m.pinned);
+  const thread = filteredMessages.filter((m) => !m.pinned);
+
+  const composeContactId = filterContactId === "all" ? activeContactId : filterContactId;
+  const composeContact = members.find((m) => m.id === composeContactId);
+
+  function handlePin(messageId: string, messageContactId: string, currentlyPinned: boolean) {
     setLocalMessages((prev) =>
       prev.map((m) => (m.id === messageId ? { ...m, pinned: !currentlyPinned } : m)),
     );
-    togglePinMessage(messageId, contactId, currentlyPinned).catch(() => {
+    togglePinMessage(messageId, messageContactId, currentlyPinned).catch(() => {
       setLocalMessages((prev) =>
         prev.map((m) => (m.id === messageId ? { ...m, pinned: currentlyPinned } : m)),
       );
@@ -91,7 +114,7 @@ export function MessagingTab({ contactId, messages: initialMessages }: Props) {
     if (!body.trim()) return;
     setError(null);
     startTransition(async () => {
-      const result = await sendClientMessage(contactId, body);
+      const result = await sendClientMessage(composeContactId, body);
       if (result.ok) {
         setBody("");
         textareaRef.current?.focus();
@@ -110,15 +133,48 @@ export function MessagingTab({ contactId, messages: initialMessages }: Props) {
 
   return (
     <div className={styles.root}>
+      {members.length > 1 && (
+        <div className={styles.filterBar}>
+          <button
+            type="button"
+            className={`${styles.filterBtn} ${filterContactId === "all" ? styles.filterBtnActive : ""}`}
+            onClick={() => setFilterContactId("all")}
+          >
+            All
+          </button>
+          {members.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className={`${styles.filterBtn} ${filterContactId === m.id ? styles.filterBtnActive : ""}`}
+              onClick={() => setFilterContactId(m.id)}
+            >
+              {m.firstName ?? m.fullName.split(" ")[0]}
+            </button>
+          ))}
+        </div>
+      )}
+
       {pinned.length > 0 && (
         <div className={styles.pinnedSection}>
           <div className={styles.pinnedLabel}>
             <PushPin size={13} weight="fill" />
             Pinned
           </div>
-          {pinned.map((m) => (
-            <MessageBubble key={m.id} message={m} onPin={handlePin} />
-          ))}
+          {pinned.map((m) => {
+            const contact =
+              filterContactId === "all"
+                ? members.find((mem) => mem.id === m.contactId)
+                : undefined;
+            return (
+              <MessageBubble
+                key={m.id}
+                message={m}
+                contactLabel={contact ? (contact.firstName ?? contact.fullName.split(" ")[0]) : undefined}
+                onPin={handlePin}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -131,13 +187,29 @@ export function MessagingTab({ contactId, messages: initialMessages }: Props) {
             </p>
           </div>
         ) : (
-          thread.map((m) => (
-            <MessageBubble key={m.id} message={m} onPin={handlePin} />
-          ))
+          thread.map((m) => {
+            const contact =
+              filterContactId === "all"
+                ? members.find((mem) => mem.id === m.contactId)
+                : undefined;
+            return (
+              <MessageBubble
+                key={m.id}
+                message={m}
+                contactLabel={contact ? (contact.firstName ?? contact.fullName.split(" ")[0]) : undefined}
+                onPin={handlePin}
+              />
+            );
+          })
         )}
       </div>
 
       <div className={styles.compose}>
+        {filterContactId === "all" && composeContact && (
+          <div className={styles.composeTarget}>
+            Sending to {composeContact.firstName ?? composeContact.fullName.split(" ")[0]}
+          </div>
+        )}
         {error && <p className={styles.composeError}>{error}</p>}
         <div className={styles.composeRow}>
           <textarea

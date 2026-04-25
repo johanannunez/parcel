@@ -22,7 +22,7 @@ import { fetchClientBilling } from "@/lib/admin/client-billing";
 import { DocumentsTab } from "./DocumentsTab";
 import { fetchClientDocuments } from "@/lib/admin/client-documents";
 import { MessagingTab } from "./MessagingTab";
-import { fetchClientMessages } from "@/lib/admin/client-messages";
+import { fetchClientMessages, fetchEntityMessages } from "@/lib/admin/client-messages";
 import { ClientOverviewTab } from "./ClientOverviewTab";
 import { fetchContactOpenTasks } from "@/lib/admin/client-overview";
 import { TasksTab } from "@/components/admin/tasks/TasksTab";
@@ -133,7 +133,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     ? await fetchClientDocuments(client.profileId)
     : [];
 
-  const clientMessages = tab === "messaging" || isOverview
+  const messagingContactIds = members.map((m) => m.id);
+  const allEntityMessages = tab === "messaging"
+    ? await fetchEntityMessages(messagingContactIds)
+    : [];
+  const overviewMessages = isOverview
     ? await fetchClientMessages(activeContactId)
     : [];
 
@@ -213,7 +217,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
           <ClientOverviewTab
             client={client!}
             documents={clientDocuments}
-            messages={clientMessages}
+            messages={overviewMessages}
             insights={insightList}
             openTasks={openTasks}
             activityLog={ownerData?.activity ?? []}
@@ -271,7 +275,14 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         );
 
       case "messaging":
-        return <MessagingTab contactId={activeContactId} messages={clientMessages} />;
+        return (
+          <MessagingTab
+            contactId={activeContactId}
+            messages={allEntityMessages}
+            members={members}
+            activeContactId={activeContactId}
+          />
+        );
 
       case "documents":
         if (!client!.profileId) {
