@@ -808,7 +808,7 @@ function AssignedField({
 // Preferred contact method toggle
 // ---------------------------------------------------------------------------
 
-type ContactMethod = "email" | "phone" | "text";
+type ContactMethod = "email" | "phone" | "text" | "whatsapp";
 
 const CONTACT_METHODS: { key: ContactMethod; Icon: React.ComponentType<{ size?: number; weight?: "regular" | "fill" | "bold" | "duotone" | "light" | "thin" }>; label: string }[] = [
   { key: "email", Icon: EnvelopeSimple, label: "Email" },

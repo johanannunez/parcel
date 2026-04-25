@@ -53,7 +53,7 @@ export type ClientDetail = {
   addressFormatted: string | null;
   addressComponents: AddressComponents | null;
   social: SocialLinks;
-  preferredContactMethod: 'email' | 'phone' | 'text' | null;
+  preferredContactMethod: 'email' | 'phone' | 'text' | 'whatsapp' | null;
   contractStartAt: string | null;
   contractEndAt: string | null;
   nextFollowUpAt: string | null;

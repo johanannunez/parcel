@@ -167,7 +167,9 @@ export function ClientOverviewTab({
         ? "📞 Prefers phone"
         : client.preferredContactMethod === "text"
           ? "💬 Prefers text"
-          : "📧 Prefers email";
+          : client.preferredContactMethod === "whatsapp"
+            ? "💬 Prefers WhatsApp"
+            : "📧 Prefers email";
     briefChips.push({ label: method, color: "blue" });
   }
 
