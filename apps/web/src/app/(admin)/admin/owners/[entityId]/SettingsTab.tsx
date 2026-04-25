@@ -211,9 +211,9 @@ export function SettingsTab({
           />
         )}
 
-        {activeSection === "people" && (
+        {activeSection === "people" && !!(adminEntityId ?? data.entity?.id) && (
           <PeopleSection
-            entityId={adminEntityId ?? data.entity?.id ?? ""}
+            entityId={adminEntityId ?? data.entity!.id}
             members={adminMembers ?? []}
           />
         )}

@@ -291,10 +291,8 @@ export async function addPersonToEntity(
   entityId: string,
   input: { firstName: string; lastName: string; email?: string | null; phone?: string | null }
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  "use server";
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Unauthorized" };
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { ok: false, error: authError };
 
   const fullName = `${input.firstName.trim()} ${input.lastName.trim()}`.trim();
 
@@ -316,7 +314,8 @@ export async function addPersonToEntity(
     return { ok: false, error: "Failed to add person." };
   }
 
-  revalidatePath("/admin/clients/[id]", "page");
+  revalidatePath(`/admin/clients/${entityId}`);
+  revalidatePath("/admin/clients");
   return { ok: true, id: data.id as string };
 }
 
@@ -328,10 +327,8 @@ export async function removePersonFromEntity(
   contactId: string,
   entityId: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  "use server";
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Unauthorized" };
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { ok: false, error: authError };
 
   const { count } = await (supabase as any)
     .from("contacts")
@@ -369,6 +366,8 @@ export async function removePersonFromEntity(
     return { ok: false, error: "Failed to unlink person from entity." };
   }
 
-  revalidatePath("/admin/clients/[id]", "page");
+  revalidatePath(`/admin/clients/${entityId}`);
+  revalidatePath(`/admin/clients/${contactId}`);
+  revalidatePath("/admin/clients");
   return { ok: true };
 }
