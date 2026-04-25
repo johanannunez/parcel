@@ -413,6 +413,34 @@
   font-weight: 600;
 }
 
+/* --- Top row: tasks + billing ---------------------------------------- */
+
+.topRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+@media (max-width: 720px) {
+  .topRow { grid-template-columns: 1fr; }
+}
+
+.billingBody {
+  padding: 20px 20px 18px;
+}
+.billingAmount {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0B1B2B;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.billingAmountLabel {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #647689;
+}
+
 /* --- Two-column activity + tasks ------------------------------------- */
 
 .twoCol {

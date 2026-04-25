@@ -13,7 +13,7 @@ import { SettingsTab } from "@/app/(admin)/admin/owners/[entityId]/SettingsTab";
 import { SETTINGS_SECTIONS, type SettingsSection } from "@/app/(admin)/admin/owners/[entityId]/settings-sections";
 import type { SessionRow } from "@/app/(admin)/admin/owners/[entityId]/settings/AccountSecuritySection";
 import type { ConnectionRow } from "@/app/(admin)/admin/owners/[entityId]/settings/DataPrivacySection";
-import { fetchClientMeetings } from "@/lib/admin/client-meetings";
+import { fetchClientMeetings, fetchNextMeeting } from "@/lib/admin/client-meetings";
 import { IntelligenceTab } from "./IntelligenceTab";
 import { fetchInsightsByParent } from "@/lib/admin/ai-insights";
 import { BillingTab } from "./BillingTab";
@@ -22,6 +22,8 @@ import { DocumentsTab } from "./DocumentsTab";
 import { fetchClientDocuments } from "@/lib/admin/client-documents";
 import { MessagingTab } from "./MessagingTab";
 import { fetchClientMessages } from "@/lib/admin/client-messages";
+import { ClientOverviewTab } from "./ClientOverviewTab";
+import { fetchContactOpenTasks } from "@/lib/admin/client-overview";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +74,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
   ]);
   if (!client) notFound();
 
+  const nextMeeting = client.profileId ? await fetchNextMeeting(client.profileId) : null;
   // Fetch full owner data for tabs that were built against OwnerDetailData.
   // Only available once the contact has a linked entity (i.e. started onboarding).
   const ownerData = client.entityId
@@ -83,7 +86,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
       ? await fetchClientMeetings(client.profileId)
       : [];
 
-  const contactInsights = tab === "intelligence"
+  const isOverview = tab === "overview";
+  const isIntelligence = tab === "intelligence";
+
+  const contactInsights = isOverview || isIntelligence
     ? await fetchInsightsByParent("contact", [id])
     : {};
   const insightList = contactInsights[id] ?? [];
@@ -93,12 +99,16 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     ? await fetchClientBilling(client.profileId, client.id, client.properties.length)
     : null;
 
-  const clientDocuments = tab === "documents" && client.profileId
+  const clientDocuments = (tab === "documents" || isOverview) && client.profileId
     ? await fetchClientDocuments(client.profileId)
     : [];
 
-  const clientMessages = tab === "messaging"
+  const clientMessages = tab === "messaging" || isOverview
     ? await fetchClientMessages(id)
+    : [];
+
+  const openTasks = isOverview
+    ? await fetchContactOpenTasks(id)
     : [];
 
   // Fetch settings data only when the settings tab is active and owner data exists.
@@ -169,11 +179,14 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
   function renderTab(): React.ReactNode {
     switch (tab) {
       case "overview":
-        if (ownerData) return <OverviewTab data={ownerData} />;
         return (
-          <TabPlaceholder
-            title="Overview"
-            body={`This contact is in the ${client!.lifecycleStage.replace(/_/g, " ")} stage. The full overview will appear once they begin onboarding.`}
+          <ClientOverviewTab
+            client={client!}
+            documents={clientDocuments}
+            messages={clientMessages}
+            insights={insightList}
+            openTasks={openTasks}
+            activityLog={ownerData?.activity ?? []}
           />
         );
 
@@ -269,7 +282,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
   }
 
   return (
-    <ClientDetailShell client={client} adminProfiles={adminProfiles}>
+    <ClientDetailShell client={client} adminProfiles={adminProfiles} nextMeeting={nextMeeting}>
       {renderTab()}
     </ClientDetailShell>
   );

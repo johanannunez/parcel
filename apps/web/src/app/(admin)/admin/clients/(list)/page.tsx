@@ -3,6 +3,7 @@ import { ContactsListView } from '../../contacts/ContactsListView';
 import { ContactsStatusView } from '../../contacts/StatusView';
 import { ActiveOwnersGrid } from '../../contacts/ActiveOwnersGrid';
 import { ContactsMapView } from '../../contacts/ContactsMapView';
+import { OnboardingPhaseBoard } from '../../contacts/OnboardingPhaseBoard';
 
 type Props = {
   searchParams: Promise<{
@@ -27,6 +28,10 @@ export default async function ClientsPage({ searchParams }: Props) {
 
   if (activeMode === 'map') {
     return <ContactsMapView rows={rows} />;
+  }
+
+  if (viewKey === 'onboarding') {
+    return <OnboardingPhaseBoard rows={rows} basePath="/admin/clients" />;
   }
 
   const useActiveOwnersGrid =

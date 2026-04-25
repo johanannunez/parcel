@@ -132,5 +132,29 @@ export async function updatePersonalInfo(
     revalidatePath(`/admin/owners/${targetProfile.entity_id}`);
   }
 
+  // Sync name and phone back to the linked contact so the sidebar stays in sync.
+  const { data: contactRow } = await (supabase as any)
+    .from("contacts")
+    .select("id")
+    .eq("profile_id", profileId)
+    .maybeSingle() as { data: { id: string } | null };
+
+  if (contactRow?.id) {
+    const contactUpdate: Record<string, unknown> = {
+      full_name: fullName,
+      first_name: firstName || null,
+      last_name: lastName || null,
+    };
+    if (phone !== null) contactUpdate.phone = phone;
+
+    await (supabase as any)
+      .from("contacts")
+      .update(contactUpdate)
+      .eq("id", contactRow.id);
+
+    revalidatePath(`/admin/clients/${contactRow.id}`);
+    revalidatePath("/admin/clients");
+  }
+
   return { ok: true };
 }

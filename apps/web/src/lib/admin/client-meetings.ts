@@ -20,6 +20,28 @@ export type ClientMeeting = {
   created_at: string;
 };
 
+export type NextMeeting = {
+  id: string;
+  title: string;
+  scheduledAt: string;
+} | null;
+
+export async function fetchNextMeeting(profileId: string): Promise<NextMeeting> {
+  const supabase = await createClient();
+  const { data, error } = await (supabase as any)
+    .from("owner_meetings")
+    .select("id, title, scheduled_at")
+    .eq("owner_id", profileId)
+    .eq("status", "scheduled")
+    .gt("scheduled_at", new Date().toISOString())
+    .order("scheduled_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return { id: data.id, title: data.title, scheduledAt: data.scheduled_at };
+}
+
 export async function fetchClientMeetings(profileId: string): Promise<ClientMeeting[]> {
   const supabase = await createClient();
   const { data, error } = await (supabase as any)

@@ -288,6 +288,7 @@ export async function fetchOwnerDetail(entityId: string): Promise<OwnerDetailDat
   const propertiesOut: OwnerDetailProperty[] = (properties ?? []).map((p: any) => ({
     id: p.id,
     label: propertyLabel(p),
+    addressLine1: (p.address_line1 as string | null) ?? null,
     city: p.city ?? null,
     state: p.state ?? null,
     setupStatus: p.setup_status ?? "draft",

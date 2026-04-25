@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useEffect, useTransition, useRef, useCallback } from "react";
+import { useClientName } from "@/app/(admin)/admin/clients/[id]/ClientNameContext";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { z } from "zod";
 import {
@@ -8,6 +9,12 @@ import {
   type PersonalInfoInput,
 } from "@/lib/admin/personal-info-actions";
 import { saveInternalNote } from "@/lib/admin/owner-facts-actions";
+import {
+  uploadAdminAvatar,
+  removeAdminAvatar,
+  getAdminOriginalAvatar,
+} from "@/lib/admin/admin-avatar-actions";
+import { AvatarCropModal } from "@/components/portal/AvatarCropModal";
 import styles from "./PersonalInfoSection.module.css";
 
 type ContactMethod = "email" | "sms" | "either";
@@ -63,6 +70,11 @@ function uiToStored(ui: ContactMethod): "email" | "sms" | "phone" {
   return "phone";
 }
 
+function capitalize(s: string): string {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -83,9 +95,18 @@ export function PersonalInfoSection({
   gradient,
 }: PersonalInfoSectionProps) {
   const seeded = useMemo(() => splitName(profile.fullName), [profile.fullName]);
+  const clientName = useClientName();
 
-  const [firstName, setFirstName] = useState(seeded.first);
-  const [lastName, setLastName] = useState(seeded.last);
+  const [firstName, setFirstName] = useState(clientName?.firstName ?? seeded.first);
+  const [lastName, setLastName] = useState(clientName?.lastName ?? seeded.last);
+
+  // Live-sync from the sidebar when inside the client detail shell.
+  const contextFirst = clientName?.firstName;
+  const contextLast = clientName?.lastName;
+  useEffect(() => {
+    if (contextFirst !== undefined) setFirstName(contextFirst);
+    if (contextLast !== undefined) setLastName(contextLast);
+  }, [contextFirst, contextLast]);
   const [preferredName, setPreferredName] = useState(
     profile.preferredName ?? "",
   );
@@ -97,6 +118,106 @@ export function PersonalInfoSection({
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // Avatar upload state
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingOriginalRef = useRef<string | null>(null);
+
+  // Downscale to max 2048px on the longest side before opening the crop modal.
+  // This keeps the server action payload well under any size limit regardless of
+  // what the user picks (phone RAW, DSLR, etc.).
+  const resizeToMax = (dataUrl: string, maxSide = 2048): Promise<string> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const { naturalWidth: w, naturalHeight: h } = img;
+        if (w <= maxSide && h <= maxSide) { resolve(dataUrl); return; }
+        const scale = maxSide / Math.max(w, h);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.92));
+      };
+      img.src = dataUrl;
+    });
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarError(null);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = await resizeToMax(reader.result as string);
+      pendingOriginalRef.current = dataUrl;
+      setCropSrc(dataUrl);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleEditExisting = useCallback(async () => {
+    if (avatarUploading) return;
+    setAvatarError(null);
+    setAvatarUploading(true);
+    try {
+      const result = await getAdminOriginalAvatar(profile.id, avatarUrl);
+      if (!result.url) { fileInputRef.current?.click(); return; }
+      pendingOriginalRef.current = null;
+      setCropSrc(result.url);
+    } catch {
+      setAvatarError("Could not load the photo. Try uploading a new one.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  }, [avatarUploading, avatarUrl, profile.id]);
+
+  const handleCrop = async (croppedDataUrl: string) => {
+    const originalBase64 = pendingOriginalRef.current ?? croppedDataUrl;
+    setCropSrc(null);
+    setAvatarError(null);
+    setAvatarUploading(true);
+    try {
+      const result = await uploadAdminAvatar({
+        targetProfileId: profile.id,
+        originalBase64,
+        croppedBase64: croppedDataUrl,
+      });
+      if (result.error) {
+        setAvatarError(result.error);
+      } else if (result.avatarUrl) {
+        setAvatarUrl(result.avatarUrl);
+        clientName?.setAvatarUrl(result.avatarUrl);
+      }
+    } catch {
+      setAvatarError("Upload failed. Please try again.");
+    } finally {
+      setAvatarUploading(false);
+      pendingOriginalRef.current = null;
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarError(null);
+    setAvatarUploading(true);
+    try {
+      const result = await removeAdminAvatar(profile.id);
+      if (result.error) {
+        setAvatarError(result.error);
+      } else {
+        setAvatarUrl(null);
+        clientName?.setAvatarUrl(null);
+      }
+    } catch {
+      setAvatarError("Could not remove the photo. Please try again.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const [noteText, setNoteText] = useState(internalNote?.text ?? "");
   const [noteError, setNoteError] = useState<string | null>(null);
@@ -141,8 +262,8 @@ export function PersonalInfoSection({
 
     const payload: PersonalInfoInput = {
       profileId: profile.id,
-      firstName: parsed.data.firstName,
-      lastName: parsed.data.lastName,
+      firstName: capitalize(parsed.data.firstName),
+      lastName: capitalize(parsed.data.lastName),
       preferredName: parsed.data.preferredName,
       phone: parsed.data.phone,
       contactMethod: uiToStored(contact),
@@ -207,35 +328,86 @@ export function PersonalInfoSection({
               <div className={styles.avatarRow}>
                 <div
                   className={styles.avatar}
-                  style={{ background: gradient }}
+                  style={{ background: avatarUrl ? "transparent" : gradient }}
                   aria-hidden
                 >
-                  {profile.avatarUrl ? (
+                  {avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profile.avatarUrl} alt="" />
+                    <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
                   ) : (
                     initials(profile.fullName || profile.email)
                   )}
+                  {avatarUploading && (
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.45)", borderRadius: "50%" }}>
+                      <div style={{ width: 20, height: 20, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+                    </div>
+                  )}
                 </div>
                 <div className={styles.avatarActions}>
-                  <button
-                    type="button"
-                    className={styles.btnSecondary}
-                    disabled
-                    title="Upload coming with admin avatar flow"
-                  >
-                    Upload photo
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.btnGhost}
-                    disabled
-                    title="Upload coming with admin avatar flow"
-                  >
-                    Remove
-                  </button>
+                  {avatarUrl ? (
+                    <>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        onClick={handleEditExisting}
+                        disabled={avatarUploading}
+                      >
+                        Edit photo
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={avatarUploading}
+                      >
+                        Upload new
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.btnGhost}
+                        onClick={handleRemoveAvatar}
+                        disabled={avatarUploading}
+                      >
+                        Remove
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={avatarUploading}
+                    >
+                      Upload photo
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: "none" }}
+                onChange={handleFileSelect}
+              />
+
+              {/* Inline error */}
+              {avatarError && (
+                <p style={{ marginTop: 8, fontSize: 12, color: "var(--color-error, #c0392b)" }}>
+                  {avatarError}
+                </p>
+              )}
+
+              {/* Crop modal */}
+              {cropSrc && (
+                <AvatarCropModal
+                  imageSrc={cropSrc}
+                  onCrop={handleCrop}
+                  onCancel={() => { setCropSrc(null); pendingOriginalRef.current = null; }}
+                />
+              )}
             </div>
           </div>
 

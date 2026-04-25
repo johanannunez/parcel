@@ -4,6 +4,7 @@ import styles from "./OverviewPanels.module.css";
 import type { OwnerDetailData } from "@/lib/admin/owner-detail";
 import {
   ActivityPanel,
+  BillingCard,
   PropertiesSnapshot,
   TasksPanel,
   relativeTimeShort,
@@ -43,7 +44,13 @@ function tenureLabel(createdAt: string): { value: string; sub: string } {
   return { value, sub };
 }
 
-export function OverviewOperating({ data }: { data: OwnerDetailData }) {
+export function OverviewOperating({
+  data,
+  lifetimeRevenueCents,
+}: {
+  data: OwnerDetailData;
+  lifetimeRevenueCents?: number | null;
+}) {
   const { primaryMember, properties, activity, entity } = data;
 
   const tenure = tenureLabel(primaryMember.createdAt);
@@ -171,9 +178,13 @@ export function OverviewOperating({ data }: { data: OwnerDetailData }) {
         </Link>
       </div>
 
-      <div className={styles.twoCol}>
-        <ActivityPanel entries={activity} entityId={entity.id} />
+      <div className={styles.topRow}>
         <TasksPanel entityId={entity.id} />
+        <BillingCard lifetimeRevenueCents={lifetimeRevenueCents} />
+      </div>
+
+      <div className={styles.twoCol} style={{ gridTemplateColumns: "1fr" }}>
+        <ActivityPanel entries={activity} entityId={entity.id} />
       </div>
 
       <PropertiesSnapshot properties={properties} />

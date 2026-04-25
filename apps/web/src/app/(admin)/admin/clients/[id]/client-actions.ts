@@ -71,6 +71,8 @@ export async function updateClientFields(
     const firstName = fields.firstName ?? '';
     const lastName = fields.lastName ?? '';
     update.full_name = [firstName, lastName].filter(Boolean).join(' ') || firstName;
+    if (fields.firstName !== undefined) update.first_name = fields.firstName || null;
+    if (fields.lastName !== undefined) update.last_name = fields.lastName || null;
   }
 
   if (fields.email !== undefined) update.email = fields.email;
@@ -98,6 +100,30 @@ export async function updateClientFields(
     .eq("id", contactId);
 
   if (error) return { ok: false, message: error.message };
+
+  // Sync name and phone to the linked profile so the Settings tab stays in sync.
+  const nameOrPhoneChanged =
+    fields.firstName !== undefined ||
+    fields.lastName !== undefined ||
+    fields.phone !== undefined;
+
+  if (nameOrPhoneChanged) {
+    const { data: contactRow } = await (supabase as any)
+      .from("contacts")
+      .select("profile_id")
+      .eq("id", contactId)
+      .single() as { data: { profile_id: string | null } | null };
+
+    const profileId = contactRow?.profile_id ?? null;
+    if (profileId) {
+      const profileUpdate: Record<string, unknown> = {};
+      if (update.full_name !== undefined) profileUpdate.full_name = update.full_name;
+      if (update.phone !== undefined) profileUpdate.phone = update.phone;
+      if (Object.keys(profileUpdate).length > 0) {
+        await (supabase as any).from("profiles").update(profileUpdate).eq("id", profileId);
+      }
+    }
+  }
 
   revalidatePath(`/admin/clients/${contactId}`);
   revalidatePath("/admin/clients");

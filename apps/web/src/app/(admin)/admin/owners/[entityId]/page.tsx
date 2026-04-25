@@ -15,6 +15,7 @@ import type { ConnectionRow } from "./settings/DataPrivacySection";
 import { TasksTab } from "@/components/admin/tasks/TasksTab";
 import { CommunicationsTab } from "@/components/admin/CommunicationsTab";
 import { fetchCommunications } from "@/lib/admin/fetch-communications";
+import { PropertiesTab } from "@/app/(admin)/admin/clients/[id]/PropertiesTab";
 
 export const metadata: Metadata = {
   title: "Owner Hub",
@@ -189,11 +190,19 @@ export default async function OwnerHubPage({
         )
       ) : null}
       {tab === "properties" ? (
-        <TabPlaceholder
-          title="Properties. Rebuilding."
-          body="This tab is being rebuilt with the new design. In the meantime, the full properties list is available in the admin Properties page."
-          linkHref="/admin/properties"
-          linkLabel="Go to Properties"
+        <PropertiesTab
+          properties={data.properties.map((p) => ({
+            id: p.id,
+            label: p.label,
+            addressLine1: p.addressLine1,
+            city: p.city,
+            state: p.state,
+            setupStatus: p.setupStatus,
+            active: p.active,
+            bedrooms: p.bedrooms,
+            bathrooms: p.bathrooms,
+            createdAt: p.createdAt,
+          }))}
         />
       ) : null}
       {tab === "financials" ? (

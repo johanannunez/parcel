@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClockCounterClockwise, Checks } from "@phosphor-icons/react/dist/ssr";
+import { ClockCounterClockwise, Checks, CurrencyDollar } from "@phosphor-icons/react/dist/ssr";
 import styles from "./OverviewPanels.module.css";
 import type {
   OwnerDetailActivityEntry,
@@ -125,6 +125,38 @@ export function TasksPanel({ entityId }: { entityId: string }) {
         No open tasks yet.
         <br />
         Tasks will appear here when they&rsquo;re created.
+      </div>
+    </section>
+  );
+}
+
+export function BillingCard({
+  lifetimeRevenueCents,
+}: {
+  lifetimeRevenueCents: number | null | undefined;
+}) {
+  const formatted = (() => {
+    const c = lifetimeRevenueCents;
+    if (!c) return "$0";
+    const k = c / 100;
+    if (k >= 1000) return `$${(k / 1000).toFixed(1)}k`;
+    return `$${k.toFixed(0)}`;
+  })();
+
+  return (
+    <section className={styles.panel}>
+      <header className={styles.panelHead}>
+        <div className={styles.panelTitle}>
+          <CurrencyDollar size={16} weight="duotone" />
+          Billing
+        </div>
+        <Link href="?tab=billing" className={styles.panelLink} prefetch={false}>
+          View all &rarr;
+        </Link>
+      </header>
+      <div className={styles.billingBody}>
+        <div className={styles.billingAmount}>{formatted}</div>
+        <div className={styles.billingAmountLabel}>lifetime revenue</div>
       </div>
     </section>
   );

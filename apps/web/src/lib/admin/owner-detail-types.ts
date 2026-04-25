@@ -22,6 +22,7 @@ export type OwnerDetailMember = {
 export type OwnerDetailProperty = {
   id: string;
   label: string;
+  addressLine1: string | null;
   city: string | null;
   state: string | null;
   setupStatus: string;

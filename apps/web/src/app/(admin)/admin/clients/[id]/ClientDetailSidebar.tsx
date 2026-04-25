@@ -18,17 +18,23 @@ import {
   ChatCentered,
   CheckCircle,
   XCircle,
+  CopySimple,
+  Check,
 } from "@phosphor-icons/react";
 import { parsePhoneNumber } from "libphonenumber-js";
 import type { ClientDetail, AddressComponents } from "@/lib/admin/client-detail";
 import type { AdminProfile } from "./client-actions";
 import { updateClientFields } from "./client-actions";
-import { StagePopover } from "./StagePopover";
 import styles from "./ClientDetailSidebar.module.css";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function capitalize(s: string): string {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 function formatPhone(raw: string | null): string {
   if (!raw) return "";
@@ -59,6 +65,19 @@ function dateInputToIso(val: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// Saved badge
+// ---------------------------------------------------------------------------
+
+function SavedBadge({ visible }: { visible: boolean }) {
+  return (
+    <span className={`${styles.savedBadge} ${visible ? styles.savedBadgeVisible : ""}`}>
+      <Check size={8} weight="bold" />
+      saved
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Inline editable field
 // ---------------------------------------------------------------------------
 
@@ -70,6 +89,13 @@ type EditableFieldProps = {
   type?: "text" | "email" | "tel" | "number";
   min?: number;
   max?: number;
+  copyValue?: string;
+  externalCopied?: boolean;
+  onChange?: (val: string) => void;
+  onEditStart?: () => void;
+  onEditEnd?: () => void;
+  onCopied?: () => void;
+  isSaved?: boolean;
   onSave: (val: string) => Promise<void>;
 };
 
@@ -81,12 +107,29 @@ function EditableField({
   type = "text",
   min,
   max,
+  copyValue,
+  externalCopied,
+  onChange: onChangeProp,
+  onEditStart,
+  onEditEnd,
+  onCopied: onCopiedProp,
+  isSaved,
   onSave,
 }: EditableFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
+  const [rowCopied, setRowCopied] = useState(false);
+  const rowCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const committingRef = useRef(false);
+
+  const handleRowCopied = useCallback(() => {
+    if (rowCopiedTimerRef.current) clearTimeout(rowCopiedTimerRef.current);
+    setRowCopied(true);
+    onCopiedProp?.();
+    rowCopiedTimerRef.current = setTimeout(() => setRowCopied(false), 900);
+  }, [onCopiedProp]);
 
   useEffect(() => {
     if (editing) {
@@ -97,40 +140,58 @@ function EditableField({
   }, [editing, value]);
 
   const commit = useCallback(async () => {
-    const trimmed = draft.trim();
-    if (trimmed === value) {
-      setEditing(false);
-      return;
-    }
-    if (type === "email" && trimmed && !trimmed.includes("@")) {
-      setDraft(value);
-      setEditing(false);
-      return;
-    }
-    if (type === "number" && trimmed !== "") {
-      const num = parseFloat(trimmed);
-      if (isNaN(num) || (min !== undefined && num < min) || (max !== undefined && num > max)) {
-        setDraft(value);
+    if (committingRef.current) return;
+    committingRef.current = true;
+    try {
+      const trimmed = draft.trim();
+      if (trimmed === value) {
         setEditing(false);
+        onEditEnd?.();
         return;
       }
+      if (type === "email" && trimmed && !trimmed.includes("@")) {
+        setDraft(value);
+        setEditing(false);
+        onEditEnd?.();
+        return;
+      }
+      if (type === "number" && trimmed !== "") {
+        const num = parseFloat(trimmed);
+        if (isNaN(num) || (min !== undefined && num < min) || (max !== undefined && num > max)) {
+          setDraft(value);
+          setEditing(false);
+          onEditEnd?.();
+          return;
+        }
+      }
+      setSaving(true);
+      await onSave(trimmed);
+      setSaving(false);
+      setEditing(false);
+      onEditEnd?.();
+    } finally {
+      committingRef.current = false;
     }
-    setSaving(true);
-    await onSave(trimmed);
-    setSaving(false);
-    setEditing(false);
-  }, [draft, value, type, min, max, onSave]);
+  }, [draft, value, type, min, max, onSave, onEditEnd]);
 
   const handleKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") { e.preventDefault(); commit(); }
-    if (e.key === "Escape") { setDraft(value); setEditing(false); }
+    if (e.key === "Escape") {
+      setDraft(value);
+      setEditing(false);
+      onEditEnd?.();
+    }
   };
 
   const shown = displayValue ?? value;
+  const isFlashing = rowCopied || !!externalCopied;
 
   return (
     <div className={styles.fieldRow}>
-      <span className={styles.fieldLabel}>{label}</span>
+      <span className={styles.fieldLabel}>
+        {label}
+        <SavedBadge visible={!!isSaved} />
+      </span>
       <div className={styles.fieldValue}>
         {editing ? (
           <input
@@ -141,19 +202,25 @@ function EditableField({
             min={min}
             max={max}
             placeholder={placeholder}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setDraft(e.target.value);
+              onChangeProp?.(e.target.value);
+            }}
             onBlur={commit}
             onKeyDown={handleKey}
             disabled={saving}
           />
         ) : (
-          <button
-            className={`${styles.valueBtn} ${!shown ? styles.valueBtnEmpty : ""}`}
-            onClick={() => setEditing(true)}
-            type="button"
-          >
-            {shown || placeholder || "—"}
-          </button>
+          <span className={`${styles.fieldValueContent} ${isFlashing ? styles.fieldValueCopied : ""}`}>
+            <button
+              className={`${styles.valueBtn} ${!shown ? styles.valueBtnEmpty : ""}`}
+              onClick={() => { setEditing(true); onEditStart?.(); }}
+              type="button"
+            >
+              {shown || placeholder || "—"}
+            </button>
+            {copyValue && shown && <SidebarCopyBtn value={copyValue} onCopied={handleRowCopied} />}
+          </span>
         )}
       </div>
     </div>
@@ -171,8 +238,17 @@ function EditableFieldPair({
   labelB,
   valueB,
   placeholderB,
+  copyFullValue,
   onSaveA,
   onSaveB,
+  onChangeA,
+  onChangeB,
+  onEditStartA,
+  onEditEndA,
+  onEditStartB,
+  onEditEndB,
+  isSavedA,
+  isSavedB,
 }: {
   labelA: string;
   valueA: string;
@@ -180,9 +256,27 @@ function EditableFieldPair({
   labelB: string;
   valueB: string;
   placeholderB?: string;
+  copyFullValue?: string;
   onSaveA: (val: string) => Promise<void>;
   onSaveB: (val: string) => Promise<void>;
+  onChangeA?: (val: string) => void;
+  onChangeB?: (val: string) => void;
+  onEditStartA?: () => void;
+  onEditEndA?: () => void;
+  onEditStartB?: () => void;
+  onEditEndB?: () => void;
+  isSavedA?: boolean;
+  isSavedB?: boolean;
 }) {
+  const [pairCopied, setPairCopied] = useState(false);
+  const pairCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handlePairCopied = useCallback(() => {
+    if (pairCopiedTimerRef.current) clearTimeout(pairCopiedTimerRef.current);
+    setPairCopied(true);
+    pairCopiedTimerRef.current = setTimeout(() => setPairCopied(false), 900);
+  }, []);
+
   return (
     <div className={styles.fieldRowPair}>
       <div className={styles.fieldPairItem}>
@@ -190,7 +284,12 @@ function EditableFieldPair({
           label={labelA}
           value={valueA}
           placeholder={placeholderA}
+          externalCopied={pairCopied}
           onSave={onSaveA}
+          onChange={onChangeA}
+          onEditStart={onEditStartA}
+          onEditEnd={onEditEndA}
+          isSaved={isSavedA}
         />
       </div>
       <div className={styles.fieldPairItem}>
@@ -198,7 +297,14 @@ function EditableFieldPair({
           label={labelB}
           value={valueB}
           placeholder={placeholderB}
+          copyValue={copyFullValue}
+          externalCopied={pairCopied}
+          onCopied={handlePairCopied}
           onSave={onSaveB}
+          onChange={onChangeB}
+          onEditStart={onEditStartB}
+          onEditEnd={onEditEndB}
+          isSaved={isSavedB}
         />
       </div>
     </div>
@@ -216,6 +322,8 @@ function DateFieldPair({
   isoB,
   onSaveA,
   onSaveB,
+  isSavedA,
+  isSavedB,
 }: {
   labelA: string;
   isoA: string | null;
@@ -223,6 +331,8 @@ function DateFieldPair({
   isoB: string | null;
   onSaveA: (iso: string | null) => Promise<void>;
   onSaveB: (iso: string | null) => Promise<void>;
+  isSavedA?: boolean;
+  isSavedB?: boolean;
 }) {
   const [editingA, setEditingA] = useState(false);
   const [editingB, setEditingB] = useState(false);
@@ -250,7 +360,10 @@ function DateFieldPair({
     <div className={styles.fieldRowPair}>
       <div className={styles.fieldPairItem}>
         <div className={styles.fieldRow}>
-          <span className={styles.fieldLabel}>{labelA}</span>
+          <span className={styles.fieldLabel}>
+            {labelA}
+            <SavedBadge visible={!!isSavedA} />
+          </span>
           <div className={styles.fieldValue}>
             {editingA ? (
               <div className={styles.dateInputWrapper}>
@@ -281,7 +394,10 @@ function DateFieldPair({
       </div>
       <div className={styles.fieldPairItem}>
         <div className={styles.fieldRow}>
-          <span className={styles.fieldLabel}>{labelB}</span>
+          <span className={styles.fieldLabel}>
+            {labelB}
+            <SavedBadge visible={!!isSavedB} />
+          </span>
           <div className={styles.fieldValue}>
             {editingB ? (
               <div className={styles.dateInputWrapper}>
@@ -323,20 +439,54 @@ type PlacePrediction = {
   description: string;
 };
 
+function formatAddressLines(
+  formatted: string | null,
+  components: AddressComponents | null
+): [string, string] | null {
+  if (!formatted) return null;
+  if (components && (components.street_number || components.route)) {
+    const street = [components.street_number, components.route].filter(Boolean).join(" ");
+    const parts = [
+      components.locality,
+      components.administrative_area_level_1,
+      components.postal_code,
+      components.country,
+    ].filter(Boolean);
+    const cityLine = parts.join(", ");
+    return [street, cityLine];
+  }
+  // fallback: split on first comma
+  const idx = formatted.indexOf(",");
+  if (idx > -1) return [formatted.slice(0, idx).trim(), formatted.slice(idx + 1).trim()];
+  return [formatted, ""];
+}
+
 function AddressField({
   value,
+  components,
+  isSaved,
   onSave,
 }: {
   value: string | null;
+  components: AddressComponents | null;
+  isSaved?: boolean;
   onSave: (formatted: string, components: AddressComponents) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [query, setQuery] = useState(value ?? "");
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [rowCopied, setRowCopied] = useState(false);
+  const rowCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleRowCopied = () => {
+    if (rowCopiedTimerRef.current) clearTimeout(rowCopiedTimerRef.current);
+    setRowCopied(true);
+    rowCopiedTimerRef.current = setTimeout(() => setRowCopied(false), 900);
+  };
 
   useEffect(() => {
     if (editing) {
@@ -421,7 +571,10 @@ function AddressField({
 
   return (
     <div className={styles.fieldRow} ref={containerRef}>
-      <span className={styles.fieldLabel}>Address</span>
+      <span className={styles.fieldLabel}>
+        Mailing
+        <SavedBadge visible={!!isSaved} />
+      </span>
       <div className={`${styles.fieldValue} ${styles.fieldValueAddress}`}>
         {editing ? (
           <div className={styles.addressInputWrap}>
@@ -432,7 +585,7 @@ function AddressField({
               value={query}
               onChange={handleChange}
               onKeyDown={handleKey}
-              placeholder="Search address…"
+              placeholder="Owner's mailing address…"
               autoComplete="off"
             />
             {(predictions.length > 0 || loading) && (
@@ -453,15 +606,26 @@ function AddressField({
               </div>
             )}
           </div>
-        ) : (
-          <button
-            className={`${styles.valueBtn} ${!value ? styles.valueBtnEmpty : ""} ${styles.valueBtnAddress}`}
-            onClick={() => setEditing(true)}
-            type="button"
-          >
-            {value || "—"}
-          </button>
-        )}
+        ) : (() => {
+          const lines = formatAddressLines(value, components);
+          return (
+            <span className={`${styles.fieldValueContent} ${rowCopied ? styles.fieldValueCopied : ""}`}>
+              <button
+                className={`${styles.valueBtn} ${!value ? styles.valueBtnEmpty : ""} ${styles.valueBtnAddress}`}
+                onClick={() => setEditing(true)}
+                type="button"
+              >
+                {lines ? (
+                  <>
+                    <span>{lines[0]}</span>
+                    {lines[1] && <span>{lines[1]}</span>}
+                  </>
+                ) : "—"}
+              </button>
+              {value && <SidebarCopyBtn value={value} onCopied={handleRowCopied} />}
+            </span>
+          );
+        })()}
       </div>
     </div>
   );
@@ -486,9 +650,11 @@ const SOCIAL_CONFIG: {
 
 function SocialRow({
   social,
+  isSaved,
   onSave,
 }: {
   social: { linkedin?: string | null; instagram?: string | null; facebook?: string | null };
+  isSaved?: boolean;
   onSave: (key: SocialKey, url: string | null) => Promise<void>;
 }) {
   const [editingKey, setEditingKey] = useState<SocialKey | null>(null);
@@ -518,7 +684,10 @@ function SocialRow({
 
   return (
     <div className={styles.fieldRow}>
-      <span className={styles.fieldLabel}>Social</span>
+      <span className={styles.fieldLabel}>
+        Social
+        <SavedBadge visible={!!isSaved} />
+      </span>
       <div className={styles.socialIcons}>
         {SOCIAL_CONFIG.map(({ key, Icon, label }) => {
           const url = social[key];
@@ -569,10 +738,12 @@ function SocialRow({
 function AssignedField({
   value,
   profiles,
+  isSaved,
   onSave,
 }: {
   value: string | null;
   profiles: AdminProfile[];
+  isSaved?: boolean;
   onSave: (id: string | null) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -589,7 +760,10 @@ function AssignedField({
 
   return (
     <div className={styles.fieldRow}>
-      <span className={styles.fieldLabel}>Assigned</span>
+      <span className={styles.fieldLabel}>
+        Assigned
+        <SavedBadge visible={!!isSaved} />
+      </span>
       <div className={styles.fieldValue}>
         {editing ? (
           <div className={styles.assignedDropdown}>
@@ -638,6 +812,35 @@ const CONTACT_METHODS: { key: ContactMethod; Icon: React.ComponentType<{ size?: 
 ];
 
 // ---------------------------------------------------------------------------
+// Copy button (sidebar)
+// ---------------------------------------------------------------------------
+
+function SidebarCopyBtn({ value, onCopied }: { value: string; onCopied?: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      onCopied?.();
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard API may fail silently
+    }
+  };
+  return (
+    <button
+      type="button"
+      className={`${styles.copyBtn} ${copied ? styles.copyBtnCopied : ""}`}
+      onClick={handleCopy}
+      aria-label={`Copy ${value}`}
+      title={copied ? "Copied!" : "Copy"}
+    >
+      <CopySimple size={13} weight="bold" />
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Section divider
 // ---------------------------------------------------------------------------
 
@@ -652,9 +855,15 @@ function SectionHeader({ label }: { label: string }) {
 export function ClientDetailSidebar({
   client,
   adminProfiles,
+  onNameChange,
+  onNameEditStart,
+  onNameEditEnd,
 }: {
   client: ClientDetail;
   adminProfiles: AdminProfile[];
+  onNameChange?: (first: string, last: string) => void;
+  onNameEditStart?: (part: "first" | "last") => void;
+  onNameEditEnd?: () => void;
 }) {
   // Local optimistic copies of mutable fields
   const [firstName,   setFirstName]   = useState(client.firstName   ?? "");
@@ -672,10 +881,21 @@ export function ClientDetailSidebar({
   const [feePercent,    setFeePercent]    = useState(
     client.managementFeePercent !== null ? String(client.managementFeePercent) : ""
   );
-  const [propsOwned,    setPropsOwned]    = useState(
-    client.totalPropertiesOwned !== null ? String(client.totalPropertiesOwned) : ""
-  );
   const [newsletter,    setNewsletter]    = useState(client.newsletterSubscribed);
+
+  // Saved-field tracker
+  const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
+
+  const markSaved = useCallback((key: string) => {
+    setSavedFields(prev => new Set(prev).add(key));
+    setTimeout(() => {
+      setSavedFields(prev => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }, 1800);
+  }, []);
 
   async function save(fields: Parameters<typeof updateClientFields>[1]) {
     await updateClientFields(client.id, fields);
@@ -683,55 +903,69 @@ export function ClientDetailSidebar({
 
   // ── Contact saves ──────────────────────────────────────────────────────
   const saveFirstName = async (val: string) => {
-    setFirstName(val);
-    await save({ firstName: val, lastName });
+    const capped = capitalize(val);
+    setFirstName(capped);
+    onNameChange?.(capped, lastName);
+    await save({ firstName: capped, lastName });
+    markSaved("firstName");
   };
   const saveLastName = async (val: string) => {
-    setLastName(val);
-    await save({ firstName, lastName: val });
+    const capped = capitalize(val);
+    setLastName(capped);
+    onNameChange?.(firstName, capped);
+    await save({ firstName, lastName: capped });
+    markSaved("lastName");
   };
   const saveEmail = async (val: string) => {
     setEmail(val);
     await save({ email: val });
+    markSaved("email");
   };
   const savePhone = async (val: string) => {
     setPhone(val);
     await save({ phone: val });
+    markSaved("phone");
   };
   const saveCompany = async (val: string) => {
     setCompany(val);
     await save({ companyName: val });
+    markSaved("company");
   };
   const saveAddress = async (formatted: string, components: AddressComponents) => {
     setAddressFmt(formatted);
     await save({ addressFormatted: formatted, addressComponents: components });
+    markSaved("address");
   };
   const saveSocial = async (key: SocialKey, url: string | null) => {
     const updated = { ...social, [key]: url };
     setSocial(updated);
     await save({ social: updated });
+    markSaved("social");
   };
 
   // ── Pipeline saves ──────────────────────────────────────────────────────
-  // source is display-only — updating it is not yet supported by the server action
   const saveAssigned = async (id: string | null) => {
     setAssignedTo(id);
     await save({ assignedTo: id });
+    markSaved("assigned");
   };
 
   // ── Contract saves ──────────────────────────────────────────────────────
   const saveContractStart = async (iso: string | null) => {
     setContractStart(iso);
     await save({ contractStartAt: iso });
+    markSaved("contractStart");
   };
   const saveContractEnd = async (iso: string | null) => {
     setContractEnd(iso);
     await save({ contractEndAt: iso });
+    markSaved("contractEnd");
   };
   const saveFeePercent = async (val: string) => {
     const num = val === "" ? null : parseFloat(val);
     setFeePercent(val);
     await save({ managementFeePercent: num });
+    markSaved("feePercent");
   };
 
   // ── Owner saves ─────────────────────────────────────────────────────────
@@ -740,11 +974,6 @@ export function ClientDetailSidebar({
     setContactMethod(next);
     await save({ preferredContactMethod: next });
   };
-  const savePropsOwned = async (val: string) => {
-    const num = val === "" ? null : parseInt(val, 10);
-    setPropsOwned(val);
-    await save({ totalPropertiesOwned: num });
-  };
   const saveNewsletter = async () => {
     const next = !newsletter;
     setNewsletter(next);
@@ -752,9 +981,16 @@ export function ClientDetailSidebar({
   };
 
   const hasPortal = client.profileId !== null;
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (sidebarRef.current) {
+      sidebarRef.current.scrollTop = 0;
+    }
+  }, [client.id]);
 
   return (
-    <aside className={styles.sidebar}>
+    <aside ref={sidebarRef} className={styles.sidebar}>
 
       {/* ── Contact ─────────────────────────────────────────────────────── */}
       <SectionHeader label="Contact" />
@@ -766,8 +1002,17 @@ export function ClientDetailSidebar({
         labelB="Last"
         valueB={lastName}
         placeholderB="Last name"
+        copyFullValue={[firstName, lastName].filter(Boolean).join(" ") || undefined}
         onSaveA={saveFirstName}
         onSaveB={saveLastName}
+        onChangeA={(val) => onNameChange?.(val, lastName)}
+        onChangeB={(val) => onNameChange?.(firstName, val)}
+        onEditStartA={() => onNameEditStart?.("first")}
+        onEditEndA={onNameEditEnd}
+        onEditStartB={() => onNameEditStart?.("last")}
+        onEditEndB={onNameEditEnd}
+        isSavedA={savedFields.has("firstName")}
+        isSavedB={savedFields.has("lastName")}
       />
 
       <EditableField
@@ -775,7 +1020,9 @@ export function ClientDetailSidebar({
         value={email}
         type="email"
         placeholder="email@example.com"
+        copyValue={email || undefined}
         onSave={saveEmail}
+        isSaved={savedFields.has("email")}
       />
 
       <EditableField
@@ -784,83 +1031,34 @@ export function ClientDetailSidebar({
         displayValue={formatPhone(phone)}
         type="tel"
         placeholder="+1 (555) 000-0000"
+        copyValue={phone || undefined}
         onSave={savePhone}
+        isSaved={savedFields.has("phone")}
       />
 
       <EditableField
         label="Company"
         value={company}
         placeholder="Company name"
+        copyValue={company || undefined}
         onSave={saveCompany}
+        isSaved={savedFields.has("company")}
       />
 
-      <AddressField value={addressFmt} onSave={saveAddress} />
-
-      <SocialRow social={social} onSave={saveSocial} />
-
-      <div className={styles.divider} />
-
-      {/* ── Pipeline ────────────────────────────────────────────────────── */}
-      <SectionHeader label="Pipeline" />
-
-      <div className={styles.fieldRow}>
-        <span className={styles.fieldLabel}>Stage</span>
-        <div className={styles.fieldValue}>
-          <StagePopover contactId={client.id} stage={client.lifecycleStage} />
-        </div>
-      </div>
-
-      <div className={styles.fieldRowPair}>
-        <div className={styles.fieldPairItem}>
-          <div className={styles.fieldRow}>
-            <span className={styles.fieldLabel}>Source</span>
-            <div className={styles.fieldValue}>
-              <span className={`${styles.readonlyValue} ${!source ? styles.valueBtnEmpty : ""}`}>
-                {source || "—"}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className={styles.fieldPairItem}>
-          <AssignedField
-            value={assignedTo}
-            profiles={adminProfiles}
-            onSave={saveAssigned}
-          />
-        </div>
-      </div>
-
-      <div className={styles.divider} />
-
-      {/* ── Contract ────────────────────────────────────────────────────── */}
-      <SectionHeader label="Contract" />
-
-      <DateFieldPair
-        labelA="Start"
-        isoA={contractStart}
-        labelB="End"
-        isoB={contractEnd}
-        onSaveA={saveContractStart}
-        onSaveB={saveContractEnd}
+      <AddressField
+        value={addressFmt}
+        components={client.addressComponents}
+        onSave={saveAddress}
+        isSaved={savedFields.has("address")}
       />
 
-      <EditableField
-        label="Mgmt fee"
-        value={feePercent}
-        displayValue={feePercent ? `${feePercent}%` : ""}
-        type="number"
-        min={0}
-        max={100}
-        placeholder="0%"
-        onSave={saveFeePercent}
+      <SocialRow
+        social={social}
+        onSave={saveSocial}
+        isSaved={savedFields.has("social")}
       />
 
-      <div className={styles.divider} />
-
-      {/* ── Owner ───────────────────────────────────────────────────────── */}
-      <SectionHeader label="Owner" />
-
-      {/* Preferred contact method */}
+      {/* Prefers + Portal/Newsletter — directly under contact, no "Owner" header */}
       <div className={styles.fieldRow}>
         <span className={styles.fieldLabel}>Prefers</span>
         <div className={styles.contactMethodRow}>
@@ -881,32 +1079,6 @@ export function ClientDetailSidebar({
         </div>
       </div>
 
-      {/* Properties owned */}
-      <div className={styles.fieldRowPair}>
-        <div className={styles.fieldPairItem}>
-          <EditableField
-            label="Owned"
-            value={propsOwned}
-            displayValue={propsOwned ? `${propsOwned} owned` : ""}
-            type="number"
-            min={0}
-            placeholder="0"
-            onSave={savePropsOwned}
-          />
-        </div>
-        <div className={styles.fieldPairItem}>
-          <div className={styles.fieldRow}>
-            <span className={styles.fieldLabel}>Managed</span>
-            <div className={styles.fieldValue}>
-              <span className={styles.readonlyValue}>
-                {client.properties.length} w/ Parcel
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Portal access + newsletter */}
       <div className={styles.fieldRowPair}>
         <div className={styles.fieldPairItem}>
           <div className={styles.fieldRow}>
@@ -942,17 +1114,57 @@ export function ClientDetailSidebar({
 
       <div className={styles.divider} />
 
-      {/* ── Meta ────────────────────────────────────────────────────────── */}
-      <div className={styles.metaRow}>
-        <span className={styles.metaLabel}>Added</span>
-        <span className={styles.metaValue}>
-          {new Date(client.createdAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
+      {/* ── Pipeline ────────────────────────────────────────────────────── */}
+      <SectionHeader label="Pipeline" />
+
+      <div className={styles.fieldRowPair}>
+        <div className={styles.fieldPairItem}>
+          <div className={styles.fieldRow}>
+            <span className={styles.fieldLabel}>Source</span>
+            <div className={styles.fieldValue}>
+              <span className={`${styles.readonlyValue} ${!source ? styles.valueBtnEmpty : ""}`}>
+                {source || "—"}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className={styles.fieldPairItem}>
+          <AssignedField
+            value={assignedTo}
+            profiles={adminProfiles}
+            onSave={saveAssigned}
+            isSaved={savedFields.has("assigned")}
+          />
+        </div>
       </div>
+
+      <div className={styles.divider} />
+
+      {/* ── Contract ────────────────────────────────────────────────────── */}
+      <SectionHeader label="Contract" />
+
+      <DateFieldPair
+        labelA="Start"
+        isoA={contractStart}
+        labelB="End"
+        isoB={contractEnd}
+        onSaveA={saveContractStart}
+        onSaveB={saveContractEnd}
+        isSavedA={savedFields.has("contractStart")}
+        isSavedB={savedFields.has("contractEnd")}
+      />
+
+      <EditableField
+        label="Mgmt fee"
+        value={feePercent}
+        displayValue={feePercent ? `${feePercent}%` : ""}
+        type="number"
+        min={0}
+        max={100}
+        placeholder="0%"
+        onSave={saveFeePercent}
+        isSaved={savedFields.has("feePercent")}
+      />
 
     </aside>
   );

@@ -99,6 +99,7 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
   let properties: ClientProperty[] = [];
   let lifetimeRevenue: number | null = null;
   let assignedToName: string | null = null;
+  let profileAvatarUrl: string | null = null;
 
   const assignedToId = (contact.assigned_to as string | null) ?? null;
   if (assignedToId) {
@@ -113,9 +114,11 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
   if (profileId) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("entity_id, onboarding_completed_at")
+      .select("entity_id, onboarding_completed_at, avatar_url")
       .eq("id", profileId)
       .single();
+
+    profileAvatarUrl = (profile as any)?.avatar_url ?? null;
 
     if (profile?.entity_id) {
       entityId = profile.entity_id;
@@ -188,7 +191,7 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
     companyName: (contact.company_name as string | null) ?? null,
     email: (contact.email as string | null) ?? null,
     phone: (contact.phone as string | null) ?? null,
-    avatarUrl: (contact.avatar_url as string | null) ?? null,
+    avatarUrl: (contact.avatar_url as string | null) ?? profileAvatarUrl,
     source: (contact.source as string | null) ?? null,
     lifecycleStage: contact.lifecycle_stage as LifecycleStage,
     stageChangedAt: (contact.stage_changed_at as string | null) ?? "",
