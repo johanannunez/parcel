@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   devIndicators: false,
+  experimental: {
+    serverActions: {
+      // Default is 1MB which is easily exceeded by base64-encoded photos.
+      bodySizeLimit: "10mb",
+    },
+  },
   images: {
     remotePatterns: [
       {

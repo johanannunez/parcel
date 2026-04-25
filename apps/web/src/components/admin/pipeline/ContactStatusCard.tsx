@@ -10,7 +10,7 @@ export function ContactStatusCard({ card }: { card: StatusCardData }) {
   const primaryAssignee = card.assigneeAvatars[0];
 
   return (
-    <Link href={card.href} className={styles.card}>
+    <Link href={card.href} className={styles.card} draggable={false}>
       <div className={styles.top}>
         <span className={styles.avatar} aria-hidden>
           {getInitials(card.name)}

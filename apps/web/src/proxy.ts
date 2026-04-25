@@ -79,8 +79,14 @@ export async function proxy(request: NextRequest) {
   // ----- Already logged in on auth pages -----
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   if (isAuthPage && user) {
+    const { data: authPageProfile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
     const url = request.nextUrl.clone();
-    url.pathname = "/portal/dashboard";
+    url.pathname = authPageProfile?.role === "admin" ? "/admin" : "/portal/dashboard";
     return NextResponse.redirect(url);
   }
 

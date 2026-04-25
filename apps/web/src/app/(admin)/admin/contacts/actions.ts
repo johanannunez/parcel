@@ -36,7 +36,7 @@ const MoveSchema = z.object({
   contactId: z.string().uuid(),
   stage: z.enum([
     'lead_new', 'qualified', 'in_discussion', 'contract_sent',
-    'onboarding', 'active_owner', 'lead_cold', 'paused', 'churned',
+    'onboarding', 'active_owner', 'offboarding', 'lead_cold', 'paused', 'churned',
   ]),
 });
 
@@ -199,6 +199,10 @@ export async function updateContactStage(
     .eq('id', parsed.data.contactId);
 
   if (error) return { ok: false, error: error.message };
+
+  if (parsed.data.stage === 'onboarding') {
+    await seedOnboardingTasks(parsed.data.contactId);
+  }
 
   revalidatePath('/admin/contacts');
   return { ok: true, data: null };

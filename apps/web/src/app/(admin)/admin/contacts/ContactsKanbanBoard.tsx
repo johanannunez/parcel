@@ -4,7 +4,8 @@ import { useMemo, useState, useTransition } from 'react';
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   useDroppable,
@@ -29,7 +30,8 @@ type Props = {
 
 export function ContactsKanbanBoard({ columns, boardKey, enableDrag, onCardMove }: Props) {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
   );
 
   const defaults = useMemo<Record<string, ColumnState>>(() => {
@@ -64,6 +66,7 @@ export function ContactsKanbanBoard({ columns, boardKey, enableDrag, onCardMove 
 
   return (
     <DndContext
+      id="contacts-kanban"
       sensors={enableDrag ? sensors : []}
       collisionDetection={closestCenter}
       onDragStart={onDragStart}

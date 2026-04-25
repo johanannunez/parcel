@@ -136,6 +136,7 @@ function parseArgs(argv) {
     selectValue: "",
     waitFor: "",
     delay: 0,
+    devLogin: false,
   };
 
   if (!args.length) return opts;
@@ -186,6 +187,7 @@ function parseArgs(argv) {
       case "--select": opts.select = val; opts.selectValue = val2 || ""; i += 3; break;
       case "--wait-for": opts.waitFor = val; i += 2; break;
       case "--delay": opts.delay = parseInt(val, 10) || 0; i += 2; break;
+      case "--dev-login": opts.devLogin = true; i++; break;
       default: i++; break;
     }
   }
@@ -631,6 +633,11 @@ async function main() {
   const page = await context.newPage();
 
   if (opts.theme) await applyTheme(page, opts.theme);
+
+  if (opts.devLogin) {
+    const loginOrigin = new URL(opts.url).origin;
+    await page.goto(`${loginOrigin}/api/dev/screenshot-auth`, { waitUntil: "networkidle", timeout: 20000 });
+  }
 
   await page.goto(opts.url, { waitUntil: "networkidle", timeout: 30000 });
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import type { LifecycleStage } from './contact-types';
 import { requireAdminUser } from './auth';
+import { seedOnboardingTasks } from './onboarding-actions';
 
 type DbLifecycleStage = LifecycleStage;
 
@@ -57,6 +58,11 @@ export async function updateContactStage(
     .update({ lifecycle_stage: stage as DbLifecycleStage })
     .eq('id', contactId);
   if (error) throw error;
+
+  if (stage === 'onboarding') {
+    await seedOnboardingTasks(contactId);
+  }
+
   revalidatePath('/admin/contacts');
   revalidatePath(`/admin/contacts/${contactId}`);
 }
