@@ -211,16 +211,18 @@ function EditableField({
             disabled={saving}
           />
         ) : (
-          <span className={`${styles.fieldValueContent} ${isFlashing ? styles.fieldValueCopied : ""}`}>
-            <button
-              className={`${styles.valueBtn} ${!shown ? styles.valueBtnEmpty : ""}`}
-              onClick={() => { setEditing(true); onEditStart?.(); }}
-              type="button"
-            >
-              {shown || placeholder || "—"}
-            </button>
+          <>
+            <span className={`${styles.fieldValueContent} ${isFlashing ? styles.fieldValueCopied : ""}`}>
+              <button
+                className={`${styles.valueBtn} ${!shown ? styles.valueBtnEmpty : ""}`}
+                onClick={() => { setEditing(true); onEditStart?.(); }}
+                type="button"
+              >
+                {shown || placeholder || "—"}
+              </button>
+            </span>
             {copyValue && shown && <SidebarCopyBtn value={copyValue} onCopied={handleRowCopied} />}
-          </span>
+          </>
         )}
       </div>
     </div>
@@ -609,21 +611,23 @@ function AddressField({
         ) : (() => {
           const lines = formatAddressLines(value, components);
           return (
-            <span className={`${styles.fieldValueContent} ${rowCopied ? styles.fieldValueCopied : ""}`}>
-              <button
-                className={`${styles.valueBtn} ${!value ? styles.valueBtnEmpty : ""} ${styles.valueBtnAddress}`}
-                onClick={() => setEditing(true)}
-                type="button"
-              >
-                {lines ? (
-                  <>
-                    <span>{lines[0]}</span>
-                    {lines[1] && <span>{lines[1]}</span>}
-                  </>
-                ) : "—"}
-              </button>
+            <>
+              <span className={`${styles.fieldValueContent} ${rowCopied ? styles.fieldValueCopied : ""}`}>
+                <button
+                  className={`${styles.valueBtn} ${!value ? styles.valueBtnEmpty : ""} ${styles.valueBtnAddress}`}
+                  onClick={() => setEditing(true)}
+                  type="button"
+                >
+                  {lines ? (
+                    <>
+                      <span>{lines[0]}</span>
+                      {lines[1] && <span>{lines[1]}</span>}
+                    </>
+                  ) : "—"}
+                </button>
+              </span>
               {value && <SidebarCopyBtn value={value} onCopied={handleRowCopied} />}
-            </span>
+            </>
           );
         })()}
       </div>
