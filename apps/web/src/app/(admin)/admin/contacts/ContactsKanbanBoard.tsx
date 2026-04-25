@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -18,6 +18,7 @@ import type { StatusCardData, StatusColumnData, ColumnState } from '@/components
 import { useColumnStates } from '@/components/admin/pipeline/useColumnStates';
 import columnStyles from '@/components/admin/pipeline/StatusColumn.module.css';
 import styles from './ContactsKanbanBoard.module.css';
+import { markContractSigned } from './actions';
 
 type Props = {
   columns: StatusColumnData[];
@@ -215,7 +216,12 @@ function ColumnBody({
               isDraggingThis={draggingId === card.id}
             />
           ) : (
-            <ContactStatusCard key={card.id} card={card} />
+            <div key={card.id}>
+              <ContactStatusCard card={card} />
+              {col.stage.key === 'contract_sent' && (
+                <MarkAsSignedButton contactId={card.id} />
+              )}
+            </div>
           ),
         )}
       </div>
@@ -252,6 +258,38 @@ function DraggableCard({
       {...attributes}
     >
       <ContactStatusCard card={card} />
+      {stageKey === 'contract_sent' && (
+        <MarkAsSignedButton contactId={card.id} />
+      )}
     </div>
+  );
+}
+
+function MarkAsSignedButton({ contactId }: { contactId: string }) {
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function handleClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setError(null);
+    startTransition(async () => {
+      const result = await markContractSigned(contactId);
+      if (!result.ok) setError(result.error);
+    });
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className={styles.signedBtn}
+        onClick={handleClick}
+        disabled={isPending}
+      >
+        {isPending ? 'Moving...' : '✓ Mark as Signed'}
+      </button>
+      {error && <p className={styles.signedErr}>{error}</p>}
+    </>
   );
 }

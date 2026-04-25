@@ -3,6 +3,7 @@ import { ContactsListView } from './ContactsListView';
 import { ContactsStatusView } from './StatusView';
 import { ActiveOwnersGrid } from './ActiveOwnersGrid';
 import { ContactsMapView } from './ContactsMapView';
+import { OnboardingPhaseBoard } from './OnboardingPhaseBoard';
 
 type Props = {
   searchParams: Promise<{
@@ -30,6 +31,11 @@ export default async function ContactsPage({ searchParams }: Props) {
 
   if (activeMode === 'map') {
     return <ContactsMapView rows={rows} />;
+  }
+
+  // Onboarding uses its own phase board — bypass the Kanban infrastructure entirely
+  if (viewKey === 'onboarding') {
+    return <OnboardingPhaseBoard rows={rows} />;
   }
 
   // Active Owners gets its own rich grid layout instead of a kanban.

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { seedOnboardingTasks } from '@/lib/admin/onboarding-actions';
 
 const IconIdSchema = z.string().max(60).nullable().optional();
 const IconColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional();
@@ -298,5 +299,33 @@ export async function deleteContactSource(id: string): Promise<ActionResult> {
   if (error) return { ok: false, error: error.message };
 
   revalidatePath('/admin/contacts', 'layout');
+  return { ok: true, data: null };
+}
+
+export async function markContractSigned(
+  contactId: string,
+): Promise<ActionResult> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contactId)) {
+    return { ok: false, error: 'Invalid contact ID.' };
+  }
+  const auth = await getAdminUser();
+  if (!auth.ok) return auth;
+  const { supabase } = auth;
+
+  const { error } = await supabase
+    .from('contacts')
+    .update({
+      lifecycle_stage: 'onboarding',
+      stage_changed_at: new Date().toISOString(),
+    })
+    .eq('id', contactId);
+
+  if (error) return { ok: false, error: error.message };
+
+  await seedOnboardingTasks(contactId);
+
+  revalidatePath('/admin/contacts');
+  revalidatePath('/admin/clients');
+  revalidatePath('/admin/leads');
   return { ok: true, data: null };
 }

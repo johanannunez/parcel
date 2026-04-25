@@ -53,6 +53,7 @@ export async function fetchOnboardingPhaseCounts(
     .in('owner_id', profileIds) as { data: DirectPropertyRow[] | null };
 
   // Fetch properties via co-ownership junction
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: coProps } = await (supabase as any)
     .from('property_owners')
     .select('property_id, owner_id')
@@ -79,6 +80,7 @@ export async function fetchOnboardingPhaseCounts(
   }
 
   // Fetch all onboarding tasks for those properties
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: taskRows } = await (supabase as any)
     .from('tasks')
     .select('parent_id, tags, status')

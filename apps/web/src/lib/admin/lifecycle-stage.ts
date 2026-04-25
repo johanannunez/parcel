@@ -1,7 +1,7 @@
 import type { LifecycleStage, StageGroup } from './contact-types';
 
 export const STAGE_LABEL: Record<LifecycleStage, string> = {
-  lead_new: 'Inquiry',
+  lead_new: 'Contacted',
   qualified: 'Qualified',
   in_discussion: 'In Talks',
   contract_sent: 'Contract Sent',
