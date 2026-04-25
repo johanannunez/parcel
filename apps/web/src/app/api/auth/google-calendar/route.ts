@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 const SCOPES = [
   "https://www.googleapis.com/auth/calendar.events",
   "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+  "https://www.googleapis.com/auth/drive.readonly",
 ].join(" ");
 
 export async function GET(_req: NextRequest) {

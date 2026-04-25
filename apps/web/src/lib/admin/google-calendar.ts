@@ -176,3 +176,64 @@ export async function deleteCalendarEvent(
     },
   );
 }
+
+export type DriveRecording = {
+  fileId: string;
+  fileName: string;
+  webViewLink: string;
+  durationMs: number | null;
+};
+
+export async function searchDriveRecording(
+  accessToken: string,
+  scheduledAt: string,
+  _title: string,
+): Promise<DriveRecording | null> {
+  const scheduled = new Date(scheduledAt);
+  const windowStart = new Date(scheduled.getTime() - 30 * 60 * 1000).toISOString();
+  const windowEnd = new Date(scheduled.getTime() + 4 * 60 * 60 * 1000).toISOString();
+
+  const q = [
+    `(mimeType='video/mp4' or mimeType='video/webm')`,
+    `createdTime >= '${windowStart}'`,
+    `createdTime <= '${windowEnd}'`,
+  ].join(" and ");
+
+  const params = new URLSearchParams({
+    q,
+    fields: "files(id,name,webViewLink,videoMediaMetadata)",
+    orderBy: "createdTime desc",
+    pageSize: "5",
+  });
+
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files?${params.toString()}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+
+  if (!res.ok) return null;
+
+  const json = (await res.json()) as {
+    files?: Array<{
+      id: string;
+      name: string;
+      webViewLink: string;
+      videoMediaMetadata?: { durationMillis?: string };
+    }>;
+  };
+
+  const files = json.files ?? [];
+  if (files.length === 0) return null;
+
+  const best =
+    files.find((f) => /meet|recording/i.test(f.name)) ?? files[0];
+
+  return {
+    fileId: best.id,
+    fileName: best.name,
+    webViewLink: best.webViewLink,
+    durationMs: best.videoMediaMetadata?.durationMillis
+      ? parseInt(best.videoMediaMetadata.durationMillis, 10)
+      : null,
+  };
+}
