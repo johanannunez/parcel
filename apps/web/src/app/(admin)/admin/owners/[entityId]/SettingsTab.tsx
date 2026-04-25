@@ -19,8 +19,10 @@ import {
   type ConnectionRow,
 } from "./settings/DataPrivacySection";
 import { DangerZoneSection } from "./settings/DangerZoneSection";
+import { PeopleSection } from "./settings/PeopleSection";
 import styles from "./SettingsTab.module.css";
 import { SETTINGS_SECTIONS, type SettingsSection } from "./settings-sections";
+import type { EntityMember } from "@/lib/admin/client-detail";
 
 export { SETTINGS_SECTIONS };
 export type { SettingsSection };
@@ -29,6 +31,7 @@ const SECTION_LABEL: Record<SettingsSection, string> = {
   personal: "Personal info",
   account: "Account & security",
   business: "Business entity",
+  people: "People",
   notifications: "Notifications",
   payments: "Payments & payout",
   property_defaults: "Property defaults",
@@ -41,6 +44,7 @@ const SECTION_LABEL: Record<SettingsSection, string> = {
 const PLACEHOLDER_TEASERS: Record<Exclude<SettingsSection, "personal">, string> = {
   account: "Password, 2FA, active sessions, and email change.",
   business: "LLC / entity details, EIN, tax classification, and co-owners.",
+  people: "Contacts linked to this entity. Add or remove people.",
   notifications: "Email and SMS preferences, digest cadence.",
   payments: "ACH details, W9, payout schedule, tax forms.",
   property_defaults:
@@ -99,6 +103,8 @@ export type SettingsTabProps = {
   } | null;
   /** Override the base path for section routing. Defaults to /admin/owners/:id. */
   basePath?: string;
+  adminMembers?: EntityMember[];
+  adminEntityId?: string;
 };
 
 export function SettingsTab({
@@ -110,6 +116,8 @@ export function SettingsTab({
   connections,
   entityDetail,
   basePath,
+  adminMembers,
+  adminEntityId,
 }: SettingsTabProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -139,6 +147,7 @@ export function SettingsTab({
         {renderNavItem("personal", activeSection, switchSection)}
         {renderNavItem("account", activeSection, switchSection)}
         {renderNavItem("business", activeSection, switchSection)}
+        {renderNavItem("people", activeSection, switchSection)}
         {renderNavItem("notifications", activeSection, switchSection)}
         {renderNavItem(
           "payments",
@@ -199,6 +208,13 @@ export function SettingsTab({
               email: m.email,
               role: m.id === primaryMember.id ? "primary" : "member",
             }))}
+          />
+        )}
+
+        {activeSection === "people" && (
+          <PeopleSection
+            entityId={adminEntityId ?? data.entity?.id ?? ""}
+            members={adminMembers ?? []}
           />
         )}
 

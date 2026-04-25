@@ -314,6 +314,8 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
             connections={connections}
             entityDetail={entityDetail}
             basePath={`/admin/clients/${id}`}
+            adminMembers={members}
+            adminEntityId={entityInfo!.id}
           />
         );
 

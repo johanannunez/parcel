@@ -2,6 +2,7 @@ export const SETTINGS_SECTIONS = [
   "personal",
   "account",
   "business",
+  "people",
   "notifications",
   "payments",
   "property_defaults",
