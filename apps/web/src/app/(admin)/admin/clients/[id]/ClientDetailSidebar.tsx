@@ -710,8 +710,40 @@ function SocialLinksModal({
   onSave: (updated: SocialLinks) => Promise<void>;
   onClose: () => void;
 }) {
-  const [draft, setDraft] = useState<SocialLinks>({ ...social });
+  const [draft, setDraft] = useState<SocialLinks>({ ...(social ?? {}) });
   const [saving, setSaving] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = modalRef.current;
+    if (!el) return;
+    const focusableSelector =
+      'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const getFocusable = () => Array.from(el.querySelectorAll<HTMLElement>(focusableSelector));
+    getFocusable()[0]?.focus();
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable();
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -726,6 +758,7 @@ function SocialLinksModal({
   return (
     <div className={styles.socialModalOverlay} onClick={onClose}>
       <div
+        ref={modalRef}
         className={styles.socialModal}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -1066,7 +1099,7 @@ export function ClientDetailSidebar({
   const [company,     setCompany]      = useState(client.companyName ?? "");
   const source = client.source ?? "";
   const [addressFmt,  setAddressFmt]   = useState(client.addressFormatted ?? null);
-  const [social,      setSocial]       = useState(client.social);
+  const [social,      setSocial]       = useState<SocialLinks>(client.social ?? {});
   const [assignedTo,  setAssignedTo]   = useState(client.assignedTo);
   const [contactMethod, setContactMethod] = useState(client.preferredContactMethod);
   const [contractStart, setContractStart] = useState(client.contractStartAt);
