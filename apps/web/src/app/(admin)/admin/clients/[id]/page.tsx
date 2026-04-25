@@ -120,9 +120,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
   const isIntelligence = tab === "intelligence";
 
   const contactInsights = isOverview || isIntelligence
-    ? await fetchInsightsByParent("contact", [id])
+    ? await fetchInsightsByParent("contact", [activeContactId])
     : {};
-  const insightList = contactInsights[id] ?? [];
+  const insightList = contactInsights[activeContactId] ?? [];
   const generatedAt = insightList[0]?.createdAt ?? null;
 
   const billingData = tab === "billing" && client.profileId
@@ -134,11 +134,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     : [];
 
   const clientMessages = tab === "messaging" || isOverview
-    ? await fetchClientMessages(id)
+    ? await fetchClientMessages(activeContactId)
     : [];
 
   const openTasks = isOverview
-    ? await fetchContactOpenTasks(id)
+    ? await fetchContactOpenTasks(activeContactId)
     : [];
 
   // Fetch settings data only when the settings tab is active and owner data exists.
@@ -224,7 +224,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         return <PropertiesTab properties={client!.properties} />;
 
       case "tasks":
-        return <TasksTab parentType="contact" parentId={id} />;
+        return <TasksTab parentType="contact" parentId={activeContactId} />;
 
       case "meetings":
         if (!client!.profileId) {
@@ -245,7 +245,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
               id: p.id,
               label: p.label,
             }))}
-            contactId={id}
+            contactId={activeContactId}
             adminProfiles={adminProfiles}
           />
         );
@@ -264,14 +264,14 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
       case "intelligence":
         return (
           <IntelligenceTab
-            contactId={id}
+            contactId={activeContactId}
             insights={insightList}
             generatedAt={generatedAt}
           />
         );
 
       case "messaging":
-        return <MessagingTab contactId={id} messages={clientMessages} />;
+        return <MessagingTab contactId={activeContactId} messages={clientMessages} />;
 
       case "documents":
         if (!client!.profileId) {
@@ -302,7 +302,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
             sessions={sessions}
             connections={connections}
             entityDetail={entityDetail}
-            basePath={`/admin/clients/${client!.id}`}
+            basePath={`/admin/clients/${id}`}
           />
         );
 

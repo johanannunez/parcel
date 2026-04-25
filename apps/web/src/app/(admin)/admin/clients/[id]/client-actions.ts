@@ -271,11 +271,14 @@ export async function updateEntityFields(
   entityId: string,
   fields: { name?: string; type?: string },
 ): Promise<void> {
-  const supabase = await createClient();
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) throw new Error(authError);
   const updates: Record<string, unknown> = {};
   if (fields.name !== undefined) updates.name = fields.name.trim();
   if (fields.type !== undefined) updates.type = fields.type;
   if (Object.keys(updates).length === 0) return;
   const { error } = await (supabase as any).from('entities').update(updates).eq('id', entityId);
   if (error) throw error;
+  revalidatePath(`/admin/clients/${entityId}`);
+  revalidatePath("/admin/clients");
 }
