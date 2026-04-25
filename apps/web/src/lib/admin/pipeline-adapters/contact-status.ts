@@ -1,7 +1,6 @@
 import type { ContactRow, LifecycleStage } from '@/lib/admin/contact-types';
 import type { Insight } from '@/lib/admin/ai-insights';
 import type { StageDef, StatusCardData, StatusColumnData } from '@/components/admin/pipeline/pipeline-types';
-import { stageLabel } from '@/lib/admin/lifecycle-stage';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

@@ -24,6 +24,7 @@ export async function seedOnboardingTasks(contactId: string): Promise<void> {
 
   const [{ data: direct }, { data: coOwned }] = await Promise.all([
     supabase.from('properties').select('id').eq('owner_id', contact.profile_id),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('property_owners')
       .select('property_id')
@@ -42,6 +43,7 @@ export async function seedOnboardingTasks(contactId: string): Promise<void> {
   if (propertyIds.length === 0) return;
 
   // Skip if any onboarding tasks already exist for these properties.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: existing } = await (supabase as any)
     .from('tasks')
     .select('id')
