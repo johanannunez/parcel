@@ -22,11 +22,12 @@ function relativeDays(iso: string | null): string | null {
 type ColDef = { key: LifecycleStage; color: StageDef['color']; label: string };
 
 const STAGE_COLUMNS_LEAD_PIPELINE: ColDef[] = [
-  { key: 'lead_new', color: 'blue', label: 'Inquiry' },
-  { key: 'qualified', color: 'blue', label: 'Qualified' },
-  { key: 'in_discussion', color: 'violet', label: 'In Talks' },
-  { key: 'contract_sent', color: 'violet', label: 'Contract Sent' },
-  { key: 'lead_cold', color: 'gray', label: 'Cold' },
+  { key: 'lead_new',       color: 'blue',   label: 'Inquiry'       },
+  { key: 'qualified',      color: 'blue',   label: 'Qualified'     },
+  { key: 'in_discussion',  color: 'violet', label: 'In Talks'      },
+  { key: 'contract_sent',  color: 'violet', label: 'Contract Sent' },
+  { key: 'onboarding',     color: 'green',  label: 'Onboarding'    },
+  { key: 'lead_cold',      color: 'gray',   label: 'Cold'          },
 ];
 
 const STAGE_COLUMNS_ONBOARDING: ColDef[] = [
@@ -76,12 +77,13 @@ export function buildContactStatusBoard(
   rows: ContactRow[],
   insightsByContact: Record<string, Insight[]>,
   viewKey: string,
+  basePath = '/admin/contacts',
 ): StatusColumnData[] {
   if (viewKey === 'onboarding') {
-    return buildOnboardingMilestoneBoard(rows, insightsByContact);
+    return buildOnboardingMilestoneBoard(rows, insightsByContact, basePath);
   }
   if (viewKey === 'offboarding') {
-    return buildOffboardingBoard(rows, insightsByContact);
+    return buildOffboardingBoard(rows, insightsByContact, basePath);
   }
   const columns = columnsForView(viewKey);
 
@@ -104,7 +106,7 @@ export function buildContactStatusBoard(
       const insight = insightsByContact[r.id]?.[0] ?? null;
       return {
         id: r.id,
-        href: r.profileId ? `/admin/owners/${r.profileId}` : `/admin/contacts/${r.id}`,
+        href: r.profileId ? `/admin/owners/${r.profileId}` : `${basePath}/${r.id}`,
         cardVariant: 'person',
         coverUrl: null,
         coverGradient: null,
@@ -177,6 +179,7 @@ function phaseForOffboarding(days: number): OffboardingPhase {
 function buildOnboardingMilestoneBoard(
   rows: ContactRow[],
   insightsByContact: Record<string, Insight[]>,
+  basePath = '/admin/contacts',
 ): StatusColumnData[] {
   // Only rows actually in the onboarding stage belong here. Guard in case
   // the saved view ever widens the filter.
@@ -201,7 +204,7 @@ function buildOnboardingMilestoneBoard(
       const activityDays = r.lastActivityAt ? daysSince(r.lastActivityAt) : 9999;
       return {
         id: r.id,
-        href: r.profileId ? `/admin/owners/${r.profileId}` : `/admin/contacts/${r.id}`,
+        href: r.profileId ? `/admin/owners/${r.profileId}` : `${basePath}/${r.id}`,
         cardVariant: 'person',
         coverUrl: null,
         coverGradient: null,
@@ -236,6 +239,7 @@ function buildOnboardingMilestoneBoard(
 function buildOffboardingBoard(
   rows: ContactRow[],
   insightsByContact: Record<string, Insight[]>,
+  basePath = '/admin/contacts',
 ): StatusColumnData[] {
   const offboardingRows = rows.filter((r) => r.lifecycleStage === 'offboarding');
 
@@ -257,7 +261,7 @@ function buildOffboardingBoard(
       const days = daysSince(r.stageChangedAt);
       return {
         id: r.id,
-        href: r.profileId ? `/admin/owners/${r.profileId}` : `/admin/contacts/${r.id}`,
+        href: r.profileId ? `/admin/owners/${r.profileId}` : `${basePath}/${r.id}`,
         cardVariant: 'person',
         coverUrl: null,
         coverGradient: null,

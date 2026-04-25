@@ -1,0 +1,93 @@
+.container {
+  position: relative;
+  display: inline-flex;
+}
+
+/* ── Trigger pill ── */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.trigger:disabled { opacity: 0.6; cursor: default; }
+.trigger:not(:disabled):hover { opacity: 0.8; }
+
+.caret { transition: transform 0.15s ease; flex-shrink: 0; }
+.caretOpen { transform: rotate(180deg); }
+
+.trigger_blue   { background: rgba(2, 170, 235, 0.12); color: #0369a1; }
+.trigger_violet { background: rgba(139, 92, 246, 0.12); color: #6d28d9; }
+.trigger_amber  { background: rgba(245, 158, 11, 0.12); color: #92600a; }
+.trigger_green  { background: rgba(22, 163, 74, 0.12); color: var(--color-success); }
+.trigger_orange { background: rgba(234, 88, 12, 0.12); color: #9a3412; }
+.trigger_gray   { background: rgba(107, 114, 128, 0.12); color: var(--color-text-secondary); }
+
+/* ── Floating panel ── */
+.panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  background: var(--color-white);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  padding: 10px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Groups ── */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.groupLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  padding: 0 2px;
+}
+
+.groupPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ── Stage pills in panel ── */
+.pill {
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.pill:hover { opacity: 0.8; transform: scale(1.02); }
+.pillActive { outline: 2px solid currentColor; outline-offset: 1px; }
+
+.blue   { background: rgba(2, 170, 235, 0.12); color: #0369a1; }
+.violet { background: rgba(139, 92, 246, 0.12); color: #6d28d9; }
+.amber  { background: rgba(245, 158, 11, 0.12); color: #92600a; }
+.green  { background: rgba(22, 163, 74, 0.12); color: var(--color-success); }
+.orange { background: rgba(234, 88, 12, 0.12); color: #9a3412; }
+.gray   { background: rgba(107, 114, 128, 0.12); color: var(--color-text-secondary); }

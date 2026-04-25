@@ -5,9 +5,11 @@ import { StatusBoardClient } from './StatusBoardClient';
 export async function ContactsStatusView({
   viewKey,
   rows,
+  basePath,
 }: {
   viewKey: string;
   rows: ContactRow[];
+  basePath?: string;
 }) {
   const insightsMap = await fetchInsightsByParent(
     'contact',
@@ -19,6 +21,7 @@ export async function ContactsStatusView({
       viewKey={viewKey}
       rows={rows}
       insightsMap={insightsMap}
+      basePath={basePath}
     />
   );
 }

@@ -4,6 +4,7 @@ import { fetchOwnerDetail } from "@/lib/admin/owner-detail";
 import { createClient } from "@/lib/supabase/server";
 import { fetchInternalNote } from "@/lib/admin/owner-facts-actions";
 import { ClientDetailShell } from "./ClientDetailShell";
+import { fetchAdminProfiles } from "./client-actions";
 import { PropertiesTab } from "./PropertiesTab";
 import { OverviewTab } from "@/app/(admin)/admin/owners/[entityId]/OverviewTab";
 import { TabPlaceholder } from "@/app/(admin)/admin/owners/[entityId]/TabPlaceholder";
@@ -65,7 +66,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     ? (sectionParam as SettingsSection)
     : "personal";
 
-  const client = await fetchClientDetail(id);
+  const [client, adminProfiles] = await Promise.all([
+    fetchClientDetail(id),
+    fetchAdminProfiles(),
+  ]);
   if (!client) notFound();
 
   // Fetch full owner data for tabs that were built against OwnerDetailData.
@@ -265,7 +269,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
   }
 
   return (
-    <ClientDetailShell client={client}>
+    <ClientDetailShell client={client} adminProfiles={adminProfiles}>
       {renderTab()}
     </ClientDetailShell>
   );

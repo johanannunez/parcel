@@ -37,7 +37,7 @@ export default async function ClientsPage({ searchParams }: Props) {
   }
 
   if (activeMode === 'status') {
-    return <ContactsStatusView viewKey={viewKey} rows={rows} />;
+    return <ContactsStatusView viewKey={viewKey} rows={rows} basePath="/admin/clients" />;
   }
 
   return (
