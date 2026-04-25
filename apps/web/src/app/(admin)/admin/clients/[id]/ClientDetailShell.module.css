@@ -34,7 +34,7 @@
   flex-shrink: 0;
 }
 
-/* ── Header grid: left contact | right pills + strip ─────────────────────── */
+/* ── Header grid: left contact | right pills + status line ───────────────── */
 
 .headerGrid {
   display: grid;
@@ -387,6 +387,12 @@
   opacity: 0.75;
 }
 
+.statusLineFollowUpBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
 .statusLineFollowUpBtn[data-state="overdue"] {
   color: #b91c1c;
 }
@@ -412,6 +418,11 @@
   background: color-mix(in srgb, #ef4444 8%, transparent);
 }
 
+.statusLineDoneBtn:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
 .statusLineAddBtn,
 .statusLineSetBtn {
   font-family: inherit;
@@ -430,6 +441,13 @@
 .statusLineAddBtn:hover,
 .statusLineSetBtn:hover {
   text-decoration-color: var(--color-brand);
+}
+
+.statusLineAddBtn:focus-visible,
+.statusLineSetBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 .statusLineMeetingText {
