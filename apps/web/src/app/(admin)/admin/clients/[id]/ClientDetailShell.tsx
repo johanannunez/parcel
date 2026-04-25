@@ -58,6 +58,15 @@ const TABS: { key: TabKey; label: string }[] = [
 
 const TAB_KEYS = TABS.map((t) => t.key) as readonly string[];
 
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  individual: 'Individual',
+  llc: 'LLC',
+  s_corp: 'S Corp',
+  c_corp: 'C Corp',
+  trust: 'Trust',
+  partnership: 'Partnership',
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -758,21 +767,53 @@ function ClientDetailContent({
               {displayAvatarUrl ? (
                 <img src={displayAvatarUrl} alt={client.fullName} className={styles.avatar} />
               ) : (
-                <div className={styles.avatarFallback}>{getInitials(client.fullName)}</div>
+                <div className={styles.avatarFallback}>
+                  {getInitials((displayFirst || displayLast) ? `${displayFirst} ${displayLast}`.trim() : client.fullName)}
+                </div>
               )}
-              <div className={styles.nameBlock}>
-                {client.companyName && (
-                  <span className={styles.eyebrow}>{client.companyName}</span>
+              <div className={styles.identityBlock}>
+                <div className={styles.entityRow}>
+                  <span className={styles.entityName}>{entityInfo.name}</span>
+                  {entityInfo.type && (
+                    <span className={styles.entityTypeBadge}>
+                      {ENTITY_TYPE_LABELS[entityInfo.type] ?? entityInfo.type}
+                    </span>
+                  )}
+                </div>
+                {members.length > 1 && (
+                  <div className={styles.personChipsRow}>
+                    {members.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className={`${styles.personChip} ${m.id === activeContactId ? styles.personChipActive : ''}`}
+                        onClick={() => router.replace(`?tab=${activeTab}&person=${m.id}`, { scroll: false })}
+                      >
+                        {m.avatarUrl ? (
+                          <img src={m.avatarUrl} alt={m.fullName} className={styles.personChipAvatar} />
+                        ) : (
+                          <span className={styles.personChipInitials}>
+                            {getInitials(m.fullName).slice(0, 1)}
+                          </span>
+                        )}
+                        <span>{m.firstName ?? m.fullName.split(' ')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
                 <h1 className={styles.name}>
                   {(displayFirst || displayLast) ? (
                     <>
                       {displayFirst && (
-                        <span className={editingNamePart === "first" ? styles.namePartEditing : ""}>{displayFirst}</span>
+                        <span className={editingNamePart === "first" ? styles.namePartEditing : ""}>
+                          {displayFirst}
+                        </span>
                       )}
                       {displayFirst && displayLast && " "}
                       {displayLast && (
-                        <span className={editingNamePart === "last" ? styles.namePartEditing : ""}>{displayLast}</span>
+                        <span className={editingNamePart === "last" ? styles.namePartEditing : ""}>
+                          {displayLast}
+                        </span>
                       )}
                     </>
                   ) : (
