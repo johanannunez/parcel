@@ -179,10 +179,10 @@ export async function fetchAdminContactsList({
     throw new Error('No saved views found for entity contact');
   }
 
-  let query = supabase
+  let query = (supabase as any)
     .from('contacts')
     .select(
-      `id, profile_id, full_name, display_name, company_name, email, phone,
+      `id, entity_id, profile_id, full_name, display_name, company_name, email, phone,
        avatar_url, source, source_detail, lifecycle_stage, stage_changed_at,
        assigned_to, estimated_mrr, last_activity_at, created_at,
        assigned_profile:profiles!contacts_assigned_to_fkey(full_name),
@@ -242,7 +242,37 @@ export async function fetchAdminContactsList({
     return { rows: [], views, activeView };
   }
 
-  const rows: ContactRow[] = (data ?? []).map((r) => {
+  type RawContactRow = {
+    id: string;
+    entity_id: string | null;
+    profile_id: string | null;
+    full_name: string;
+    display_name: string | null;
+    company_name: string | null;
+    email: string | null;
+    phone: string | null;
+    avatar_url: string | null;
+    source: string | null;
+    source_detail: string | null;
+    lifecycle_stage: LifecycleStage;
+    stage_changed_at: string;
+    assigned_to: string | null;
+    estimated_mrr: number | string | null;
+    last_activity_at: string | null;
+    created_at: string;
+    assigned_profile: { full_name?: string } | Array<{ full_name?: string }> | null;
+    property_count: Array<{ count: number }> | number | null;
+    properties: Array<{
+      id: unknown;
+      address_line1: unknown;
+      city: unknown;
+      state: unknown;
+      latitude: unknown;
+      longitude: unknown;
+    }> | null;
+  };
+
+  const rows: ContactRow[] = ((data ?? []) as RawContactRow[]).map((r) => {
     const assignedProfile =
       Array.isArray(r.assigned_profile)
         ? r.assigned_profile[0]
@@ -264,6 +294,7 @@ export async function fetchAdminContactsList({
       : [];
     return {
       id: r.id,
+      entityId: (r.entity_id as string | null) ?? null,
       profileId: r.profile_id,
       fullName: r.full_name,
       displayName: r.display_name,

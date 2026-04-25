@@ -31,18 +31,18 @@ export default async function ClientsPage({ searchParams }: Props) {
   }
 
   if (viewKey === 'onboarding') {
-    return <OnboardingPhaseBoard rows={rows} basePath="/admin/clients" />;
+    return <OnboardingPhaseBoard rows={rows} basePath="/admin/clients" useEntityId />;
   }
 
   const useActiveOwnersGrid =
     viewKey === 'active-owners' && activeMode !== 'compact';
 
   if (useActiveOwnersGrid) {
-    return <ActiveOwnersGrid rows={rows} />;
+    return <ActiveOwnersGrid rows={rows} basePath="/admin/clients" useEntityId />;
   }
 
   if (activeMode === 'status') {
-    return <ContactsStatusView viewKey={viewKey} rows={rows} basePath="/admin/clients" />;
+    return <ContactsStatusView viewKey={viewKey} rows={rows} basePath="/admin/clients" useEntityId />;
   }
 
   return (
@@ -50,6 +50,7 @@ export default async function ClientsPage({ searchParams }: Props) {
       rows={rows}
       activeView={activeView}
       basePath="/admin/clients"
+      useEntityId
     />
   );
 }

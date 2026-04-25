@@ -9,6 +9,8 @@ import styles from './ActiveOwnersGrid.module.css';
 
 type Props = {
   rows: ContactRow[];
+  basePath?: string;
+  useEntityId?: boolean;
 };
 
 type HealthTone = 'healthy' | 'attention' | 'risk';
@@ -47,7 +49,7 @@ const HEALTH_COPY: Record<HealthTone, string> = {
   risk: 'At Risk',
 };
 
-export function ActiveOwnersGrid({ rows }: Props) {
+export function ActiveOwnersGrid({ rows, basePath = '/admin/contacts', useEntityId = false }: Props) {
   const { sources, assignees } = useContactsFilters();
 
   const filteredRows = useMemo(() => {
@@ -99,7 +101,7 @@ export function ActiveOwnersGrid({ rows }: Props) {
           const health = healthFor(days);
           const href = r.profileId
             ? `/admin/owners/${r.profileId}`
-            : `/admin/contacts/${r.id}`;
+            : `${basePath}/${useEntityId ? (r.entityId ?? r.id) : r.id}`;
 
           const displayedProperties = r.properties.slice(0, 5);
           const extraProperties = r.properties.length - 5;

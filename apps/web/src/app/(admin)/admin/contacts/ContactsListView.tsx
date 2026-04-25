@@ -12,6 +12,7 @@ type Props = {
   rows: ContactRow[];
   activeView: ContactSavedView;
   basePath?: string;
+  useEntityId?: boolean;
 };
 
 const STAGE_PILL_CLASS: Record<ReturnType<typeof stageGroup>, string> = {
@@ -41,7 +42,7 @@ function relativeTime(iso: string | null): string {
   return `${Math.floor(months / 12)}y`;
 }
 
-export function ContactsListView({ rows, activeView, basePath = '/admin/contacts' }: Props) {
+export function ContactsListView({ rows, activeView, basePath = '/admin/contacts', useEntityId = false }: Props) {
   const [search, setSearch] = useState('');
   const { sources, assignees } = useContactsFilters();
 
@@ -88,7 +89,7 @@ export function ContactsListView({ rows, activeView, basePath = '/admin/contacts
         {filtered.map((r) => {
           const href = r.profileId
             ? `/admin/owners/${r.profileId}`
-            : `${basePath}/${r.id}`;
+            : `${basePath}/${useEntityId ? (r.entityId ?? r.id) : r.id}`;
           const pillClass = STAGE_PILL_CLASS[stageGroup(r.lifecycleStage)];
           return (
             <Link key={r.id} href={href} className={styles.row}>

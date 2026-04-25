@@ -26,6 +26,7 @@ export type ContactProperty = {
 
 export type ContactRow = {
   id: string;
+  entityId: string | null;
   profileId: string | null;
   fullName: string;
   displayName: string | null;

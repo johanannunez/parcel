@@ -6,6 +6,7 @@ import styles from './OnboardingPhaseBoard.module.css';
 type Props = {
   rows: ContactRow[];
   basePath?: string;
+  useEntityId?: boolean;
 };
 
 function initials(name: string): string {
@@ -72,7 +73,7 @@ const PHASES = [
 
 type PhaseKey = 'documents' | 'finances' | 'listings';
 
-export async function OnboardingPhaseBoard({ rows, basePath = '/admin/contacts' }: Props) {
+export async function OnboardingPhaseBoard({ rows, basePath = '/admin/contacts', useEntityId = false }: Props) {
   const onboardingRows = rows.filter((r) => r.lifecycleStage === 'onboarding');
   const phaseCounts = await fetchOnboardingPhaseCounts(onboardingRows);
 
@@ -118,7 +119,7 @@ export async function OnboardingPhaseBoard({ rows, basePath = '/admin/contacts' 
                   const counts = phaseCounts[row.id];
                   const href = row.profileId
                     ? `/admin/owners/${row.profileId}`
-                    : `${basePath}/${row.id}`;
+                    : `${basePath}/${useEntityId ? (row.entityId ?? row.id) : row.id}`;
 
                   return (
                     <Link key={row.id} href={href} className={styles.card}>

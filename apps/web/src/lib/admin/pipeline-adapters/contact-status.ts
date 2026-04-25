@@ -51,9 +51,10 @@ export function buildContactStatusBoard(
   insightsByContact: Record<string, Insight[]>,
   viewKey: string,
   basePath = '/admin/contacts',
+  useEntityId = false,
 ): StatusColumnData[] {
   if (viewKey === 'offboarding') {
-    return buildOffboardingBoard(rows, insightsByContact, basePath);
+    return buildOffboardingBoard(rows, insightsByContact, basePath, useEntityId);
   }
   const columns = columnsForView(viewKey);
 
@@ -76,7 +77,7 @@ export function buildContactStatusBoard(
       const insight = insightsByContact[r.id]?.[0] ?? null;
       return {
         id: r.id,
-        href: r.profileId ? `/admin/owners/${r.profileId}` : `${basePath}/${r.id}`,
+        href: r.profileId ? `/admin/owners/${r.profileId}` : `${basePath}/${useEntityId ? (r.entityId ?? r.id) : r.id}`,
         cardVariant: 'person',
         coverUrl: null,
         coverGradient: null,
@@ -143,6 +144,7 @@ function buildOffboardingBoard(
   rows: ContactRow[],
   insightsByContact: Record<string, Insight[]>,
   basePath = '/admin/contacts',
+  useEntityId = false,
 ): StatusColumnData[] {
   const offboardingRows = rows.filter((r) => r.lifecycleStage === 'offboarding');
 
@@ -164,7 +166,7 @@ function buildOffboardingBoard(
       const days = daysSince(r.stageChangedAt);
       return {
         id: r.id,
-        href: r.profileId ? `/admin/owners/${r.profileId}` : `${basePath}/${r.id}`,
+        href: r.profileId ? `/admin/owners/${r.profileId}` : `${basePath}/${useEntityId ? (r.entityId ?? r.id) : r.id}`,
         cardVariant: 'person',
         coverUrl: null,
         coverGradient: null,

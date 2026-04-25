@@ -6,10 +6,12 @@ export async function ContactsStatusView({
   viewKey,
   rows,
   basePath,
+  useEntityId,
 }: {
   viewKey: string;
   rows: ContactRow[];
   basePath?: string;
+  useEntityId?: boolean;
 }) {
   const insightsMap = await fetchInsightsByParent(
     'contact',
@@ -22,6 +24,7 @@ export async function ContactsStatusView({
       rows={rows}
       insightsMap={insightsMap}
       basePath={basePath}
+      useEntityId={useEntityId}
     />
   );
 }
