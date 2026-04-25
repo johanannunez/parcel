@@ -379,47 +379,196 @@
   background: var(--color-warm-gray-50);
 }
 
-/* ── Social icons ──────────────────────────────────────────────────────── */
+/* ── Social icon row ─────────────────────────────────────────────────────── */
 
-.socialIcons {
+.socialIconRow {
   display: flex;
+  gap: 4px;
   align-items: center;
-  gap: 6px;
 }
 
-.socialEditRow {
-  padding-top: 6px;
+.socialIconBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: background 100ms ease, border-color 100ms ease;
 }
 
-.socialBtn {
+.socialIconBtn:hover {
+  background: var(--color-warm-gray-50);
+  border-color: var(--color-warm-gray-300, #d4d0c8);
+}
+
+.socialIconBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* ── Social links modal ──────────────────────────────────────────────────── */
+
+.socialModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 500;
+}
+
+.socialModal {
+  background: var(--color-surface, #fff);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.socialModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--color-warm-gray-100);
+}
+
+.socialModalTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.socialModalClose {
   width: 28px;
   height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  border-radius: 7px;
-  background: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
   cursor: pointer;
-  transition: background 100ms ease, opacity 100ms ease, transform 100ms ease;
+  transition: background 100ms ease;
 }
 
-.socialBtn:hover {
+.socialModalClose:hover {
   background: var(--color-warm-gray-100);
-  transform: translateY(-1px);
 }
 
-.socialBtn:active {
-  transform: translateY(0);
+.socialModalClose:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
 }
 
-.socialBtnActive {
-  color: var(--color-brand);
+.socialModalFields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
 }
 
-.socialBtnEmpty {
-  color: var(--color-warm-gray-400);
-  opacity: 0.6;
+.socialModalField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.socialModalFieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.socialModalInput {
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--color-text-primary);
+  background: var(--color-warm-gray-50);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.socialModalInput:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 12%, transparent);
+}
+
+.socialModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--color-warm-gray-100);
+}
+
+.socialModalCancel {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+
+.socialModalCancel:hover {
+  background: var(--color-warm-gray-50);
+}
+
+.socialModalCancel:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.socialModalSave {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--color-brand);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 100ms ease;
+}
+
+.socialModalSave:hover {
+  opacity: 0.88;
+}
+
+.socialModalSave:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.socialModalSave:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
 }
 
 /* ── Assigned dropdown ─────────────────────────────────────────────────── */

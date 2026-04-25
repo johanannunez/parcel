@@ -14,6 +14,9 @@ import {
   LinkedinLogo,
   InstagramLogo,
   FacebookLogo,
+  XLogo,
+  Globe,
+  X as XIcon,
   Phone,
   ChatCentered,
   CheckCircle,
@@ -22,7 +25,7 @@ import {
   Check,
 } from "@phosphor-icons/react";
 import { parsePhoneNumber } from "libphonenumber-js";
-import type { ClientDetail, AddressComponents, EntityInfo, EntityMember } from "@/lib/admin/client-detail";
+import type { ClientDetail, AddressComponents, EntityInfo, EntityMember, SocialLinks } from "@/lib/admin/client-detail";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminProfile } from "./client-actions";
 import { updateClientFields, updateEmailWithPortalSync } from "./client-actions";
@@ -649,98 +652,123 @@ function AddressField({
 // Social icons row
 // ---------------------------------------------------------------------------
 
-type SocialKey = "linkedin" | "instagram" | "facebook";
+type SocialKey = keyof SocialLinks;
 
-const SOCIAL_CONFIG: {
+const SOCIAL_FIELDS: Array<{
   key: SocialKey;
-  Icon: React.ComponentType<{ size?: number; weight?: "regular" | "fill" | "bold" | "duotone" | "light" | "thin"; className?: string }>;
   label: string;
-  prefix: string;
-}[] = [
-  { key: "linkedin",  Icon: LinkedinLogo,   label: "LinkedIn",  prefix: "https://linkedin.com/in/" },
-  { key: "instagram", Icon: InstagramLogo,  label: "Instagram", prefix: "https://instagram.com/"   },
-  { key: "facebook",  Icon: FacebookLogo,   label: "Facebook",  prefix: "https://facebook.com/"    },
+  placeholder: string;
+  Icon: React.ElementType;
+  color: string;
+}> = [
+  { key: 'linkedin',  label: 'LinkedIn',  placeholder: 'https://linkedin.com/in/…', Icon: LinkedinLogo,  color: '#0077b5' },
+  { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/…',   Icon: InstagramLogo, color: '#e1306c' },
+  { key: 'x',         label: 'X',         placeholder: 'https://x.com/…',            Icon: XLogo,         color: '#000000' },
+  { key: 'facebook',  label: 'Facebook',  placeholder: 'https://facebook.com/…',    Icon: FacebookLogo,  color: '#1877f2' },
+  { key: 'website',   label: 'Website',   placeholder: 'https://…',                 Icon: Globe,         color: 'var(--color-brand)' },
 ];
 
-function SocialRow({
+// ---------------------------------------------------------------------------
+// Social links (icon row + modal)
+// ---------------------------------------------------------------------------
+
+function SocialIconRow({
   social,
-  isSaved,
-  onSave,
+  onOpenModal,
 }: {
-  social: { linkedin?: string | null; instagram?: string | null; facebook?: string | null };
-  isSaved?: boolean;
-  onSave: (key: SocialKey, url: string | null) => Promise<void>;
+  social: SocialLinks;
+  onOpenModal: () => void;
 }) {
-  const [editingKey, setEditingKey] = useState<SocialKey | null>(null);
-  const [draft, setDraft] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <div className={styles.socialIconRow}>
+      {SOCIAL_FIELDS.map(({ key, label, Icon, color }) => {
+        const hasValue = !!(social[key]);
+        return (
+          <button
+            key={key}
+            type="button"
+            title={label}
+            className={styles.socialIconBtn}
+            style={hasValue ? { color } : undefined}
+            onClick={onOpenModal}
+            aria-label={`${label}${hasValue ? ': set' : ': not set'}`}
+          >
+            <Icon size={16} weight={hasValue ? 'fill' : 'regular'} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
-  const openEdit = (key: SocialKey) => {
-    setEditingKey(key);
-    setDraft(social[key] ?? "");
-  };
+function SocialLinksModal({
+  social,
+  onSave,
+  onClose,
+}: {
+  social: SocialLinks;
+  onSave: (updated: SocialLinks) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState<SocialLinks>({ ...social });
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (editingKey) inputRef.current?.focus();
-  }, [editingKey]);
-
-  const commit = async () => {
-    if (!editingKey) return;
-    const trimmed = draft.trim() || null;
-    await onSave(editingKey, trimmed);
-    setEditingKey(null);
-  };
-
-  const handleKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") { e.preventDefault(); commit(); }
-    if (e.key === "Escape") { setEditingKey(null); }
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(draft);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className={styles.fieldRow}>
-      <span className={styles.fieldLabel}>
-        Social
-        <SavedBadge visible={!!isSaved} />
-      </span>
-      <div className={styles.socialIcons}>
-        {SOCIAL_CONFIG.map(({ key, Icon, label }) => {
-          const url = social[key];
-          const hasUrl = !!url;
-          return (
-            <button
-              key={key}
-              type="button"
-              aria-label={label}
-              className={`${styles.socialBtn} ${hasUrl ? styles.socialBtnActive : styles.socialBtnEmpty}`}
-              onClick={() => {
-                if (hasUrl) {
-                  window.open(url!, "_blank", "noopener,noreferrer");
-                } else {
-                  openEdit(key);
-                }
-              }}
-              onContextMenu={(e) => { e.preventDefault(); openEdit(key); }}
-              title={hasUrl ? `Open ${label}` : `Add ${label} URL (right-click to edit)`}
-            >
-              <Icon size={18} weight={hasUrl ? "fill" : "regular"} />
-            </button>
-          );
-        })}
-      </div>
-      {editingKey && (
-        <div className={styles.socialEditRow}>
-          <input
-            ref={inputRef}
-            className={styles.inlineInput}
-            type="url"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={handleKey}
-            placeholder={`Paste ${editingKey} URL…`}
-          />
+    <div className={styles.socialModalOverlay} onClick={onClose}>
+      <div
+        className={styles.socialModal}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Social links"
+      >
+        <div className={styles.socialModalHeader}>
+          <span className={styles.socialModalTitle}>Social Links</span>
+          <button type="button" className={styles.socialModalClose} onClick={onClose} aria-label="Close">
+            <XIcon size={16} />
+          </button>
         </div>
-      )}
+        <div className={styles.socialModalFields}>
+          {SOCIAL_FIELDS.map(({ key, label, placeholder, Icon, color }) => (
+            <div key={key} className={styles.socialModalField}>
+              <label className={styles.socialModalFieldLabel}>
+                <Icon size={13} style={{ color: draft[key] ? color : 'var(--color-text-tertiary)' }} />
+                {label}
+              </label>
+              <input
+                type="url"
+                className={styles.socialModalInput}
+                placeholder={placeholder}
+                value={draft[key] ?? ''}
+                onChange={(e) => setDraft((prev) => ({ ...prev, [key]: e.target.value || null }))}
+              />
+            </div>
+          ))}
+        </div>
+        <div className={styles.socialModalFooter}>
+          <button type="button" className={styles.socialModalCancel} onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.socialModalSave}
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1047,6 +1075,7 @@ export function ClientDetailSidebar({
     client.managementFeePercent !== null ? String(client.managementFeePercent) : ""
   );
   const [newsletter,    setNewsletter]    = useState(client.newsletterSubscribed);
+  const [socialModalOpen, setSocialModalOpen] = useState(false);
 
   // Saved-field tracker
   const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
@@ -1115,8 +1144,7 @@ export function ClientDetailSidebar({
     await save({ addressFormatted: formatted, addressComponents: components });
     markSaved("address");
   };
-  const saveSocial = async (key: SocialKey, url: string | null) => {
-    const updated = { ...social, [key]: url };
+  const saveSocial = async (updated: SocialLinks) => {
     setSocial(updated);
     await save({ social: updated });
     markSaved("social");
@@ -1269,11 +1297,22 @@ export function ClientDetailSidebar({
         isSaved={savedFields.has("address")}
       />
 
-      <SocialRow
-        social={social}
-        onSave={saveSocial}
-        isSaved={savedFields.has("social")}
-      />
+      <div className={styles.fieldRow}>
+        <span className={styles.fieldLabel}>
+          Social
+          <SavedBadge visible={savedFields.has("social")} />
+        </span>
+        <div className={styles.fieldValue}>
+          <SocialIconRow social={social} onOpenModal={() => setSocialModalOpen(true)} />
+        </div>
+      </div>
+      {socialModalOpen && (
+        <SocialLinksModal
+          social={social}
+          onSave={saveSocial}
+          onClose={() => setSocialModalOpen(false)}
+        />
+      )}
 
       {/* Prefers + Portal/Newsletter — directly under contact, no "Owner" header */}
       <div className={styles.fieldRow}>
