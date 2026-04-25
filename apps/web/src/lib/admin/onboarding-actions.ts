@@ -67,6 +67,7 @@ export async function seedOnboardingTasks(contactId: string): Promise<void> {
     })),
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: insertError } = await (supabase as any).from('tasks').insert(rows);
   if (insertError) throw new Error(`Failed to seed onboarding tasks: ${insertError.message}`);
 
