@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import type { Database } from "@/types/supabase";
 import type { AddressComponents, SocialLinks } from "@/lib/admin/client-detail";
@@ -152,4 +153,109 @@ export async function fetchAdminProfiles(): Promise<AdminProfile[]> {
     fullName: p.full_name ?? '',
     avatarUrl: (p.avatar_url as string | null) ?? null,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Email change with portal verification
+// ---------------------------------------------------------------------------
+
+const BRAND_FROM = '"The Parcel Company" <hello@theparcelco.com>';
+
+function buildEmailChangeHtml(magicLink: string): string {
+  return `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#F9F7F4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1C1A17;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+<tr><td align="center">
+<table role="presentation" width="100%" style="max-width:520px;background:#FFFFFF;border-radius:12px;padding:40px;">
+<tr><td>
+<h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your account email has been updated</h1>
+<p style="font-size:15px;line-height:1.6;margin:0 0 24px;color:#4A4845;">
+  Your Parcel owner portal account has been updated to use this email address.
+  Click the button below to confirm and log in.
+</p>
+<a href="${magicLink}" style="display:inline-block;background:#1b77be;color:#FFFFFF;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">
+  Log in to Owner Portal
+</a>
+<p style="font-size:12px;line-height:1.6;margin:24px 0 0;color:#8A8783;">
+  If you did not expect this change, contact your property manager at hello@theparcelco.com.
+</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+}
+
+export async function updateEmailWithPortalSync(
+  contactId: string,
+  newEmail: string,
+): Promise<{ ok: boolean; message: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { ok: false, message: authError };
+
+  // Get profile_id for this contact
+  const { data: contact } = await (supabase as any)
+    .from("contacts")
+    .select("profile_id")
+    .eq("id", contactId)
+    .single() as { data: { profile_id: string | null } | null };
+
+  const profileId = contact?.profile_id ?? null;
+
+  // Update contacts.email
+  const { error: dbError } = await (supabase as any)
+    .from("contacts")
+    .update({ email: newEmail })
+    .eq("id", contactId);
+
+  if (dbError) return { ok: false, message: dbError.message };
+
+  // If this contact has a portal account, update auth email and send login link
+  if (profileId) {
+    try {
+      const serviceClient = createServiceClient();
+
+      // Change auth email immediately (admin override). email_confirm: false
+      // leaves email_confirmed_at null so the badge shows "Unverified" until
+      // the owner logs in via the magic link below.
+      await serviceClient.auth.admin.updateUserById(profileId, {
+        email: newEmail,
+        email_confirm: false,
+      });
+
+      // Generate a magic link for the new email address
+      const { data: linkData } = await serviceClient.auth.admin.generateLink({
+        type: "magiclink",
+        email: newEmail,
+      });
+
+      const magicLink = (linkData as any)?.properties?.action_link as string | undefined;
+
+      if (magicLink) {
+        const resendKey = process.env.RESEND_API_KEY;
+        if (resendKey) {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: BRAND_FROM,
+              to: newEmail,
+              subject: "Your Parcel account email has been updated",
+              html: buildEmailChangeHtml(magicLink),
+            }),
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[updateEmailWithPortalSync] auth/email step failed:", err);
+      // contacts.email was already updated; auth failure is non-fatal
+    }
+  }
+
+  revalidatePath(`/admin/clients/${contactId}`);
+  revalidatePath("/admin/clients");
+  return { ok: true, message: "Email updated" };
 }

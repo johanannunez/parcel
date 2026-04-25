@@ -24,12 +24,14 @@ import { MessagingTab } from "./MessagingTab";
 import { fetchClientMessages } from "@/lib/admin/client-messages";
 import { ClientOverviewTab } from "./ClientOverviewTab";
 import { fetchContactOpenTasks } from "@/lib/admin/client-overview";
+import { TasksTab } from "@/components/admin/tasks/TasksTab";
 
 export const dynamic = "force-dynamic";
 
 type TabKey =
   | "overview"
   | "properties"
+  | "tasks"
   | "meetings"
   | "intelligence"
   | "messaging"
@@ -40,6 +42,7 @@ type TabKey =
 const KNOWN_TABS: readonly TabKey[] = [
   "overview",
   "properties",
+  "tasks",
   "meetings",
   "intelligence",
   "messaging",
@@ -193,6 +196,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
       case "properties":
         return <PropertiesTab properties={client!.properties} />;
 
+      case "tasks":
+        return <TasksTab parentType="contact" parentId={id} />;
+
       case "meetings":
         if (!client!.profileId) {
           return (
@@ -212,6 +218,8 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
               id: p.id,
               label: p.label,
             }))}
+            contactId={id}
+            adminProfiles={adminProfiles}
           />
         );
 

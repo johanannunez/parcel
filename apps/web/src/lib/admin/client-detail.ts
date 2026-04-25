@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import type { LifecycleStage } from "@/lib/admin/contact-types";
 
 export type ClientProperty = {
@@ -59,6 +60,9 @@ export type ClientDetail = {
   managementFeePercent: number | null;
   lastActivityAt: string | null;
 
+  // Email verification (true when auth email_confirmed_at is set)
+  emailVerified: boolean;
+
   // Owner fields (null when contact is a pre-profile lead)
   profileId: string | null;
   entityId: string | null;
@@ -100,6 +104,7 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
   let lifetimeRevenue: number | null = null;
   let assignedToName: string | null = null;
   let profileAvatarUrl: string | null = null;
+  let emailVerified = false;
 
   const assignedToId = (contact.assigned_to as string | null) ?? null;
   if (assignedToId) {
@@ -112,6 +117,14 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
   }
 
   if (profileId) {
+    try {
+      const serviceClient = createServiceClient();
+      const { data: authData } = await serviceClient.auth.admin.getUserById(profileId);
+      emailVerified = !!authData?.user?.email_confirmed_at;
+    } catch {
+      // Service key not available in this env; default to false
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("entity_id, onboarding_completed_at, avatar_url")
@@ -209,6 +222,7 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
     totalPropertiesOwned: (extras?.total_properties_owned as number | null) ?? null,
     newsletterSubscribed: (extras?.newsletter_subscribed as boolean | null) ?? false,
     lastActivityAt: (extras?.last_activity_at as string | null) ?? null,
+    emailVerified,
     profileId,
     entityId,
     onboardingCompletedAt,

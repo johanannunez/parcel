@@ -41,7 +41,6 @@
   grid-template-columns: 40% 1fr;
   grid-template-rows: auto auto;
   min-width: 0;
-  overflow: hidden;
 }
 
 .contactBlock {
@@ -189,7 +188,7 @@
   padding: 8px 18px;
   border-bottom: 1px solid var(--color-warm-gray-100);
   min-width: 0;
-  overflow: hidden;
+  position: relative;
 }
 
 .pill {
@@ -202,6 +201,7 @@
   border: 1px solid var(--color-warm-gray-200);
   font-size: 10.5px;
   font-weight: 500;
+  line-height: 1;
   color: var(--color-text-secondary);
   white-space: nowrap;
   flex-shrink: 0;
@@ -240,9 +240,13 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 8px 18px;
+  padding: 10px 18px;
   border-right: 1px solid var(--color-warm-gray-100);
   min-width: 0;
+}
+
+.stripCellWide {
+  flex: 1.6;
 }
 
 .stripCell:last-child {
@@ -258,12 +262,34 @@
   background: color-mix(in srgb, #ef4444 4%, transparent);
 }
 
-/* Cell head: inline icon + label */
+/* Cell head: icon badge + label + optional corner action */
 .stripCellHead {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 2px;
+  gap: 5px;
+  margin-bottom: 4px;
+  justify-content: space-between;
+}
+
+/* Icon badge — small tinted container */
+.stripCellIconBadge {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.stripCellIconBadge_neutral { background: var(--color-warm-gray-100); }
+.stripCellIconBadge_amber   { background: rgba(245, 158, 11, 0.14); }
+.stripCellIconBadge_red     { background: rgba(239, 68, 68, 0.12); }
+.stripCellIconBadge_green   { background: rgba(22, 163, 74, 0.12); }
+.stripCellIconBadge_blue    { background: rgba(27, 119, 190, 0.12); }
+
+.stripCellCornerAction {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .stripCellIconColor_neutral {
@@ -297,10 +323,13 @@
 }
 
 .stripCellValue {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stripCellValueRed {
@@ -322,6 +351,26 @@
   display: flex;
   gap: 5px;
   margin-top: 3px;
+}
+
+/* Corner action button — sits in the top-right of the cell head */
+.stripCornerBtn {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.stripCornerBtn:hover {
+  background: var(--color-warm-gray-100);
+  color: var(--color-text-secondary);
 }
 
 /* Strip mini buttons */
@@ -359,16 +408,127 @@
   background: color-mix(in srgb, #ef4444 18%, transparent);
 }
 
-/* Follow-up date input (inline reschedule) */
-.followUpDateInput {
+/* ── Custom date-picker popover ───────────────────────────────────────────── */
+
+.datePicker {
+  position: fixed;
+  z-index: 300;
+  background: var(--color-surface);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(11,27,43,0.06), 0 16px 32px -8px rgba(11,27,43,0.14);
+  padding: 12px;
+  width: 252px;
+  font-family: inherit;
+}
+
+.datePickerQuick {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.datePickerChip {
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid var(--color-warm-gray-200);
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+.datePickerChip:hover {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+
+.datePickerNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+.datePickerNavBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 100ms ease;
+}
+.datePickerNavBtn:hover {
+  background: var(--color-warm-gray-100);
+  color: var(--color-text-primary);
+}
+
+.datePickerMonthLabel {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.datePickerGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.datePickerDow {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  padding: 3px 0 5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.datePickerDay {
+  aspect-ratio: 1;
+  border-radius: 6px;
   border: none;
-  outline: none;
   background: transparent;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--color-text-primary);
   cursor: pointer;
-  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 80ms ease;
+}
+.datePickerDay:hover { background: var(--color-warm-gray-100); }
+
+.datePickerDayToday {
+  background: color-mix(in srgb, var(--color-brand) 10%, transparent);
+  color: var(--color-brand);
+  font-weight: 700;
+}
+.datePickerDayToday:hover { background: color-mix(in srgb, var(--color-brand) 16%, transparent); }
+
+.datePickerDaySelected {
+  background: var(--color-brand) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.datePickerDayPast {
+  color: var(--color-text-tertiary);
 }
 
 /* ── Tab column ───────────────────────────────────────────────────────────── */
@@ -434,18 +594,13 @@
 
 .tab[data-active="true"] {
   color: var(--color-brand);
-  font-weight: 600;
+  font-weight: 700;
+  background: rgba(27, 119, 190, 0.08);
+  border-radius: 6px;
 }
 
 .tab[data-active="true"]::after {
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: -1px;
-  height: 2px;
-  background: var(--color-brand);
-  border-radius: 2px 2px 0 0;
+  display: none;
 }
 
 /* ── Tab content ──────────────────────────────────────────────────────────── */

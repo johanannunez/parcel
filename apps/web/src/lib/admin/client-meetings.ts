@@ -12,12 +12,15 @@ export type ClientMeeting = {
   status: string;
   transcript: string | null;
   ai_summary: string | null;
-  action_items: Array<{ id: string; text: string; completed: boolean; assignedTo: string | null }>;
+  action_items: Array<{ id: string; text: string; completed: boolean; assignedTo: string | null; pushed?: boolean }>;
   notes: string | null;
   visibility: string;
   property_id: string | null;
   propertyLabel: string | null;
   created_at: string;
+  meeting_type: "phone_call" | "video_call" | "in_person";
+  calendar_event_id: string | null;
+  attendee_ids: string[] | null;
 };
 
 export type NextMeeting = {
@@ -49,7 +52,7 @@ export async function fetchClientMeetings(profileId: string): Promise<ClientMeet
     .select(`
       id, title, scheduled_at, duration_minutes, meet_link,
       status, transcript, ai_summary, action_items, notes, visibility,
-      property_id, created_at,
+      property_id, created_at, meeting_type, calendar_event_id, attendee_ids,
       property:properties(address_line1, city, state)
     `)
     .eq("owner_id", profileId)
@@ -84,12 +87,16 @@ export async function fetchClientMeetings(profileId: string): Promise<ClientMeet
         text: String(item.text ?? ""),
         completed: Boolean(item.completed),
         assignedTo: item.assignedTo != null ? String(item.assignedTo) : null,
+        pushed: Boolean(item.pushed),
       })),
       notes: (row.notes as string | null) ?? null,
       visibility: (row.visibility as string) ?? "private",
       property_id: (row.property_id as string | null) ?? null,
       propertyLabel: propertyLabel || null,
       created_at: row.created_at as string,
+      meeting_type: ((row.meeting_type as string | null) ?? "video_call") as "phone_call" | "video_call" | "in_person",
+      calendar_event_id: (row.calendar_event_id as string | null) ?? null,
+      attendee_ids: Array.isArray(row.attendee_ids) ? (row.attendee_ids as string[]) : null,
     };
   });
 }

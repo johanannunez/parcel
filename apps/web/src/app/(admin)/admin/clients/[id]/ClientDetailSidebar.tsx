@@ -24,7 +24,7 @@ import {
 import { parsePhoneNumber } from "libphonenumber-js";
 import type { ClientDetail, AddressComponents } from "@/lib/admin/client-detail";
 import type { AdminProfile } from "./client-actions";
-import { updateClientFields } from "./client-actions";
+import { updateClientFields, updateEmailWithPortalSync } from "./client-actions";
 import styles from "./ClientDetailSidebar.module.css";
 
 // ---------------------------------------------------------------------------
@@ -845,6 +845,151 @@ function SidebarCopyBtn({ value, onCopied }: { value: string; onCopied?: () => v
 }
 
 // ---------------------------------------------------------------------------
+// Email field with verified / unverified badge + inline confirm step
+// ---------------------------------------------------------------------------
+
+type EmailFieldState = "display" | "editing" | "confirming" | "sending";
+
+function EmailField({
+  email,
+  emailVerified,
+  profileId,
+  onSaveDirect,
+  onSaveWithPortal,
+  isSaved,
+}: {
+  email: string;
+  emailVerified: boolean;
+  profileId: string | null;
+  onSaveDirect: (val: string) => Promise<void>;
+  onSaveWithPortal: (val: string) => Promise<{ ok: boolean; message: string }>;
+  isSaved?: boolean;
+}) {
+  const [fieldState, setFieldState] = useState<EmailFieldState>("display");
+  const [draft, setDraft] = useState(email);
+  const [rowCopied, setRowCopied] = useState(false);
+  const rowCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const committingRef = useRef(false);
+
+  const handleRowCopied = useCallback(() => {
+    if (rowCopiedTimerRef.current) clearTimeout(rowCopiedTimerRef.current);
+    setRowCopied(true);
+    rowCopiedTimerRef.current = setTimeout(() => setRowCopied(false), 900);
+  }, []);
+
+  useEffect(() => {
+    if (fieldState === "editing") {
+      setDraft(email);
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [fieldState, email]);
+
+  const handleCommit = useCallback(async () => {
+    if (committingRef.current) return;
+    const trimmed = draft.trim();
+    if (!trimmed || trimmed === email) {
+      setFieldState("display");
+      return;
+    }
+    if (!trimmed.includes("@")) {
+      setDraft(email);
+      setFieldState("display");
+      return;
+    }
+    // Portal account: need the confirm step before changing login credential
+    if (profileId) {
+      setFieldState("confirming");
+      return;
+    }
+    committingRef.current = true;
+    try {
+      await onSaveDirect(trimmed);
+      setFieldState("display");
+    } finally {
+      committingRef.current = false;
+    }
+  }, [draft, email, profileId, onSaveDirect]);
+
+  const handleSend = useCallback(async () => {
+    setFieldState("sending");
+    await onSaveWithPortal(draft.trim());
+    setFieldState("display");
+  }, [draft, onSaveWithPortal]);
+
+  const shown = email || "";
+
+  return (
+    <div className={styles.fieldRow}>
+      <span className={styles.fieldLabel}>
+        Email
+        <SavedBadge visible={!!isSaved} />
+      </span>
+      <div className={styles.fieldValue}>
+        {fieldState === "editing" ? (
+          <input
+            ref={inputRef}
+            className={styles.inlineInput}
+            type="email"
+            value={draft}
+            placeholder="email@example.com"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+            onBlur={handleCommit}
+            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === "Enter") { e.preventDefault(); handleCommit(); }
+              if (e.key === "Escape") { setDraft(email); setFieldState("display"); }
+            }}
+          />
+        ) : fieldState === "confirming" || fieldState === "sending" ? (
+          <div className={styles.emailConfirmRow}>
+            <p className={styles.emailConfirmText}>
+              Send login link to <strong>{draft}</strong>?
+            </p>
+            <div className={styles.emailConfirmActions}>
+              <button
+                type="button"
+                className={styles.emailConfirmSendBtn}
+                onClick={handleSend}
+                disabled={fieldState === "sending"}
+              >
+                {fieldState === "sending" ? "Sending…" : "Send"}
+              </button>
+              <button
+                type="button"
+                className={styles.emailConfirmCancelBtn}
+                onClick={() => setFieldState("display")}
+                disabled={fieldState === "sending"}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <span className={`${styles.fieldValueContent} ${rowCopied ? styles.fieldValueCopied : ""}`}>
+              <button
+                className={`${styles.valueBtn} ${!shown ? styles.valueBtnEmpty : ""}`}
+                onClick={() => setFieldState("editing")}
+                type="button"
+              >
+                {shown || "email@example.com"}
+              </button>
+            </span>
+            {profileId && (
+              <span className={`${styles.emailBadge} ${emailVerified ? styles.emailBadgeVerified : styles.emailBadgeUnverified}`}>
+                {emailVerified ? "Verified" : "Unverified"}
+              </span>
+            )}
+            {shown && <SidebarCopyBtn value={shown} onCopied={handleRowCopied} />}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Section divider
 // ---------------------------------------------------------------------------
 
@@ -873,6 +1018,7 @@ export function ClientDetailSidebar({
   const [firstName,   setFirstName]   = useState(client.firstName   ?? "");
   const [lastName,    setLastName]     = useState(client.lastName    ?? "");
   const [email,       setEmail]        = useState(client.email       ?? "");
+  const [emailVerified, setEmailVerified] = useState(client.emailVerified);
   const [phone,       setPhone]        = useState(client.phone       ?? "");
   const [company,     setCompany]      = useState(client.companyName ?? "");
   const source = client.source ?? "";
@@ -920,10 +1066,19 @@ export function ClientDetailSidebar({
     await save({ firstName, lastName: capped });
     markSaved("lastName");
   };
-  const saveEmail = async (val: string) => {
+  const saveEmailDirect = async (val: string) => {
     setEmail(val);
     await save({ email: val });
     markSaved("email");
+  };
+  const saveEmailWithPortal = async (val: string): Promise<{ ok: boolean; message: string }> => {
+    const result = await updateEmailWithPortalSync(client.id, val);
+    if (result.ok) {
+      setEmail(val);
+      setEmailVerified(false);
+      markSaved("email");
+    }
+    return result;
   };
   const savePhone = async (val: string) => {
     setPhone(val);
@@ -1019,13 +1174,12 @@ export function ClientDetailSidebar({
         isSavedB={savedFields.has("lastName")}
       />
 
-      <EditableField
-        label="Email"
-        value={email}
-        type="email"
-        placeholder="email@example.com"
-        copyValue={email || undefined}
-        onSave={saveEmail}
+      <EmailField
+        email={email}
+        emailVerified={emailVerified}
+        profileId={client.profileId}
+        onSaveDirect={saveEmailDirect}
+        onSaveWithPortal={saveEmailWithPortal}
         isSaved={savedFields.has("email")}
       />
 
