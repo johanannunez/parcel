@@ -161,28 +161,31 @@ export async function fetchAdminProfiles(): Promise<AdminProfile[]> {
 
 const BRAND_FROM = '"The Parcel Company" <hello@theparcelco.com>';
 
-function buildEmailChangeHtml(magicLink: string): string {
+const LOGO_URL = "https://www.theparcelco.com/brand/logo-full-color.png";
+
+function buildEmailChangeHtml(magicLink: string, newEmail: string): string {
   return `<!DOCTYPE html>
 <html><body style="margin:0;padding:0;background:#F9F7F4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1C1A17;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
-<tr><td align="center">
-<table role="presentation" width="100%" style="max-width:520px;background:#FFFFFF;border-radius:12px;padding:40px;">
-<tr><td>
-<h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Your account email has been updated</h1>
-<p style="font-size:15px;line-height:1.6;margin:0 0 24px;color:#4A4845;">
-  Your Parcel owner portal account has been updated to use this email address.
-  Click the button below to confirm and log in.
-</p>
-<a href="${magicLink}" style="display:inline-block;background:#1b77be;color:#FFFFFF;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">
-  Log in to Owner Portal
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F9F7F4;padding:40px 16px;"><tr><td align="center">
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(28,26,23,0.06);">
+<tr><td align="center" style="padding:32px 32px 8px 32px;background:#F9F7F4;">
+<img src="${LOGO_URL}" alt="The Parcel Company" width="180" style="display:block;border:0;outline:none;max-width:180px;height:auto;">
+</td></tr>
+<tr><td style="padding:32px 40px 8px 40px;">
+<h1 style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:1.3;color:#1C1A17;font-weight:500;">Your account email has been updated</h1>
+<p style="margin:0 0 16px 0;font-size:16px;line-height:1.6;color:#4a4641;">Your Parcel owner portal account email has been changed to:</p>
+<div style="background:#F9F7F4;border-radius:8px;padding:12px 16px;margin:0 0 20px 0;font-size:15px;font-weight:600;color:#1C1A17;">${newEmail}</div>
+<p style="margin:0 0 24px 0;font-size:16px;line-height:1.6;color:#4a4641;">Click the button below to verify this address and sign in to your owner portal.</p>
+<a href="${magicLink}" style="display:inline-block;background:#1b77be;color:#FFFFFF;font-size:14px;font-weight:600;padding:13px 28px;border-radius:8px;text-decoration:none;letter-spacing:0.01em;">
+  Verify email
 </a>
-<p style="font-size:12px;line-height:1.6;margin:24px 0 0;color:#8A8783;">
-  If you did not expect this change, contact your property manager at hello@theparcelco.com.
-</p>
 </td></tr>
-</table>
+<tr><td style="padding:24px 40px 32px 40px;border-top:1px solid #eee8df;">
+<p style="margin:0 0 6px 0;font-size:13px;line-height:1.6;color:#8a8680;">The Parcel Company &middot; Rentals Made Easy</p>
+<p style="margin:0 0 12px 0;font-size:13px;line-height:1.6;color:#8a8680;">Questions? Just reply to this email or write us at <a href="mailto:hello@theparcelco.com" style="color:#3D6B61;text-decoration:none;">hello@theparcelco.com</a>.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:#b3ada4;">If you did not expect this change, contact your property manager immediately.</p>
 </td></tr>
-</table>
+</table></td></tr></table>
 </body></html>`;
 }
 
@@ -244,7 +247,7 @@ export async function updateEmailWithPortalSync(
               from: BRAND_FROM,
               to: newEmail,
               subject: "Your Parcel account email has been updated",
-              html: buildEmailChangeHtml(magicLink),
+              html: buildEmailChangeHtml(magicLink, newEmail),
             }),
           });
         }
@@ -258,4 +261,21 @@ export async function updateEmailWithPortalSync(
   revalidatePath(`/admin/clients/${contactId}`);
   revalidatePath("/admin/clients");
   return { ok: true, message: "Email updated" };
+}
+
+// ---------------------------------------------------------------------------
+// Update entity fields (for owner entity names and types)
+// ---------------------------------------------------------------------------
+
+export async function updateEntityFields(
+  entityId: string,
+  fields: { name?: string; type?: string },
+): Promise<void> {
+  const supabase = await createClient();
+  const updates: Record<string, unknown> = {};
+  if (fields.name !== undefined) updates.name = fields.name.trim();
+  if (fields.type !== undefined) updates.type = fields.type;
+  if (Object.keys(updates).length === 0) return;
+  const { error } = await (supabase as any).from('entities').update(updates).eq('id', entityId);
+  if (error) throw error;
 }
