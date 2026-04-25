@@ -1,0 +1,161 @@
+.board {
+  display: flex;
+  gap: 12px;
+  padding: 14px 24px;
+  overflow-x: auto;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
+  scrollbar-width: none;
+}
+
+.board::-webkit-scrollbar {
+  display: none;
+}
+
+.col {
+  flex: 0 0 280px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid transparent;
+}
+
+.colHead {
+  padding: 10px 14px 12px;
+  color: #fff;
+}
+
+.colTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.colSub {
+  font-size: 10px;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+.colCount {
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
+.colBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  flex: 1;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 10px 11px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  text-decoration: none;
+  display: block;
+  color: inherit;
+  transition: box-shadow 120ms ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cardName {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.cardMeta {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+.phases {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.phaseRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.phaseRow.dim {
+  opacity: 0.25;
+}
+
+.phaseRow.done {
+  opacity: 0.45;
+}
+
+.phaseLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.phaseName {
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.phaseFrac {
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.phaseTrack {
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.phaseFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 300ms ease;
+}
+
+.emptyCol {
+  padding: 20px 12px;
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+}
