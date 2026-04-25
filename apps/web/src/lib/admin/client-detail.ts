@@ -230,3 +230,84 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
     lifetimeRevenue,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Entity-first types
+// ---------------------------------------------------------------------------
+
+export type EntityMember = {
+  id: string;
+  fullName: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+  avatarUrl: string | null;
+  portalAccess: boolean;
+};
+
+export type EntityInfo = {
+  id: string;
+  name: string;
+  type: string | null;
+};
+
+// ---------------------------------------------------------------------------
+// Entity helpers
+// ---------------------------------------------------------------------------
+
+export async function fetchEntityMembers(entityId: string): Promise<EntityMember[]> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await (supabase as any)
+    .from('contacts')
+    .select('id, full_name, first_name, last_name, email, phone, avatar_url, profile_id')
+    .eq('entity_id', entityId)
+    .order('created_at', { ascending: true });
+
+  if (error || !data) return [];
+
+  return (data as any[]).map((c) => ({
+    id: c.id as string,
+    fullName: c.full_name as string,
+    firstName: (c.first_name as string | null) ?? null,
+    lastName: (c.last_name as string | null) ?? null,
+    email: (c.email as string | null) ?? null,
+    phone: (c.phone as string | null) ?? null,
+    avatarUrl: (c.avatar_url as string | null) ?? null,
+    portalAccess: !!c.profile_id,
+  }));
+}
+
+export async function fetchEntityInfo(entityId: string): Promise<EntityInfo | null> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await (supabase as any)
+    .from('entities')
+    .select('id, name, type')
+    .eq('id', entityId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id as string,
+    name: data.name as string,
+    type: (data.type as string | null) ?? null,
+  };
+}
+
+export async function fetchPrimaryContactIdForEntity(entityId: string): Promise<string | null> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await (supabase as any)
+    .from('contacts')
+    .select('id')
+    .eq('entity_id', entityId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.id as string;
+}
