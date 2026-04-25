@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
-import { fetchClientDetail } from "@/lib/admin/client-detail";
+import { notFound, redirect } from "next/navigation";
+import { fetchClientDetail, fetchEntityInfo, fetchEntityMembers } from "@/lib/admin/client-detail";
 import { fetchOwnerDetail } from "@/lib/admin/owner-detail";
+import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 import { fetchInternalNote } from "@/lib/admin/owner-facts-actions";
 import { ClientDetailShell } from "./ClientDetailShell";
@@ -56,12 +57,38 @@ type StoredContactMethod = "email" | "sms" | "phone" | "whatsapp" | null;
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string; section?: string }>;
+  searchParams: Promise<{ tab?: string; section?: string; person?: string }>;
 };
 
 export default async function ClientDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
-  const { tab: tabParam, section: sectionParam } = await searchParams;
+  const { tab: tabParam, section: sectionParam, person: personParam } = await searchParams;
+
+  // Resolve: [id] may be an entity ID (new) or a contact ID (legacy redirect)
+  const entityInfo = await fetchEntityInfo(id);
+
+  if (!entityInfo) {
+    // Try to treat [id] as a legacy contact ID and redirect to its entity
+    const svc = createServiceClient();
+    const { data: contact } = await (svc as any)
+      .from('contacts')
+      .select('entity_id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (contact?.entity_id) {
+      redirect(`/admin/clients/${contact.entity_id}${tabParam ? `?tab=${tabParam}` : ''}`);
+    }
+    notFound();
+  }
+
+  // Resolve the active contact: prefer ?person= param, else first member
+  const members = await fetchEntityMembers(id);
+  const activeContactId = (personParam && members.find((m) => m.id === personParam))
+    ? personParam
+    : members[0]?.id ?? null;
+
+  if (!activeContactId) notFound();
 
   const tab: TabKey = (KNOWN_TABS as readonly string[]).includes(tabParam ?? "")
     ? (tabParam as TabKey)
@@ -72,7 +99,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     : "personal";
 
   const [client, adminProfiles] = await Promise.all([
-    fetchClientDetail(id),
+    fetchClientDetail(activeContactId),
     fetchAdminProfiles(),
   ]);
   if (!client) notFound();
