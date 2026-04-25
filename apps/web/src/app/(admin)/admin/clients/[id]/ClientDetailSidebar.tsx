@@ -464,6 +464,15 @@ function formatAddressLines(
   return [formatted, ""];
 }
 
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  individual: 'Individual',
+  llc: 'LLC',
+  s_corp: 'S Corp',
+  c_corp: 'C Corp',
+  trust: 'Trust',
+  partnership: 'Partnership',
+};
+
 function AddressField({
   value,
   components,
@@ -1161,6 +1170,45 @@ export function ClientDetailSidebar({
 
   return (
     <aside ref={sidebarRef} className={styles.sidebar}>
+
+      {/* ── Person chips (multi-member only) ─────────────────────────────── */}
+      {members.length > 1 && (
+        <div className={styles.personChipsSection}>
+          {members.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className={`${styles.sidebarChip} ${m.id === activeContactId ? styles.sidebarChipActive : ''}`}
+              onClick={() => {
+                const sectionSuffix = rawSection ? `&section=${rawSection}` : "";
+                router.replace(`?tab=${rawTab}&person=${m.id}${sectionSuffix}`, { scroll: false });
+              }}
+            >
+              {m.avatarUrl ? (
+                <img src={m.avatarUrl} alt={m.fullName} className={styles.sidebarChipAvatar} />
+              ) : (
+                <span className={styles.sidebarChipInitials}>
+                  {(m.firstName ? m.firstName[0] : m.fullName[0] ?? '?').toUpperCase()}
+                </span>
+              )}
+              <span>{m.firstName ?? m.fullName.split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Entity section ────────────────────────────────────────────────── */}
+      <div className={styles.entitySection}>
+        <div className={styles.entitySectionRow}>
+          <span className={styles.entitySectionName}>{entityInfo.name}</span>
+          {entityInfo.type && (
+            <span className={styles.entitySectionBadge}>
+              {ENTITY_TYPE_LABELS[entityInfo.type] ?? entityInfo.type}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className={styles.divider} />
 
       {/* ── Contact ─────────────────────────────────────────────────────── */}
       <SectionHeader label="Contact" />

@@ -14,6 +14,114 @@
   gap: 0;
 }
 
+/* ── Sidebar person chips ───────────────────────────────────────────────── */
+
+.personChipsSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px 14px 8px;
+}
+
+.sidebarChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 4px;
+  border-radius: 20px;
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 100ms ease, border-color 100ms ease, color 100ms ease;
+}
+
+.sidebarChip:hover {
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-primary);
+}
+
+.sidebarChip:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.sidebarChipActive {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+
+.sidebarChipActive:hover {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+
+.sidebarChipAvatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.sidebarChipInitials {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-warm-gray-200);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* ── Entity section ─────────────────────────────────────────────────────── */
+
+.entitySection {
+  padding: 8px 14px 10px;
+}
+
+.entitySectionRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.entitySectionName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entitySectionBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-warm-gray-100);
+  border: 1px solid var(--color-warm-gray-200);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* ── Section header ────────────────────────────────────────────────────── */
 
 .sectionHeader {
@@ -63,6 +171,10 @@
 
 .fieldValueContent:hover {
   background: color-mix(in srgb, var(--color-warm-gray-200) 30%, var(--color-warm-gray-100));
+}
+
+.fieldValueContentUnverified {
+  border-color: color-mix(in srgb, var(--color-star) 60%, transparent);
 }
 
 .fieldValueContent .valueBtn {
