@@ -111,9 +111,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     ? await fetchOwnerDetail(client.entityId)
     : null;
 
+  const meetingOwnerId = client.profileId ?? activeContactId;
   const clientMeetings =
-    client.profileId && tab === "meetings"
-      ? await fetchClientMeetings(client.profileId)
+    tab === "meetings" && meetingOwnerId
+      ? await fetchClientMeetings(meetingOwnerId)
       : [];
 
   const isOverview = tab === "overview";
@@ -231,17 +232,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         return <TasksTab parentType="contact" parentId={activeContactId} />;
 
       case "meetings":
-        if (!client!.profileId) {
-          return (
-            <TabPlaceholder
-              title="Meetings"
-              body="Available once the client begins onboarding."
-            />
-          );
-        }
         return (
           <MeetingsTab
-            ownerId={client!.profileId}
+            ownerId={client!.profileId ?? activeContactId}
             ownerFirstName={client!.fullName.split(" ")[0] ?? client!.fullName}
             ownerEmail={client!.email ?? ""}
             ownerPhone={client!.phone ?? null}
