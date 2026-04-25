@@ -53,7 +53,7 @@ export function ContactForm({ onClose }: { onClose: () => void }) {
           lifecycleStage,
           notes: notes || null,
         });
-        router.push(`/admin/contacts/${result.id}`);
+        router.push(`/admin/clients/${result.entityId}`);
         onClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
