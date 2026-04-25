@@ -217,7 +217,7 @@ export async function fetchClientDetail(contactId: string): Promise<ClientDetail
     addressFormatted: (extras?.address_formatted as string | null) ?? null,
     addressComponents: (extras?.address_components as AddressComponents | null) ?? null,
     social: ((extras?.social as SocialLinks | null) ?? {}) as SocialLinks,
-    preferredContactMethod: (extras?.preferred_contact_method as 'email' | 'phone' | 'text' | null) ?? null,
+    preferredContactMethod: (extras?.preferred_contact_method as 'email' | 'phone' | 'text' | 'whatsapp' | null) ?? null,
     contractStartAt: (extras?.contract_start_at as string | null) ?? null,
     contractEndAt: (extras?.contract_end_at as string | null) ?? null,
     nextFollowUpAt: (extras?.next_follow_up_at as string | null) ?? null,
