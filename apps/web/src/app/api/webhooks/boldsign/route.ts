@@ -1,37 +1,195 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
+import { revalidatePath } from 'next/cache';
+import { createServiceClient } from '@/lib/supabase/service';
+import { ONBOARDING_TASKS, phaseTag } from '@/lib/admin/onboarding-templates';
 
-/**
- * BoldSign webhook handler (stub).
- *
- * BoldSign sends POST requests when a document is:
- * - Sent
- * - Viewed
- * - Signed
- * - Completed
- * - Declined
- * - Expired
- *
- * Once the signed_documents table exists, this handler will:
- * 1. Verify the webhook signature
- * 2. Parse the event payload
- * 3. Update the signed_documents row (status, signed_at, signed_pdf_url)
- * 4. Return 200
- *
- * Until then, acknowledge all requests with 200 so BoldSign
- * does not retry or flag the endpoint as unhealthy.
- */
-export async function POST(request: Request) {
+export const dynamic = 'force-dynamic';
+
+// Only these events trigger database writes
+const HANDLED_EVENTS = new Set(['Completed', 'Declined', 'Expired', 'Revoked', 'Viewed']);
+
+const TERMINAL_STATUSES = ['completed', 'declined', 'expired', 'revoked'];
+
+// BoldSign sends the secret as a plain header value (X-BoldSign-Secret).
+// Use timingSafeEqual to prevent timing attacks.
+function verifySecret(provided: string, expected: string): boolean {
   try {
-    const body = await request.json();
-    console.log("[BoldSign webhook] Received event:", body?.event?.eventType ?? "unknown");
-
-    // TODO: Process the event once PENDING migration runs
-    // - Verify X-BoldSign-Signature header
-    // - Match body.event.document.documentId to signed_documents.boldsign_document_id
-    // - Update status + signed_at + signed_pdf_url
-
-    return NextResponse.json({ received: true });
+    return timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
   } catch {
-    return NextResponse.json({ received: true });
+    return false;
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function seedOnboardingTasksForContact(supabase: any, contactId: string, createdBy: string): Promise<void> {
+  const { data: contact } = await supabase
+    .from('contacts')
+    .select('profile_id')
+    .eq('id', contactId)
+    .maybeSingle();
+
+  if (!contact?.profile_id) return;
+
+  const [{ data: direct }, { data: coOwned }] = await Promise.all([
+    supabase.from('properties').select('id').eq('owner_id', contact.profile_id),
+    supabase.from('property_owners').select('property_id').eq('owner_id', contact.profile_id),
+  ]);
+
+  const propertyIds: string[] = Array.from(new Set([
+    ...(direct ?? []).map((p: { id: string }) => p.id),
+    ...(coOwned ?? []).map((p: { property_id: string }) => p.property_id),
+  ]));
+
+  if (propertyIds.length === 0) return;
+
+  // Skip if tasks already exist (idempotent)
+  const { data: existing } = await supabase
+    .from('tasks')
+    .select('id')
+    .eq('parent_type', 'property')
+    .in('parent_id', propertyIds)
+    .contains('tags', ['onboarding'])
+    .limit(1);
+
+  if ((existing ?? []).length > 0) return;
+
+  const rows = propertyIds.flatMap((propertyId: string) =>
+    ONBOARDING_TASKS.map((task) => ({
+      title: task.title,
+      parent_type: 'property',
+      parent_id: propertyId,
+      created_by: createdBy,
+      tags: ['onboarding', phaseTag(task.phase)],
+      estimated_minutes: task.estimatedMinutes,
+      status: 'todo',
+      task_type: 'todo',
+    })),
+  );
+
+  const { error } = await supabase.from('tasks').insert(rows);
+  if (error) {
+    console.error('[boldsign-webhook] task seeding error:', error.message);
+  }
+}
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const secret = process.env.BOLDSIGN_WEBHOOK_SECRET;
+  const rawBody = await req.text();
+
+  if (secret) {
+    const provided = req.headers.get('x-boldsign-secret') ?? '';
+    if (!provided || !verifySecret(provided, secret)) {
+      console.warn('[boldsign-webhook] invalid secret header');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  } else if (process.env.NODE_ENV !== 'development') {
+    console.error('[boldsign-webhook] BOLDSIGN_WEBHOOK_SECRET not configured');
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const event = payload.event as Record<string, unknown> | undefined;
+  const eventType = event?.eventType as string | undefined;
+  const document = event?.document as Record<string, unknown> | undefined;
+  const documentId = document?.documentId as string | undefined;
+
+  console.log('[boldsign-webhook] received:', eventType ?? 'unknown', documentId ?? 'no-id');
+
+  if (!eventType || !documentId || !HANDLED_EVENTS.has(eventType)) {
+    return NextResponse.json({ ok: true, skipped: eventType ?? 'missing event' });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createServiceClient() as any;
+
+  // Look up the document record
+  const { data: docRow } = await supabase
+    .from('signed_documents')
+    .select('id, user_id, template_name')
+    .eq('boldsign_document_id', documentId)
+    .maybeSingle();
+
+  if (!docRow) {
+    console.warn('[boldsign-webhook] no signed_documents row for:', documentId);
+    return NextResponse.json({ ok: true, skipped: 'document not found' });
+  }
+
+  // Update document status
+  // For Viewed: only write if not already in a terminal state (completed/declined/expired/revoked).
+  // This prevents a late Viewed event from overwriting a final status.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let updateError: any = null;
+  if (eventType === 'Viewed') {
+    const { error } = await supabase
+      .from('signed_documents')
+      .update({ status: 'viewed', updated_at: new Date().toISOString() })
+      .eq('id', docRow.id)
+      .not('status', 'in', `(${TERMINAL_STATUSES.join(',')})`);
+    updateError = error;
+  } else {
+    const status = eventType === 'Completed' ? 'completed' : eventType.toLowerCase();
+    const { error } = await supabase
+      .from('signed_documents')
+      .update({
+        status,
+        ...(eventType === 'Completed' ? { signed_at: new Date().toISOString() } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', docRow.id);
+    updateError = error;
+  }
+
+  if (updateError) {
+    console.error('[boldsign-webhook] document update error:', updateError.message);
+    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+  }
+
+  // Completing the host rental agreement triggers the onboarding flow
+  if (eventType === 'Completed' && docRow.template_name === 'hostRentalAgreement') {
+    const { data: contact } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('profile_id', docRow.user_id)
+      .maybeSingle();
+
+    if (contact) {
+      // Idempotent: .neq prevents downgrading from a later stage
+      const { error: stageError } = await supabase
+        .from('contacts')
+        .update({
+          lifecycle_stage: 'onboarding',
+          stage_changed_at: new Date().toISOString(),
+        })
+        .eq('id', contact.id)
+        .neq('lifecycle_stage', 'onboarding');
+
+      if (stageError) {
+        console.error('[boldsign-webhook] stage update error:', stageError.message);
+      } else {
+        const { data: adminProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'admin')
+          .limit(1)
+          .maybeSingle();
+
+        if (adminProfile) {
+          await seedOnboardingTasksForContact(supabase, contact.id, adminProfile.id);
+        }
+
+        revalidatePath('/admin/contacts');
+        revalidatePath('/admin/clients');
+        console.log('[boldsign-webhook] contact moved to onboarding:', contact.id);
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true });
 }
