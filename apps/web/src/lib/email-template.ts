@@ -100,6 +100,104 @@ export function buildBroadcastEmail(args: {
   });
 }
 
+const ADMIN_URL = "https://www.theparcelco.com/admin";
+
+export function buildFollowUpDigestEmail(args: {
+  contacts: Array<{
+    id: string;
+    fullName: string;
+    email: string | null;
+    followUpAt: string;
+    daysOverdue: number;
+  }>;
+}) {
+  const count = args.contacts.length;
+  const subject = `Follow-up reminders — ${count} contact${count === 1 ? "" : "s"} need attention`;
+
+  const rows = args.contacts
+    .map((c) => {
+      const isOverdue = c.daysOverdue > 0;
+      const dateLabel = isOverdue
+        ? `${c.daysOverdue}d overdue`
+        : "Due today";
+      const badgeBg = isOverdue ? "#fef2f2" : "#fff7ed";
+      const badgeColor = isOverdue ? "#b91c1c" : "#92600a";
+      const badgeBorder = isOverdue ? "#fecaca" : "#fde68a";
+      const detailUrl = `${ADMIN_URL}/clients/${c.id}`;
+
+      return `
+      <tr style="border-bottom: 1px solid #f0eeec;">
+        <td style="padding: 12px 16px; vertical-align: middle;">
+          <a href="${detailUrl}" style="font-size: 14px; font-weight: 600; color: ${BRAND_DARK}; text-decoration: none;">${escapeHtml(c.fullName)}</a>
+          ${c.email ? `<div style="font-size: 12px; color: ${TEXT_SECONDARY}; margin-top: 2px;">${escapeHtml(c.email)}</div>` : ""}
+        </td>
+        <td style="padding: 12px 16px; vertical-align: middle; font-size: 12px; color: ${TEXT_SECONDARY}; white-space: nowrap;">
+          ${escapeHtml(new Date(c.followUpAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }))}
+        </td>
+        <td style="padding: 12px 16px; vertical-align: middle;">
+          <span style="display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder};">${dateLabel}</span>
+        </td>
+        <td style="padding: 12px 16px; vertical-align: middle; text-align: right;">
+          <a href="${detailUrl}" style="font-size: 12px; font-weight: 600; color: ${BRAND_DARK}; text-decoration: none;">View &rarr;</a>
+        </td>
+      </tr>`;
+    })
+    .join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: ${BG_LIGHT}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <div style="padding: 20px 0; background-color: ${BG_LIGHT};">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+
+      <div style="padding: 28px 40px 20px; border-bottom: 1px solid #f0eeec;">
+        <a href="${ADMIN_URL}" style="font-size: 20px; font-weight: 700; color: ${TEXT_PRIMARY}; text-decoration: none; letter-spacing: -0.3px;">
+          Parcel<span style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: ${BRAND_BLUE}; margin-left: 8px;">Admin</span>
+        </a>
+      </div>
+
+      <div style="padding: 28px 40px 8px;">
+        <h2 style="margin: 0 0 6px; font-size: 18px; font-weight: 700; color: ${TEXT_PRIMARY}; letter-spacing: -0.3px;">Follow-up reminders</h2>
+        <p style="margin: 0 0 20px; font-size: 14px; color: ${TEXT_SECONDARY};">${count} contact${count === 1 ? "" : "s"} ${count === 1 ? "needs" : "need"} follow-up today.</p>
+      </div>
+
+      <div style="padding: 0 40px;">
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #f0eeec; border-radius: 8px; overflow: hidden;">
+          <thead>
+            <tr style="background: #fafafa; border-bottom: 1px solid #f0eeec;">
+              <th style="padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${TEXT_SECONDARY};">Contact</th>
+              <th style="padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${TEXT_SECONDARY};">Follow-up date</th>
+              <th style="padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${TEXT_SECONDARY};">Status</th>
+              <th style="padding: 10px 16px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="padding: 24px 40px; text-align: center;">
+        <a href="${ADMIN_URL}/clients" style="display: inline-block; padding: 11px 24px; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600;">Open admin dashboard</a>
+      </div>
+
+      <div style="padding: 20px 40px; border-top: 1px solid #f0eeec; text-align: center;">
+        <p style="font-size: 12px; color: ${TEXT_SECONDARY}; margin: 0;">Daily follow-up digest from <a href="${ADMIN_URL}" style="color: ${BRAND_DARK}; text-decoration: none;">Parcel</a>.</p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return { subject, html };
+}
+
 function escapeHtml(str: string) {
   return str
     .replace(/&/g, "&amp;")
