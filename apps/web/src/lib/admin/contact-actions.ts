@@ -20,8 +20,18 @@ export type CreateContactInput = {
 
 export async function createContact(
   input: CreateContactInput,
-): Promise<{ id: string }> {
+): Promise<{ id: string; entityId: string }> {
   const { supabase, user } = await requireAdminUser();
+
+  const entityName = input.companyName?.trim() || input.fullName.trim();
+
+  const { data: entity, error: entityError } = await supabase
+    .from('entities')
+    .insert({ name: entityName, type: 'individual' })
+    .select('id')
+    .single();
+
+  if (entityError) throw entityError;
 
   const metadata = input.notes?.trim()
     ? { notes: input.notes.trim() }
@@ -39,13 +49,14 @@ export async function createContact(
       lifecycle_stage: (input.lifecycleStage ?? 'lead_new') as DbLifecycleStage,
       metadata,
       assigned_to: user.id,
-    })
+      entity_id: entity.id,
+    } as any)
     .select('id')
     .single();
 
   if (error) throw error;
   revalidatePath('/admin/contacts');
-  return { id: data.id as string };
+  return { id: data.id as string, entityId: entity.id as string };
 }
 
 export async function updateContactStage(
