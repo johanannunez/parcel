@@ -666,32 +666,6 @@
   color: var(--color-text-tertiary);
 }
 
-/* ── Newsletter toggle ─────────────────────────────────────────────────── */
-
-.newsletterToggle {
-  padding: 3px 9px;
-  border-radius: 20px;
-  border: 1px solid var(--color-warm-gray-200);
-  background: none;
-  font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: border-color 100ms ease, background 100ms ease, color 100ms ease;
-}
-
-.newsletterToggle:hover {
-  border-color: var(--color-warm-gray-400);
-  color: var(--color-text-primary);
-}
-
-.newsletterToggleOn {
-  border-color: var(--color-success);
-  background: color-mix(in srgb, var(--color-success) 8%, transparent);
-  color: var(--color-success);
-}
-
 /* ── Copy button ───────────────────────────────────────────────────────── */
 
 .copyBtn {
