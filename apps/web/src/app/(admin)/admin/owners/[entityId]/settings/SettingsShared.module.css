@@ -277,3 +277,115 @@
 }
 .kbdRow { display: inline-flex; gap: 4px; align-items: center; }
 .kbdPlus { color: #8A9AAB; font-size: 11px; }
+
+/* ── People section utilities ────────────────────────────────────────────── */
+
+.addLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-brand);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 100ms ease;
+}
+
+.addLink:hover {
+  opacity: 0.75;
+}
+
+.addLink:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.dangerLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: color 100ms ease, background 100ms ease, border-color 100ms ease;
+}
+
+.dangerLink:hover {
+  color: var(--color-danger, #e53e3e);
+  background: color-mix(in srgb, var(--color-danger, #e53e3e) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger, #e53e3e) 20%, transparent);
+}
+
+.dangerLink:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.primaryBtn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--color-brand);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 100ms ease;
+}
+
+.primaryBtn:hover {
+  opacity: 0.88;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.primaryBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.secondaryBtn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+
+.secondaryBtn:hover {
+  background: var(--color-warm-gray-50);
+}
+
+.secondaryBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.errorMsg {
+  font-size: 12.5px;
+  color: var(--color-danger, #e53e3e);
+  margin: 0;
+}
+
+.metaValue {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}

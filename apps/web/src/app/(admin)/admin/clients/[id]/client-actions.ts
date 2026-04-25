@@ -282,3 +282,93 @@ export async function updateEntityFields(
   revalidatePath(`/admin/clients/${entityId}`);
   revalidatePath("/admin/clients");
 }
+
+// ---------------------------------------------------------------------------
+// Add person to entity
+// ---------------------------------------------------------------------------
+
+export async function addPersonToEntity(
+  entityId: string,
+  input: { firstName: string; lastName: string; email?: string | null; phone?: string | null }
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  "use server";
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Unauthorized" };
+
+  const fullName = `${input.firstName.trim()} ${input.lastName.trim()}`.trim();
+
+  const { data, error } = await (supabase as any)
+    .from("contacts")
+    .insert({
+      full_name: fullName,
+      first_name: input.firstName.trim(),
+      last_name: input.lastName.trim(),
+      email: input.email ?? null,
+      phone: input.phone ?? null,
+      entity_id: entityId,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[addPersonToEntity]", error.message);
+    return { ok: false, error: "Failed to add person." };
+  }
+
+  revalidatePath("/admin/clients/[id]", "page");
+  return { ok: true, id: data.id as string };
+}
+
+// ---------------------------------------------------------------------------
+// Remove person from entity
+// ---------------------------------------------------------------------------
+
+export async function removePersonFromEntity(
+  contactId: string,
+  entityId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  "use server";
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Unauthorized" };
+
+  const { count } = await (supabase as any)
+    .from("contacts")
+    .select("id", { count: "exact", head: true })
+    .eq("entity_id", entityId);
+
+  if ((count ?? 0) <= 1) {
+    return { ok: false, error: "Cannot remove the only person in an entity." };
+  }
+
+  const { data: contact } = await (supabase as any)
+    .from("contacts")
+    .select("full_name")
+    .eq("id", contactId)
+    .maybeSingle();
+
+  const { data: newEntity, error: entityError } = await (supabase as any)
+    .from("entities")
+    .insert({ name: contact?.full_name ?? "Unknown", type: "individual" })
+    .select("id")
+    .single();
+
+  if (entityError) {
+    console.error("[removePersonFromEntity] entity error:", entityError.message);
+    return { ok: false, error: "Failed to create new entity for removed person." };
+  }
+
+  const { error: updateError } = await (supabase as any)
+    .from("contacts")
+    .update({ entity_id: newEntity.id })
+    .eq("id", contactId);
+
+  if (updateError) {
+    console.error("[removePersonFromEntity] update error:", updateError.message);
+    return { ok: false, error: "Failed to unlink person from entity." };
+  }
+
+  revalidatePath("/admin/clients/[id]", "page");
+  return { ok: true };
+}
