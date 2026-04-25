@@ -6,6 +6,7 @@ import {
   LinkSimple,
   PlugsConnected,
   Eye,
+  CalendarBlank,
 } from "@phosphor-icons/react";
 import s from "./PersonalInfoSection.module.css";
 import x from "./SettingsShared.module.css";
@@ -117,6 +118,32 @@ export function DataPrivacySection({ connections }: Props) {
           <button type="button" className={s.btnSecondary}>
             Browse integrations
           </button>
+        </div>
+      </section>
+
+      {/* Admin calendar integration */}
+      <section className={s.card}>
+        <div className={s.cardHeader}>
+          <span className={s.cardHeaderTitle}>Admin calendar</span>
+        </div>
+        <div className={s.cardBody}>
+          <div className={s.row}>
+            <div className={s.labelCell}>
+              <label className={s.label}>Google Calendar</label>
+              <span className={s.labelHint}>
+                Meetings you create in Parcel will sync to your Google Calendar and include a Meet link for video calls.
+              </span>
+            </div>
+            <div className={s.fieldCell}>
+              <a href="/api/auth/google-calendar" className={s.btnSecondary} style={{ display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none" }}>
+                <CalendarBlank size={14} weight="duotone" />
+                Connect Google Calendar
+              </a>
+              <p className={s.fieldHint}>
+                You will be redirected to Google to authorize calendar access.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

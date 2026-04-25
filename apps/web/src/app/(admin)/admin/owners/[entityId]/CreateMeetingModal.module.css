@@ -1,0 +1,319 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--color-warm-gray-100);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 8px;
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+  padding: 0;
+}
+
+.closeBtn:hover {
+  background: var(--color-warm-gray-100);
+  color: var(--color-text-primary);
+}
+
+/* ── Meeting type picker ─────────────────────────────────────────── */
+
+.typeRow {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-warm-gray-100);
+  flex-shrink: 0;
+}
+
+.typeBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-warm-gray-200);
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.typeBtn:hover {
+  border-color: var(--color-warm-gray-300, #c9c4be);
+  background: var(--color-warm-gray-100);
+}
+
+.typeBtnActive {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  color: var(--color-brand);
+}
+
+.typeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.typeLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ── Body ──────────────────────────────────────────────────────── */
+
+.body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-warm-gray-200);
+  background: var(--color-warm-gray-50);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.12s;
+}
+
+.input:focus {
+  border-color: var(--color-brand);
+  background: #ffffff;
+}
+
+.textarea {
+  composes: input;
+  resize: vertical;
+  min-height: 68px;
+  font-family: inherit;
+}
+
+.hint {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.row3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+/* ── Attendees ──────────────────────────────────────────────────── */
+
+.attendeeList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.attendeeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 20px;
+  border: 1px solid var(--color-warm-gray-200);
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.attendeeChip:hover {
+  border-color: var(--color-warm-gray-300, #c9c4be);
+  background: var(--color-warm-gray-100);
+}
+
+.attendeeChipActive {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  color: var(--color-brand);
+}
+
+.attendeeAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-brand-light), var(--color-brand));
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.attendeeAvatarActive {
+  background: var(--color-brand);
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Visibility ─────────────────────────────────────────────────── */
+
+.visRow {
+  display: flex;
+  gap: 8px;
+}
+
+.visBtn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--color-warm-gray-200);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.visBtnActive {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: #ffffff;
+}
+
+/* ── Error ─────────────────────────────────────────────────────── */
+
+.errorRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-error);
+  font-size: 12px;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--color-warm-gray-100);
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cancelBtn:hover {
+  background: var(--color-warm-gray-50);
+}
+
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--color-brand);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.createBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.createBtn:not(:disabled):hover {
+  opacity: 0.9;
+}

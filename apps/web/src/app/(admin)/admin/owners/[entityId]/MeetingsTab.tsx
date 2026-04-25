@@ -3,6 +3,8 @@
 import { useState, useTransition, useRef } from "react";
 import {
   VideoCamera,
+  Phone,
+  MapPin,
   Plus,
   CalendarBlank,
   Clock,
@@ -20,14 +22,18 @@ import {
   CaretDown,
   Buildings,
   Warning,
+  ArrowUpRight,
 } from "@phosphor-icons/react";
+import type { AdminProfile } from "@/app/(admin)/admin/clients/[id]/client-actions";
 import {
-  createOwnerMeeting,
   updateOwnerMeeting,
   deleteOwnerMeeting,
   generateMeetingSummary,
   toggleActionItem,
+  pushMeetingTasksToContact,
 } from "./meetings-actions";
+import { MeetingsMiniCal } from "./MeetingsMiniCal";
+import { CreateMeetingModal } from "./CreateMeetingModal";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,6 +61,9 @@ type Meeting = {
   property_id: string | null;
   propertyLabel: string | null;
   created_at: string;
+  meeting_type: "phone_call" | "video_call" | "in_person";
+  calendar_event_id: string | null;
+  attendee_ids: string[] | null;
 };
 
 type Property = { id: string; label: string };
@@ -65,33 +74,14 @@ type MeetingsTabProps = {
   ownerEmail: string;
   meetings: Meeting[];
   properties: Property[];
+  contactId?: string;
+  adminProfiles?: AdminProfile[];
 };
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildGCalLink(
-  title: string,
-  date: string,
-  time: string,
-  durationMins: number,
-  ownerEmail: string,
-): string {
-  const start =
-    date && time ? `${date.replace(/-/g, "")}T${time.replace(/:/g, "")}00` : "";
-  const endDate = new Date(`${date}T${time}`);
-  endDate.setMinutes(endDate.getMinutes() + durationMins);
-  const end = endDate.toISOString().replace(/[-:]/g, "").split(".")[0];
-  const params = new URLSearchParams({
-    action: "TEMPLATE",
-    text: title || "Meeting",
-    ...(start && { dates: `${start}/${end}` }),
-    add: ownerEmail,
-    details: "Parcel check-in meeting",
-  });
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
 
 function formatDateTime(iso: string | null): string {
   if (!iso) return "No date set";
@@ -115,362 +105,9 @@ function durationLabel(mins: number | null): string {
   return m ? `${h}h ${m}m` : `${h}h`;
 }
 
-const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120] as const;
-
 // ---------------------------------------------------------------------------
-// Create Meeting Form
+// Create Meeting Form — removed, replaced by CreateMeetingModal
 // ---------------------------------------------------------------------------
-
-type CreateFormProps = {
-  ownerId: string;
-  ownerEmail: string;
-  properties: Property[];
-  onCancel: () => void;
-  onCreated: (meeting: Meeting) => void;
-};
-
-function CreateMeetingForm({
-  ownerId,
-  ownerEmail,
-  properties,
-  onCancel,
-  onCreated,
-}: CreateFormProps) {
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [duration, setDuration] = useState<number | "custom">(30);
-  const [customDuration, setCustomDuration] = useState("");
-  const [propertyId, setPropertyId] = useState("");
-  const [meetLink, setMeetLink] = useState("");
-  const [notes, setNotes] = useState("");
-  const [visibility, setVisibility] = useState<"shared" | "private">("shared");
-
-  const durationMins =
-    duration === "custom"
-      ? parseInt(customDuration, 10) || null
-      : (duration as number);
-
-  const gCalLink =
-    title && date && time && durationMins
-      ? buildGCalLink(title, date, time, durationMins, ownerEmail)
-      : null;
-
-  function handleSubmit() {
-    if (!title.trim()) {
-      setError("Title is required.");
-      return;
-    }
-    setError(null);
-
-    const scheduledAt =
-      date && time ? new Date(`${date}T${time}`).toISOString() : null;
-
-    startTransition(async () => {
-      const result = await createOwnerMeeting(ownerId, {
-        title: title.trim(),
-        scheduledAt,
-        durationMinutes: durationMins,
-        meetLink: meetLink.trim() || null,
-        propertyId: propertyId || null,
-        notes: notes.trim() || null,
-        visibility,
-      });
-
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-
-      onCreated({
-        id: result.id ?? crypto.randomUUID(),
-        title: title.trim(),
-        scheduled_at: scheduledAt,
-        duration_minutes: durationMins,
-        meet_link: meetLink.trim() || null,
-        status: "scheduled",
-        transcript: null,
-        ai_summary: null,
-        action_items: [],
-        notes: notes.trim() || null,
-        visibility,
-        property_id: propertyId || null,
-        propertyLabel:
-          properties.find((p) => p.id === propertyId)?.label ?? null,
-        created_at: new Date().toISOString(),
-      });
-    });
-  }
-
-  return (
-    <div
-      style={{
-        background: "var(--color-white)",
-        border: "1.5px solid var(--color-brand)",
-        borderRadius: "16px",
-        padding: "20px",
-        marginBottom: "16px",
-        boxShadow:
-          "0 4px 24px rgba(27, 119, 190, 0.08), 0 1px 4px rgba(0,0,0,0.04)",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "16px",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "var(--color-brand)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          New meeting
-        </span>
-        <button
-          onClick={onCancel}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--color-text-tertiary)",
-            padding: "2px",
-            display: "flex",
-            alignItems: "center",
-          }}
-          aria-label="Cancel"
-        >
-          <X size={16} />
-        </button>
-      </div>
-
-      {/* Title */}
-      <div style={{ marginBottom: "12px" }}>
-        <label style={labelStyle}>Title *</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Q2 Owner Check-in"
-          style={inputStyle}
-          autoFocus
-        />
-      </div>
-
-      {/* Date + Time row */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Time</label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Duration</label>
-          <select
-            value={duration}
-            onChange={(e) => {
-              const v = e.target.value;
-              setDuration(v === "custom" ? "custom" : parseInt(v, 10));
-            }}
-            style={inputStyle}
-          >
-            {DURATION_OPTIONS.map((d) => (
-              <option key={d} value={d}>
-                {durationLabel(d)}
-              </option>
-            ))}
-            <option value="custom">Custom</option>
-          </select>
-        </div>
-      </div>
-
-      {duration === "custom" && (
-        <div style={{ marginBottom: "12px" }}>
-          <label style={labelStyle}>Custom duration (minutes)</label>
-          <input
-            type="number"
-            min="1"
-            value={customDuration}
-            onChange={(e) => setCustomDuration(e.target.value)}
-            placeholder="e.g. 75"
-            style={inputStyle}
-          />
-        </div>
-      )}
-
-      {/* Property */}
-      <div style={{ marginBottom: "12px" }}>
-        <label style={labelStyle}>Property</label>
-        <select
-          value={propertyId}
-          onChange={(e) => setPropertyId(e.target.value)}
-          style={inputStyle}
-        >
-          <option value="">No specific property</option>
-          {properties.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Meet link */}
-      <div style={{ marginBottom: "6px" }}>
-        <label style={labelStyle}>Google Meet link</label>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <input
-            type="url"
-            value={meetLink}
-            onChange={(e) => setMeetLink(e.target.value)}
-            placeholder="https://meet.google.com/..."
-            style={{ ...inputStyle, flex: 1 }}
-          />
-          {gCalLink && (
-            <a
-              href={gCalLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                padding: "6px 10px",
-                borderRadius: "8px",
-                background: "var(--color-brand)",
-                color: "#fff",
-                fontSize: "11px",
-                fontWeight: 600,
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-            >
-              Open Google Calendar
-              <ArrowSquareOut size={12} />
-            </a>
-          )}
-        </div>
-        <p
-          style={{
-            fontSize: "11px",
-            color: "var(--color-text-tertiary)",
-            marginTop: "4px",
-          }}
-        >
-          Create the event in Google Calendar, then paste the Meet link here.
-        </p>
-      </div>
-
-      {/* Notes */}
-      <div style={{ marginBottom: "12px" }}>
-        <label style={labelStyle}>Notes</label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Agenda, topics, context..."
-          rows={3}
-          style={{ ...inputStyle, resize: "vertical" }}
-        />
-      </div>
-
-      {/* Visibility toggle */}
-      <div style={{ marginBottom: "16px" }}>
-        <label style={labelStyle}>Visibility</label>
-        <div style={{ display: "flex", gap: "8px" }}>
-          {(["shared", "private"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setVisibility(v)}
-              style={{
-                padding: "5px 12px",
-                borderRadius: "20px",
-                border: `1.5px solid ${
-                  visibility === v
-                    ? "var(--color-brand)"
-                    : "var(--color-warm-gray-200)"
-                }`,
-                background:
-                  visibility === v ? "var(--color-brand)" : "transparent",
-                color: visibility === v ? "#fff" : "var(--color-text-secondary)",
-                fontSize: "11px",
-                fontWeight: 600,
-                cursor: "pointer",
-                textTransform: "capitalize",
-                transition: "background 0.15s, border-color 0.15s, color 0.15s",
-              }}
-            >
-              {v === "shared" ? "Shared with owner" : "Private (admin only)"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            marginBottom: "12px",
-            color: "var(--color-error)",
-            fontSize: "12px",
-          }}
-        >
-          <Warning size={14} weight="fill" />
-          {error}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div style={{ display: "flex", gap: "8px" }}>
-        <button
-          onClick={handleSubmit}
-          disabled={isPending}
-          style={{
-            ...primaryButtonStyle,
-            opacity: isPending ? 0.7 : 1,
-            cursor: isPending ? "not-allowed" : "pointer",
-          }}
-        >
-          {isPending ? (
-            <SpinnerIcon />
-          ) : (
-            <Check size={14} weight="bold" />
-          )}
-          {isPending ? "Creating..." : "Create meeting"}
-        </button>
-        <button onClick={onCancel} style={ghostButtonStyle}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Meeting Card
@@ -481,28 +118,32 @@ type MeetingCardProps = {
   ownerId: string;
   ownerEmail: string;
   properties: Property[];
+  contactId?: string;
   muted?: boolean;
   onUpdated: (updated: Partial<Meeting> & { id: string }) => void;
   onDeleted: (id: string) => void;
 };
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 function MeetingCard({
   meeting,
   ownerId,
-  ownerEmail,
-  properties,
+  ownerEmail: _ownerEmail,
+  properties: _properties,
+  contactId,
   muted = false,
   onUpdated,
   onDeleted,
-}: MeetingCardProps) { /* eslint-enable @typescript-eslint/no-unused-vars */
+}: MeetingCardProps) {
   const [isPending, startTransition] = useTransition();
   const [actionPending, setActionPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deleteState, setDeleteState] = useState<"idle" | "confirming">("idle");
 
   const [notesOpen, setNotesOpen] = useState(false);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(!!meeting.ai_summary);
+  const [tasksPushed, setTasksPushed] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(meeting.title);
@@ -578,7 +219,10 @@ function MeetingCard({
         status: newStatus as "scheduled" | "completed",
       });
       if (!res.ok) setError(res.message);
-      else onUpdated({ id: meeting.id, status: newStatus });
+      else {
+        onUpdated({ id: meeting.id, status: newStatus });
+        if (newStatus === "completed") setSummaryOpen(true);
+      }
     });
   }
 
@@ -595,11 +239,20 @@ function MeetingCard({
   }
 
   function handleDelete() {
-    if (!confirm(`Delete "${meeting.title}"? This cannot be undone.`)) return;
+    if (deleteState === "idle") { setDeleteState("confirming"); return; }
     doAction("delete", async () => {
       const res = await deleteOwnerMeeting(meeting.id, ownerId);
-      if (!res.ok) setError(res.message);
+      if (!res.ok) { setError(res.message); setDeleteState("idle"); }
       else onDeleted(meeting.id);
+    });
+  }
+
+  function handlePushTasks() {
+    if (!contactId) return;
+    doAction("push", async () => {
+      const res = await pushMeetingTasksToContact(meeting.id, ownerId, contactId);
+      if (!res.ok) setPushError(res.message);
+      else setTasksPushed(true);
     });
   }
 
@@ -691,14 +344,20 @@ function MeetingCard({
             width: 36,
             height: 36,
             borderRadius: "10px",
-            background: "var(--color-brand)",
+            background: muted ? "var(--color-warm-gray-200)" : "var(--color-brand)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
           }}
         >
-          <VideoCamera size={17} color="#fff" weight="fill" />
+          {meeting.meeting_type === "phone_call" ? (
+            <Phone size={17} color="#fff" weight="fill" />
+          ) : meeting.meeting_type === "in_person" ? (
+            <MapPin size={17} color="#fff" weight="fill" />
+          ) : (
+            <VideoCamera size={17} color="#fff" weight="fill" />
+          )}
         </div>
 
         {/* Title + meta */}
@@ -903,18 +562,38 @@ function MeetingCard({
           </button>
 
           {/* Delete */}
-          <button
-            onClick={handleDelete}
-            disabled={isPending}
-            title="Delete meeting"
-            style={{ ...iconButtonStyle, color: "var(--color-error)" }}
-          >
-            {isLoading("delete") ? (
-              <SpinnerIcon size={14} />
-            ) : (
+          {deleteState === "confirming" ? (
+            <>
+              <button
+                onClick={handleDelete}
+                disabled={isPending}
+                style={{
+                  ...ghostButtonStyle,
+                  fontSize: "10px",
+                  padding: "3px 8px",
+                  color: "var(--color-error)",
+                  borderColor: "var(--color-error)",
+                }}
+              >
+                {isLoading("delete") ? <SpinnerIcon size={10} /> : "Delete"}
+              </button>
+              <button
+                onClick={() => setDeleteState("idle")}
+                style={{ ...iconButtonStyle }}
+              >
+                <X size={14} />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleDelete}
+              disabled={isPending}
+              title="Delete meeting"
+              style={{ ...iconButtonStyle, color: "var(--color-error)" }}
+            >
               <Trash size={16} />
-            )}
-          </button>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1172,11 +851,7 @@ function MeetingCard({
                               : "var(--color-warm-gray-400)",
                             flexShrink: 0,
                           }}
-                          aria-label={
-                            item.completed
-                              ? "Mark incomplete"
-                              : "Mark complete"
-                          }
+                          aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
                         >
                           {isLoading(`action-${item.id}`) ? (
                             <SpinnerIcon size={14} />
@@ -1192,26 +867,82 @@ function MeetingCard({
                             color: item.completed
                               ? "var(--color-text-tertiary)"
                               : "var(--color-text-primary)",
-                            textDecoration: item.completed
-                              ? "line-through"
-                              : "none",
+                            textDecoration: item.completed ? "line-through" : "none",
                             flex: 1,
                           }}
                         >
                           {item.text}
                         </span>
+                        {(item as any).pushed && (
+                          <span style={{ fontSize: "9px", color: "var(--color-success)", fontWeight: 600 }}>
+                            Added
+                          </span>
+                        )}
                         {item.assignedTo && (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              color: "var(--color-text-tertiary)",
-                            }}
-                          >
+                          <span style={{ fontSize: "10px", color: "var(--color-text-tertiary)" }}>
                             {item.assignedTo}
                           </span>
                         )}
                       </div>
                     ))}
+                  </div>
+
+                  {/* Recap action row */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
+                    {contactId && !tasksPushed && (
+                      <button
+                        onClick={handlePushTasks}
+                        disabled={isPending}
+                        style={{
+                          ...ghostButtonStyle,
+                          fontSize: "11px",
+                          padding: "5px 12px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          opacity: isPending && actionPending === "push" ? 0.6 : 1,
+                        }}
+                      >
+                        {isLoading("push") ? <SpinnerIcon size={11} /> : <ArrowUpRight size={12} weight="bold" />}
+                        Push all to Tasks
+                      </button>
+                    )}
+                    {tasksPushed && (
+                      <span style={{ fontSize: "11px", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "4px", fontWeight: 600 }}>
+                        <Check size={12} weight="bold" />
+                        Tasks added to contact
+                      </span>
+                    )}
+                    {pushError && (
+                      <span style={{ fontSize: "11px", color: "var(--color-error)" }}>{pushError}</span>
+                    )}
+                    {meeting.visibility !== "shared" && (
+                      <button
+                        onClick={handleVisibilityToggle}
+                        disabled={isPending}
+                        style={{
+                          ...ghostButtonStyle,
+                          fontSize: "11px",
+                          padding: "5px 12px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                      >
+                        <Eye size={12} />
+                        Share recap with owner
+                      </button>
+                    )}
+                    {meeting.visibility === "shared" && (
+                      <span style={{ fontSize: "11px", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "4px", fontWeight: 600 }}>
+                        <Eye size={12} weight="fill" />
+                        Shared with owner
+                      </span>
+                    )}
+                    <span style={{ fontSize: "10px", color: "var(--color-text-tertiary)", marginLeft: "auto", display: "flex", alignItems: "center", gap: "3px" }}>
+                      <Sparkle size={10} weight="fill" />
+                      Intelligence updated
+                    </span>
                   </div>
                 </div>
               )}
@@ -1567,18 +1298,30 @@ export function MeetingsTab({
   ownerEmail,
   meetings: initialMeetings,
   properties,
+  contactId,
+  adminProfiles = [],
 }: MeetingsTabProps) {
   const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const upcoming = meetings.filter((m) => m.status === "scheduled");
-  const past = meetings.filter(
+  const filtered = selectedDate
+    ? meetings.filter((m) => {
+        if (!m.scheduled_at) return false;
+        const d = new Date(m.scheduled_at);
+        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        return iso === selectedDate;
+      })
+    : meetings;
+
+  const upcoming = filtered.filter((m) => m.status === "scheduled");
+  const past = filtered.filter(
     (m) => m.status === "completed" || m.status === "cancelled",
   );
 
   function handleCreated(meeting: Meeting) {
     setMeetings((prev) => [meeting, ...prev]);
-    setShowCreateForm(false);
+    setShowModal(false);
   }
 
   function handleUpdated(updated: Partial<Meeting> & { id: string }) {
@@ -1591,103 +1334,115 @@ export function MeetingsTab({
     setMeetings((prev) => prev.filter((m) => m.id !== id));
   }
 
-  const isEmpty = meetings.length === 0 && !showCreateForm;
+  const isEmpty = meetings.length === 0;
 
   return (
-    <div style={{ maxWidth: "760px" }}>
+    <div style={{ maxWidth: "900px" }}>
       {/* Top bar */}
-      {!isEmpty && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "20px",
-          }}
-        >
-          <div />
-          <button
-            onClick={() => setShowCreateForm((p) => !p)}
-            style={primaryButtonStyle}
-          >
-            {showCreateForm ? (
-              <>
-                <X size={13} weight="bold" />
-                Cancel
-              </>
-            ) : (
-              <>
-                <Plus size={13} weight="bold" />
-                Create meeting
-              </>
-            )}
-          </button>
-        </div>
-      )}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          marginBottom: "16px",
+        }}
+      >
+        <button onClick={() => setShowModal(true)} style={primaryButtonStyle}>
+          <Plus size={13} weight="bold" />
+          New meeting
+        </button>
+      </div>
 
-      {/* Create form (inline at top) */}
-      {showCreateForm && (
-        <CreateMeetingForm
+      {/* Modal */}
+      {showModal && (
+        <CreateMeetingModal
           ownerId={ownerId}
+          ownerFirstName={ownerFirstName}
           ownerEmail={ownerEmail}
           properties={properties}
-          onCancel={() => setShowCreateForm(false)}
+          adminProfiles={adminProfiles}
+          onClose={() => setShowModal(false)}
           onCreated={handleCreated}
         />
       )}
 
       {/* Empty state */}
-      {isEmpty && (
+      {isEmpty && !showModal && (
         <EmptyState
           ownerFirstName={ownerFirstName}
-          onCreateClick={() => setShowCreateForm(true)}
+          onCreateClick={() => setShowModal(true)}
         />
       )}
 
-      {/* Upcoming section */}
-      {upcoming.length > 0 && (
-        <div style={{ marginBottom: "28px" }}>
-          <SectionHeader
-            label="Upcoming"
-            count={upcoming.length}
-            accent="#1B77BE"
-          />
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {upcoming.map((m) => (
-              <MeetingCard
-                key={m.id}
-                meeting={m}
-                ownerId={ownerId}
-                ownerEmail={ownerEmail}
-                properties={properties}
-                onUpdated={handleUpdated}
-                onDeleted={handleDeleted}
-              />
-            ))}
+      {/* Two-column layout */}
+      {!isEmpty && (
+        <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+          {/* Left: mini calendar */}
+          <div style={{ flexShrink: 0, position: "sticky", top: "20px" }}>
+            <MeetingsMiniCal
+              meetings={meetings}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+            />
           </div>
-        </div>
-      )}
 
-      {/* Past section */}
-      {past.length > 0 && (
-        <div>
-          <SectionHeader
-            label="Past meetings"
-            count={past.length}
-          />
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {past.map((m) => (
-              <MeetingCard
-                key={m.id}
-                meeting={m}
-                ownerId={ownerId}
-                ownerEmail={ownerEmail}
-                properties={properties}
-                muted
-                onUpdated={handleUpdated}
-                onDeleted={handleDeleted}
-              />
-            ))}
+          {/* Right: meeting list */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {selectedDate && filtered.length === 0 && (
+              <div
+                style={{
+                  padding: "20px",
+                  textAlign: "center",
+                  color: "var(--color-text-tertiary)",
+                  fontSize: "12px",
+                }}
+              >
+                No meetings on this date.
+              </div>
+            )}
+
+            {/* Upcoming section */}
+            {upcoming.length > 0 && (
+              <div style={{ marginBottom: "28px" }}>
+                <SectionHeader label="Upcoming" count={upcoming.length} accent="#1B77BE" />
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {upcoming.map((m) => (
+                    <MeetingCard
+                      key={m.id}
+                      meeting={m}
+                      ownerId={ownerId}
+                      ownerEmail={ownerEmail}
+                      properties={properties}
+                      contactId={contactId}
+                      onUpdated={handleUpdated}
+                      onDeleted={handleDeleted}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Past section */}
+            {past.length > 0 && (
+              <div>
+                <SectionHeader label="Past meetings" count={past.length} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {past.map((m) => (
+                    <MeetingCard
+                      key={m.id}
+                      meeting={m}
+                      ownerId={ownerId}
+                      ownerEmail={ownerEmail}
+                      properties={properties}
+                      contactId={contactId}
+                      muted
+                      onUpdated={handleUpdated}
+                      onDeleted={handleDeleted}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

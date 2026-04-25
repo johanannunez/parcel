@@ -1,0 +1,152 @@
+.root {
+  background: #ffffff;
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 12px;
+  padding: 14px;
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.navBtn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 6px;
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+  padding: 0;
+}
+
+.navBtn:hover {
+  background: var(--color-warm-gray-100);
+  color: var(--color-text-primary);
+}
+
+.monthLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.dayName {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  letter-spacing: 0.04em;
+  padding-bottom: 4px;
+}
+
+.dayCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  gap: 1px;
+  transition: background 0.1s;
+}
+
+.dayCell:hover {
+  background: var(--color-warm-gray-100);
+}
+
+.dayNum {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dayCell.today .dayNum {
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+.dayCell.today {
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+
+.dayCell.selected {
+  background: var(--color-brand);
+  box-shadow: none;
+}
+
+.dayCell.selected .dayNum {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.dayCell.selected:hover {
+  background: var(--color-brand);
+  opacity: 0.9;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotUpcoming {
+  background: var(--color-brand);
+}
+
+.dayCell.selected .dotUpcoming {
+  background: rgba(255,255,255,0.7);
+}
+
+.dotPast {
+  background: var(--color-warm-gray-200);
+}
+
+.dayCell.selected .dotPast {
+  background: rgba(255,255,255,0.4);
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  padding-top: 10px;
+  border-top: 1px solid var(--color-warm-gray-100);
+  flex-wrap: wrap;
+}
+
+.stats strong {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.statSep {
+  color: var(--color-warm-gray-200);
+}

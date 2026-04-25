@@ -204,6 +204,9 @@ type Meeting = {
   property_id: string | null;
   propertyLabel: string | null;
   created_at: string;
+  meeting_type: "phone_call" | "video_call" | "in_person";
+  calendar_event_id: string | null;
+  attendee_ids: string[] | null;
 };
 
 type OwnerHubProps = {

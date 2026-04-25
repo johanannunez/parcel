@@ -25,6 +25,8 @@ export interface CreateMeetingData {
   propertyId: string | null;
   notes: string | null;
   visibility: "shared" | "private";
+  meetingType?: "phone_call" | "video_call" | "in_person";
+  attendeeIds?: string[] | null;
 }
 
 export interface UpdateMeetingData {
@@ -75,9 +77,38 @@ async function requireAdmin() {
 export async function createOwnerMeeting(
   ownerId: string,
   data: CreateMeetingData,
-): Promise<{ ok: boolean; message: string; id?: string }> {
+): Promise<{ ok: boolean; message: string; id?: string; meetLink?: string; calendarEventId?: string }> {
   const { supabase, error: authError } = await requireAdmin();
   if (authError) return { ok: false, message: authError };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const meetingType = data.meetingType ?? "video_call";
+
+  let meetLink = data.meetLink ?? null;
+  let calendarEventId: string | null = null;
+
+  if (user && data.scheduledAt && data.durationMinutes) {
+    try {
+      const { getValidAccessToken, createCalendarEvent } = await import("@/lib/admin/google-calendar");
+      const accessToken = await getValidAccessToken(user.id);
+      if (accessToken) {
+        const endDate = new Date(data.scheduledAt);
+        endDate.setMinutes(endDate.getMinutes() + data.durationMinutes);
+        const created = await createCalendarEvent(accessToken, {
+          title: data.title,
+          startIso: data.scheduledAt,
+          endIso: endDate.toISOString(),
+          description: data.notes ?? "",
+          attendeeEmails: [],
+          addConferencing: meetingType === "video_call",
+        });
+        calendarEventId = created.eventId;
+        if (created.meetLink) meetLink = created.meetLink;
+      }
+    } catch {
+      // Calendar sync optional — don't block meeting creation on failure
+    }
+  }
 
   const { data: inserted, error } = await (supabase as any)
     .from("owner_meetings")
@@ -87,13 +118,16 @@ export async function createOwnerMeeting(
       title: data.title,
       scheduled_at: data.scheduledAt ?? null,
       duration_minutes: data.durationMinutes ?? null,
-      meet_link: data.meetLink ?? null,
+      meet_link: meetLink,
       status: "scheduled",
       transcript: null,
       ai_summary: null,
       action_items: [],
       notes: data.notes ?? null,
       visibility: data.visibility,
+      meeting_type: meetingType,
+      attendee_ids: data.attendeeIds ?? null,
+      calendar_event_id: calendarEventId,
     })
     .select("id")
     .single();
@@ -103,7 +137,7 @@ export async function createOwnerMeeting(
   }
 
   revalidatePath(`/admin/owners/${ownerId}`);
-  return { ok: true, message: "Meeting created.", id: inserted?.id };
+  return { ok: true, message: "Meeting created.", id: inserted?.id, meetLink: meetLink ?? undefined, calendarEventId: calendarEventId ?? undefined };
 }
 
 export async function updateOwnerMeeting(
@@ -358,4 +392,69 @@ export async function toggleActionItem(
     ok: true,
     message: `Action item marked as ${completed ? "complete" : "incomplete"}.`,
   };
+}
+
+// ---------------------------------------------------------------------------
+// PUSH TASKS
+// ---------------------------------------------------------------------------
+
+export async function pushMeetingTasksToContact(
+  meetingId: string,
+  ownerId: string,
+  contactId: string,
+): Promise<{ ok: boolean; message: string; pushed: number }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { ok: false, message: authError, pushed: 0 };
+
+  const { data: meeting, error: fetchError } = await (supabase as any)
+    .from("owner_meetings")
+    .select("action_items")
+    .eq("id", meetingId)
+    .eq("owner_id", ownerId)
+    .single();
+
+  if (fetchError || !meeting) {
+    return { ok: false, message: "Meeting not found.", pushed: 0 };
+  }
+
+  const items: ActionItem[] = Array.isArray(meeting.action_items)
+    ? (meeting.action_items as ActionItem[])
+    : [];
+
+  const unpushed = items.filter((item) => !item.completed && !(item as any).pushed);
+
+  if (unpushed.length === 0) {
+    return { ok: true, message: "No items to push.", pushed: 0 };
+  }
+
+  const { createTask } = await import("@/lib/admin/task-actions");
+
+  for (const item of unpushed) {
+    try {
+      await createTask({
+        title: item.text,
+        parentType: "contact",
+        parentId: contactId,
+        taskType: "todo",
+        tags: ["meeting-followup"],
+      });
+    } catch {
+      // Continue pushing remaining items if one fails
+    }
+  }
+
+  const updatedItems = items.map((item) =>
+    !item.completed && !(item as any).pushed
+      ? { ...item, pushed: true }
+      : item,
+  );
+
+  await (supabase as any)
+    .from("owner_meetings")
+    .update({ action_items: updatedItems, updated_at: new Date().toISOString() })
+    .eq("id", meetingId)
+    .eq("owner_id", ownerId);
+
+  revalidatePath(`/admin/owners/${ownerId}`);
+  return { ok: true, message: `${unpushed.length} task${unpushed.length > 1 ? "s" : ""} added to contact.`, pushed: unpushed.length };
 }
