@@ -5,6 +5,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import {
+  notifyMeetingCreated,
+  notifyMeetingCancelled,
+  notifyMeetingRescheduled,
+  notifyMeetingRecapShared,
+} from "@/lib/admin/meeting-notifications";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -137,6 +143,19 @@ export async function createOwnerMeeting(
   }
 
   revalidatePath(`/admin/owners/${ownerId}`);
+
+  if (data.visibility === "shared" && user) {
+    notifyMeetingCreated(ownerId, user.id, {
+      title: data.title,
+      scheduledAt: data.scheduledAt ?? null,
+      durationMinutes: data.durationMinutes ?? null,
+      meetingType,
+      meetLink: meetLink ?? null,
+      propertyLabel: null,
+      notes: data.notes ?? null,
+    }).catch(() => {});
+  }
+
   return { ok: true, message: "Meeting created.", id: inserted?.id, meetLink: meetLink ?? undefined, calendarEventId: calendarEventId ?? undefined };
 }
 
@@ -147,6 +166,16 @@ export async function updateOwnerMeeting(
 ): Promise<{ ok: boolean; message: string }> {
   const { supabase, error: authError } = await requireAdmin();
   if (authError) return { ok: false, message: authError };
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch current meeting state for notification diffing
+  const { data: current } = await (supabase as any)
+    .from("owner_meetings")
+    .select("title, scheduled_at, duration_minutes, meet_link, meeting_type, visibility, ai_summary, action_items, status")
+    .eq("id", meetingId)
+    .eq("owner_id", ownerId)
+    .single();
 
   const patch: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
@@ -177,6 +206,54 @@ export async function updateOwnerMeeting(
 
   revalidatePath(`/admin/owners/${ownerId}`);
   revalidatePath("/portal/meetings");
+
+  if (user && current) {
+    const title = (data.title ?? current.title) as string;
+    const meetingType = (current.meeting_type ?? "video_call") as string;
+    const meetLink = (data.meetLink ?? current.meet_link ?? null) as string | null;
+    const wasShared = current.visibility === "shared";
+    const isNowShared = data.visibility === "shared";
+
+    // Cancelled
+    if (data.status === "cancelled" && current.status !== "cancelled") {
+      notifyMeetingCancelled(ownerId, user.id, {
+        title,
+        scheduledAt: (current.scheduled_at ?? null) as string | null,
+        meetingType,
+      }).catch(() => {});
+    }
+    // Rescheduled — scheduledAt changed and meeting is shared
+    else if (
+      data.scheduledAt !== undefined &&
+      data.scheduledAt !== current.scheduled_at &&
+      (wasShared || isNowShared)
+    ) {
+      notifyMeetingRescheduled(ownerId, user.id, {
+        title,
+        oldScheduledAt: (current.scheduled_at ?? null) as string | null,
+        newScheduledAt: data.scheduledAt,
+        durationMinutes: (data.durationMinutes ?? current.duration_minutes ?? null) as number | null,
+        meetingType,
+        meetLink,
+      }).catch(() => {});
+    }
+    // Recap shared — visibility changed to shared and ai_summary exists
+    else if (
+      isNowShared &&
+      !wasShared &&
+      (data.aiSummary ?? current.ai_summary)
+    ) {
+      const summary = (data.aiSummary ?? current.ai_summary) as string;
+      const items = (data.actionItems ?? current.action_items ?? []) as Array<{ text: string; completed: boolean }>;
+      notifyMeetingRecapShared(ownerId, user.id, {
+        title,
+        scheduledAt: (current.scheduled_at ?? null) as string | null,
+        aiSummary: summary,
+        actionItems: items,
+      }).catch(() => {});
+    }
+  }
+
   return { ok: true, message: "Meeting updated." };
 }
 
@@ -199,6 +276,121 @@ export async function deleteOwnerMeeting(
 
   revalidatePath(`/admin/owners/${ownerId}`);
   return { ok: true, message: "Meeting deleted." };
+}
+
+export async function updateMeetingRecording(
+  meetingId: string,
+  ownerId: string,
+  recordingUrl: string | null,
+): Promise<{ ok: boolean; message: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { ok: false, message: authError };
+
+  const { error } = await (supabase as any)
+    .from("owner_meetings")
+    .update({ recording_url: recordingUrl, updated_at: new Date().toISOString() })
+    .eq("id", meetingId)
+    .eq("owner_id", ownerId);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/admin/owners/${ownerId}`);
+  return { ok: true, message: "Recording attached." };
+}
+
+export async function searchAndAttachRecording(
+  meetingId: string,
+  ownerId: string,
+  scheduledAt: string,
+  title: string,
+): Promise<{ ok: boolean; recordingUrl: string | null; message: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { ok: false, recordingUrl: null, message: authError };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, recordingUrl: null, message: "Not signed in." };
+
+  try {
+    const { getValidAccessToken, searchDriveRecording } = await import(
+      "@/lib/admin/google-calendar"
+    );
+    const accessToken = await getValidAccessToken(user.id);
+    if (!accessToken) return { ok: true, recordingUrl: null, message: "No calendar connection." };
+
+    const recording = await searchDriveRecording(accessToken, scheduledAt, title);
+    if (!recording) return { ok: true, recordingUrl: null, message: "No recording found." };
+
+    await (supabase as any)
+      .from("owner_meetings")
+      .update({ recording_url: recording.webViewLink, updated_at: new Date().toISOString() })
+      .eq("id", meetingId)
+      .eq("owner_id", ownerId);
+
+    revalidatePath(`/admin/owners/${ownerId}`);
+    return { ok: true, recordingUrl: recording.webViewLink, message: "Recording attached." };
+  } catch {
+    return { ok: true, recordingUrl: null, message: "Recording search failed silently." };
+  }
+}
+
+export async function shareRecap(
+  meetingId: string,
+  ownerId: string,
+  opts: {
+    summaryOverride?: string;
+    excludedItemIds?: string[];
+    personalNote?: string;
+  },
+): Promise<{ ok: boolean; message: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { ok: false, message: authError };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Not signed in." };
+
+  const { data: meeting, error: fetchError } = await (supabase as any)
+    .from("owner_meetings")
+    .select("title, scheduled_at, ai_summary, action_items, visibility")
+    .eq("id", meetingId)
+    .eq("owner_id", ownerId)
+    .single();
+
+  if (fetchError || !meeting) return { ok: false, message: "Meeting not found." };
+
+  const finalSummary: string = opts.summaryOverride ?? (meeting.ai_summary as string) ?? "";
+  const allItems: ActionItem[] = Array.isArray(meeting.action_items)
+    ? (meeting.action_items as ActionItem[])
+    : [];
+  const includedItems = opts.excludedItemIds?.length
+    ? allItems.filter((item) => !opts.excludedItemIds!.includes(item.id))
+    : allItems;
+
+  const patch: Record<string, unknown> = {
+    visibility: "shared",
+    updated_at: new Date().toISOString(),
+  };
+  if (opts.summaryOverride !== undefined) patch.ai_summary = opts.summaryOverride;
+
+  const { error } = await (supabase as any)
+    .from("owner_meetings")
+    .update(patch)
+    .eq("id", meetingId)
+    .eq("owner_id", ownerId);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/admin/owners/${ownerId}`);
+  revalidatePath("/portal/meetings");
+
+  notifyMeetingRecapShared(ownerId, user.id, {
+    title: meeting.title as string,
+    scheduledAt: (meeting.scheduled_at as string | null) ?? null,
+    aiSummary: finalSummary,
+    actionItems: includedItems,
+    personalNote: opts.personalNote,
+  }).catch(() => {});
+
+  return { ok: true, message: "Recap shared." };
 }
 
 // ---------------------------------------------------------------------------
