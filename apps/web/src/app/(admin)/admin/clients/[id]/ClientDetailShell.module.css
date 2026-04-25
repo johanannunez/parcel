@@ -323,193 +323,122 @@
   flex-shrink: 0;
 }
 
-/* ── Relationship strip ───────────────────────────────────────────────────── */
+/* ── Inline status line (replaces bordered strip) ───────────────────────── */
 
-.strip {
+.statusLine {
   grid-row: 2;
   grid-column: 2;
   display: flex;
-  align-items: stretch;
-  background: var(--color-warm-gray-50);
+  align-items: center;
+  padding: 8px 18px;
+  gap: 0;
   min-width: 0;
   overflow: hidden;
   transition: background 200ms ease;
 }
 
-.stripOverdue {
-  background: color-mix(in srgb, #ef4444 4%, var(--color-warm-gray-50));
+.statusLineOverdue {
+  background: color-mix(in srgb, #ef4444 5%, var(--color-warm-gray-50));
 }
 
-.stripCell {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 10px 18px;
-  border-right: 1px solid var(--color-warm-gray-100);
+.statusLinePiece {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
   min-width: 0;
 }
 
-.stripCellWide {
-  flex: 1.6;
-}
-
-.stripCell:last-child {
-  border-right: none;
-}
-
-.stripOverdue .stripCell {
-  border-right-color: color-mix(in srgb, #ef4444 12%, transparent);
-}
-
-/* Cell variant tints */
-.stripCell_red {
-  background: color-mix(in srgb, #ef4444 4%, transparent);
-}
-
-/* Cell head: icon badge + label + optional corner action */
-.stripCellHead {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 4px;
-  justify-content: space-between;
-}
-
-/* Icon badge — small tinted container */
-.stripCellIconBadge {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.stripCellIconBadge_neutral { background: var(--color-warm-gray-100); }
-.stripCellIconBadge_amber   { background: rgba(245, 158, 11, 0.14); }
-.stripCellIconBadge_red     { background: rgba(239, 68, 68, 0.12); }
-.stripCellIconBadge_green   { background: rgba(22, 163, 74, 0.12); }
-.stripCellIconBadge_blue    { background: rgba(27, 119, 190, 0.12); }
-
-.stripCellCornerAction {
-  margin-left: auto;
+.statusLineSep {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  background: var(--color-warm-gray-200);
+  margin: 0 12px;
   flex-shrink: 0;
 }
 
-.stripCellIconColor_neutral {
+.statusLineLabel {
+  font-size: 11px;
+  font-weight: 500;
   color: var(--color-text-tertiary);
+  white-space: nowrap;
 }
 
-.stripCellIconColor_blue {
-  color: var(--color-brand);
+.statusLineMuted {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
 }
 
-.stripCellIconColor_red {
+.statusLineFollowUpBtn {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  line-height: inherit;
+  transition: opacity 100ms ease;
+}
+
+.statusLineFollowUpBtn:hover {
+  opacity: 0.75;
+}
+
+.statusLineFollowUpBtn[data-state="overdue"] {
   color: #b91c1c;
 }
 
-.stripCellIconColor_amber {
+.statusLineFollowUpBtn[data-state="upcoming"] {
   color: #b45309;
 }
 
-.stripCellIconColor_green {
-  color: #15803d;
-}
-
-.stripCellLabel {
-  font-size: 7.5px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-.stripCellValue {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.stripCellValueRed {
-  color: #b91c1c;
-}
-
-.stripCellValueGreen {
-  color: #15803d;
-}
-
-.stripCellSub {
-  font-size: 9.5px;
-  color: var(--color-text-tertiary);
-  line-height: 1.2;
-  margin-top: 1px;
-}
-
-.stripCellActions {
-  display: flex;
-  gap: 5px;
-  margin-top: 3px;
-}
-
-/* Corner action button — sits in the top-right of the cell head */
-.stripCornerBtn {
-  padding: 1px 6px;
+.statusLineDoneBtn {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
   border-radius: 4px;
-  font-size: 9.5px;
-  font-weight: 600;
-  font-family: inherit;
-  line-height: 1.4;
-  cursor: pointer;
-  border: 1px solid var(--color-warm-gray-200);
-  background: transparent;
-  color: var(--color-text-tertiary);
-  transition: background 100ms ease, color 100ms ease;
-}
-
-.stripCornerBtn:hover {
-  background: var(--color-warm-gray-100);
-  color: var(--color-text-secondary);
-}
-
-/* Strip mini buttons */
-.stripMiniBtn {
-  padding: 2px 8px;
-  border-radius: 5px;
-  font-size: 10.5px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
   border: 1px solid color-mix(in srgb, #ef4444 28%, transparent);
   background: transparent;
   color: #b91c1c;
+  cursor: pointer;
   transition: background 100ms ease;
 }
 
-.stripMiniBtn:hover {
+.statusLineDoneBtn:hover {
   background: color-mix(in srgb, #ef4444 8%, transparent);
 }
 
-.stripMiniBtnSolid {
-  padding: 2px 8px;
-  border-radius: 5px;
-  font-size: 10.5px;
-  font-weight: 700;
+.statusLineAddBtn,
+.statusLineSetBtn {
   font-family: inherit;
-  cursor: pointer;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 0;
   border: none;
-  background: color-mix(in srgb, #ef4444 12%, transparent);
-  color: #b91c1c;
-  transition: background 100ms ease;
+  background: transparent;
+  color: var(--color-brand);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 100ms ease;
 }
 
-.stripMiniBtnSolid:hover {
-  background: color-mix(in srgb, #ef4444 18%, transparent);
+.statusLineAddBtn:hover,
+.statusLineSetBtn:hover {
+  text-decoration-color: var(--color-brand);
+}
+
+.statusLineMeetingText {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #15803d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Custom date-picker popover ───────────────────────────────────────────── */

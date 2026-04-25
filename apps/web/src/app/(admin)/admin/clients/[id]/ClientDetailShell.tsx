@@ -5,12 +5,8 @@ import { createPortal } from "react-dom";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   CopySimple,
-  Warning,
-  Clock,
-  CalendarBlank,
   CaretLeft,
   CaretRight,
-  CheckCircle,
 } from "@phosphor-icons/react";
 import {
   startOfMonth,
@@ -87,32 +83,12 @@ function relativeDays(iso: string | null): string {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
-// "Mon, Apr 23 · 3:14 PM"
-function formatDateTimeWithDay(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
-  const dayStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  const timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  return `${dayStr} · ${timeStr}`;
-}
-
 // "Mon, Apr 28" — for follow-up (date only, no time stored)
 function formatShortDate(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-}
-
-// "Mon, May 5 · 2:00 PM" for next meeting sub-line
-function formatMeetingDate(iso: string): string {
-  const d = new Date(iso);
-  const days = Math.ceil((d.getTime() - Date.now()) / 86400_000);
-  const dateStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  const timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  const rel = days <= 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`;
-  return `${dateStr} · ${timeStr} · ${rel}`;
 }
 
 function formatPhone(raw: string | null): string | null {
@@ -166,46 +142,130 @@ function CopyButton({ value }: { value: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Relationship strip cell
+// Inline status line (replaces the bordered-cell strip)
 // ---------------------------------------------------------------------------
 
-type CellVariant = "neutral" | "blue" | "red" | "green" | "amber";
-
-function StripCell({
-  variant,
-  icon,
-  label,
-  value,
-  sub,
-  actions,
-  cornerAction,
-  wide,
+function StatusLine({
+  clientId,
+  followUpAt,
+  nextMeeting,
+  lastActivityAt,
 }: {
-  variant: CellVariant;
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-  sub?: React.ReactNode;
-  actions?: React.ReactNode;
-  cornerAction?: React.ReactNode;
-  wide?: boolean;
+  clientId: string;
+  followUpAt: string | null;
+  nextMeeting: NextMeeting;
+  lastActivityAt: string | null;
 }) {
-  return (
-    <div className={`${styles.stripCell} ${styles[`stripCell_${variant}`]} ${wide ? styles.stripCellWide : ""}`}>
-      <div className={styles.stripCellHead}>
-        <span className={`${styles.stripCellIconBadge} ${styles[`stripCellIconBadge_${variant}` as keyof typeof styles]}`}>
-          <span className={styles[`stripCellIconColor_${variant}` as keyof typeof styles]}>
-            {icon}
-          </span>
-        </span>
-        <span className={styles.stripCellLabel}>{label}</span>
-        {cornerAction && <span className={styles.stripCellCornerAction}>{cornerAction}</span>}
-      </div>
-      <span className={`${styles.stripCellValue} ${variant === "red" ? styles.stripCellValueRed : variant === "green" ? styles.stripCellValueGreen : ""}`}>
-        {value}
+  const [picking, setPicking] = useState(false);
+  const [current, setCurrent] = useState(followUpAt);
+  const [, startTransition] = useTransition();
+  const followUpAnchorRef = useRef<HTMLDivElement>(null);
+
+  const save = (iso: string | null) => {
+    setCurrent(iso);
+    setPicking(false);
+    startTransition(async () => {
+      await updateClientFields(clientId, { nextFollowUpAt: iso });
+    });
+  };
+
+  const overdue = current ? isOverdue(current) : false;
+  const overdueDays = current && overdue ? daysOverdue(current) : 0;
+  const hasMeeting = !!nextMeeting;
+  const lastContactAgo = lastActivityAt ? relativeDays(lastActivityAt) : null;
+
+  let followUpNode: React.ReactNode;
+  if (current && overdue) {
+    followUpNode = (
+      <>
+        <button
+          type="button"
+          className={styles.statusLineFollowUpBtn}
+          data-state="overdue"
+          onClick={() => setPicking(true)}
+        >
+          {formatShortDate(current)}
+          {overdueDays > 0 && ` · ${overdueDays}d overdue`}
+        </button>
+        <button type="button" className={styles.statusLineDoneBtn} onClick={() => save(null)}>
+          Done
+        </button>
+      </>
+    );
+  } else if (current) {
+    followUpNode = (
+      <button
+        type="button"
+        className={styles.statusLineFollowUpBtn}
+        data-state="upcoming"
+        onClick={() => setPicking(true)}
+      >
+        {formatShortDate(current)}
+      </button>
+    );
+  } else if (hasMeeting) {
+    followUpNode = (
+      <>
+        <span className={styles.statusLineMuted}>Meeting is next</span>
+        <button type="button" className={styles.statusLineAddBtn} onClick={() => setPicking(true)}>
+          Add reminder
+        </button>
+      </>
+    );
+  } else {
+    followUpNode = (
+      <button type="button" className={styles.statusLineSetBtn} onClick={() => setPicking(true)}>
+        Set date
+      </button>
+    );
+  }
+
+  let nextMeetingNode: React.ReactNode;
+  if (nextMeeting) {
+    const meetingDays = Math.ceil(
+      (new Date(nextMeeting.scheduledAt).getTime() - Date.now()) / 86400_000,
+    );
+    const meetingRel =
+      meetingDays <= 0 ? "today" : meetingDays === 1 ? "tomorrow" : `in ${meetingDays}d`;
+    const title =
+      nextMeeting.title.length > 28
+        ? nextMeeting.title.slice(0, 28) + "…"
+        : nextMeeting.title;
+    nextMeetingNode = (
+      <span className={styles.statusLineMeetingText}>
+        {title}
+        {" · "}
+        {meetingRel}
       </span>
-      {sub && <span className={styles.stripCellSub}>{sub}</span>}
-      {actions && <div className={styles.stripCellActions}>{actions}</div>}
+    );
+  } else {
+    nextMeetingNode = <span className={styles.statusLineMuted}>None scheduled</span>;
+  }
+
+  return (
+    <div className={`${styles.statusLine} ${overdue ? styles.statusLineOverdue : ""}`}>
+      <span className={styles.statusLinePiece}>
+        <span className={styles.statusLineLabel}>Last contact</span>
+        <span className={styles.statusLineMuted}>{lastContactAgo ?? "No activity yet"}</span>
+      </span>
+      <span className={styles.statusLineSep} aria-hidden="true" />
+      <div ref={followUpAnchorRef} className={styles.statusLinePiece}>
+        <span className={styles.statusLineLabel}>Follow-up</span>
+        {followUpNode}
+      </div>
+      <span className={styles.statusLineSep} aria-hidden="true" />
+      <span className={styles.statusLinePiece}>
+        <span className={styles.statusLineLabel}>Next meeting</span>
+        {nextMeetingNode}
+      </span>
+      {picking && (
+        <DatePickerPopover
+          anchorRef={followUpAnchorRef}
+          value={current}
+          onSelect={save}
+          onClose={() => setPicking(false)}
+        />
+      )}
     </div>
   );
 }
@@ -227,7 +287,7 @@ function DatePickerPopover({
   onSelect,
   onClose,
 }: {
-  anchorRef: React.RefObject<HTMLDivElement | null>;
+  anchorRef: React.RefObject<HTMLElement | null>;
   value: string | null;
   onSelect: (iso: string) => void;
   onClose: () => void;
@@ -323,129 +383,6 @@ function DatePickerPopover({
       </div>
     </div>,
     document.body,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Follow-up cell — context-aware state machine
-// ---------------------------------------------------------------------------
-
-function FollowUpCell({
-  clientId,
-  followUpAt,
-  nextMeeting,
-}: {
-  clientId: string;
-  followUpAt: string | null;
-  nextMeeting?: NextMeeting | null;
-}) {
-  const [picking, setPicking] = useState(false);
-  const [current, setCurrent] = useState(followUpAt);
-  const [, startTransition] = useTransition();
-  const cellRef = useRef<HTMLDivElement>(null);
-
-  const save = (iso: string | null) => {
-    setCurrent(iso);
-    setPicking(false);
-    startTransition(async () => {
-      await updateClientFields(clientId, { nextFollowUpAt: iso });
-    });
-  };
-
-  const overdue = current ? isOverdue(current) : false;
-  const overdueDays = current && overdue ? daysOverdue(current) : 0;
-  const hasMeeting = !!nextMeeting;
-  const meetingBeforeFollowUp = hasMeeting && current
-    ? new Date(nextMeeting!.scheduledAt) < new Date(current)
-    : false;
-
-  const openPicker = () => setPicking(true);
-
-  // Overdue: always urgent, regardless of whether a meeting exists
-  if (current && overdue) {
-    return (
-      <div ref={cellRef} style={{ display: "contents" }}>
-        <StripCell
-          variant="red"
-          icon={<Warning size={11} weight="bold" />}
-          label="Follow-up"
-          value={`${formatShortDate(current)} · ${overdueDays}d overdue`}
-          actions={
-            <>
-              <button className={styles.stripMiniBtn} onClick={openPicker}>Reschedule</button>
-              <button className={styles.stripMiniBtnSolid} onClick={() => save(null)}>Done</button>
-            </>
-          }
-        />
-        {picking && <DatePickerPopover anchorRef={cellRef} value={current} onSelect={save} onClose={() => setPicking(false)} />}
-      </div>
-    );
-  }
-
-  // Upcoming follow-up — contextualize relative to next meeting
-  if (current) {
-    const variant = hasMeeting && meetingBeforeFollowUp ? "neutral" : "amber";
-    const sub = hasMeeting && meetingBeforeFollowUp
-      ? `After ${formatShortDate(nextMeeting!.scheduledAt)} meeting`
-      : hasMeeting
-        ? `Before ${formatShortDate(nextMeeting!.scheduledAt)} meeting`
-        : "Upcoming";
-    const btnStyle = variant === "amber"
-      ? { borderColor: "rgba(245,158,11,0.3)", color: "#b45309" }
-      : undefined;
-    return (
-      <div ref={cellRef} style={{ display: "contents" }}>
-        <StripCell
-          variant={variant}
-          icon={<Warning size={11} weight={variant === "amber" ? "fill" : "regular"} />}
-          label="Follow-up"
-          value={formatShortDate(current)}
-          sub={sub}
-          actions={
-            <>
-              <button className={styles.stripMiniBtn} style={btnStyle} onClick={openPicker}>Reschedule</button>
-              <button className={styles.stripMiniBtnSolid} style={variant === "amber" ? { background: "rgba(245,158,11,0.1)", color: "#b45309" } : undefined} onClick={() => save(null)}>Done</button>
-            </>
-          }
-        />
-        {picking && <DatePickerPopover anchorRef={cellRef} value={current} onSelect={save} onClose={() => setPicking(false)} />}
-      </div>
-    );
-  }
-
-  // No follow-up set
-  if (hasMeeting) {
-    // Meeting is the next touchpoint — no urgency needed
-    return (
-      <div ref={cellRef} style={{ display: "contents" }}>
-        <StripCell
-          variant="neutral"
-          icon={<CheckCircle size={11} weight="fill" />}
-          label="Follow-up"
-          value="Meeting is next"
-          sub="No reminder set"
-          actions={
-            <button className={styles.stripMiniBtn} onClick={openPicker}>Add reminder</button>
-          }
-        />
-        {picking && <DatePickerPopover anchorRef={cellRef} value={null} onSelect={save} onClose={() => setPicking(false)} />}
-      </div>
-    );
-  }
-
-  return (
-    <div ref={cellRef} style={{ display: "contents" }}>
-      <StripCell
-        variant="neutral"
-        icon={<Warning size={11} weight="regular" />}
-        label="Follow-up"
-        value="Not scheduled"
-        actions={
-          <button className={styles.stripMiniBtn} onClick={openPicker}>Set date</button>
-        }
-      />
-      {picking && <DatePickerPopover anchorRef={cellRef} value={null} onSelect={save} onClose={() => setPicking(false)} />}
-    </div>
   );
 }
 
@@ -745,13 +682,6 @@ function ClientDetailContent({
     nameEditTimeoutRef.current = setTimeout(() => setEditingNamePart(null), 120);
   }, []);
 
-  // Determine last contact display
-  const lastContactDate = client.lastActivityAt ? formatDateTimeWithDay(client.lastActivityAt) : null;
-  const lastContactAgo = client.lastActivityAt ? relativeDays(client.lastActivityAt) : null;
-
-  // Determine if strip has any overdue items
-  const hasOverdue = client.nextFollowUpAt ? isOverdue(client.nextFollowUpAt) : false;
-
   return (
     <ClientNameContext.Provider value={{ firstName: displayFirst, lastName: displayLast, avatarUrl: displayAvatarUrl, setAvatarUrl: setDisplayAvatarUrl }}>
     <div ref={shellRef} className={styles.shell}>
@@ -851,24 +781,12 @@ function ClientDetailContent({
               <StagePopover contactId={client.id} stage={client.lifecycleStage} />
             </div>
 
-            <div className={`${styles.strip} ${hasOverdue ? styles.stripOverdue : ""}`}>
-              <StripCell
-                variant="neutral"
-                icon={<Clock size={11} weight="regular" />}
-                label="Last Contact"
-                value={lastContactDate ?? "No activity yet"}
-                sub={lastContactAgo && lastContactDate ? lastContactAgo : undefined}
-              />
-              <FollowUpCell clientId={client.id} followUpAt={client.nextFollowUpAt} nextMeeting={nextMeeting} />
-              <StripCell
-                variant={nextMeeting ? "green" : "neutral"}
-                icon={<CalendarBlank size={11} weight={nextMeeting ? "duotone" : "regular"} />}
-                label="Next Meeting"
-                value={nextMeeting ? nextMeeting.title : "None scheduled"}
-                sub={nextMeeting ? formatMeetingDate(nextMeeting.scheduledAt) : undefined}
-                wide
-              />
-            </div>
+            <StatusLine
+              clientId={client.id}
+              followUpAt={client.nextFollowUpAt}
+              nextMeeting={nextMeeting}
+              lastActivityAt={client.lastActivityAt}
+            />
 
           </div>
         </header>
