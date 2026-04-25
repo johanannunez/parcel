@@ -22,7 +22,8 @@ import {
   Check,
 } from "@phosphor-icons/react";
 import { parsePhoneNumber } from "libphonenumber-js";
-import type { ClientDetail, AddressComponents } from "@/lib/admin/client-detail";
+import type { ClientDetail, AddressComponents, EntityInfo, EntityMember } from "@/lib/admin/client-detail";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminProfile } from "./client-actions";
 import { updateClientFields, updateEmailWithPortalSync } from "./client-actions";
 import styles from "./ClientDetailSidebar.module.css";
@@ -967,7 +968,11 @@ function EmailField({
           </div>
         ) : (
           <>
-            <span className={`${styles.fieldValueContent} ${rowCopied ? styles.fieldValueCopied : ""}`}>
+            <span className={[
+              styles.fieldValueContent,
+              rowCopied ? styles.fieldValueCopied : "",
+              profileId && !emailVerified ? styles.fieldValueContentUnverified : "",
+            ].filter(Boolean).join(" ")}>
               <button
                 className={`${styles.valueBtn} ${!shown ? styles.valueBtnEmpty : ""}`}
                 onClick={() => setFieldState("editing")}
@@ -976,11 +981,6 @@ function EmailField({
                 {shown || "email@example.com"}
               </button>
             </span>
-            {profileId && (
-              <span className={`${styles.emailBadge} ${emailVerified ? styles.emailBadgeVerified : styles.emailBadgeUnverified}`}>
-                {emailVerified ? "Verified" : "Unverified"}
-              </span>
-            )}
             {shown && <SidebarCopyBtn value={shown} onCopied={handleRowCopied} />}
           </>
         )}
@@ -1004,12 +1004,18 @@ function SectionHeader({ label }: { label: string }) {
 export function ClientDetailSidebar({
   client,
   adminProfiles,
+  entityInfo,
+  members,
+  activeContactId,
   onNameChange,
   onNameEditStart,
   onNameEditEnd,
 }: {
   client: ClientDetail;
   adminProfiles: AdminProfile[];
+  entityInfo: EntityInfo;
+  members: EntityMember[];
+  activeContactId: string;
   onNameChange?: (first: string, last: string) => void;
   onNameEditStart?: (part: "first" | "last") => void;
   onNameEditEnd?: () => void;
@@ -1046,6 +1052,11 @@ export function ClientDetailSidebar({
       });
     }, 1800);
   }, []);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawTab = searchParams.get("tab") ?? "overview";
+  const rawSection = searchParams.get("section");
 
   async function save(fields: Parameters<typeof updateClientFields>[1]) {
     await updateClientFields(client.id, fields);

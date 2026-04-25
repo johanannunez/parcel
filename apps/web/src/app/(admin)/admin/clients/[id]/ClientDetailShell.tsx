@@ -830,6 +830,9 @@ function ClientDetailContent({
       <ClientDetailSidebar
         client={client}
         adminProfiles={adminProfiles}
+        entityInfo={entityInfo}
+        members={members}
+        activeContactId={activeContactId}
         onNameChange={handleNameChange}
         onNameEditStart={handleNameEditStart}
         onNameEditEnd={handleNameEditEnd}

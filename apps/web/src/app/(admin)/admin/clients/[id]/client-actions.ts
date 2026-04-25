@@ -50,7 +50,7 @@ type UpdateClientFields = Partial<{
   addressFormatted: string;
   addressComponents: AddressComponents;
   social: SocialLinks;
-  preferredContactMethod: 'email' | 'phone' | 'text' | null;
+  preferredContactMethod: 'email' | 'phone' | 'text' | 'whatsapp' | null;
   contractStartAt: string | null;
   contractEndAt: string | null;
   nextFollowUpAt: string | null;

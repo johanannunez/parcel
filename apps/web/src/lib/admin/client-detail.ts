@@ -29,6 +29,8 @@ export type SocialLinks = {
   linkedin?: string | null;
   instagram?: string | null;
   facebook?: string | null;
+  x?: string | null;
+  website?: string | null;
 };
 
 export type ClientDetail = {
