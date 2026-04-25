@@ -552,6 +552,7 @@ export function OwnerHubTabs({
               ownerId={ownerId}
               ownerFirstName={owner.fullName.split(" ")[0] ?? owner.fullName}
               ownerEmail={owner.email}
+              ownerPhone={owner.phone ?? null}
               meetings={meetings}
               properties={properties.map((p) => ({ id: p.id, label: propertyLabel(p) }))}
             />
