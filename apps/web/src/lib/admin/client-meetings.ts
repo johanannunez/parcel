@@ -21,6 +21,7 @@ export type ClientMeeting = {
   meeting_type: "phone_call" | "video_call" | "in_person";
   calendar_event_id: string | null;
   attendee_ids: string[] | null;
+  recording_url: string | null;
 };
 
 export type NextMeeting = {
@@ -52,7 +53,7 @@ export async function fetchClientMeetings(profileId: string): Promise<ClientMeet
     .select(`
       id, title, scheduled_at, duration_minutes, meet_link,
       status, transcript, ai_summary, action_items, notes, visibility,
-      property_id, created_at, meeting_type, calendar_event_id, attendee_ids,
+      property_id, created_at, meeting_type, calendar_event_id, attendee_ids, recording_url,
       property:properties(address_line1, city, state)
     `)
     .eq("owner_id", profileId)
@@ -97,6 +98,7 @@ export async function fetchClientMeetings(profileId: string): Promise<ClientMeet
       meeting_type: ((row.meeting_type as string | null) ?? "video_call") as "phone_call" | "video_call" | "in_person",
       calendar_event_id: (row.calendar_event_id as string | null) ?? null,
       attendee_ids: Array.isArray(row.attendee_ids) ? (row.attendee_ids as string[]) : null,
+      recording_url: (row.recording_url as string | null) ?? null,
     };
   });
 }

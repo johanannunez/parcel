@@ -37,6 +37,7 @@ type NewMeeting = {
   meeting_type: MeetingType;
   calendar_event_id: string | null;
   attendee_ids: string[] | null;
+  recording_url: string | null;
 };
 
 type Props = {
@@ -171,6 +172,7 @@ export function CreateMeetingModal({
         meeting_type: meetingType,
         calendar_event_id: result.calendarEventId ?? null,
         attendee_ids: attendeeIds.length > 0 ? attendeeIds : null,
+        recording_url: null,
       });
     });
   }

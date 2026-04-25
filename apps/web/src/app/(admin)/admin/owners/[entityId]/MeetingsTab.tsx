@@ -64,6 +64,7 @@ type Meeting = {
   meeting_type: "phone_call" | "video_call" | "in_person";
   calendar_event_id: string | null;
   attendee_ids: string[] | null;
+  recording_url: string | null;
 };
 
 type Property = { id: string; label: string };
