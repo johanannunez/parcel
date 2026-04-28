@@ -38,18 +38,28 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
 
+  // Fix 1: Local optimistic state for mutable fields
+  const [localPriority, setLocalPriority] = useState<1 | 2 | 3 | 4>(4);
+  const [localDueAt, setLocalDueAt] = useState<string | null>(null);
+  const [localStatus, setLocalStatus] = useState<string>('todo');
+
   useEffect(() => {
     if (task) {
       setTitleDraft(task.title);
       setEditingTitle(false);
+      setLocalPriority(task.priority);
+      setLocalDueAt(task.dueAt);
+      setLocalStatus(task.status);
     }
   }, [task?.id]);
 
+  // Fix 3: Only attach Escape listener when a task is open; re-attach only on task change
   useEffect(() => {
+    if (!task) return;
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
-  }, [onClose]);
+  }, [onClose, task?.id]);
 
   const saveTitle = useCallback(() => {
     if (!task || !titleDraft.trim() || titleDraft === task.title) {
@@ -62,22 +72,29 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
     });
   }, [task, titleDraft]);
 
+  // Fix 1 + 2: Optimistic status update; properly awaited inside transition
   const toggleDone = useCallback(() => {
     if (!task) return;
+    const isDone = localStatus === 'done';
+    setLocalStatus(isDone ? 'todo' : 'done');
     startTransition(async () => {
-      if (task.status === 'done') await uncompleteTask(task.id);
+      if (isDone) await uncompleteTask(task.id);
       else await completeTask(task.id);
     });
-  }, [task]);
+  }, [task, localStatus]);
 
+  // Fix 1 + 2: Optimistic due date update; properly awaited inside transition
   const setDue = useCallback((iso: string | null) => {
     if (!task) return;
-    startTransition(() => { updateTask(task.id, { dueAt: iso }); });
+    setLocalDueAt(iso);
+    startTransition(async () => { await updateTask(task.id, { dueAt: iso }); });
   }, [task]);
 
+  // Fix 1 + 2: Optimistic priority update; properly awaited inside transition
   const setPriority = useCallback((value: 1 | 2 | 3 | 4) => {
     if (!task) return;
-    startTransition(() => { updateTask(task.id, { priority: value }); });
+    setLocalPriority(value);
+    startTransition(async () => { await updateTask(task.id, { priority: value }); });
   }, [task]);
 
   return (
@@ -102,10 +119,10 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
             <div className={styles.header}>
               <button
                 type="button"
-                className={`${styles.completeBtn} ${task.status === 'done' ? styles.completeBtnDone : ''}`}
+                className={`${styles.completeBtn} ${localStatus === 'done' ? styles.completeBtnDone : ''}`}
                 onClick={toggleDone}
                 disabled={isPending}
-                aria-label={task.status === 'done' ? 'Mark incomplete' : 'Mark complete'}
+                aria-label={localStatus === 'done' ? 'Mark incomplete' : 'Mark complete'}
               />
               {editingTitle ? (
                 <input
@@ -121,7 +138,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
                 />
               ) : (
                 <h2
-                  className={`${styles.title} ${task.status === 'done' ? styles.titleDone : ''}`}
+                  className={`${styles.title} ${localStatus === 'done' ? styles.titleDone : ''}`}
                   onClick={() => setEditingTitle(true)}
                   title="Click to edit"
                 >
@@ -141,8 +158,8 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
             <div className={styles.meta}>
               <div className={styles.metaRow}>
                 <span className={styles.metaLabel}>Status</span>
-                <span className={`${styles.statusBadge} ${styles[`status_${task.status}`]}`}>
-                  {STATUS_LABELS[task.status] ?? task.status}
+                <span className={`${styles.statusBadge} ${styles[`status_${localStatus}`]}`}>
+                  {STATUS_LABELS[localStatus] ?? localStatus}
                 </span>
               </div>
 
@@ -153,11 +170,11 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
                     <button
                       key={value}
                       type="button"
-                      className={`${styles.priorityPill} ${task.priority === value ? styles.priorityPillActive : ''}`}
-                      style={task.priority === value && color ? { borderColor: color, color } : undefined}
+                      className={`${styles.priorityPill} ${localPriority === value ? styles.priorityPillActive : ''}`}
+                      style={localPriority === value && color ? { borderColor: color, color } : undefined}
                       onClick={() => setPriority(value)}
                       disabled={isPending}
-                      aria-pressed={task.priority === value}
+                      aria-pressed={localPriority === value}
                     >
                       {label}
                     </button>
@@ -168,12 +185,12 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
               <div className={styles.metaRow}>
                 <span className={styles.metaLabel}>Due</span>
                 <div className={styles.dueSection}>
-                  <span className={styles.dueDisplay}>{formatDueDate(task.dueAt)}</span>
+                  <span className={styles.dueDisplay}>{formatDueDate(localDueAt)}</span>
                   <div className={styles.duePresets}>
                     <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(0))} disabled={isPending}>Today</button>
                     <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(1))} disabled={isPending}>Tomorrow</button>
                     <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(7))} disabled={isPending}>Next week</button>
-                    {task.dueAt && (
+                    {localDueAt && (
                       <button type="button" className={`${styles.duePreset} ${styles.duePresetClear}`} onClick={() => setDue(null)} disabled={isPending}>Clear</button>
                     )}
                   </div>
