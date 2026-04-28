@@ -4,7 +4,14 @@ import { useState, useTransition } from 'react';
 import Image from 'next/image';
 import type { Task } from '@/lib/admin/task-types';
 import { ParentPill } from './ParentPill';
-import { completeTask, uncompleteTask } from '@/lib/admin/task-actions';
+import { completeTask, uncompleteTask, updateTask } from '@/lib/admin/task-actions';
+import {
+  CaretDown,
+  CaretRight,
+  PencilSimple,
+  CalendarBlank,
+  DotsThreeVertical,
+} from '@phosphor-icons/react';
 import styles from './TaskRow.module.css';
 
 function dueDisplay(iso: string | null): { label: string; tone: string } {
@@ -23,9 +30,22 @@ function dueDisplay(iso: string | null): { label: string; tone: string } {
   return { label: due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), tone: 'neutral' };
 }
 
-export function TaskRow({ task, subtasks = [], onOpen }: { task: Task; subtasks?: Task[]; onOpen?: () => void }) {
+export function TaskRow({
+  task,
+  subtasks = [],
+  onOpen,
+  showNeedsOwner,
+  currentUserId,
+}: {
+  task: Task;
+  subtasks?: Task[];
+  onOpen?: () => void;
+  showNeedsOwner?: boolean;
+  currentUserId?: string | null;
+}) {
   const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
+  const [assigned, setAssigned] = useState(false);
   const due = dueDisplay(task.dueAt);
   const hasSubtasks = task.subtaskCount > 0 || subtasks.length > 0;
 
@@ -43,6 +63,16 @@ export function TaskRow({ task, subtasks = [], onOpen }: { task: Task; subtasks?
     });
   };
 
+  const handleAssignToMe = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!currentUserId) return;
+    setAssigned(true);
+    startTransition(async () => {
+      await updateTask(task.id, { assigneeId: currentUserId });
+    });
+  };
+
   return (
     <>
       <div
@@ -57,22 +87,54 @@ export function TaskRow({ task, subtasks = [], onOpen }: { task: Task; subtasks?
           onClick={(e) => { e.stopPropagation(); toggleComplete(e); }}
           disabled={isPending}
         />
-        <div className={styles.title}>
-          {task.title}
-          {hasSubtasks ? (
-            <button
-              type="button"
-              className={styles.subBadge}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setExpanded((v) => !v);
-              }}
-            >
-              {task.subtaskDoneCount} / {task.subtaskCount} subtasks
-            </button>
-          ) : null}
+
+        {/* Title cell */}
+        <div className={styles.titleCell}>
+          <div className={styles.titleText}>
+            <span className={styles.titleTextInner}>{task.title}</span>
+            {hasSubtasks ? (
+              <span
+                className={styles.chevron}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setExpanded((v) => !v);
+                }}
+                role="button"
+                aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
+              >
+                {expanded
+                  ? <CaretDown size={12} weight="bold" />
+                  : <CaretRight size={12} weight="bold" />}
+              </span>
+            ) : null}
+          </div>
+          {/* Metadata sub-line */}
+          {(hasSubtasks || (showNeedsOwner && !assigned)) && (
+            <div className={styles.titleMeta}>
+              {hasSubtasks && (
+                <span className={styles.subtaskBadge}>
+                  {task.subtaskDoneCount}/{task.subtaskCount} subtasks
+                </span>
+              )}
+              {showNeedsOwner && !assigned && (
+                <>
+                  <span className={styles.needsOwnerBadge}>Needs owner</span>
+                  {currentUserId && (
+                    <button
+                      type="button"
+                      className={styles.assignMeBtn}
+                      onClick={handleAssignToMe}
+                    >
+                      Assign to me
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
+
         <div className={styles.parent}>
           <ParentPill parent={task.parent} />
         </div>
@@ -102,7 +164,32 @@ export function TaskRow({ task, subtasks = [], onOpen }: { task: Task; subtasks?
             <span className={styles.avEmpty} aria-label="Unassigned">—</span>
           )}
         </div>
-        <button type="button" className={styles.menuBtn} aria-label="Task menu">⋯</button>
+
+        {/* Hover actions */}
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.actionBtn}
+            aria-label="Edit task"
+            onClick={(e) => { e.stopPropagation(); onOpen?.(); }}
+          >
+            <PencilSimple size={16} />
+          </button>
+          <button
+            type="button"
+            className={styles.actionBtn}
+            aria-label="Set due date"
+          >
+            <CalendarBlank size={16} />
+          </button>
+          <button
+            type="button"
+            className={styles.actionBtn}
+            aria-label="More options"
+          >
+            <DotsThreeVertical size={16} />
+          </button>
+        </div>
       </div>
 
       {expanded && subtasks.length > 0 ? (

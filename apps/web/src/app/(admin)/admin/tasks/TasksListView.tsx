@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useCallback, useTransition } from 'react';
+import { useState, useCallback, useTransition, useMemo, useRef, useEffect } from 'react';
 import type {
   Task,
   TasksSavedView,
   TasksFetchResult,
 } from '@/lib/admin/task-types';
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
+import { CaretDown, Check } from '@phosphor-icons/react';
 import { TaskRow } from './TaskRow';
 import { TasksUpcomingView } from './TasksUpcomingView';
 import { TaskDetailModal } from './TaskDetailModal';
@@ -17,7 +18,9 @@ type ApiResponse = TasksFetchResult & {
   upcomingTasks: Task[];
 };
 
-type Props = ApiResponse;
+type Props = ApiResponse & {
+  currentUserId?: string | null;
+};
 
 function SavedViewTabs({
   views,
@@ -64,40 +67,99 @@ function ListSkeleton() {
   );
 }
 
+function TaskListHeader() {
+  return (
+    <div className={styles.columnHeader}>
+      <div />
+      <div className={styles.columnHeaderCell}>Task</div>
+      <div className={styles.columnHeaderCell}>Project</div>
+      <div className={`${styles.columnHeaderCell} ${styles.columnHeaderCellRight}`}>Due</div>
+      <div className={`${styles.columnHeaderCell} ${styles.columnHeaderCellCenter}`}>Assignee</div>
+      <div />
+    </div>
+  );
+}
+
+const SORT_LABELS: Record<string, string> = {
+  priority: 'Priority',
+  date_added: 'Date Added',
+  due_date: 'Due Date',
+};
+
 export function TasksListView(props: Props) {
   const [data, setData] = useState<ApiResponse>(props);
   const [activeKey, setActiveKey] = useState(props.activeView.key);
   const [drawerTask, setDrawerTask] = useState<Task | null>(null);
   const [search, setSearch] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [sortBy, setSortBy] = useState<'priority' | 'date_added' | 'due_date'>('priority');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close sort menu on outside click
+  useEffect(() => {
+    if (!showSortMenu) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+        setShowSortMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [showSortMenu]);
 
   const switchView = useCallback((key: string) => {
-    setActiveKey(key); // instant tab switch
+    setActiveKey(key);
     startTransition(async () => {
       const params = new URLSearchParams({ view: key });
-      if (search) params.set('q', search);
       const res = await fetch(`/api/tasks?${params}`);
       if (res.ok) {
         const json: ApiResponse = await res.json();
         setData(json);
       }
     });
-  }, [search]);
+  }, []);
 
+  // Search is now purely client-side — just update state
   const handleSearch = useCallback((q: string) => {
     setSearch(q);
-    startTransition(async () => {
-      const params = new URLSearchParams({ view: activeKey });
-      if (q) params.set('q', q);
-      const res = await fetch(`/api/tasks?${params}`);
-      if (res.ok) {
-        const json: ApiResponse = await res.json();
-        setData(json);
-      }
-    });
-  }, [activeKey]);
+  }, []);
+
+  // Filtered + sorted groups derived from server data
+  const filteredGroups = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const groups = q
+      ? data.groups.map((g) => ({
+          ...g,
+          tasks: g.tasks.filter(
+            (t) =>
+              t.title.toLowerCase().includes(q) ||
+              (t.description?.toLowerCase().includes(q) ?? false) ||
+              (t.assigneeName?.toLowerCase().includes(q) ?? false) ||
+              (t.parent?.label.toLowerCase().includes(q) ?? false),
+          ),
+        })).filter((g) => g.tasks.length > 0)
+      : data.groups;
+
+    return groups.map((g) => ({
+      ...g,
+      tasks: [...g.tasks].sort((a, b) => {
+        if (sortBy === 'priority') return a.priority - b.priority;
+        if (sortBy === 'date_added')
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (sortBy === 'due_date') {
+          if (!a.dueAt && !b.dueAt) return 0;
+          if (!a.dueAt) return 1;
+          if (!b.dueAt) return -1;
+          return new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
+        }
+        return 0;
+      }),
+    }));
+  }, [data.groups, search, sortBy]);
 
   const activeView = data.views.find((v) => v.key === activeKey) ?? data.views[0];
+  const totalFiltered = filteredGroups.flatMap((g) => g.tasks).length;
 
   return (
     <div className={styles.page}>
@@ -116,7 +178,40 @@ export function TasksListView(props: Props) {
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
         />
-        <div className={styles.meta}>{data.totalCount} tasks</div>
+
+        {activeKey === 'inbox' && (
+          <div className={styles.sortControl} style={{ position: 'relative' }} ref={sortMenuRef}>
+            <button
+              type="button"
+              className={styles.sortBtn}
+              onClick={() => setShowSortMenu((v) => !v)}
+            >
+              Sort: {SORT_LABELS[sortBy]}
+              <CaretDown size={12} />
+            </button>
+            {showSortMenu && (
+              <div className={styles.sortMenu}>
+                {(['priority', 'date_added', 'due_date'] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    className={`${styles.sortOption} ${sortBy === opt ? styles.sortOptionActive : ''}`}
+                    onClick={() => { setSortBy(opt); setShowSortMenu(false); }}
+                  >
+                    {SORT_LABELS[opt]}
+                    {sortBy === opt && <Check size={13} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className={styles.meta}>
+          {search.trim()
+            ? `${totalFiltered} results`
+            : `${data.totalCount} tasks`}
+        </div>
       </div>
 
       {isPending ? (
@@ -125,10 +220,11 @@ export function TasksListView(props: Props) {
         <TasksUpcomingView tasks={data.upcomingTasks} onOpenTask={setDrawerTask} />
       ) : (
         <div className={styles.list}>
-          {data.groups.length === 0 ? (
+          {filteredGroups.length > 0 && <TaskListHeader />}
+          {filteredGroups.length === 0 ? (
             <div className={styles.empty}>Nothing here.</div>
           ) : null}
-          {data.groups.map((g) => (
+          {filteredGroups.map((g) => (
             <section key={g.bucket}>
               <header className={`${styles.groupHead} ${styles[g.bucket]}`}>
                 <span>{BUCKET_LABEL[g.bucket].toUpperCase()}</span>
@@ -140,6 +236,8 @@ export function TasksListView(props: Props) {
                   task={t}
                   subtasks={data.subtasksByParent[t.id] ?? []}
                   onOpen={() => setDrawerTask(t)}
+                  showNeedsOwner={activeKey === 'unassigned'}
+                  currentUserId={activeKey === 'unassigned' ? (props.currentUserId ?? null) : null}
                 />
               ))}
             </section>

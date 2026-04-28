@@ -3,14 +3,13 @@
   grid-template-columns: 20px 1fr minmax(140px, auto) 90px 30px 24px;
   align-items: center;
   gap: 12px;
-  padding: 10px 22px;
-  border-top: 1px solid #f3f4f6;
+  padding: 11px 22px;
   background: #fff;
   transition: background 120ms ease;
 }
 
 .row:hover { background: #fafbfc; }
-.rowDone .title { color: #9ca3af; text-decoration: line-through; }
+.rowDone .titleText { color: #9ca3af; text-decoration: line-through; }
 
 .check {
   width: 16px; height: 16px;
@@ -23,15 +22,53 @@
 .checkSm { width: 12px; height: 12px; border-radius: 3px; }
 .checkDone { background: #02AAEB; border-color: #02AAEB; }
 
-.title {
-  color: #0F3B6B;
-  font-size: 13px;
-  font-weight: 500;
+/* Title cell — flex column for title text + sub-line */
+.titleCell {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
+.titleText {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0F3B6B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titleTextInner {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.titleMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subtaskBadge {
+  font-size: 10.5px;
+  color: #9ca3af;
+}
+
+/* Kept for backward compat, no longer primary */
 .subBadge {
   background: #f3f4f6;
   color: #374151;
@@ -63,12 +100,45 @@
   display: flex; align-items: center; justify-content: center;
 }
 
-.menuBtn {
-  background: transparent; border: none;
-  color: #9ca3af; font-size: 16px;
-  cursor: pointer; padding: 0;
+/* Hover actions — replaces static menuBtn */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 120ms ease;
 }
-.menuBtn:hover { color: #0F3B6B; }
+.row:hover .actions { opacity: 1; }
+.actionBtn {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent;
+  border-radius: 4px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 13px;
+}
+.actionBtn:hover { background: #f3f4f6; color: #374151; }
+
+/* Unassigned badges */
+.needsOwnerBadge {
+  font-size: 10.5px;
+  background: rgba(217,119,6,0.12);
+  color: #b45309;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+.assignMeBtn {
+  font-size: 10.5px;
+  color: #c17b4e;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-family: inherit;
+}
+.assignMeBtn:hover { color: #a0622a; }
 
 .subWrap { background: #fafbfc; }
 .subRow {
@@ -76,7 +146,6 @@
   padding: 5px 22px 5px 60px;
   color: #6b7280;
   font-size: 11.5px;
-  border-top: 1px solid #f3f4f6;
 }
 .subDone .subTitle { color: #9ca3af; text-decoration: line-through; }
 .subTitle { flex: 1; }
