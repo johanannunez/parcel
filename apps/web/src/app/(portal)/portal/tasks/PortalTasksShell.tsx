@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { updateTaskStatus, toggleSubtask, addComment } from "./portal-task-actions";
 import type { PortalTask, TaskSubtask, TaskComment, PropertyOption } from "./page";
+import { PhaseProgressRing } from "./PhaseProgressRing";
 
 // ─── Type helpers ────────────────────────────────────────────────────────────
 
@@ -801,6 +802,117 @@ function FilterTabs({
   );
 }
 
+// ─── Phase card ───────────────────────────────────────────────────────────────
+
+function PhaseCard({
+  label,
+  tasks,
+  color,
+  onToggle,
+}: {
+  label: string;
+  tasks: Array<{ id: string; title: string; status: string }>;
+  color: string;
+  onToggle: (id: string, newStatus: "done" | "todo") => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const done = tasks.filter((t) => t.status === "done").length;
+  const total = tasks.length;
+  if (total === 0) return null;
+
+  return (
+    <div
+      style={{
+        border: "1px solid var(--color-warm-gray-200)",
+        borderRadius: 12,
+        overflow: "hidden",
+        backgroundColor: "var(--color-white)",
+      }}
+    >
+      <button
+        type="button"
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "14px 16px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+      >
+        <PhaseProgressRing done={done} total={total} color={color} size={44} />
+        <div style={{ flex: 1 }}>
+          <div
+            style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text-primary)" }}
+          >
+            {label}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 500, color, marginTop: 2 }}>
+            {done}/{total} done
+          </div>
+        </div>
+        <span
+          style={{ fontSize: 10, color: "var(--color-text-tertiary)", lineHeight: 1 }}
+        >
+          {expanded ? "▲" : "▼"}
+        </span>
+      </button>
+
+      {expanded && (
+        <ul
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: "0 16px 12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {tasks.map((t) => {
+            const isDone = t.status === "done";
+            return (
+              <li key={t.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button
+                  type="button"
+                  aria-label={isDone ? "Mark incomplete" : "Mark complete"}
+                  onClick={() => onToggle(t.id, isDone ? "todo" : "done")}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    border: `2px solid ${isDone ? color : "var(--color-warm-gray-300, #d1d5db)"}`,
+                    background: isDone ? color : "transparent",
+                    cursor: "pointer",
+                    transition: "background 0.15s, border-color 0.15s",
+                  }}
+                />
+                <span
+                  style={{
+                    flex: 1,
+                    fontSize: 14,
+                    color: "var(--color-text-primary)",
+                    textDecoration: isDone ? "line-through" : "none",
+                    opacity: isDone ? 0.6 : 1,
+                  }}
+                >
+                  {t.title}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
 export function PortalTasksShell({
@@ -954,6 +1066,21 @@ export function PortalTasksShell({
   const doneCount = counts.done;
   const overdueCount = counts.overdue;
 
+  // ── Onboarding phases ───────────────────────────────────────────────────────
+  const onboardingTasks = tasks.filter(
+    (t) => Array.isArray(t.tags) && t.tags.some((tag) => tag.startsWith("onboarding")),
+  );
+  const docTasks = onboardingTasks.filter((t) =>
+    (t.tags ?? []).includes("onboarding:documents"),
+  );
+  const finTasks = onboardingTasks.filter((t) =>
+    (t.tags ?? []).includes("onboarding:finances"),
+  );
+  const listTasks = onboardingTasks.filter((t) =>
+    (t.tags ?? []).includes("onboarding:listings"),
+  );
+  const hasOnboarding = onboardingTasks.length > 0;
+
   // ── Empty state ─────────────────────────────────────────────────────────────
   if (tasks.length === 0) {
     return (
@@ -1027,6 +1154,44 @@ export function PortalTasksShell({
           </span>
         )}
       </div>
+
+      {/* Onboarding phase cards */}
+      {hasOnboarding && (
+        <section style={{ marginBottom: 4 }}>
+          <h2
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--color-text-secondary)",
+              margin: "0 0 10px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Onboarding
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <PhaseCard
+              label="Documents"
+              tasks={docTasks}
+              color="#6366f1"
+              onToggle={handleToggleStatus}
+            />
+            <PhaseCard
+              label="Finances"
+              tasks={finTasks}
+              color="#10b981"
+              onToggle={handleToggleStatus}
+            />
+            <PhaseCard
+              label="Listings"
+              tasks={listTasks}
+              color="#8b5cf6"
+              onToggle={handleToggleStatus}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Filter tabs */}
       <FilterTabs active={activeTab} counts={counts} onChange={setActiveTab} />
