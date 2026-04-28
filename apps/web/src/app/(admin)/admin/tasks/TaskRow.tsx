@@ -23,11 +23,16 @@ function dueDisplay(iso: string | null): { label: string; tone: string } {
   return { label: due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), tone: 'neutral' };
 }
 
-export function TaskRow({ task, subtasks = [] }: { task: Task; subtasks?: Task[] }) {
+export function TaskRow({ task, subtasks = [], onOpen }: { task: Task; subtasks?: Task[]; onOpen?: () => void }) {
   const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
   const due = dueDisplay(task.dueAt);
   const hasSubtasks = task.subtaskCount > 0 || subtasks.length > 0;
+
+  const priorityClass =
+    task.priority === 1 ? styles.p1 :
+    task.priority === 2 ? styles.p2 :
+    task.priority === 3 ? styles.p3 : '';
 
   const toggleComplete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -40,12 +45,16 @@ export function TaskRow({ task, subtasks = [] }: { task: Task; subtasks?: Task[]
 
   return (
     <>
-      <div className={`${styles.row} ${task.status === 'done' ? styles.rowDone : ''}`}>
+      <div
+        className={`${styles.row} ${task.status === 'done' ? styles.rowDone : ''} ${priorityClass}`}
+        onClick={onOpen}
+        style={{ cursor: onOpen ? 'pointer' : undefined }}
+      >
         <button
           type="button"
           aria-label={task.status === 'done' ? 'Mark as todo' : 'Complete task'}
           className={`${styles.check} ${task.status === 'done' ? styles.checkDone : ''}`}
-          onClick={toggleComplete}
+          onClick={(e) => { e.stopPropagation(); toggleComplete(e); }}
           disabled={isPending}
         />
         <div className={styles.title}>

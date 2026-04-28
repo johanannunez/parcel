@@ -80,3 +80,7 @@
 }
 .subDone .subTitle { color: #9ca3af; text-decoration: line-through; }
 .subTitle { flex: 1; }
+
+.p1 { border-left: 3px solid #ef4444; }
+.p2 { border-left: 3px solid #f59e0b; }
+.p3 { border-left: 3px solid #60a5fa; }
