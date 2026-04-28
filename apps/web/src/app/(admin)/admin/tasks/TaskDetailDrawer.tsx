@@ -121,7 +121,6 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
                 type="button"
                 className={`${styles.completeBtn} ${localStatus === 'done' ? styles.completeBtnDone : ''}`}
                 onClick={toggleDone}
-                disabled={isPending}
                 aria-label={localStatus === 'done' ? 'Mark incomplete' : 'Mark complete'}
               />
               {editingTitle ? (
@@ -173,7 +172,6 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
                       className={`${styles.priorityPill} ${localPriority === value ? styles.priorityPillActive : ''}`}
                       style={localPriority === value && color ? { borderColor: color, color } : undefined}
                       onClick={() => setPriority(value)}
-                      disabled={isPending}
                       aria-pressed={localPriority === value}
                     >
                       {label}
@@ -187,11 +185,11 @@ export function TaskDetailDrawer({ task, onClose }: { task: Task | null; onClose
                 <div className={styles.dueSection}>
                   <span className={styles.dueDisplay}>{formatDueDate(localDueAt)}</span>
                   <div className={styles.duePresets}>
-                    <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(0))} disabled={isPending}>Today</button>
-                    <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(1))} disabled={isPending}>Tomorrow</button>
-                    <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(7))} disabled={isPending}>Next week</button>
+                    <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(0))}>Today</button>
+                    <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(1))}>Tomorrow</button>
+                    <button type="button" className={styles.duePreset} onClick={() => setDue(dueDatePreset(7))}>Next week</button>
                     {localDueAt && (
-                      <button type="button" className={`${styles.duePreset} ${styles.duePresetClear}`} onClick={() => setDue(null)} disabled={isPending}>Clear</button>
+                      <button type="button" className={`${styles.duePreset} ${styles.duePresetClear}`} onClick={() => setDue(null)}>Clear</button>
                     )}
                   </div>
                 </div>
