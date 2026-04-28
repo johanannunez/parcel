@@ -33,9 +33,12 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // Authenticate via HTTP Basic auth
+  // Single Supabase service client per request
+  const supabase = getServiceClient();
+
+  // Authenticate via HTTP Basic auth (email:token, take everything after first colon as token)
   const authHeader = request.headers.get('Authorization') ?? '';
-  const profileId = await authenticate(authHeader);
+  const profileId = await authenticate(authHeader, supabase);
   if (!profileId) {
     return new NextResponse('Unauthorized', {
       status: 401,
@@ -43,10 +46,11 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  const supabase = getServiceClient();
-
   if (method === 'PROPFIND') return handlePropfind(pathname);
-  if (method === 'REPORT') return handleReport(supabase, profileId);
+  // Scope REPORT to the tasks collection only
+  if (method === 'REPORT' && (pathname === '/caldav/tasks/' || pathname === '/caldav/tasks')) {
+    return handleReport(supabase, profileId);
+  }
   if (method === 'GET' && pathname.match(/\/caldav\/tasks\/.+\.ics$/)) {
     return handleGet(supabase, profileId, pathname);
   }
@@ -57,14 +61,17 @@ export async function middleware(request: NextRequest) {
   return new NextResponse('Method Not Allowed', { status: 405 });
 }
 
-async function authenticate(authHeader: string): Promise<string | null> {
+async function authenticate(
+  authHeader: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+): Promise<string | null> {
   if (!authHeader.startsWith('Basic ')) return null;
   const decoded = atob(authHeader.slice(6));
   const colonIdx = decoded.indexOf(':');
   if (colonIdx === -1) return null;
   const token = decoded.slice(colonIdx + 1);
   if (!token) return null;
-  const supabase = getServiceClient();
   const result = await verifyApiToken(token, supabase as any);
   return result?.profileId ?? null;
 }
@@ -84,6 +91,7 @@ function handlePropfind(pathname: string): NextResponse {
     <href>/caldav/</href>
     <propstat>
       <prop>
+        <displayname>Parcel</displayname>
         <resourcetype><principal/></resourcetype>
         <C:calendar-home-set><href>/caldav/</href></C:calendar-home-set>
       </prop>
@@ -93,7 +101,8 @@ function handlePropfind(pathname: string): NextResponse {
 </multistatus>`, 207);
   }
 
-  return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
+  if (pathname === '/caldav/tasks/' || pathname === '/caldav/tasks') {
+    return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
 <multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
   <response>
     <href>/caldav/tasks/</href>
@@ -109,6 +118,9 @@ function handlePropfind(pathname: string): NextResponse {
     </propstat>
   </response>
 </multistatus>`, 207);
+  }
+
+  return new NextResponse('Not Found', { status: 404 });
 }
 
 async function handleReport(
@@ -125,6 +137,7 @@ async function handleReport(
     .not('caldav_uid', 'is', null);
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.theparcelco.com';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const responses = (tasks ?? []).map((t: any) => {
     const vtodo = taskToVTodo({
       id: t.id,
@@ -136,12 +149,13 @@ async function handleReport(
       updatedAt: t.updated_at,
     }, baseUrl);
     const etag = generateETag(t.updated_at);
+    // Wrap VTODO in CDATA to prevent XML injection from task title characters like < > &
     return `  <response>
     <href>/caldav/tasks/${t.caldav_uid}.ics</href>
     <propstat>
       <prop>
         <getetag>${etag}</getetag>
-        <C:calendar-data>${vtodo}</C:calendar-data>
+        <C:calendar-data><![CDATA[${vtodo}]]></C:calendar-data>
       </prop>
       <status>HTTP/1.1 200 OK</status>
     </propstat>
@@ -198,11 +212,15 @@ async function handlePut(
   const newStatus = parseVTodoStatus(body);
 
   if (newStatus === 'COMPLETED') {
-    await (supabase as any)
+    const { count } = await (supabase as any)
       .from('tasks')
-      .update({ status: 'done', completed_at: new Date().toISOString() })
+      .update({ status: 'done', completed_at: new Date().toISOString() }, { count: 'exact' })
       .eq('caldav_uid', uid)
       .eq('created_by', profileId);
+
+    if ((count ?? 0) === 0) {
+      return new NextResponse('Not Found', { status: 404 });
+    }
   }
 
   return new NextResponse(null, { status: 204 });
