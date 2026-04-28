@@ -46,7 +46,7 @@
 
 .hintSep { margin: 0 4px; }
 
-kbd {
+.hint kbd {
   display: inline-block;
   padding: 1px 5px;
   background: var(--surface-elevated);
