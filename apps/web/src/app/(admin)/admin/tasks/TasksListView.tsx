@@ -17,12 +17,12 @@ type Props = TasksFetchResult & {
 
 function SavedViewTabs({ views }: { views: TasksSavedView[] }) {
   const sp = useSearchParams();
-  const active = sp?.get('view') ?? 'my-tasks';
+  const active = sp?.get('view') ?? 'today';
   return (
     <nav className={styles.views} aria-label="Saved views">
       {views.map((v) => {
         const isActive = v.key === active;
-        const href = v.key === 'my-tasks' ? '/admin/tasks' : `/admin/tasks?view=${v.key}`;
+        const href = v.key === 'today' ? '/admin/tasks' : `/admin/tasks?view=${v.key}`;
         const warn = v.key === 'overdue' && v.count > 0;
         return (
           <Link

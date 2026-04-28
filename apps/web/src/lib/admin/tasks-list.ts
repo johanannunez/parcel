@@ -38,8 +38,8 @@ export async function fetchAdminTasksList(
     count: 0,
   }));
   const activeView =
-    views.find((v) => v.key === (opts.viewKey ?? 'my-tasks')) ??
-    views.find((v) => v.key === 'my-tasks') ??
+    views.find((v) => v.key === (opts.viewKey ?? 'today')) ??
+    views.find((v) => v.key === 'today') ??
     views[0];
   if (!activeView) throw new Error('No task saved views');
 
@@ -59,6 +59,30 @@ export async function fetchAdminTasksList(
     .order('created_at', { ascending: false });
 
   switch (activeView.key) {
+    case 'inbox':
+      query = query
+        .is('due_at', null)
+        .is('parent_task_id', null)
+        .neq('status', 'done');
+      break;
+    case 'today': {
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      query = query
+        .lte('due_at', endOfToday.toISOString())
+        .neq('status', 'done');
+      break;
+    }
+    case 'upcoming': {
+      const nowStr = new Date().toISOString();
+      const in14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+      query = query
+        .not('due_at', 'is', null)
+        .gte('due_at', nowStr)
+        .lte('due_at', in14)
+        .neq('status', 'done');
+      break;
+    }
     case 'my-tasks':
       query = query.eq('assignee_id', user.id).neq('status', 'done');
       break;
@@ -81,6 +105,12 @@ export async function fetchAdminTasksList(
       break;
     default:
       query = query.neq('status', 'done');
+  }
+
+  if (activeView.key === 'today') {
+    query = (query as any)
+      .order('priority', { ascending: true })
+      .order('due_at', { ascending: true, nullsFirst: false });
   }
 
   if (opts.parentFilter) {
@@ -258,6 +288,21 @@ export async function fetchAdminTasksList(
     views.map((v) => {
       let cq = supabase.from('tasks').select('*', { count: 'exact', head: true });
       switch (v.key) {
+        case 'inbox':
+          cq = (cq as any).is('due_at', null).is('parent_task_id', null).neq('status', 'done');
+          break;
+        case 'today': {
+          const eot = new Date();
+          eot.setHours(23, 59, 59, 999);
+          cq = cq.lte('due_at', eot.toISOString()).neq('status', 'done');
+          break;
+        }
+        case 'upcoming': {
+          const nowStr2 = new Date().toISOString();
+          const in14c = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+          cq = (cq as any).not('due_at', 'is', null).gte('due_at', nowStr2).lte('due_at', in14c).neq('status', 'done');
+          break;
+        }
         case 'my-tasks':
           cq = cq.eq('assignee_id', user.id).neq('status', 'done');
           break;
