@@ -33,6 +33,7 @@ export async function TasksTab({
         title: s.title,
         description: null,
         status: s.status as Task['status'],
+        priority: 4 as const,
         assigneeId: null,
         assigneeName: null,
         assigneeAvatarUrl: null,

@@ -43,10 +43,14 @@ export async function fetchAdminTasksList(
     views[0];
   if (!activeView) throw new Error('No task saved views');
 
-  let query = supabase
+  // Cast through `any` so that columns not yet in generated Supabase types
+  // (e.g. priority, caldav_uid) do not produce a SelectQueryError that
+  // poisons all property accesses on the result rows.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
     .from('tasks')
     .select(`
-      id, parent_task_id, parent_type, parent_id, title, description, status,
+      id, parent_task_id, parent_type, parent_id, title, description, status, priority,
       assignee_id, created_by, due_at, completed_at, created_at,
       assignee:profiles!tasks_assignee_id_fkey(full_name, avatar_url),
       creator:profiles!tasks_created_by_fkey1(full_name)
@@ -95,7 +99,25 @@ export async function fetchAdminTasksList(
     query = query.not('id', 'like', '0000%');
   }
 
-  const { data, error } = await query;
+  type RawTaskRow = {
+    id: string;
+    parent_task_id: string | null;
+    parent_type: string | null;
+    parent_id: string | null;
+    title: string;
+    description: string | null;
+    status: string;
+    priority: number | null;
+    assignee_id: string | null;
+    created_by: string | null;
+    due_at: string | null;
+    completed_at: string | null;
+    created_at: string;
+    assignee: { full_name?: string; avatar_url?: string } | { full_name?: string; avatar_url?: string }[] | null;
+    creator: { full_name?: string } | { full_name?: string }[] | null;
+  };
+  const { data: dataRaw, error } = await query;
+  const data = dataRaw as RawTaskRow[] | null;
   if (error) {
     console.error('[tasks-list] tasks fetch error:', error.code, error.message);
     return { groups: [], views, activeView, totalCount: 0 };
@@ -204,6 +226,7 @@ export async function fetchAdminTasksList(
       title: t.title,
       description: t.description,
       status: t.status as Task['status'],
+      priority: ((t as any).priority ?? 4) as 1 | 2 | 3 | 4,
       assigneeId: t.assignee_id,
       assigneeName: assignee?.full_name ?? null,
       assigneeAvatarUrl: assignee?.avatar_url ?? null,

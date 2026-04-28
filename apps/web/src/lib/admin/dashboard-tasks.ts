@@ -55,6 +55,7 @@ export async function fetchDashboardTasks(): Promise<DashboardTask[]> {
       title: t.title,
       description: t.description,
       status: t.status as TaskStatus,
+      priority: ((t as any).priority ?? 4) as 1 | 2 | 3 | 4,
       assigneeId: t.assignee_id,
       assigneeName: assigneeData?.full_name ?? null,
       assigneeAvatarUrl: assigneeData?.avatar_url ?? null,
