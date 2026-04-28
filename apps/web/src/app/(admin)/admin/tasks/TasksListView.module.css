@@ -18,8 +18,11 @@
   font-size: 13px;
   font-weight: 500;
   color: #6b7280;
-  text-decoration: none;
+  background: none;
+  border: none;
   border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
 }
 .tab:hover { color: #0F3B6B; }
 .tab:focus-visible { outline: none; color: #0F3B6B; border-bottom-color: #02AAEB; }
@@ -73,3 +76,22 @@
 .today { color: #9a3412; }
 
 .empty { padding: 40px 24px; color: #6b7280; font-size: 13px; text-align: center; }
+
+.skeleton {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.skeletonRow {
+  height: 48px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e9eaec 50%, #f3f4f6 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-top: 1px solid #f3f4f6;
+}
+.skeletonRow:first-child { border-top: none; }
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
