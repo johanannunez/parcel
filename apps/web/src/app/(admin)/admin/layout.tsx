@@ -10,6 +10,7 @@ import { CreateScopeProvider } from "@/components/admin/chrome/CreateScopeContex
 import { CreateModal } from "@/components/admin/chrome/CreateModal";
 import { TopBarSlotsProvider } from "@/components/admin/chrome/TopBarSlotsContext";
 import { CommandPalette } from "@/components/admin/chrome/CommandPalette";
+import { QuickCapture } from "@/components/admin/chrome/QuickCapture";
 import { SidebarDrawer } from "@/components/admin/chrome/SidebarDrawer";
 import { NotificationPopover } from "@/components/admin/chrome/NotificationPopover";
 import { HelpSupportModal } from "@/components/admin/HelpSupportModal";
@@ -111,6 +112,7 @@ export default async function AdminLayout({
 
         <CreateModal />
         <CommandPalette />
+        <QuickCapture />
         <NotificationPopover />
         <HelpSupportModal />
         <AdminAIChatTrigger />
