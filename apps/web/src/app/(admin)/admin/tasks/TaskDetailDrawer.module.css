@@ -116,9 +116,9 @@
   font-weight: 500;
 }
 .status_todo { background: var(--surface-elevated); color: var(--text-secondary); }
-.status_in_progress { background: #eff6ff; color: #2563eb; }
-.status_blocked { background: #fef2f2; color: #dc2626; }
-.status_done { background: #f0fdf4; color: #16a34a; }
+.status_in_progress { background: rgba(2, 170, 235, 0.14); color: #02AAEB; }
+.status_blocked { background: rgba(239, 68, 68, 0.14); color: #b91c1c; }
+.status_done { background: rgba(16, 185, 129, 0.14); color: #047857; }
 
 .priorityPills { display: flex; gap: 4px; flex-wrap: wrap; }
 .priorityPill {
