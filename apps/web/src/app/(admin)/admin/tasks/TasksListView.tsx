@@ -9,7 +9,7 @@ import type {
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
 import { TaskRow } from './TaskRow';
 import { TasksUpcomingView } from './TasksUpcomingView';
-import { TaskDetailDrawer } from './TaskDetailDrawer';
+import { TaskDetailModal } from './TaskDetailModal';
 import styles from './TasksListView.module.css';
 
 type ApiResponse = TasksFetchResult & {
@@ -147,7 +147,7 @@ export function TasksListView(props: Props) {
         </div>
       )}
 
-      <TaskDetailDrawer task={drawerTask} onClose={() => setDrawerTask(null)} />
+      <TaskDetailModal task={drawerTask} onClose={() => setDrawerTask(null)} />
     </div>
   );
 }
