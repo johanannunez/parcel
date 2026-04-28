@@ -32,6 +32,9 @@ export async function POST(request: Request) {
   if (!trimmedTitle) {
     return NextResponse.json({ error: 'title is required' }, { status: 400 });
   }
+  if (trimmedTitle.length > 500) {
+    return NextResponse.json({ error: 'title must be 500 characters or fewer' }, { status: 400 });
+  }
 
   // Accept ISO date string or natural language ("next monday", "tomorrow", etc.)
   let dueAt: string | null = null;

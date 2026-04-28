@@ -31,7 +31,7 @@ Add these actions in order:
 - Method: POST
 - Headers:
   - `Authorization`: `Bearer YOUR_TOKEN_HERE` (replace with your token from Step 1)
-  - `Content-Type`: `application/json`
+- Note: `Content-Type: application/json` is set automatically when you choose "JSON" as the Request Body type in Shortcuts
 - Request Body: JSON
   - Key `title`, Value: variable `TaskTitle`
   - Key `dueDate`, Value: variable `DueDate`
@@ -45,7 +45,7 @@ Add these actions in order:
 | Surface | How to add |
 |---------|-----------|
 | iPhone home screen | Long-press the shortcut in Shortcuts app, tap Add to Home Screen |
-| iPhone lock screen | Settings > Lock Screen > Customize > Widgets > Shortcuts |
+| iPhone lock screen | Long-press the lock screen > Customize > tap a widget area > tap "+" > choose Shortcuts |
 | Mac menu bar | Right-click the shortcut in Shortcuts app > Add to Menu Bar |
 | Siri | Say "Add to Parcel" (shortcut must be named exactly "Add to Parcel") |
 | Share sheet | Open shortcut settings > toggle Show in Share Sheet |
