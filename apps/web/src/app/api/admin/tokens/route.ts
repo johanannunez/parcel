@@ -59,11 +59,12 @@ export async function DELETE(request: Request) {
     .from('profiles').select('id').eq('user_id', user.id).single();
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
-  await (supabase as any)
+  const { error: deleteError } = await (supabase as any)
     .from('api_tokens')
     .delete()
     .eq('id', id)
     .eq('profile_id', profile.id); // security: only delete tokens owned by this profile
+  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }

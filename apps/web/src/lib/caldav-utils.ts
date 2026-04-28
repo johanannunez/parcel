@@ -1,5 +1,3 @@
-import { format } from 'date-fns';
-
 // CalDAV PRIORITY uses 1-9 scale. 1=highest priority.
 const PRIORITY_MAP: Record<number, number> = { 1: 1, 2: 3, 3: 5, 4: 9 };
 
@@ -44,7 +42,8 @@ export function taskToVTodo(task: CalDAVTask, baseUrl: string): string {
   }
 
   lines.push('END:VTODO', 'END:VCALENDAR');
-  return lines.join('\r\n');
+  // RFC 5545 requires CRLF line endings and a trailing CRLF after the last line
+  return lines.join('\r\n') + '\r\n';
 }
 
 export function generateETag(updatedAt: string): string {
@@ -52,7 +51,8 @@ export function generateETag(updatedAt: string): string {
 }
 
 export function parseVTodoStatus(body: string): 'COMPLETED' | 'NEEDS-ACTION' | null {
-  const match = body.match(/^STATUS:(.+)$/m);
+  // Use [^\r\n]+ to correctly handle CRLF-terminated bodies from CalDAV clients
+  const match = body.match(/^STATUS:([^\r\n]+)/m);
   if (!match) return null;
   const val = match[1].trim();
   if (val === 'COMPLETED' || val === 'NEEDS-ACTION') return val;
@@ -60,12 +60,22 @@ export function parseVTodoStatus(body: string): 'COMPLETED' | 'NEEDS-ACTION' | n
 }
 
 export function parseVTodoUid(body: string): string | null {
-  const match = body.match(/^UID:(.+)$/m);
+  // Use [^\r\n]+ to correctly handle CRLF-terminated bodies from CalDAV clients
+  const match = body.match(/^UID:([^\r\n]+)/m);
   return match?.[1]?.trim() ?? null;
 }
 
+// Produces UTC datetime in iCalendar format: YYYYMMDDTHHmmssZ (RFC 5545 section 3.3.5)
 function formatIcalDate(date: Date): string {
-  return format(date, "yyyyMMdd'T'HHmmss'Z'");
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${date.getUTCFullYear()}` +
+    `${pad(date.getUTCMonth() + 1)}` +
+    `${pad(date.getUTCDate())}` +
+    `T${pad(date.getUTCHours())}` +
+    `${pad(date.getUTCMinutes())}` +
+    `${pad(date.getUTCSeconds())}Z`
+  );
 }
 
 function escapeIcal(str: string): string {

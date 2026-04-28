@@ -13,9 +13,18 @@ export function generateToken(): string {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Minimal structural interface to avoid importing server-only Supabase client types
+// into this edge-compatible module.
+interface MinimalSupabaseClient {
+  from(table: string): {
+    select(cols: string): unknown;
+    update(values: Record<string, unknown>): unknown;
+  };
+}
+
 export async function verifyApiToken(
   providedToken: string,
-  supabaseClient: { from: Function },
+  supabaseClient: MinimalSupabaseClient,
 ): Promise<{ profileId: string; tokenId: string } | null> {
   const hash = await hashToken(providedToken);
   const { data } = await (supabaseClient as any)
@@ -25,7 +34,7 @@ export async function verifyApiToken(
     .single();
   if (!data) return null;
 
-  // Fire-and-forget last_used_at update
+  // Fire-and-forget last_used_at update -- non-critical, background
   void (supabaseClient as any)
     .from('api_tokens')
     .update({ last_used_at: new Date().toISOString() })
