@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { format, addDays, startOfDay, isToday, isTomorrow } from 'date-fns';
 import type { Task } from '@/lib/admin/task-types';
+import { ParentPill } from './ParentPill';
 import styles from './TasksUpcomingView.module.css';
 
 const PRIORITY_COLORS: Record<number, string> = {
@@ -11,10 +12,17 @@ const PRIORITY_COLORS: Record<number, string> = {
   3: '#60a5fa',
 };
 
-function dayLabel(date: Date): string {
+const DAYS_SHOWN = 14;
+
+function relativeLabel(date: Date): string | null {
   if (isToday(date)) return 'Today';
   if (isTomorrow(date)) return 'Tomorrow';
-  return format(date, 'EEE MMM d');
+  return null;
+}
+
+function hasTimeComponent(dueAt: string): boolean {
+  const d = new Date(dueAt);
+  return d.getHours() !== 0 || d.getMinutes() !== 0 || d.getSeconds() !== 0;
 }
 
 export function TasksUpcomingView({
@@ -24,14 +32,12 @@ export function TasksUpcomingView({
   tasks: Task[];
   onOpenTask?: (task: Task) => void;
 }) {
-  const todayMs = startOfDay(new Date()).getTime();
+  const todayStart = startOfDay(new Date());
+
   const days = useMemo(
-    () => {
-      const tomorrow = new Date(todayMs);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return Array.from({ length: 14 }, (_, i) => addDays(tomorrow, i));
-    },
-    [todayMs],
+    () => Array.from({ length: DAYS_SHOWN }, (_, i) => addDays(todayStart, i)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [todayStart.getTime()],
   );
 
   const tasksByDay = useMemo(() => {
@@ -46,55 +52,106 @@ export function TasksUpcomingView({
     return map;
   }, [tasks]);
 
+  function scrollToDay(key: string) {
+    document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   return (
-    <div className={styles.grid}>
-      {days.map((day) => {
-        const key = format(day, 'yyyy-MM-dd');
-        const dayTasks = tasksByDay.get(key) ?? [];
-        return (
-          <div
-            key={key}
-            className={`${styles.row} ${isToday(day) ? styles.rowToday : ''}`}
-          >
-            <div className={styles.dayLabel}>
-              <span className={styles.dayName}>{dayLabel(day)}</span>
-            </div>
-            <div className={styles.chips}>
+    <div className={styles.root}>
+      {/* Week strip */}
+      <div className={styles.weekStrip}>
+        {days.map((day) => {
+          const key = format(day, 'yyyy-MM-dd');
+          const today = isToday(day);
+          return (
+            <button
+              key={key}
+              type="button"
+              className={`${styles.dayButton} ${today ? styles.dayButtonToday : ''}`}
+              onClick={() => scrollToDay(key)}
+            >
+              <span className={styles.dayButtonName}>{format(day, 'EEE')}</span>
+              <span className={`${styles.dayButtonNum} ${today ? styles.dayButtonNumToday : ''}`}>
+                {format(day, 'd')}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Date-grouped list */}
+      <div className={styles.list}>
+        {days.map((day) => {
+          const key = format(day, 'yyyy-MM-dd');
+          const dayTasks = tasksByDay.get(key) ?? [];
+          const rel = relativeLabel(day);
+
+          return (
+            <div key={key} id={key} className={styles.section}>
+              {/* Section header */}
+              <div className={styles.sectionHeader}>
+                <span className={styles.headerDate}>{format(day, 'MMM d')}</span>
+                {rel && (
+                  <>
+                    <span className={styles.headerSep}>·</span>
+                    <span className={styles.headerRel}>{rel}</span>
+                  </>
+                )}
+                <span className={styles.headerSep}>·</span>
+                <span className={styles.headerDay}>{format(day, 'EEEE')}</span>
+              </div>
+
+              {/* Task rows */}
+              {dayTasks.map((task) => {
+                const priorityColor =
+                  task.priority < 4 ? PRIORITY_COLORS[task.priority] : undefined;
+                const showTime = task.dueAt != null && hasTimeComponent(task.dueAt);
+
+                return (
+                  <div
+                    key={task.id}
+                    className={styles.taskRow}
+                    style={
+                      priorityColor
+                        ? { borderLeft: `3px solid ${priorityColor}`, paddingLeft: '10px' }
+                        : { paddingLeft: '13px' }
+                    }
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onOpenTask?.(task)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onOpenTask?.(task);
+                      }
+                    }}
+                  >
+                    <span className={styles.taskCheckbox} aria-hidden />
+                    <div className={styles.taskMain}>
+                      <span className={styles.taskTitle}>{task.title}</span>
+                      {(showTime || task.parent) && (
+                        <div className={styles.taskMeta}>
+                          {showTime && task.dueAt && (
+                            <span className={styles.taskTime}>
+                              {format(new Date(task.dueAt), 'h:mm a')}
+                            </span>
+                          )}
+                          {task.parent && <ParentPill parent={task.parent} />}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Empty placeholder */}
               {dayTasks.length === 0 && (
-                <span className={styles.empty}>-</span>
+                <div className={styles.addTaskPlaceholder}>+ Add task</div>
               )}
-              {dayTasks.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={styles.chip}
-                  style={
-                    t.priority < 4
-                      ? {
-                          borderLeftColor: PRIORITY_COLORS[t.priority],
-                          borderLeftWidth: '3px',
-                          borderLeftStyle: 'solid',
-                        }
-                      : undefined
-                  }
-                  onClick={() => onOpenTask?.(t)}
-                  title={t.title}
-                >
-                  {t.priority < 4 && (
-                    <span
-                      className={styles.dot}
-                      style={{ background: PRIORITY_COLORS[t.priority] }}
-                    />
-                  )}
-                  <span className={styles.chipTitle}>
-                    {t.title.length > 28 ? t.title.slice(0, 28) + '…' : t.title}
-                  </span>
-                </button>
-              ))}
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
