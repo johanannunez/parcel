@@ -15,7 +15,7 @@ export async function fetchDashboardTasks(): Promise<DashboardTask[]> {
   const { data: tasks } = await supabase
     .from('tasks')
     .select(`
-      id, parent_task_id, parent_type, parent_id, title, description, status,
+      id, parent_task_id, parent_type, parent_id, title, description, status, priority,
       assignee_id, created_by, due_at, completed_at, created_at,
       assignee:profiles!tasks_assignee_id_fkey(full_name, avatar_url),
       creator:profiles!tasks_created_by_fkey1(full_name)

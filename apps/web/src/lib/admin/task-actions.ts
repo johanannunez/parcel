@@ -148,6 +148,8 @@ export async function completeTask(id: string): Promise<void> {
         linked_property_id: task.linked_property_id,
         recurrence_rule: task.recurrence_rule,
         pre_notify_hours: task.pre_notify_hours,
+        priority: (task as any).priority ?? 4,
+        caldav_uid: `task-${crypto.randomUUID()}@parcelco.com`,
         spawned_from_task_id: task.id,
         due_at: nextDue,
         next_spawn_at: afterNext,
