@@ -303,9 +303,11 @@ export async function fetchAdminTasksList(
           break;
         }
         case 'upcoming': {
-          const nowStr2 = new Date().toISOString();
+          const startOfTomorrow2 = new Date();
+          startOfTomorrow2.setDate(startOfTomorrow2.getDate() + 1);
+          startOfTomorrow2.setHours(0, 0, 0, 0);
           const in14c = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-          cq = (cq as any).not('due_at', 'is', null).gte('due_at', nowStr2).lte('due_at', in14c).neq('status', 'done');
+          cq = (cq as any).not('due_at', 'is', null).gte('due_at', startOfTomorrow2.toISOString()).lte('due_at', in14c).neq('status', 'done');
           break;
         }
         case 'my-tasks':

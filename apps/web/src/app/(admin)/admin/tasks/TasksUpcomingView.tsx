@@ -24,11 +24,14 @@ export function TasksUpcomingView({
   tasks: Task[];
   onOpenTask?: (task: Task) => void;
 }) {
-  const today = startOfDay(new Date());
+  const todayMs = startOfDay(new Date()).getTime();
   const days = useMemo(
-    () => Array.from({ length: 14 }, (_, i) => addDays(today, i)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [today.getTime()],
+    () => {
+      const tomorrow = new Date(todayMs);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return Array.from({ length: 14 }, (_, i) => addDays(tomorrow, i));
+    },
+    [todayMs],
   );
 
   const tasksByDay = useMemo(() => {
