@@ -55,10 +55,7 @@ export async function fetchAdminTasksList(
       assignee:profiles!tasks_assignee_id_fkey(full_name, avatar_url),
       creator:profiles!tasks_created_by_fkey1(full_name)
     `)
-    .order('due_at', { ascending: true, nullsFirst: false })
-    .order('created_at', { ascending: false });
-
-  switch (activeView.key) {
+    switch (activeView.key) {
     case 'inbox':
       query = query
         .is('due_at', null)
@@ -74,11 +71,14 @@ export async function fetchAdminTasksList(
       break;
     }
     case 'upcoming': {
-      const nowStr = new Date().toISOString();
+      // Start from tomorrow so upcoming and today views don't overlap
+      const startOfTomorrow = new Date();
+      startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+      startOfTomorrow.setHours(0, 0, 0, 0);
       const in14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
       query = query
         .not('due_at', 'is', null)
-        .gte('due_at', nowStr)
+        .gte('due_at', startOfTomorrow.toISOString())
         .lte('due_at', in14)
         .neq('status', 'done');
       break;
@@ -107,10 +107,15 @@ export async function fetchAdminTasksList(
       query = query.neq('status', 'done');
   }
 
+  // Apply ordering after switch so today view can use priority-first sort
   if (activeView.key === 'today') {
     query = (query as any)
       .order('priority', { ascending: true })
       .order('due_at', { ascending: true, nullsFirst: false });
+  } else {
+    query = query
+      .order('due_at', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false });
   }
 
   if (opts.parentFilter) {
