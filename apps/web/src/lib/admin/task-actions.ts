@@ -134,7 +134,8 @@ export async function completeTask(id: string): Promise<void> {
       // Compute the spawn after THAT one so next_spawn_at is always one step ahead
       const afterNext = nextOccurrence(next, rule)?.toISOString() ?? null;
 
-      await supabase.from('tasks').insert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('tasks').insert({
         title: task.title,
         description: task.description,
         parent_type: task.parent_type,
