@@ -9,10 +9,12 @@ import type {
 } from '@/lib/admin/task-types';
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
 import { TaskRow } from './TaskRow';
+import { TasksUpcomingView } from './TasksUpcomingView';
 import styles from './TasksListView.module.css';
 
 type Props = TasksFetchResult & {
   subtasksByParent: Record<string, Task[]>;
+  upcomingTasks: Task[];
 };
 
 function SavedViewTabs({ views }: { views: TasksSavedView[] }) {
@@ -43,7 +45,7 @@ function SavedViewTabs({ views }: { views: TasksSavedView[] }) {
   );
 }
 
-export function TasksListView({ groups, views, activeView, totalCount, subtasksByParent }: Props) {
+export function TasksListView({ groups, views, activeView, totalCount, subtasksByParent, upcomingTasks }: Props) {
   return (
     <div className={styles.page}>
       <SavedViewTabs views={views} />
@@ -53,26 +55,30 @@ export function TasksListView({ groups, views, activeView, totalCount, subtasksB
         <div className={styles.meta}>{totalCount} tasks</div>
       </div>
 
-      <div className={styles.list}>
-        {groups.length === 0 ? (
-          <div className={styles.empty}>Nothing here.</div>
-        ) : null}
-        {groups.map((g) => (
-          <section key={g.bucket}>
-            <header className={`${styles.groupHead} ${styles[g.bucket]}`}>
-              <span>{BUCKET_LABEL[g.bucket].toUpperCase()}</span>
-              <span className={styles.groupCount}>{g.tasks.length}</span>
-            </header>
-            {g.tasks.map((t) => (
-              <TaskRow
-                key={t.id}
-                task={t}
-                subtasks={subtasksByParent[t.id] ?? []}
-              />
-            ))}
-          </section>
-        ))}
-      </div>
+      {activeView?.key === 'upcoming' ? (
+        <TasksUpcomingView tasks={upcomingTasks} />
+      ) : (
+        <div className={styles.list}>
+          {groups.length === 0 ? (
+            <div className={styles.empty}>Nothing here.</div>
+          ) : null}
+          {groups.map((g) => (
+            <section key={g.bucket}>
+              <header className={`${styles.groupHead} ${styles[g.bucket]}`}>
+                <span>{BUCKET_LABEL[g.bucket].toUpperCase()}</span>
+                <span className={styles.groupCount}>{g.tasks.length}</span>
+              </header>
+              {g.tasks.map((t) => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  subtasks={subtasksByParent[t.id] ?? []}
+                />
+              ))}
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

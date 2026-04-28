@@ -12,6 +12,8 @@ export default async function TasksPage({ searchParams }: Props) {
     search: q ?? null,
   });
 
+  const upcomingTasks = view === 'upcoming' ? groups.flatMap((g) => g.tasks) : [];
+
   // Fetch subtasks for all parent tasks currently in view (for inline expansion).
   const parentIds = groups.flatMap((g) => g.tasks.map((t) => t.id));
   const subtasksByParent: Record<string, Task[]> = {};
@@ -53,6 +55,7 @@ export default async function TasksPage({ searchParams }: Props) {
       activeView={activeView}
       totalCount={totalCount}
       subtasksByParent={subtasksByParent}
+      upcomingTasks={upcomingTasks}
     />
   );
 }
