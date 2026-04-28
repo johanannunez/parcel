@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import type {
@@ -10,6 +11,7 @@ import type {
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
 import { TaskRow } from './TaskRow';
 import { TasksUpcomingView } from './TasksUpcomingView';
+import { TaskDetailDrawer } from './TaskDetailDrawer';
 import styles from './TasksListView.module.css';
 
 type Props = TasksFetchResult & {
@@ -46,6 +48,8 @@ function SavedViewTabs({ views }: { views: TasksSavedView[] }) {
 }
 
 export function TasksListView({ groups, views, activeView, totalCount, subtasksByParent, upcomingTasks }: Props) {
+  const [drawerTask, setDrawerTask] = useState<Task | null>(null);
+
   return (
     <div className={styles.page}>
       <SavedViewTabs views={views} />
@@ -56,7 +60,7 @@ export function TasksListView({ groups, views, activeView, totalCount, subtasksB
       </div>
 
       {activeView?.key === 'upcoming' ? (
-        <TasksUpcomingView tasks={upcomingTasks} />
+        <TasksUpcomingView tasks={upcomingTasks} onOpenTask={setDrawerTask} />
       ) : (
         <div className={styles.list}>
           {groups.length === 0 ? (
@@ -73,12 +77,15 @@ export function TasksListView({ groups, views, activeView, totalCount, subtasksB
                   key={t.id}
                   task={t}
                   subtasks={subtasksByParent[t.id] ?? []}
+                  onOpen={() => setDrawerTask(t)}
                 />
               ))}
             </section>
           ))}
         </div>
       )}
+
+      <TaskDetailDrawer task={drawerTask} onClose={() => setDrawerTask(null)} />
     </div>
   );
 }
