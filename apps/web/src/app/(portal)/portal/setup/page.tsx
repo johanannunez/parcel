@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PropertySelector } from "@/components/portal/PropertySelector";
 import { OwnerLocalTime } from "@/components/portal/OwnerLocalTime";
 import {
-  setupSearchIndex,
+  activeSetupSearchIndex as setupSearchIndex,
   groupStepsByGroup,
 } from "@/lib/wizard/search-index";
 
@@ -42,12 +42,13 @@ type PropertyRow = {
 
 /**
  * Resolve step state for a property step.
- * Until the PENDING migration runs, only basics/address/space can be "done".
+ * propertyFormsDone: set of form_keys with completed_at in property_forms.
  */
 function resolvePropertyStepState(
   stepKey: string,
   property: PropertyRow | null,
   allStepKeys: string[],
+  propertyFormsDone: Set<string>,
 ): StepState {
   if (!property) return "todo";
 
@@ -69,6 +70,18 @@ function resolvePropertyStepState(
     compliance: false,
     "host-agreement": false,
     review: false,
+    // property_forms-backed sections
+    setup_basic: propertyFormsDone.has("setup_basic"),
+    setup_access: propertyFormsDone.has("setup_access"),
+    setup_security: propertyFormsDone.has("setup_security"),
+    setup_utilities: propertyFormsDone.has("setup_utilities"),
+    setup_appliances: propertyFormsDone.has("setup_appliances"),
+    setup_contacts: propertyFormsDone.has("setup_contacts"),
+    setup_tech: propertyFormsDone.has("setup_tech"),
+    setup_house_rules: propertyFormsDone.has("setup_house_rules"),
+    setup_amenities: propertyFormsDone.has("setup_amenities"),
+    setup_listing: propertyFormsDone.has("setup_listing"),
+    setup_communication: propertyFormsDone.has("setup_communication"),
   };
 
   const isDone = completionChecks[stepKey] ?? false;
@@ -157,6 +170,19 @@ export default async function SetupHubPage({
       : undefined) ??
     ((properties?.[0] as PropertyRow | undefined) ?? null);
 
+  // Fetch property_forms completion for the selected property
+  const propertyFormsDone = new Set<string>();
+  if (selected?.id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: formRows } = await (supabase as any)
+      .from("property_forms")
+      .select("form_key, completed_at")
+      .eq("property_id", selected.id);
+    for (const row of (formRows ?? []) as { form_key: string; completed_at: string | null }[]) {
+      if (row.completed_at) propertyFormsDone.add(row.form_key);
+    }
+  }
+
   const propertyGroups = groupStepsByGroup("property");
   const ownerGroups = groupStepsByGroup("owner");
 
@@ -175,6 +201,7 @@ export default async function SetupHubPage({
         key,
         selected as PropertyRow | null,
         propertyStepKeys,
+        propertyFormsDone,
       ),
     );
   }

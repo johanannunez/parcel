@@ -7,7 +7,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { StepShell } from "@/components/portal/setup/StepShell";
-import { setupSearchIndex } from "@/lib/wizard/search-index";
+import { activeSetupSearchIndex as setupSearchIndex } from "@/lib/wizard/search-index";
 import { ReviewSubmitBar } from "./ReviewClient";
 
 export const metadata: Metadata = { title: "Review and Submit" };

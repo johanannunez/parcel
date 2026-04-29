@@ -34,6 +34,7 @@ export async function createDocumentFromTemplate(opts: {
   signerEmail: string;
   signerName: string;
   redirectUrl?: string;
+  sendEmail?: boolean;
 }): Promise<CreateDocumentResult> {
   if (!getApiKey()) return null;
 
@@ -50,7 +51,7 @@ export async function createDocumentFromTemplate(opts: {
           signerType: "Signer",
         },
       ],
-      disableEmails: true,
+      disableEmails: opts.sendEmail ? false : true,
       enableEmbeddedSigning: true,
       ...(opts.redirectUrl ? { redirectUrl: opts.redirectUrl } : {}),
     }),
@@ -78,6 +79,30 @@ export async function createDocumentFromTemplate(opts: {
 
   const embedData = (await embedRes.json()) as { signLink: string };
   return { documentId, signUrl: embedData.signLink };
+}
+
+/**
+ * Get a fresh signing URL for an existing pending BoldSign document.
+ * Used for "Send Reminder" — does not create a new document.
+ */
+export async function resendDocumentLink(
+  boldsignDocumentId: string,
+  signerEmail: string,
+): Promise<string | null> {
+  if (!getApiKey()) return null;
+
+  const res = await fetch(
+    `${BASE_URL}/document/getEmbeddedSignLink?documentId=${boldsignDocumentId}&signerEmail=${encodeURIComponent(signerEmail)}`,
+    { headers: headers() },
+  );
+
+  if (!res.ok) {
+    console.error("[BoldSign] resendDocumentLink failed:", await res.text());
+    return null;
+  }
+
+  const data = (await res.json()) as { signLink: string };
+  return data.signLink ?? null;
 }
 
 export type DocumentStatus = {

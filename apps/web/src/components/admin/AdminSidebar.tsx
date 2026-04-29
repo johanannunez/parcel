@@ -11,6 +11,7 @@ import {
   ListChecks,
   BookOpenText,
   FolderOpen,
+  Files,
   UsersThree,
   UserPlus,
   Key,
@@ -65,6 +66,7 @@ const navEntries: NavEntry[] = [
   { kind: "item", href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { kind: "item", href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/calendar" },
   { kind: "item", href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
+  { kind: "item", href: "/admin/documents", label: "Documents", icon: <Files size={18} weight="duotone" />, matchPrefix: "/admin/documents" },
   {
     kind: "group",
     label: "People",
@@ -433,9 +435,7 @@ export function AdminSidebar({
         position: "sticky",
         top: 0,
         height: "100vh",
-        width: "252px",
         flexShrink: 0,
-        borderRight: "1px solid rgba(255,255,255,0.06)",
         background: `
           radial-gradient(ellipse 180% 28% at 50% 0%,
             rgba(2, 170, 235, 0.07) 0%,
@@ -581,6 +581,7 @@ export function AdminTopBar({
     if (pathname.startsWith("/admin/inbox")) return "Inbox";
     if (pathname.startsWith("/admin/tasks")) return "Tasks";
     if (pathname.startsWith("/admin/projects")) return "Projects";
+    if (pathname.startsWith("/admin/documents")) return "Documents";
     if (pathname.startsWith("/admin/map")) return "Map";
     if (pathname.startsWith("/admin/help")) return "Help Center";
     if (pathname.startsWith("/admin/treasury")) return "Treasury";
@@ -683,6 +684,7 @@ const adminRailItems: Array<{
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
   { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
   { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
+  { href: "/admin/documents", icon: <Files size={20} weight="duotone" />, label: "Documents", matchPrefix: "/admin/documents" },
   { href: "/admin/clients", icon: <UsersThree size={20} weight="duotone" />, label: "People", matchPrefix: "/admin/clients" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },

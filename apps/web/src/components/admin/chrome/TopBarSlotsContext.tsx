@@ -15,12 +15,14 @@ export type TopBarSlots = {
   centerSlot: ReactNode | null;
   searchOverride: ReactNode | null;
   hideHelp: boolean;
+  breadcrumbTrail: string[] | null;
 };
 
 const EMPTY: TopBarSlots = {
   centerSlot: null,
   searchOverride: null,
   hideHelp: false,
+  breadcrumbTrail: null,
 };
 
 type Ctx = {
@@ -74,6 +76,7 @@ export function useSetTopBarSlots(
       centerSlot: next.centerSlot ?? null,
       searchOverride: next.searchOverride ?? null,
       hideHelp: next.hideHelp ?? false,
+      breadcrumbTrail: next.breadcrumbTrail ?? null,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);

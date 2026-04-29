@@ -2,10 +2,22 @@
 .sidebar {
   display: none;
   flex-direction: column;
+  /* Fluid: 180px at 768vw → 252px at 1100vw, no hard jump */
+  width: clamp(180px, calc(180px + (100vw - 768px) * 0.22), 252px);
 }
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .sidebar {
     display: flex;
+  }
+}
+
+/* Hover-expand at compact widths: spring bounce, pushes content cleanly */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .sidebar {
+    transition: width 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .sidebar:hover {
+    width: 252px;
   }
 }
 
@@ -13,16 +25,6 @@
   display: none;
   flex-direction: column;
   align-items: center;
-}
-@media (min-width: 768px) {
-  .rail {
-    display: flex;
-  }
-}
-@media (min-width: 1024px) {
-  .rail {
-    display: none;
-  }
 }
 
 .topBar {

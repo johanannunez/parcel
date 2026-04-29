@@ -1,16 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { Flask, MagnifyingGlass, X } from "@phosphor-icons/react";
-import { toggleShowTestDataAction } from "@/lib/admin/test-data";
-import { derivePageTitle, type PageTitleInfo } from "@/lib/admin/derive-page-title";
-import { CreateMenu } from "./CreateMenu";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { Bell } from "@phosphor-icons/react";
 import { useTopBarSlots } from "./TopBarSlotsContext";
 import styles from "./AdminTopBar.module.css";
 
 type Props = {
-  showTestData?: boolean;
+  pendingBlockCount?: number;
 };
 
 function ordinalSuffix(day: number): string {
@@ -33,35 +30,28 @@ function AdminClock() {
     return () => window.clearInterval(id);
   }, []);
 
-  let dateNode: ReactNode = "Sat, Apr 12th, 2026";
-  let timeStr = "12:00:00 AM";
+  if (!now) return <div className={styles.clockPlaceholder} />;
 
-  if (now) {
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const seconds = now.getSeconds();
-    const period = hours >= 12 ? "PM" : "AM";
-    const displayHours = hours % 12 || 12;
-    timeStr = `${displayHours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} ${period}`;
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
+  const period = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+  const timeStr = `${displayHours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} ${period}`;
 
-    const day = now.getDate();
-    const suffix = ordinalSuffix(day);
-    const weekday = now.toLocaleDateString("en-US", { weekday: "short" });
-    const month = now.toLocaleDateString("en-US", { month: "short" });
-    const year = now.getFullYear();
+  const day = now.getDate();
+  const suffix = ordinalSuffix(day);
+  const weekday = now.toLocaleDateString("en-US", { weekday: "short" });
+  const month = now.toLocaleDateString("en-US", { month: "short" });
+  const year = now.getFullYear();
 
-    dateNode = (
-      <>
+  return (
+    <div className={styles.clock} suppressHydrationWarning>
+      <span className={styles.clockDate}>
         {weekday}, {month} {day}
         <span className={styles.clockSuffix}>{suffix}</span>
         , {year}
-      </>
-    );
-  }
-
-  return (
-    <div className={styles.clock} style={{ opacity: now ? 1 : 0 }} suppressHydrationWarning>
-      <span className={styles.clockDate}>{dateNode}</span>
+      </span>
       <span className={styles.clockDivider} aria-hidden />
       <span className={styles.clockTime}>{timeStr}</span>
       <span className={styles.live} aria-hidden />
@@ -69,106 +59,89 @@ function AdminClock() {
   );
 }
 
-function AdminSearchPill() {
+const SECTION_LABELS: Record<string, string> = {
+  dashboard: "Dashboard",
+  inbox: "Inbox",
+  tasks: "Tasks",
+  calendar: "Calendar",
+  projects: "Projects",
+  clients: "Clients",
+  vendors: "Vendors",
+  properties: "Properties",
+  help: "Help Center",
+  treasury: "Treasury",
+  timeline: "Timeline",
+  payouts: "Payouts",
+  account: "Account",
+  map: "Map",
+  leads: "Leads",
+  contacts: "Contacts",
+  "block-requests": "Owner Reservations",
+};
+
+function Breadcrumb({ trail }: { trail: string[] | null }) {
+  const pathname = usePathname() ?? "";
+  const segments = pathname.replace(/^\/admin\/?/, "").split("/").filter(Boolean);
+  const section = segments[0] ?? "dashboard";
+  const defaultLabel = SECTION_LABELS[section] ?? (section.charAt(0).toUpperCase() + section.slice(1));
+
+  const crumbs: string[] = trail ?? [defaultLabel];
+
+  return (
+    <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+      <span className={styles.breadcrumbRoot}>Admin</span>
+      {crumbs.map((crumb, i) => {
+        const isCurrent = i === crumbs.length - 1;
+        return (
+          <span key={i} className={styles.breadcrumbSegment}>
+            <span className={styles.breadcrumbSep} aria-hidden>›</span>
+            <span className={isCurrent ? styles.breadcrumbCurrent : styles.breadcrumbLink}>
+              {crumb}
+            </span>
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
+function NotificationBell({ count }: { count: number }) {
+  const btnRef = useRef<HTMLButtonElement>(null);
+
   function handleClick() {
-    document.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }),
-    );
+    window.dispatchEvent(new CustomEvent("admin:notifications-toggle"));
   }
 
   return (
     <button
+      ref={btnRef}
       type="button"
+      className={styles.bellBtn}
+      aria-label="Notifications"
       onClick={handleClick}
-      className={styles.searchPill}
-      aria-label="Open search"
     >
-      <MagnifyingGlass size={14} weight="bold" />
-      <span className={styles.searchPillLabel}>Search</span>
-      <span className={styles.searchPillKbd}>⌘K</span>
+      <Bell size={15} weight="regular" />
+      {count > 0 && (
+        <span className={styles.bellBadge} aria-hidden>
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
     </button>
   );
 }
 
-function TestDataToggle({
-  on,
-  pending,
-  onToggle,
-}: {
-  on: boolean;
-  pending: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={onToggle}
-      className={`${styles.testToggle} ${on ? styles.testToggleOn : styles.testToggleOff}`}
-      aria-label={on ? "Test data visible — click to hide" : "Test data hidden — click to show"}
-      title={on ? "Hide test data" : "Show test data"}
-    >
-      <Flask size={11} weight={on ? "fill" : "regular"} />
-      <span>{on ? "Test On" : "Test Off"}</span>
-      {on && <X size={9} weight="bold" style={{ opacity: 0.7 }} />}
-    </button>
-  );
-}
-
-export function AdminTopBar({ showTestData = false }: Props) {
-  const pathname = usePathname() ?? "";
-  const router = useRouter();
-  const fallback = useMemo(() => derivePageTitle(pathname), [pathname]);
-  const [override, setOverride] = useState<PageTitleInfo | null>(null);
-  const [pending, startTransition] = useTransition();
-  const { centerSlot, searchOverride } = useTopBarSlots();
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      setOverride((e as CustomEvent<PageTitleInfo | null>).detail ?? null);
-    };
-    window.addEventListener("admin:page-title", handler);
-    return () => window.removeEventListener("admin:page-title", handler);
-  }, []);
-
-  const info = override ?? fallback;
+export function AdminTopBar({ pendingBlockCount = 0 }: Props) {
+  const { centerSlot, breadcrumbTrail } = useTopBarSlots();
 
   return (
     <header className={styles.root}>
-      <div className={styles.titleWrap}>
-        {info.backHref ? (
-          <button
-            type="button"
-            className={styles.crumb}
-            onClick={() => router.push(info.backHref!)}
-          >
-            ← {info.backLabel ?? "Back"}
-          </button>
-        ) : null}
-        {info.title ? <div className={styles.title}>{info.title}</div> : null}
-        {info.subtitle ? <div className={styles.sub}>{info.subtitle}</div> : null}
-      </div>
-
+      <Breadcrumb trail={breadcrumbTrail} />
+      {centerSlot ? (
+        <div className={styles.centerSlot}>{centerSlot}</div>
+      ) : null}
       <div className={styles.right}>
-        <div className={styles.clockRow}>
-          <TestDataToggle
-            on={showTestData}
-            pending={pending}
-            onToggle={() => startTransition(() => toggleShowTestDataAction())}
-          />
-          <AdminClock />
-        </div>
-        <div className={styles.utilities}>
-          {centerSlot ? <div className={styles.centerInline}>{centerSlot}</div> : null}
-          <div className={styles.compactUtils}>
-            <CreateMenu placement="topbar" />
-          </div>
-          {searchOverride ? (
-            <div className={styles.searchSlot}>{searchOverride}</div>
-          ) : (
-            <AdminSearchPill />
-          )}
-        </div>
+        <AdminClock />
+        <NotificationBell count={pendingBlockCount} />
       </div>
     </header>
   );

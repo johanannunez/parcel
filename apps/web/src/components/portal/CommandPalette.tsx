@@ -13,7 +13,7 @@ import {
   Gear,
   DownloadSimple,
 } from "@phosphor-icons/react";
-import { setupSearchIndex } from "@/lib/wizard/search-index";
+import { activeSetupSearchIndex as setupSearchIndex } from "@/lib/wizard/search-index";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
 
 type Result = {

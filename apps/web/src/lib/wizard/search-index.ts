@@ -6,6 +6,8 @@ export type SetupStepEntry = {
   track: "property" | "owner";
   group: string;
   estimateMinutes: number;
+  /** True when the portal route does not exist yet. Filtered out of all active consumers. */
+  disabled?: true;
 };
 
 export const setupSearchIndex: SetupStepEntry[] = [
@@ -191,6 +193,154 @@ export const setupSearchIndex: SetupStepEntry[] = [
     estimateMinutes: 3,
   },
 
+  // ── Property Data (saves to property_forms table) ───────
+  // Group: Property data — disabled: true until Phase 2 portal routes are built
+  {
+    stepKey: "setup_basic",
+    label: "Basic info",
+    keywords: [
+      "basic", "basics", "bedrooms", "bathrooms", "bed arrangements", "max guests",
+      "sqft", "square feet", "property type", "year built", "adu",
+    ],
+    href: "/portal/setup/setup-basic",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 4,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_access",
+    label: "Access and entry",
+    keywords: [
+      "access", "entry", "smart lock", "lockbox", "key", "backup key",
+      "gate code", "garage code", "parking pass", "check-in", "schlage", "august",
+    ],
+    href: "/portal/setup/setup-access",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 4,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_security",
+    label: "Security system",
+    keywords: [
+      "security", "alarm", "system", "panel", "arm", "disarm", "code",
+      "monitoring", "sensors", "battery", "ring", "adt", "brinks",
+    ],
+    href: "/portal/setup/setup-security",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 3,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_utilities",
+    label: "Utilities and systems",
+    keywords: [
+      "utilities", "electric", "gas", "water", "trash", "recycling",
+      "breaker", "panel", "hvac", "filter", "water heater", "smoke detector",
+      "carbon monoxide", "fire extinguisher", "first aid",
+    ],
+    href: "/portal/setup/setup-utilities",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 6,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_appliances",
+    label: "Appliances",
+    keywords: [
+      "appliances", "washer", "dryer", "dishwasher", "refrigerator",
+      "coffee maker", "laundry", "kitchen", "brand",
+    ],
+    href: "/portal/setup/setup-appliances",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 4,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_contacts",
+    label: "Emergency contacts",
+    keywords: [
+      "contacts", "emergency", "plumber", "hvac", "electrician", "handyman",
+      "pest control", "hospital", "hoa", "vendor", "contractor",
+    ],
+    href: "/portal/setup/setup-contacts",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 5,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_tech",
+    label: "Tech and connectivity",
+    keywords: [
+      "tech", "wifi", "wi-fi", "ssid", "password", "router", "doorbell",
+      "thermostat", "noise monitor", "tv", "television", "smart home",
+      "nest", "ecobee", "ring", "minut",
+    ],
+    href: "/portal/setup/setup-tech",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 5,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_house_rules",
+    label: "House rules",
+    keywords: [
+      "house rules", "rules", "pets", "smoking", "events", "parties",
+      "noise curfew", "max occupancy", "min stay", "parking", "pool hours",
+    ],
+    href: "/portal/setup/setup-house-rules",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 5,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_amenities",
+    label: "Outdoor amenities",
+    keywords: [
+      "amenities", "pool", "hot tub", "bbq", "grill", "fire pit",
+      "outdoor shower", "sauna", "propane", "chemical service",
+    ],
+    href: "/portal/setup/setup-amenities",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 4,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_listing",
+    label: "Listing setup",
+    keywords: [
+      "listing", "photography", "photos", "staging", "personal items",
+      "restricted areas", "off limits", "valuables", "secure",
+    ],
+    href: "/portal/setup/setup-listing",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 3,
+    disabled: true,
+  },
+  {
+    stepKey: "setup_communication",
+    label: "Communication preferences",
+    keywords: [
+      "communication", "contact", "text", "call", "email", "notifications",
+      "booking", "preference", "availability", "hours",
+    ],
+    href: "/portal/setup/setup-communication",
+    track: "property",
+    group: "Property data",
+    estimateMinutes: 2,
+    disabled: true,
+  },
+
   // ── Owner Essentials ────────────────────────────────────
   // Group: About you
   {
@@ -277,3 +427,5 @@ export function groupStepsByGroup(
 
   return groups;
 }
+
+export const activeSetupSearchIndex = setupSearchIndex.filter((e) => !e.disabled);

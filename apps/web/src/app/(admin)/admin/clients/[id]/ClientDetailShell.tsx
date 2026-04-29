@@ -20,6 +20,7 @@ import type { ClientDetail, EntityInfo, EntityMember } from "@/lib/admin/client-
 import type { NextMeeting } from "@/lib/admin/client-meetings";
 import type { AdminProfile } from "./client-actions";
 import { updateClientFields } from "./client-actions";
+import { useSetTopBarSlots } from "@/components/admin/chrome/TopBarSlotsContext";
 import { StagePopover } from "./StagePopover";
 import { ClientDetailSidebar } from "./ClientDetailSidebar";
 import { ClientNameContext } from "./ClientNameContext";
@@ -646,6 +647,12 @@ function ClientDetailContent({
   useEffect(() => {
     if (!isTabPending) setPendingTab(null);
   }, [isTabPending]);
+
+  const tabLabel = TABS.find((t) => t.key === activeTab)?.label ?? activeTab;
+  useSetTopBarSlots(
+    () => ({ breadcrumbTrail: ["Clients", entityInfo.name, tabLabel] }),
+    [entityInfo.name, tabLabel],
+  );
 
   const shellRef = useRef<HTMLDivElement>(null);
 

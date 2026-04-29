@@ -2,10 +2,11 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  padding: 14px 28px;
+  height: 48px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   color: #fff;
   background:
     radial-gradient(1200px 200px at 0% 0%, rgba(2,170,235,0.25), transparent 60%),
@@ -22,46 +23,75 @@
   pointer-events: none;
 }
 
-.titleWrap { display: flex; flex-direction: column; gap: 2px; z-index: 1; min-width: 0; flex-shrink: 0; }
-
-.crumb {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11.5px; color: rgba(255,255,255,0.68);
-  margin-bottom: 4px; cursor: pointer;
-  background: none; border: 0; padding: 0; font-family: inherit;
-}
-.crumb:hover { color: #fff; }
-.title { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: #fff; }
-.sub { font-size: 13px; color: rgba(255,255,255,0.72); }
-
-/* Right column — clock row on top, utilities row below */
-.right {
-  margin-left: auto;
+/* Breadcrumb */
+.breadcrumb {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.breadcrumbSegment {
+  display: contents;
+}
+.breadcrumbRoot {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.01em;
+}
+.breadcrumbSep {
+  font-size: 11px;
+  color: rgba(255,255,255,0.2);
+  line-height: 1;
+}
+.breadcrumbLink {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.48);
+  letter-spacing: 0.01em;
+}
+.breadcrumbCurrent {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.82);
+  letter-spacing: 0.01em;
+}
+
+/* Center slot — view switchers injected by pages */
+.centerSlot {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
   z-index: 1;
 }
 
-/* Toggle + clock on the same line */
-.clockRow {
+/* Right cluster */
+.right {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  z-index: 1;
+  flex-shrink: 0;
 }
 
-/* Single-line clock: date | divider | time ● */
+/* Clock — single inline line */
 .clock {
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: opacity 0.2s;
+  gap: 7px;
+}
+.clockPlaceholder {
+  width: 200px;
+  height: 12px;
 }
 .clockDate {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.82);
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
 }
 .clockSuffix {
   font-size: 8.5px;
@@ -73,207 +103,70 @@
 .clockDivider {
   display: inline-block;
   width: 1px;
-  height: 13px;
-  background: rgba(255,255,255,0.35);
+  height: 12px;
+  background: rgba(255,255,255,0.28);
   flex-shrink: 0;
 }
 .clockTime {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
 .live {
   display: inline-flex;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #4ADE80;
   box-shadow: 0 0 0 3px rgba(74,222,128,0.22);
   flex-shrink: 0;
 }
 
-/* Bottom utilities row: search pill + icon buttons */
-.utilities {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 1;
-}
-
-/* Search pill that triggers ⌘K */
-.searchPill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255,255,255,0.28);
-  background: rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.82);
-  font-size: 12.5px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  width: 200px;
-  backdrop-filter: blur(8px);
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-.searchPill:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.42);
-  color: #fff;
-}
-.searchPillLabel {
-  flex: 1;
-  text-align: left;
-}
-.searchPillKbd {
-  color: rgba(255,255,255,0.55);
-  font-size: 12px;
-}
-
-/* Icon button — circular pill matching portal style */
-.iconBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.28);
-  color: rgba(255,255,255,0.82);
+/* Bell button */
+.bellBtn {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.72);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   cursor: pointer;
-  backdrop-filter: blur(8px);
+  font-family: inherit;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.iconBtn:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.42);
+.bellBtn:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.28);
   color: #fff;
 }
 
-.badge {
+.bellBadge {
   position: absolute;
-  top: -5px; right: -5px;
-  min-width: 16px; height: 16px;
+  top: -4px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
   background: #F97316;
   border-radius: 8px;
   border: 2px solid #1B77BE;
   color: #fff;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
   pointer-events: none;
-}
-
-.centerInline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.searchSlot {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-/* Compact create-menu cluster — hidden on desktop (sidebar handles it) */
-.compactUtils {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-@media (min-width: 1024px) {
-  .compactUtils { display: none; }
-}
-
-@media (max-width: 1100px) {
-  .centerInline { display: none; }
-}
-
-@media (max-width: 900px) {
-  .searchPill { display: none; }
-  .searchSlot { display: none; }
 }
 
 @media (max-width: 768px) {
-  .root { padding: 10px 16px; gap: 12px; }
-  .title { font-size: 16px; }
-  .sub { font-size: 11.5px; }
-  .clock { display: none; }
-}
-
-.testToggle {
-  position: relative;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px 3px 7px;
-  border-radius: 999px;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  font-family: inherit;
-  transition: box-shadow 0.2s ease, opacity 0.15s ease;
-}
-.testToggle:disabled { opacity: 0.5; cursor: default; }
-
-/* Off state: ghost pill, barely there */
-.testToggleOff {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.45);
-}
-.testToggleOff:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.13);
-  border-color: rgba(255, 255, 255, 0.26);
-  color: rgba(255, 255, 255, 0.72);
-}
-
-/* On state: orange with sweeping shine */
-.testToggleOn {
-  background: linear-gradient(135deg, #c2410c 0%, #f97316 55%, #fb923c 100%);
-  border: 1px solid rgba(251, 146, 60, 0.5);
-  color: #fff;
-  box-shadow: 0 0 12px rgba(249, 115, 22, 0.4), 0 1px 3px rgba(0, 0, 0, 0.18);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-}
-.testToggleOn:hover:not(:disabled) {
-  box-shadow: 0 0 20px rgba(249, 115, 22, 0.6), 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-/* Sweeping shine pseudo-element */
-.testToggleOn::after {
-  content: '';
-  position: absolute;
-  top: -40%;
-  left: -80%;
-  width: 55%;
-  height: 180%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 220, 150, 0.55) 50%,
-    transparent 100%
-  );
-  transform: skewX(-18deg);
-  animation: testToggleShine 4.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  pointer-events: none;
-}
-
-@keyframes testToggleShine {
-  0%   { left: -80%; opacity: 0; }
-  10%  { opacity: 1; }
-  45%  { left: 140%; opacity: 1; }
-  55%  { opacity: 0; left: 140%; }
-  100% { opacity: 0; left: 140%; }
+  .root { padding: 0 16px; gap: 10px; }
+  .clockDate { display: none; }
+  .clockDivider { display: none; }
+  .centerSlot { display: none; }
 }

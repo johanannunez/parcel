@@ -9,7 +9,6 @@ import {
   ChatCircle,
   List,
   Buildings,
-  MapTrifold,
   UserSwitch,
   ListChecks,
   BookOpenText,
@@ -20,7 +19,10 @@ import {
   Moon,
   CalendarBlank,
   FolderOpen,
-  Users,
+  Key,
+  UserPlus,
+  Toolbox,
+  CaretDown,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -33,16 +35,28 @@ type NavItem = {
   icon: ReactNode;
   activeIcon: ReactNode;
   matchPrefix?: string;
+  matchPrefixes?: string[];
 };
 
 type SheetNavItem = {
+  kind?: "item";
   href: string;
   label: string;
   icon: ReactNode;
   matchPrefix?: string;
 };
 
-/* ── Bottom tab items (always visible) ── */
+type SheetNavGroup = {
+  kind: "group";
+  label: string;
+  icon: ReactNode;
+  storageKey: string;
+  items: Array<{ href: string; label: string; icon: ReactNode; matchPrefix?: string }>;
+};
+
+type SheetEntry = SheetNavItem | SheetNavGroup;
+
+/* ── Bottom tab items ── */
 
 const navItems: NavItem[] = [
   {
@@ -52,37 +66,161 @@ const navItems: NavItem[] = [
     activeIcon: <House size={22} weight="fill" />,
   },
   {
-    href: "/admin/contacts",
-    label: "Contacts",
-    icon: <UsersThree size={22} weight="regular" />,
-    activeIcon: <UsersThree size={22} weight="fill" />,
-    matchPrefix: "/admin/contacts",
+    href: "/admin/tasks",
+    label: "Tasks",
+    icon: <ListChecks size={22} weight="regular" />,
+    activeIcon: <ListChecks size={22} weight="fill" />,
+    matchPrefix: "/admin/tasks",
   },
   {
-    href: "/admin/inbox",
-    label: "Inbox",
-    icon: <ChatCircle size={22} weight="regular" />,
-    activeIcon: <ChatCircle size={22} weight="fill" />,
-    matchPrefix: "/admin/inbox",
+    href: "/admin/clients",
+    label: "People",
+    icon: <UsersThree size={22} weight="regular" />,
+    activeIcon: <UsersThree size={22} weight="fill" />,
+    matchPrefixes: ["/admin/clients", "/admin/leads", "/admin/vendors"],
   },
 ];
 
-/* ── Sheet items (flat list matching sidebar) ── */
+/* ── Sheet items (mirrors desktop sidebar) ── */
 
-const sheetItems: SheetNavItem[] = [
+const sheetItems: SheetEntry[] = [
   { href: "/admin", label: "Dashboard", icon: <House size={19} weight="duotone" /> },
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={19} weight="duotone" />, matchPrefix: "/admin/calendar" },
   { href: "/admin/projects", label: "Projects", icon: <FolderOpen size={19} weight="duotone" />, matchPrefix: "/admin/projects" },
-  { href: "/admin/clients", label: "Clients", icon: <Users size={19} weight="duotone" />, matchPrefix: "/admin/clients" },
+  {
+    kind: "group",
+    label: "People",
+    icon: <UsersThree size={19} weight="duotone" />,
+    storageKey: "mobile-nav-people-expanded",
+    items: [
+      { href: "/admin/clients", label: "Owners", icon: <Key size={17} weight="duotone" />, matchPrefix: "/admin/clients" },
+      { href: "/admin/leads", label: "Leads", icon: <UserPlus size={17} weight="duotone" />, matchPrefix: "/admin/leads" },
+      { href: "/admin/vendors", label: "Vendors", icon: <Toolbox size={17} weight="duotone" />, matchPrefix: "/admin/vendors" },
+    ],
+  },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
 /* ── Helpers ── */
 
-const mainNavPrefixes = ["/admin", "/admin/contacts", "/admin/inbox"];
+const mainNavPrefixes = [
+  "/admin",
+  "/admin/tasks",
+  "/admin/clients",
+  "/admin/leads",
+  "/admin/vendors",
+];
+
+const springCollapse = { type: "spring" as const, stiffness: 380, damping: 36, mass: 0.7 };
+
+/* ── Sheet group row ── */
+
+function SheetGroupRow({
+  group,
+  pathname,
+  closeMore,
+}: {
+  group: SheetNavGroup;
+  pathname: string | null;
+  closeMore: () => void;
+}) {
+  const [expanded, setExpanded] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem(group.storageKey);
+    return stored === null ? true : stored === "true";
+  });
+
+  const isAnySubActive = group.items.some((item) =>
+    item.matchPrefix ? pathname?.startsWith(item.matchPrefix) : pathname === item.href
+  );
+
+  const toggle = () => {
+    setExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem(group.storageKey, String(next));
+      return next;
+    });
+  };
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={toggle}
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium"
+        style={{
+          color: isAnySubActive ? "var(--color-brand-light)" : "rgba(255,255,255,0.65)",
+          backgroundColor: "transparent",
+          fontFamily: "inherit",
+          cursor: "pointer",
+          border: "none",
+        }}
+      >
+        <span
+          style={{
+            display: "inline-flex",
+            color: isAnySubActive ? "var(--color-brand-light)" : "rgba(255,255,255,0.4)",
+          }}
+        >
+          {group.icon}
+        </span>
+        <span style={{ flex: 1, textAlign: "left" }}>{group.label}</span>
+        <motion.span
+          animate={{ rotate: expanded ? 0 : -90 }}
+          transition={springCollapse}
+          style={{ display: "inline-flex", alignItems: "center", color: "rgba(255,255,255,0.28)" }}
+        >
+          <CaretDown size={12} weight="bold" />
+        </motion.span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={springCollapse}
+            style={{ overflow: "hidden" }}
+          >
+            {group.items.map((item) => {
+              const active = item.matchPrefix
+                ? !!pathname?.startsWith(item.matchPrefix)
+                : pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMore}
+                  className="flex items-center gap-3 rounded-lg text-sm font-medium"
+                  style={{
+                    padding: "8px 12px 8px 36px",
+                    color: active ? "var(--color-brand-light)" : "rgba(255,255,255,0.55)",
+                    backgroundColor: active ? "rgba(2, 170, 235, 0.09)" : "transparent",
+                    textDecoration: "none",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      color: active ? "var(--color-brand-light)" : "rgba(255,255,255,0.35)",
+                    }}
+                  >
+                    {item.icon}
+                  </span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                </Link>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 /* ── Component ── */
 
@@ -123,7 +261,8 @@ export function AdminBottomNav({
 
   const isActive = useCallback(
     (item: NavItem) => {
-      if (item.matchPrefix) return pathname?.startsWith(item.matchPrefix);
+      if (item.matchPrefixes) return item.matchPrefixes.some((p) => !!pathname?.startsWith(p));
+      if (item.matchPrefix) return !!pathname?.startsWith(item.matchPrefix);
       return pathname === item.href;
     },
     [pathname],
@@ -307,14 +446,25 @@ export function AdminBottomNav({
                 style={{ borderColor: "rgba(255,255,255,0.08)" }}
               />
 
-              {/* Flat nav list */}
+              {/* Nav list */}
               <div className="px-4">
-                {sheetItems.map((item) => {
-                  const active = isItemActive(item);
+                {sheetItems.map((entry, i) => {
+                  if (entry.kind === "group") {
+                    return (
+                      <SheetGroupRow
+                        key={entry.label}
+                        group={entry}
+                        pathname={pathname}
+                        closeMore={closeMore}
+                      />
+                    );
+                  }
+
+                  const active = isItemActive(entry);
                   return (
                     <Link
-                      key={item.href}
-                      href={item.href}
+                      key={entry.href ?? i}
+                      href={entry.href!}
                       onClick={closeMore}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
                       style={{
@@ -334,9 +484,9 @@ export function AdminBottomNav({
                             : "rgba(255,255,255,0.4)",
                         }}
                       >
-                        {item.icon}
+                        {entry.icon}
                       </span>
-                      <span className="flex-1">{item.label}</span>
+                      <span className="flex-1">{entry.label}</span>
                     </Link>
                   );
                 })}

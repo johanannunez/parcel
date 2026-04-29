@@ -84,7 +84,7 @@ export default async function AdminLayout({
           {/* Desktop + tablet: the new rich top bar with title, subtitle, utility cluster, clock. */}
           <div className="hidden md:block">
             <AdminTopBarNew
-              showTestData={profile?.show_test_data ?? false}
+              pendingBlockCount={pendingBlockCount ?? 0}
             />
           </div>
           {/* Mobile: keep the legacy compact header for now; responsive pass lands in Dispatch 8. */}
