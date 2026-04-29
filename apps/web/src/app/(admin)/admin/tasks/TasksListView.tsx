@@ -676,7 +676,7 @@ export function TasksListView(props: Props) {
       {isPending ? (
         <ListSkeleton />
       ) : !isListView ? (
-        <TasksUpcomingView tasks={data.upcomingTasks} onOpenTask={setDrawerTask} />
+        <TasksUpcomingView tasks={data.upcomingTasks} groups={data.groups} onOpenTask={setDrawerTask} />
       ) : entityGroups ? (
         <div className={styles.list}>
           {entityGroups.length === 0 ? (
