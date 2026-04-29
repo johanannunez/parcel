@@ -690,7 +690,7 @@ export function TasksListView(props: Props) {
         )}
 
         <div className={styles.meta}>
-          {search.trim() ? `${totalFiltered} results` : `${data.totalCount} tasks`}
+          {search.trim() ? `${totalFiltered} results` : activeKey === 'unassigned' ? `${unassignedCount} tasks` : `${data.totalCount} tasks`}
         </div>
       </div>
 
