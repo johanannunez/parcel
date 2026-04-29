@@ -29,3 +29,8 @@
   padding: 2px 5px;
   gap: 4px;
 }
+
+.pillCompact .dot {
+  width: 5px;
+  height: 5px;
+}

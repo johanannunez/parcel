@@ -15,8 +15,7 @@ import {
 } from '@phosphor-icons/react';
 import styles from './TaskRow.module.css';
 
-function dueDisplay(iso: string | null): { label: string; tone: string } {
-  if (!iso) return { label: '—', tone: 'neutral' };
+function dueDisplay(iso: string): { label: string; tone: string } {
   const now = new Date();
   const due = new Date(iso);
   const diff = due.getTime() - now.getTime();
@@ -50,10 +49,12 @@ const QUICK_DATE_PRESETS = [
 function MetaLine({
   task,
   due,
+  dueAt,
   onDateClick,
 }: {
   task: Task;
   due: ReturnType<typeof dueDisplay> | null;
+  dueAt: string | null;
   onDateClick: (e: React.MouseEvent) => void;
 }) {
   const hasContent =
@@ -63,8 +64,8 @@ function MetaLine({
     task.tags.length > 0;
   if (!hasContent) return null;
 
-  const hasTime = task.dueAt
-    ? getHours(parseISO(task.dueAt)) !== 0 || getMinutes(parseISO(task.dueAt)) !== 0
+  const hasTime = dueAt
+    ? getHours(parseISO(dueAt)) !== 0 || getMinutes(parseISO(dueAt)) !== 0
     : false;
 
   return (
@@ -74,14 +75,14 @@ function MetaLine({
           {task.subtaskDoneCount}/{task.subtaskCount}
         </span>
       )}
-      {due && task.dueAt && (
+      {due && dueAt && (
         <button
           type="button"
           className={`${styles.metaDue} ${styles[`dueTone_${due.tone}`]}`}
           onClick={onDateClick}
         >
           {hasTime
-            ? `${due.label} ${format(parseISO(task.dueAt), 'h:mm a')}`
+            ? `${due.label} ${format(parseISO(dueAt), 'h:mm a')}`
             : due.label}
         </button>
       )}
@@ -267,7 +268,7 @@ export function TaskRow({
             )}
           </div>
 
-          <MetaLine task={task} due={due} onDateClick={handleDateClick} />
+          <MetaLine task={task} due={due} dueAt={localDueAt} onDateClick={handleDateClick} />
         </div>
 
         {/* Right column: assignee + hover actions */}
