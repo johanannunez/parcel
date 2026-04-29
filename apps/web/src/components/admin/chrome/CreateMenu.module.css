@@ -22,7 +22,7 @@
 
 .menu {
   position: fixed;
-  width: 210px;
+  width: 220px;
   background: #fff;
   border: 1px solid #E6ECF2;
   border-radius: 12px;
@@ -65,7 +65,17 @@
   border-radius: 3px;
 }
 
-.divider { height: 1px; background: #E6ECF2; margin: 6px 4px; }
+.divider { height: 1px; background: #E6ECF2; margin: 4px 4px; }
+
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #8A9AAB;
+  padding: 5px 10px 3px;
+  user-select: none;
+}
 
 /* Top-bar placement keeps the same portalled menu. Positioning is computed
    in JS via getBoundingClientRect so there are no media-query overrides here. */

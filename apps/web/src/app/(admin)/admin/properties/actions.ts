@@ -6,6 +6,84 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { CHECKLIST_TEMPLATE, type ChecklistStatus } from "@/lib/checklist";
 
+export type OwnerPickerItem = { id: string; label: string };
+
+export async function fetchOwnersForPicker(): Promise<OwnerPickerItem[]> {
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", (await supabase.auth.getUser()).data.user?.id ?? "")
+    .maybeSingle();
+  if (profile?.role !== "admin") return [];
+
+  const svc = createServiceClient();
+  const { data } = await svc
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("role", "owner")
+    .order("full_name", { ascending: true });
+
+  return (data ?? []).map((p) => ({
+    id: p.id,
+    label: p.full_name || p.email || p.id,
+  }));
+}
+
+const QuickPropertySchema = z.object({
+  ownerId: z.string().uuid("Select an owner"),
+  propertyType: z.enum(["str", "ltr", "mtr", "co-hosting", "arbitrage"]),
+  addressLine1: z.string().trim().min(1, "Street address is required"),
+  city: z.string().trim().min(1, "City is required"),
+  state: z.string().trim().min(2, "State is required"),
+  postalCode: z.string().trim().min(3, "Postal code is required"),
+});
+
+export type QuickCreatePropertyResult =
+  | { ok: true; propertyId: string }
+  | { ok: false; error: string };
+
+export async function quickCreateAdminProperty(
+  input: unknown,
+): Promise<QuickCreatePropertyResult> {
+  const parsed = QuickPropertySchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "admin") return { ok: false, error: "Admins only." };
+
+  const svc = createServiceClient();
+  const v = parsed.data;
+  const { data: inserted, error } = await svc
+    .from("properties")
+    .insert({
+      owner_id: v.ownerId,
+      property_type: v.propertyType as "str" | "ltr" | "mtr" | "co-hosting" | "arbitrage",
+      address_line1: v.addressLine1,
+      city: v.city,
+      state: v.state,
+      postal_code: v.postalCode,
+      active: true,
+    })
+    .select("id")
+    .single();
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/properties");
+  return { ok: true, propertyId: inserted.id };
+}
+
 const Schema = z.object({
   propertyId: z.string().uuid(),
   hospitableId: z.string().min(1).max(200).nullable(),
