@@ -48,6 +48,7 @@
   white-space: nowrap;
   min-width: 0;
 }
+.row:hover .titleTextInner { text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgba(15,59,107,0.3); }
 
 .chevron {
   flex-shrink: 0;

@@ -217,6 +217,31 @@ export function TasksListView(props: Props) {
     }));
   }, [data.groups, search, sortBy]);
 
+  // Re-group by entity for By Property / By Assignee views
+  const entityGroups = useMemo(() => {
+    if (activeKey !== 'by-property' && activeKey !== 'by-assignee') return null;
+    const allTasks = filteredGroups.flatMap((g) => g.tasks);
+    const map = new Map<string, { tasks: Task[]; avatarUrl?: string | null; initials?: string }>();
+    for (const t of allTasks) {
+      const key =
+        activeKey === 'by-property'
+          ? (t.parent?.label ?? 'No Project')
+          : (t.assigneeName ?? 'Unassigned');
+      if (!map.has(key)) {
+        map.set(key, {
+          tasks: [],
+          avatarUrl: activeKey === 'by-assignee' ? t.assigneeAvatarUrl : undefined,
+          initials:
+            activeKey === 'by-assignee' && t.assigneeName
+              ? t.assigneeName.split(' ').map((p) => p[0]).slice(0, 2).join('')
+              : undefined,
+        });
+      }
+      map.get(key)!.tasks.push(t);
+    }
+    return Array.from(map.entries()).map(([name, info]) => ({ name, ...info }));
+  }, [filteredGroups, activeKey]);
+
   const activeView = data.views.find((v) => v.key === activeKey) ?? data.views[0];
   const totalFiltered = filteredGroups.flatMap((g) => g.tasks).length;
 
@@ -277,6 +302,34 @@ export function TasksListView(props: Props) {
         <ListSkeleton />
       ) : activeView?.key === 'upcoming' ? (
         <TasksUpcomingView tasks={data.upcomingTasks} onOpenTask={setDrawerTask} />
+      ) : entityGroups ? (
+        <div className={styles.list}>
+          <TaskListHeader />
+          {entityGroups.length === 0 ? (
+            <div className={styles.empty}>Nothing here.</div>
+          ) : entityGroups.map((g) => (
+            <section key={g.name}>
+              <header className={styles.entityHead}>
+                {g.avatarUrl ? (
+                  <img src={g.avatarUrl} alt={g.name} className={styles.entityAvatar} />
+                ) : g.initials ? (
+                  <span className={styles.entityAvatarFallback}>{g.initials}</span>
+                ) : null}
+                <span className={styles.entityHeadName}>{g.name}</span>
+                <span className={styles.groupCount}>{g.tasks.length}</span>
+              </header>
+              {g.tasks.map((t) => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  subtasks={data.subtasksByParent[t.id] ?? []}
+                  onOpen={() => setDrawerTask(t)}
+                />
+              ))}
+            </section>
+          ))}
+          <AddTaskRow onCreated={() => switchView(activeKey)} />
+        </div>
       ) : (
         <div className={styles.list}>
           {filteredGroups.length > 0 && <TaskListHeader />}

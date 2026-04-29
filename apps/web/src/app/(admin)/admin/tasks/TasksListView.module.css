@@ -124,6 +124,29 @@
 .sortOption:hover { background: #f3f4f6; }
 .sortOptionActive { color: #c17b4e; font-weight: 500; }
 
+/* Entity group header (By Property / By Assignee) */
+.entityHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  background: #fafbfc;
+  border-top: 1px solid #f3f4f6;
+}
+.entityHead:first-child { border-top: none; }
+.entityHeadName { flex: 1; }
+.entityAvatar { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
+.entityAvatarFallback {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+  color: #fff; font-size: 8px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
 .skeleton {
   background: #fff;
   border: 1px solid #e5e7eb;
