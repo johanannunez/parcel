@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import type { ContactRow, ContactSavedView, StageGroup } from '@/lib/admin/contact-types';
-import { stageLabel, stageGroup } from '@/lib/admin/lifecycle-stage';
+import { stageLabel, stageGroup, initials } from '@/lib/admin/lifecycle-stage';
 import { useContactsFilters, matchesAssigneeFilter } from './ContactsFiltersProvider';
 import { FunnelSimple, X, Check } from '@phosphor-icons/react';
 import styles from './ContactsListView.module.css';
@@ -45,20 +45,13 @@ const PROP_COUNT_OPTIONS: { value: 0 | 1 | 2; label: string }[] = [
   { value: 2, label: '2+' },
 ];
 
-const STAGE_PILL_CLASS: Record<ReturnType<typeof stageGroup>, string> = {
+const STAGE_PILL_CLASS: Record<StageGroup, string> = {
   lead: styles.pillLead,
   onboarding: styles.pillOnboarding,
   active: styles.pillActive,
   cold: styles.pillCold,
   dormant: styles.pillDormant,
 };
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 function relativeTime(iso: string | null): string {
   if (!iso) return '-';
@@ -225,6 +218,7 @@ function ContactsFilterChips({
   local,
   sources,
   assignees,
+  availableAssignees,
   onChangeLocal,
   onChangeSources,
   onChangeAssignees,
@@ -233,6 +227,7 @@ function ContactsFilterChips({
   local: LocalFilters;
   sources: string[];
   assignees: string[];
+  availableAssignees: { name: string; displayName: string; count: number }[];
   onChangeLocal: (f: LocalFilters) => void;
   onChangeSources: (v: string[]) => void;
   onChangeAssignees: (v: string[]) => void;
@@ -257,7 +252,7 @@ function ContactsFilterChips({
   for (const asg of assignees) {
     chips.push({
       key: `asg:${asg}`,
-      label: asg,
+      label: availableAssignees.find((a) => a.name === asg)?.displayName ?? asg,
       onRemove: () => onChangeAssignees(assignees.filter((x) => x !== asg)),
     });
   }
@@ -386,7 +381,7 @@ export function ContactsListView({ rows, activeView, basePath = '/admin/contacts
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <div style={{ position: 'relative' }}>
+        <div className={styles.filterBtnWrap}>
           <button
             ref={filterBtnRef}
             type="button"
@@ -426,6 +421,7 @@ export function ContactsListView({ rows, activeView, basePath = '/admin/contacts
         local={localFilters}
         sources={sources}
         assignees={assignees}
+        availableAssignees={availableAssignees}
         onChangeLocal={setLocalFilters}
         onChangeSources={setSources}
         onChangeAssignees={setAssignees}
