@@ -71,14 +71,9 @@ export async function fetchAdminTasksList(
       break;
     }
     case 'upcoming': {
-      // Start from tomorrow so upcoming and today views don't overlap
-      const startOfTomorrow = new Date();
-      startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
-      startOfTomorrow.setHours(0, 0, 0, 0);
       const in14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
       query = query
         .not('due_at', 'is', null)
-        .gte('due_at', startOfTomorrow.toISOString())
         .lte('due_at', in14)
         .neq('status', 'done');
       break;
@@ -305,11 +300,8 @@ export async function fetchAdminTasksList(
           break;
         }
         case 'upcoming': {
-          const startOfTomorrow2 = new Date();
-          startOfTomorrow2.setDate(startOfTomorrow2.getDate() + 1);
-          startOfTomorrow2.setHours(0, 0, 0, 0);
           const in14c = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-          cq = (cq as any).not('due_at', 'is', null).gte('due_at', startOfTomorrow2.toISOString()).lte('due_at', in14c).neq('status', 'done');
+          cq = (cq as any).not('due_at', 'is', null).lte('due_at', in14c).neq('status', 'done');
           break;
         }
         case 'my-tasks':
