@@ -7,10 +7,11 @@ import type {
   TasksFetchResult,
 } from '@/lib/admin/task-types';
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
-import { CaretDown, Check } from '@phosphor-icons/react';
+import { CaretDown, Check, Plus } from '@phosphor-icons/react';
 import { TaskRow } from './TaskRow';
 import { TasksUpcomingView } from './TasksUpcomingView';
 import { TaskDetailModal } from './TaskDetailModal';
+import { createTask } from '@/lib/admin/task-actions';
 import styles from './TasksListView.module.css';
 
 type ApiResponse = TasksFetchResult & {
@@ -76,6 +77,64 @@ function TaskListHeader() {
       <div className={`${styles.columnHeaderCell} ${styles.columnHeaderCellRight}`}>Due</div>
       <div className={`${styles.columnHeaderCell} ${styles.columnHeaderCellCenter}`}>Assignee</div>
       <div />
+    </div>
+  );
+}
+
+function AddTaskRow({ onCreated }: { onCreated: () => void }) {
+  const [active, setActive] = useState(false);
+  const [title, setTitle] = useState('');
+  const [isSubmitting, startSubmit] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const open = () => { setActive(true); setTimeout(() => inputRef.current?.focus(), 0); };
+  const cancel = () => { setActive(false); setTitle(''); };
+
+  const submit = () => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    startSubmit(async () => {
+      await createTask({ title: trimmed, priority: 4 });
+      setTitle('');
+      setActive(false);
+      onCreated();
+    });
+  };
+
+  if (active) {
+    return (
+      <div className={styles.addTaskForm}>
+        <input
+          ref={inputRef}
+          type="text"
+          className={styles.addTaskInput}
+          placeholder="Task name"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') submit();
+            if (e.key === 'Escape') cancel();
+          }}
+        />
+        <div className={styles.addTaskActions}>
+          <button type="button" className={styles.addTaskCancelBtn} onClick={cancel}>Cancel</button>
+          <button
+            type="button"
+            className={styles.addTaskSubmitBtn}
+            onClick={submit}
+            disabled={!title.trim() || isSubmitting}
+          >
+            Add task
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.addTaskRow} onClick={open} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') open(); }}>
+      <Plus size={14} className={styles.addTaskIcon} />
+      <span className={styles.addTaskBtn}>Add task</span>
     </div>
   );
 }
@@ -242,6 +301,7 @@ export function TasksListView(props: Props) {
               ))}
             </section>
           ))}
+          <AddTaskRow onCreated={() => switchView(activeKey)} />
         </div>
       )}
 

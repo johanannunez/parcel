@@ -142,3 +142,74 @@
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
 }
+
+/* Add task row */
+.addTaskRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  cursor: pointer;
+  border-top: 1px solid #f3f4f6;
+  color: #9ca3af;
+  transition: color 120ms ease;
+  outline: none;
+}
+.addTaskRow:hover { color: #374151; }
+.addTaskRow:focus-visible { color: #374151; outline: 2px solid #02AAEB; outline-offset: -2px; }
+.addTaskIcon { flex-shrink: 0; }
+.addTaskBtn {
+  font-size: 13px;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.addTaskForm {
+  padding: 10px 22px 12px;
+  border-top: 1px solid #f3f4f6;
+}
+.addTaskInput {
+  width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+}
+.addTaskInput::placeholder { color: #9ca3af; }
+.addTaskActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.addTaskCancelBtn {
+  font-size: 12px;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+.addTaskCancelBtn:hover { background: #f3f4f6; }
+.addTaskSubmitBtn {
+  font-size: 12px;
+  color: #fff;
+  background: #111827;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.addTaskSubmitBtn:hover { background: #374151; }
+.addTaskSubmitBtn:disabled { opacity: 0.4; cursor: default; }

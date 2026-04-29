@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import type { Task } from '@/lib/admin/task-types';
 import { ParentPill } from './ParentPill';
-import { completeTask, uncompleteTask, updateTask } from '@/lib/admin/task-actions';
+import { completeTask, uncompleteTask, updateTask, deleteTask } from '@/lib/admin/task-actions';
 import {
   CaretDown,
   CaretRight,
@@ -30,6 +30,20 @@ function dueDisplay(iso: string | null): { label: string; tone: string } {
   return { label: due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), tone: 'neutral' };
 }
 
+function quickDateISO(daysFromNow: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+const QUICK_DATE_PRESETS = [
+  { label: 'Today', getISO: () => quickDateISO(0), dayLabel: () => new Date().toLocaleDateString(undefined, { weekday: 'short' }) },
+  { label: 'Tomorrow', getISO: () => quickDateISO(1), dayLabel: () => new Date(Date.now() + 86400000).toLocaleDateString(undefined, { weekday: 'short' }) },
+  { label: 'Next week', getISO: () => quickDateISO(7), dayLabel: () => new Date(Date.now() + 7 * 86400000).toLocaleDateString(undefined, { weekday: 'short' }) },
+  { label: 'No date', getISO: () => null, dayLabel: () => '' },
+] as const;
+
 export function TaskRow({
   task,
   subtasks = [],
@@ -46,7 +60,49 @@ export function TaskRow({
   const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
   const [assigned, setAssigned] = useState(false);
-  const due = dueDisplay(task.dueAt);
+  const [optimisticDeleted, setOptimisticDeleted] = useState(false);
+  const [showQuickDate, setShowQuickDate] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [localDueAt, setLocalDueAt] = useState(task.dueAt);
+
+  const calendarBtnRef = useRef<HTMLButtonElement>(null);
+  const quickDateRef = useRef<HTMLDivElement>(null);
+  const dotsBtnRef = useRef<HTMLButtonElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close quick-date on outside click
+  useEffect(() => {
+    if (!showQuickDate) return;
+    function handleDown(e: MouseEvent) {
+      if (
+        quickDateRef.current && !quickDateRef.current.contains(e.target as Node) &&
+        calendarBtnRef.current && !calendarBtnRef.current.contains(e.target as Node)
+      ) {
+        setShowQuickDate(false);
+      }
+    }
+    document.addEventListener('mousedown', handleDown);
+    return () => document.removeEventListener('mousedown', handleDown);
+  }, [showQuickDate]);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!showContextMenu) return;
+    function handleDown(e: MouseEvent) {
+      if (
+        contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node) &&
+        dotsBtnRef.current && !dotsBtnRef.current.contains(e.target as Node)
+      ) {
+        setShowContextMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleDown);
+    return () => document.removeEventListener('mousedown', handleDown);
+  }, [showContextMenu]);
+
+  if (optimisticDeleted) return null;
+
+  const due = dueDisplay(localDueAt);
   const hasSubtasks = task.subtaskCount > 0 || subtasks.length > 0;
 
   const priorityClass =
@@ -71,6 +127,27 @@ export function TaskRow({
     startTransition(async () => {
       await updateTask(task.id, { assigneeId: currentUserId });
     });
+  };
+
+  const handleQuickDate = (e: React.MouseEvent, getISO: () => string | null) => {
+    e.stopPropagation();
+    const iso = getISO();
+    setLocalDueAt(iso);
+    setShowQuickDate(false);
+    startTransition(async () => { await updateTask(task.id, { dueAt: iso }); });
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOptimisticDeleted(true);
+    setShowContextMenu(false);
+    startTransition(async () => { await deleteTask(task.id); });
+  };
+
+  const handleMarkComplete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowContextMenu(false);
+    startTransition(async () => { await completeTask(task.id); });
   };
 
   return (
@@ -109,7 +186,6 @@ export function TaskRow({
               </span>
             ) : null}
           </div>
-          {/* Metadata sub-line */}
           {(hasSubtasks || (showNeedsOwner && !assigned)) && (
             <div className={styles.titleMeta}>
               {hasSubtasks && (
@@ -167,6 +243,7 @@ export function TaskRow({
 
         {/* Hover actions */}
         <div className={styles.actions}>
+          {/* Pencil — opens modal */}
           <button
             type="button"
             className={styles.actionBtn}
@@ -175,20 +252,73 @@ export function TaskRow({
           >
             <PencilSimple size={16} />
           </button>
-          <button
-            type="button"
-            className={styles.actionBtn}
-            aria-label="Set due date"
-          >
-            <CalendarBlank size={16} />
-          </button>
-          <button
-            type="button"
-            className={styles.actionBtn}
-            aria-label="More options"
-          >
-            <DotsThreeVertical size={16} />
-          </button>
+
+          {/* Calendar — quick-date popover */}
+          <div className={styles.actionWrap}>
+            <button
+              ref={calendarBtnRef}
+              type="button"
+              className={`${styles.actionBtn} ${showQuickDate ? styles.actionBtnActive : ''}`}
+              aria-label="Set due date"
+              onClick={(e) => { e.stopPropagation(); setShowContextMenu(false); setShowQuickDate((v) => !v); }}
+            >
+              <CalendarBlank size={16} />
+            </button>
+            {showQuickDate && (
+              <div ref={quickDateRef} className={styles.quickDatePanel} onClick={(e) => e.stopPropagation()}>
+                {QUICK_DATE_PRESETS.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    className={styles.quickDateOption}
+                    onClick={(e) => handleQuickDate(e, p.getISO)}
+                  >
+                    <span>{p.label}</span>
+                    {p.dayLabel() && <span className={styles.quickDateDay}>{p.dayLabel()}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Dots — context menu */}
+          <div className={styles.actionWrap}>
+            <button
+              ref={dotsBtnRef}
+              type="button"
+              className={`${styles.actionBtn} ${showContextMenu ? styles.actionBtnActive : ''}`}
+              aria-label="More options"
+              onClick={(e) => { e.stopPropagation(); setShowQuickDate(false); setShowContextMenu((v) => !v); }}
+            >
+              <DotsThreeVertical size={16} />
+            </button>
+            {showContextMenu && (
+              <div ref={contextMenuRef} className={styles.contextMenu} onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className={styles.contextOption}
+                  onClick={(e) => { e.stopPropagation(); setShowContextMenu(false); onOpen?.(); }}
+                >
+                  Open
+                </button>
+                <button
+                  type="button"
+                  className={styles.contextOption}
+                  onClick={handleMarkComplete}
+                >
+                  Mark complete
+                </button>
+                <div className={styles.contextDivider} />
+                <button
+                  type="button"
+                  className={`${styles.contextOption} ${styles.contextOptionDanger}`}
+                  onClick={handleDelete}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -100,7 +100,7 @@
   display: flex; align-items: center; justify-content: center;
 }
 
-/* Hover actions — replaces static menuBtn */
+/* Hover actions */
 .actions {
   display: flex;
   align-items: center;
@@ -119,6 +119,73 @@
   font-size: 13px;
 }
 .actionBtn:hover { background: #f3f4f6; color: #374151; }
+.actionBtnActive { background: #f3f4f6; color: #374151; }
+
+/* Wrapper for positioned popovers */
+.actionWrap { position: relative; }
+
+/* Quick-date popover */
+.quickDatePanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  width: 160px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08);
+  padding: 4px;
+  z-index: 20;
+}
+.quickDateOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: #374151;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+.quickDateOption:hover { background: #f3f4f6; }
+.quickDateDay { color: #9ca3af; }
+
+/* Context menu */
+.contextMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  width: 148px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08);
+  padding: 4px;
+  z-index: 20;
+}
+.contextOption {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: #374151;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+.contextOption:hover { background: #f3f4f6; }
+.contextOptionDanger { color: #dc2626; }
+.contextOptionDanger:hover { background: rgba(220,38,38,0.06); color: #dc2626; }
+.contextDivider { height: 1px; background: #f3f4f6; margin: 3px 0; }
 
 /* Unassigned badges */
 .needsOwnerBadge {
