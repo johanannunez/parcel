@@ -67,6 +67,7 @@ function MonthCalendar({
       <div className={styles.monthCalNav}>
         <button
           type="button"
+          aria-label="Previous month"
           onClick={() => onMonthChange(subMonths(month, 1))}
         >
           <CaretLeft size={12} />
@@ -74,16 +75,23 @@ function MonthCalendar({
         <span className={styles.monthCalTitle}>{format(month, 'MMMM yyyy')}</span>
         <button
           type="button"
+          aria-label="Next month"
           onClick={() => onMonthChange(addMonths(month, 1))}
         >
           <CaretRight size={12} />
         </button>
       </div>
       <div className={styles.monthCalGrid}>
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-          <span key={i} className={styles.monthCalDow}>
-            {d}
-          </span>
+        {[
+          { key: 'Su', label: 'S' },
+          { key: 'Mo', label: 'M' },
+          { key: 'Tu', label: 'T' },
+          { key: 'We', label: 'W' },
+          { key: 'Th', label: 'T' },
+          { key: 'Fr', label: 'F' },
+          { key: 'Sa', label: 'S' },
+        ].map(({ key, label }) => (
+          <span key={key} className={styles.monthCalDow} title={key}>{label}</span>
         ))}
         {blanks.map((_, i) => (
           <span key={`b${i}`} />
@@ -131,6 +139,11 @@ export function TasksUpcomingView({
   const [calMonth, setCalMonth] = useState(() => new Date());
   const monthBtnRef = useRef<HTMLButtonElement>(null);
   const monthCalRef = useRef<HTMLDivElement>(null);
+  const pendingScrollRef = useRef<string | null>(null);
+
+  function scrollToDate(key: string) {
+    document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   useEffect(() => {
     if (!showMonthCal) return;
@@ -147,6 +160,13 @@ export function TasksUpcomingView({
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [showMonthCal]);
 
+  useEffect(() => {
+    if (pendingScrollRef.current) {
+      scrollToDate(pendingScrollRef.current);
+      pendingScrollRef.current = null;
+    }
+  }, [weekStart]);
+
   // Overdue reschedule state
   const [confirmReschedule, setConfirmReschedule] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
@@ -155,11 +175,14 @@ export function TasksUpcomingView({
 
   async function handleRescheduleAll() {
     setRescheduling(true);
-    const todayIso = format(new Date(), "yyyy-MM-dd'T'00:00:00");
-    await Promise.all(overdueTasks.map((t) => updateTask(t.id, { dueAt: todayIso })));
-    setRescheduling(false);
-    setConfirmReschedule(false);
-    router.refresh();
+    try {
+      const todayIso = format(new Date(), "yyyy-MM-dd'T'00:00:00");
+      await Promise.all(overdueTasks.map((t) => updateTask(t.id, { dueAt: todayIso })));
+      setConfirmReschedule(false);
+      router.refresh();
+    } finally {
+      setRescheduling(false);
+    }
   }
 
   // Per-date add task
@@ -195,10 +218,6 @@ export function TasksUpcomingView({
     }
     return map;
   }, [tasks]);
-
-  function scrollToDate(key: string) {
-    document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 
   return (
     <div className={styles.root}>
@@ -284,9 +303,10 @@ export function TasksUpcomingView({
                 month={calMonth}
                 onMonthChange={setCalMonth}
                 onSelectDate={(d) => {
+                  const dateKey = format(d, 'yyyy-MM-dd');
+                  pendingScrollRef.current = dateKey;
                   setWeekStart(startOfWeek(d, { weekStartsOn: 1 }));
                   setShowMonthCal(false);
-                  setTimeout(() => scrollToDate(format(d, 'yyyy-MM-dd')), 50);
                 }}
               />
             </div>
@@ -306,8 +326,8 @@ export function TasksUpcomingView({
             className={styles.weekNavBtn}
             onClick={() => {
               const today = startOfWeek(new Date(), { weekStartsOn: 1 });
+              pendingScrollRef.current = format(new Date(), 'yyyy-MM-dd');
               setWeekStart(today);
-              setTimeout(() => scrollToDate(format(new Date(), 'yyyy-MM-dd')), 50);
             }}
           >
             Today
