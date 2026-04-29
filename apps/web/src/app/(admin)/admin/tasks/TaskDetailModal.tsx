@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useRouter } from 'next/navigation';
 import type { Task } from '@/lib/admin/task-types';
 import { updateTask, completeTask, uncompleteTask, createTask } from '@/lib/admin/task-actions';
 import { SubtaskInlineForm } from './SubtaskInlineForm';
@@ -137,10 +136,10 @@ function useSubtasks(task: Task | null) {
 export type TaskDetailModalProps = {
   task: Task | null;
   onClose: () => void;
+  onSaved?: (taskId: string) => void;
 };
 
-export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
-  const router = useRouter();
+export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps) {
   const [, startTransition] = useTransition();
 
   // Local state
@@ -220,12 +219,13 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
 
   // Save wrapper
   async function withSave(fn: () => Promise<void>) {
+    if (!task) return;
     setSavedState('saving');
     try {
       await fn();
       setSavedState('saved');
       setTimeout(() => setSavedState(null), 2000);
-      router.refresh();
+      onSaved?.(task.id);
     } catch {
       setSavedState(null);
     }
@@ -291,18 +291,16 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
       withSave(async () => {
         if (currentStatus === 'done') await uncompleteTask(subtaskId);
         else await completeTask(subtaskId);
-        router.refresh();
       });
     });
-  }, [router]);
+  }, [task]);
 
   const handleSubtaskSave = useCallback(async (title: string) => {
     if (!task) return;
     await createTask({ title, parentTaskId: task.id });
-    // Optimistically append
     setSubtasks((prev) => [...prev, { id: `optimistic-${Date.now()}`, title, status: 'todo' }]);
-    router.refresh();
-  }, [task, router]);
+    onSaved?.(task.id);
+  }, [task, onSaved]);
 
   const priorityConfig = getPriorityConfig(localPriority);
 

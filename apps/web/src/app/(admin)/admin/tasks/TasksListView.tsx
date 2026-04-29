@@ -460,6 +460,18 @@ export function TasksListView(props: Props) {
     });
   }, []);
 
+  const refreshCurrentView = useCallback(async (openTaskId?: string) => {
+    const res = await fetch(`/api/tasks?view=${activeKey}`);
+    if (!res.ok) return;
+    const fresh: ApiResponse = await res.json();
+    setData(fresh);
+    if (openTaskId) {
+      const allTasks = fresh.groups.flatMap((g) => g.tasks);
+      const updated = allTasks.find((t) => t.id === openTaskId);
+      if (updated) setDrawerTask(updated);
+    }
+  }, [activeKey]);
+
   const handleSearch = useCallback((q: string) => setSearch(q), []);
 
   // Unique assignees for the filter panel
@@ -736,7 +748,11 @@ export function TasksListView(props: Props) {
         </div>
       )}
 
-      <TaskDetailModal task={drawerTask} onClose={() => setDrawerTask(null)} />
+      <TaskDetailModal
+        task={drawerTask}
+        onClose={() => setDrawerTask(null)}
+        onSaved={(taskId) => refreshCurrentView(taskId)}
+      />
     </div>
   );
 }
