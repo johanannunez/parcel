@@ -236,14 +236,13 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
   return (
     <AnimatePresence>
       {task && (
-        <>
-          <motion.div
-            className={styles.backdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
+        <motion.div
+          className={styles.backdrop}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
           <motion.div
             className={styles.modal}
             initial={{ opacity: 0, scale: 0.96 }}
@@ -553,7 +552,7 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
               </div>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );
