@@ -29,7 +29,8 @@ function toISODate(date: Date): string {
 }
 
 function parseISODate(iso: string): Date {
-  const parts = iso.split('-').map(Number);
+  const datePart = iso.split('T')[0];
+  const parts = datePart.split('-').map(Number);
   return new Date(parts[0], parts[1] - 1, parts[2]);
 }
 

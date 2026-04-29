@@ -29,6 +29,7 @@ export type Task = {
   parent: TaskParent | null;
   subtaskCount: number;
   subtaskDoneCount: number;
+  tags: string[];
 };
 
 export type TaskGroup = {

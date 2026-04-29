@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
           parent: null,
           subtaskCount: 0,
           subtaskDoneCount: 0,
+          tags: [],
         });
       }
     }

@@ -46,6 +46,7 @@ export default async function TasksPage({ searchParams }: Props) {
         parent: null,
         subtaskCount: 0,
         subtaskDoneCount: 0,
+        tags: [],
       });
     }
   }
