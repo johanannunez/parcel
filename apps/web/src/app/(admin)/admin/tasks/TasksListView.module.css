@@ -147,6 +147,134 @@
   flex-shrink: 0;
 }
 
+/* Toolbar action buttons (Filter, Group by) */
+.toolbarBtn {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: #6b7280; background: #fff;
+  border: 1px solid #e5e7eb; border-radius: 7px;
+  padding: 5px 10px; cursor: pointer; font-family: inherit;
+  white-space: nowrap; position: relative;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.toolbarBtn:hover { border-color: #d1d5db; color: #374151; }
+.toolbarBtnActive { border-color: #c17b4e; color: #c17b4e; background: rgba(193,123,78,0.06); }
+.toolbarBtnActive:hover { border-color: #a0622a; color: #a0622a; }
+.toolbarBtnBadge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  background: #c17b4e; color: #fff; font-size: 10px; font-weight: 700;
+  border-radius: 8px;
+}
+
+/* Filter panel */
+.filterPanelWrap {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  z-index: 40;
+}
+.filterPanel {
+  width: 288px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 12px 28px rgba(0,0,0,0.10);
+  overflow: hidden;
+}
+.filterPanelHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 11px 14px 9px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.filterPanelTitle { font-size: 12px; font-weight: 700; color: #111827; letter-spacing: 0.02em; }
+.filterClearBtn {
+  font-size: 11.5px; color: #c17b4e; background: none; border: none;
+  cursor: pointer; font-family: inherit; padding: 0;
+}
+.filterClearBtn:hover { color: #a0622a; text-decoration: underline; }
+.filterSection { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; }
+.filterSection:last-child { border-bottom: none; }
+.filterSectionLabel {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #9ca3af; margin-bottom: 8px;
+}
+.filterAssigneeList { display: flex; flex-direction: column; gap: 1px; max-height: 160px; overflow-y: auto; }
+.filterAssigneeItem {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 6px 8px; background: transparent;
+  border: none; border-radius: 6px; cursor: pointer; font-family: inherit;
+  text-align: left; font-size: 12.5px; color: #374151;
+}
+.filterAssigneeItem:hover { background: #f9fafb; }
+.filterAssigneeItemActive { background: rgba(193,123,78,0.07); }
+.filterAssigneeItemActive:hover { background: rgba(193,123,78,0.12); }
+.filterAvatar { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
+.filterAvatarFallback {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, #02AAEB, #1B77BE);
+  color: #fff; font-size: 8px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.filterAssigneeName { flex: 1; font-size: 12.5px; }
+.filterAssigneeCount {
+  font-size: 10.5px; color: #9ca3af;
+  background: #f3f4f6; border-radius: 8px; padding: 1px 6px;
+}
+.filterCheck { color: #c17b4e; flex-shrink: 0; }
+.filterPillRow { display: flex; flex-wrap: wrap; gap: 6px; }
+.filterPill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 9px; font-size: 11.5px; font-family: inherit;
+  border: 1px solid #e5e7eb; border-radius: 20px;
+  background: #fff; color: #6b7280; cursor: pointer;
+  transition: border-color 100ms, background 100ms, color 100ms;
+}
+.filterPill:hover { border-color: #d1d5db; color: #374151; }
+.filterPillActive { border-color: #c17b4e; color: #c17b4e; background: rgba(193,123,78,0.08); font-weight: 500; }
+.filterPriorityDot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.filterPillCount {
+  font-size: 10px; background: rgba(0,0,0,0.07); border-radius: 8px;
+  padding: 0 5px; color: inherit;
+}
+
+/* Group by dropdown */
+.groupMenu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08);
+  padding: 4px; min-width: 148px; z-index: 40;
+}
+.groupOption {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; padding: 7px 10px; font-size: 12.5px; color: #374151;
+  background: transparent; border: none; border-radius: 5px;
+  cursor: pointer; font-family: inherit; text-align: left;
+}
+.groupOption:hover { background: #f3f4f6; }
+.groupOptionActive { color: #c17b4e; font-weight: 500; }
+
+/* Active filter chips */
+.chips {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 0 0 10px;
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 8px 3px 10px;
+  background: rgba(193,123,78,0.10); border: 1px solid rgba(193,123,78,0.25);
+  border-radius: 20px; font-size: 11.5px; color: #a0622a; font-weight: 500;
+}
+.chipLabel { line-height: 1; }
+.chipRemove {
+  display: flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: none; border: none; cursor: pointer; color: #a0622a; padding: 0;
+}
+.chipRemove:hover { background: rgba(193,123,78,0.2); }
+.chipClearAll {
+  font-size: 11.5px; color: #9ca3af; background: none;
+  border: none; cursor: pointer; font-family: inherit; padding: 2px 4px;
+}
+.chipClearAll:hover { color: #374151; text-decoration: underline; }
+
 .skeleton {
   background: #fff;
   border: 1px solid #e5e7eb;

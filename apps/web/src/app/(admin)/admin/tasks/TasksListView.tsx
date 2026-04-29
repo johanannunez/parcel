@@ -1,13 +1,10 @@
 'use client';
 
 import { useState, useCallback, useTransition, useMemo, useRef, useEffect } from 'react';
-import type {
-  Task,
-  TasksSavedView,
-  TasksFetchResult,
-} from '@/lib/admin/task-types';
+import type { Task, TasksSavedView, TasksFetchResult, TaskStatus } from '@/lib/admin/task-types';
+import type { DueBucket } from '@/lib/admin/due-buckets';
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
-import { CaretDown, Check, Plus } from '@phosphor-icons/react';
+import { CaretDown, Check, Plus, FunnelSimple, SquaresFour, X } from '@phosphor-icons/react';
 import { TaskRow } from './TaskRow';
 import { TasksUpcomingView } from './TasksUpcomingView';
 import { TaskDetailModal } from './TaskDetailModal';
@@ -23,22 +20,241 @@ type Props = ApiResponse & {
   currentUserId?: string | null;
 };
 
-function SavedViewTabs({
+type FilterState = {
+  assignees: string[];
+  priorities: (1 | 2 | 3 | 4)[];
+  dueBucket: DueBucket | null;
+  statuses: TaskStatus[];
+};
+
+type GroupBy = 'none' | 'property' | 'assignee';
+
+const EMPTY_FILTERS: FilterState = { assignees: [], priorities: [], dueBucket: null, statuses: [] };
+const PRIMARY_TABS = ['inbox', 'today', 'upcoming', 'my-tasks'];
+
+const PRIORITY_CONFIG: Record<number, { label: string; color: string }> = {
+  1: { label: 'P1', color: '#ef4444' },
+  2: { label: 'P2', color: '#f59e0b' },
+  3: { label: 'P3', color: '#60a5fa' },
+  4: { label: 'P4', color: '#9ca3af' },
+};
+
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
+  { value: 'todo', label: 'To Do' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'blocked', label: 'Blocked' },
+  { value: 'done', label: 'Done' },
+];
+
+const GROUP_BY_LABELS: Record<GroupBy, string> = {
+  none: 'Group by',
+  property: 'By Property',
+  assignee: 'By Assignee',
+};
+
+function countActiveFilters(f: FilterState): number {
+  return f.assignees.length + f.priorities.length + (f.dueBucket ? 1 : 0) + f.statuses.length;
+}
+
+// ─── FilterPanel ───────────────────────────────────────────────────────────
+
+function FilterPanel({
+  filters,
+  onChange,
+  onClear,
+  assigneeOptions,
   views,
-  activeKey,
-  onSelect,
-  isPending,
+}: {
+  filters: FilterState;
+  onChange: (f: FilterState) => void;
+  onClear: () => void;
+  assigneeOptions: { name: string; avatarUrl: string | null | undefined; count: number }[];
+  views: TasksSavedView[];
+}) {
+  const toggle = <T,>(arr: T[], val: T): T[] =>
+    arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
+
+  const overdueCount = views.find((v) => v.key === 'overdue')?.count ?? 0;
+  const todayCount = views.find((v) => v.key === 'today')?.count ?? 0;
+  const weekCount = views.find((v) => v.key === 'this-week')?.count ?? 0;
+
+  return (
+    <div className={styles.filterPanel} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.filterPanelHeader}>
+        <span className={styles.filterPanelTitle}>Filters</span>
+        {countActiveFilters(filters) > 0 && (
+          <button type="button" className={styles.filterClearBtn} onClick={onClear}>
+            Clear all
+          </button>
+        )}
+      </div>
+
+      {assigneeOptions.length > 0 && (
+        <div className={styles.filterSection}>
+          <div className={styles.filterSectionLabel}>Assignee</div>
+          <div className={styles.filterAssigneeList}>
+            {assigneeOptions.map((a) => {
+              const active = filters.assignees.includes(a.name);
+              return (
+                <button
+                  key={a.name}
+                  type="button"
+                  className={`${styles.filterAssigneeItem} ${active ? styles.filterAssigneeItemActive : ''}`}
+                  onClick={() => onChange({ ...filters, assignees: toggle(filters.assignees, a.name) })}
+                >
+                  {a.avatarUrl ? (
+                    <img src={a.avatarUrl} alt={a.name} className={styles.filterAvatar} />
+                  ) : (
+                    <span className={styles.filterAvatarFallback}>
+                      {a.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                    </span>
+                  )}
+                  <span className={styles.filterAssigneeName}>{a.name}</span>
+                  <span className={styles.filterAssigneeCount}>{a.count}</span>
+                  {active && <Check size={12} className={styles.filterCheck} />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className={styles.filterSection}>
+        <div className={styles.filterSectionLabel}>Priority</div>
+        <div className={styles.filterPillRow}>
+          {([1, 2, 3, 4] as const).map((p) => {
+            const { label, color } = PRIORITY_CONFIG[p];
+            const active = filters.priorities.includes(p);
+            return (
+              <button
+                key={p}
+                type="button"
+                className={`${styles.filterPill} ${active ? styles.filterPillActive : ''}`}
+                style={active ? { borderColor: color, color, background: `${color}18` } : undefined}
+                onClick={() => onChange({ ...filters, priorities: toggle(filters.priorities, p) })}
+              >
+                <span className={styles.filterPriorityDot} style={{ background: color }} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className={styles.filterSection}>
+        <div className={styles.filterSectionLabel}>Due Date</div>
+        <div className={styles.filterPillRow}>
+          {([
+            { key: 'overdue' as DueBucket, label: 'Overdue', count: overdueCount },
+            { key: 'today' as DueBucket, label: 'Today', count: todayCount },
+            { key: 'this_week' as DueBucket, label: 'This Week', count: weekCount },
+          ]).map(({ key, label, count }) => {
+            const active = filters.dueBucket === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                className={`${styles.filterPill} ${active ? styles.filterPillActive : ''}`}
+                onClick={() => onChange({ ...filters, dueBucket: active ? null : key })}
+              >
+                {label}
+                {count > 0 && <span className={styles.filterPillCount}>{count}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className={styles.filterSection}>
+        <div className={styles.filterSectionLabel}>Status</div>
+        <div className={styles.filterPillRow}>
+          {STATUS_OPTIONS.map(({ value, label }) => {
+            const active = filters.statuses.includes(value);
+            return (
+              <button
+                key={value}
+                type="button"
+                className={`${styles.filterPill} ${active ? styles.filterPillActive : ''}`}
+                onClick={() => onChange({ ...filters, statuses: toggle(filters.statuses, value) })}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── FilterChips ───────────────────────────────────────────────────────────
+
+function FilterChips({
+  filters,
+  groupBy,
+  onChange,
+  onClear,
+  onGroupByChange,
+}: {
+  filters: FilterState;
+  groupBy: GroupBy;
+  onChange: (f: FilterState) => void;
+  onClear: () => void;
+  onGroupByChange: (g: GroupBy) => void;
+}) {
+  const chips: { key: string; label: string; onRemove: () => void }[] = [];
+
+  for (const a of filters.assignees) {
+    chips.push({ key: `a:${a}`, label: a, onRemove: () => onChange({ ...filters, assignees: filters.assignees.filter((x) => x !== a) }) });
+  }
+  for (const p of filters.priorities) {
+    chips.push({ key: `p:${p}`, label: PRIORITY_CONFIG[p].label, onRemove: () => onChange({ ...filters, priorities: filters.priorities.filter((x) => x !== p) }) });
+  }
+  if (filters.dueBucket) {
+    const db = filters.dueBucket;
+    chips.push({ key: `d:${db}`, label: BUCKET_LABEL[db], onRemove: () => onChange({ ...filters, dueBucket: null }) });
+  }
+  for (const s of filters.statuses) {
+    const lbl = STATUS_OPTIONS.find((x) => x.value === s)?.label ?? s;
+    chips.push({ key: `s:${s}`, label: lbl, onRemove: () => onChange({ ...filters, statuses: filters.statuses.filter((x) => x !== s) }) });
+  }
+  if (groupBy !== 'none') {
+    chips.push({ key: `g:${groupBy}`, label: GROUP_BY_LABELS[groupBy], onRemove: () => onGroupByChange('none') });
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className={styles.chips}>
+      {chips.map((c) => (
+        <span key={c.key} className={styles.chip}>
+          <span className={styles.chipLabel}>{c.label}</span>
+          <button type="button" className={styles.chipRemove} onClick={c.onRemove} aria-label={`Remove ${c.label} filter`}>
+            <X size={10} />
+          </button>
+        </span>
+      ))}
+      <button type="button" className={styles.chipClearAll} onClick={() => { onClear(); onGroupByChange('none'); }}>
+        Clear all
+      </button>
+    </div>
+  );
+}
+
+// ─── Sub-components ─────────────────────────────────────────────────────────
+
+function SavedViewTabs({
+  views, activeKey, onSelect,
 }: {
   views: TasksSavedView[];
   activeKey: string;
   onSelect: (key: string) => void;
-  isPending: boolean;
 }) {
+  const primary = views.filter((v) => PRIMARY_TABS.includes(v.key));
   return (
     <nav className={styles.views} aria-label="Saved views">
-      {views.map((v) => {
+      {primary.map((v) => {
         const isActive = v.key === activeKey;
-        const warn = v.key === 'overdue' && v.count > 0;
         return (
           <button
             key={v.key}
@@ -48,7 +264,7 @@ function SavedViewTabs({
             onClick={() => onSelect(v.key)}
           >
             {v.name}
-            <span className={`${styles.count} ${isActive ? styles.countActive : ''} ${warn ? styles.countWarn : ''}`}>
+            <span className={`${styles.count} ${isActive ? styles.countActive : ''}`}>
               {v.count}
             </span>
           </button>
@@ -145,6 +361,8 @@ const SORT_LABELS: Record<string, string> = {
   due_date: 'Due Date',
 };
 
+// ─── Main component ──────────────────────────────────────────────────────────
+
 export function TasksListView(props: Props) {
   const [data, setData] = useState<ApiResponse>(props);
   const [activeKey, setActiveKey] = useState(props.activeView.key);
@@ -153,38 +371,77 @@ export function TasksListView(props: Props) {
   const [isPending, startTransition] = useTransition();
   const [sortBy, setSortBy] = useState<'priority' | 'date_added' | 'due_date'>('priority');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+  const [groupBy, setGroupBy] = useState<GroupBy>('none');
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [showGroupMenu, setShowGroupMenu] = useState(false);
+
   const sortMenuRef = useRef<HTMLDivElement>(null);
+  const filterBtnRef = useRef<HTMLButtonElement>(null);
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+  const groupBtnRef = useRef<HTMLButtonElement>(null);
+  const groupMenuRef = useRef<HTMLDivElement>(null);
 
   // Close sort menu on outside click
   useEffect(() => {
     if (!showSortMenu) return;
     function handleMouseDown(e: MouseEvent) {
-      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
-        setShowSortMenu(false);
-      }
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) setShowSortMenu(false);
     }
     document.addEventListener('mousedown', handleMouseDown);
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [showSortMenu]);
 
+  // Close filter panel on outside click
+  useEffect(() => {
+    if (!showFilterPanel) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (
+        filterPanelRef.current && !filterPanelRef.current.contains(e.target as Node) &&
+        filterBtnRef.current && !filterBtnRef.current.contains(e.target as Node)
+      ) setShowFilterPanel(false);
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [showFilterPanel]);
+
+  // Close group menu on outside click
+  useEffect(() => {
+    if (!showGroupMenu) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (
+        groupMenuRef.current && !groupMenuRef.current.contains(e.target as Node) &&
+        groupBtnRef.current && !groupBtnRef.current.contains(e.target as Node)
+      ) setShowGroupMenu(false);
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [showGroupMenu]);
+
   const switchView = useCallback((key: string) => {
     setActiveKey(key);
     startTransition(async () => {
-      const params = new URLSearchParams({ view: key });
-      const res = await fetch(`/api/tasks?${params}`);
-      if (res.ok) {
-        const json: ApiResponse = await res.json();
-        setData(json);
-      }
+      const res = await fetch(`/api/tasks?view=${key}`);
+      if (res.ok) setData(await res.json());
     });
   }, []);
 
-  // Search is now purely client-side — just update state
-  const handleSearch = useCallback((q: string) => {
-    setSearch(q);
-  }, []);
+  const handleSearch = useCallback((q: string) => setSearch(q), []);
 
-  // Filtered + sorted groups derived from server data
+  // Unique assignees for the filter panel
+  const assigneeOptions = useMemo(() => {
+    const map = new Map<string, { name: string; avatarUrl: string | null | undefined; count: number }>();
+    for (const g of data.groups) {
+      for (const t of g.tasks) {
+        if (!t.assigneeName) continue;
+        const entry = map.get(t.assigneeName);
+        if (entry) { entry.count++; } else { map.set(t.assigneeName, { name: t.assigneeName, avatarUrl: t.assigneeAvatarUrl, count: 1 }); }
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [data.groups]);
+
+  // Search + sort
   const filteredGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
     const groups = q
@@ -204,8 +461,7 @@ export function TasksListView(props: Props) {
       ...g,
       tasks: [...g.tasks].sort((a, b) => {
         if (sortBy === 'priority') return a.priority - b.priority;
-        if (sortBy === 'date_added')
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (sortBy === 'date_added') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         if (sortBy === 'due_date') {
           if (!a.dueAt && !b.dueAt) return 0;
           if (!a.dueAt) return 1;
@@ -217,42 +473,55 @@ export function TasksListView(props: Props) {
     }));
   }, [data.groups, search, sortBy]);
 
-  // Re-group by entity for By Property / By Assignee views
+  // Apply active filters on top
+  const activeFilterGroups = useMemo(() => {
+    const { assignees, priorities, dueBucket, statuses } = filters;
+    const hasFilter = assignees.length > 0 || priorities.length > 0 || dueBucket || statuses.length > 0;
+    if (!hasFilter) return filteredGroups;
+
+    return filteredGroups
+      .filter((g) => !dueBucket || g.bucket === dueBucket)
+      .map((g) => ({
+        ...g,
+        tasks: g.tasks.filter((t) => {
+          if (assignees.length > 0 && !assignees.includes(t.assigneeName ?? '')) return false;
+          if (priorities.length > 0 && !priorities.includes(t.priority)) return false;
+          if (statuses.length > 0 && !statuses.includes(t.status)) return false;
+          return true;
+        }),
+      }))
+      .filter((g) => g.tasks.length > 0);
+  }, [filteredGroups, filters]);
+
+  // Entity grouping (controlled by groupBy, not activeKey)
   const entityGroups = useMemo(() => {
-    if (activeKey !== 'by-property' && activeKey !== 'by-assignee') return null;
-    const allTasks = filteredGroups.flatMap((g) => g.tasks);
+    if (groupBy === 'none') return null;
+    const allTasks = activeFilterGroups.flatMap((g) => g.tasks);
     const map = new Map<string, { tasks: Task[]; avatarUrl?: string | null; initials?: string }>();
     for (const t of allTasks) {
-      const key =
-        activeKey === 'by-property'
-          ? (t.parent?.label ?? 'No Project')
-          : (t.assigneeName ?? 'Unassigned');
+      const key = groupBy === 'property' ? (t.parent?.label ?? 'No Project') : (t.assigneeName ?? 'Unassigned');
       if (!map.has(key)) {
         map.set(key, {
           tasks: [],
-          avatarUrl: activeKey === 'by-assignee' ? t.assigneeAvatarUrl : undefined,
-          initials:
-            activeKey === 'by-assignee' && t.assigneeName
-              ? t.assigneeName.split(' ').map((p) => p[0]).slice(0, 2).join('')
-              : undefined,
+          avatarUrl: groupBy === 'assignee' ? t.assigneeAvatarUrl : undefined,
+          initials: groupBy === 'assignee' && t.assigneeName
+            ? t.assigneeName.split(' ').map((p) => p[0]).slice(0, 2).join('')
+            : undefined,
         });
       }
       map.get(key)!.tasks.push(t);
     }
     return Array.from(map.entries()).map(([name, info]) => ({ name, ...info }));
-  }, [filteredGroups, activeKey]);
+  }, [activeFilterGroups, groupBy]);
 
   const activeView = data.views.find((v) => v.key === activeKey) ?? data.views[0];
-  const totalFiltered = filteredGroups.flatMap((g) => g.tasks).length;
+  const totalFiltered = activeFilterGroups.flatMap((g) => g.tasks).length;
+  const activeFilterCount = countActiveFilters(filters);
+  const isListView = activeView?.key !== 'upcoming';
 
   return (
     <div className={styles.page}>
-      <SavedViewTabs
-        views={data.views}
-        activeKey={activeKey}
-        onSelect={switchView}
-        isPending={isPending}
-      />
+      <SavedViewTabs views={data.views} activeKey={activeKey} onSelect={switchView} />
 
       <div className={styles.toolbar}>
         <input
@@ -291,16 +560,84 @@ export function TasksListView(props: Props) {
           </div>
         )}
 
+        {isListView && (
+          <>
+            {/* Filter button */}
+            <div style={{ position: 'relative' }}>
+              <button
+                ref={filterBtnRef}
+                type="button"
+                className={`${styles.toolbarBtn} ${showFilterPanel || activeFilterCount > 0 ? styles.toolbarBtnActive : ''}`}
+                onClick={() => { setShowGroupMenu(false); setShowFilterPanel((v) => !v); }}
+                aria-label="Filter tasks"
+              >
+                <FunnelSimple size={14} />
+                Filter
+                {activeFilterCount > 0 && (
+                  <span className={styles.toolbarBtnBadge}>{activeFilterCount}</span>
+                )}
+              </button>
+              {showFilterPanel && (
+                <div ref={filterPanelRef} className={styles.filterPanelWrap}>
+                  <FilterPanel
+                    filters={filters}
+                    onChange={setFilters}
+                    onClear={() => setFilters(EMPTY_FILTERS)}
+                    assigneeOptions={assigneeOptions}
+                    views={data.views}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Group by button */}
+            <div style={{ position: 'relative' }} ref={groupMenuRef}>
+              <button
+                ref={groupBtnRef}
+                type="button"
+                className={`${styles.toolbarBtn} ${showGroupMenu || groupBy !== 'none' ? styles.toolbarBtnActive : ''}`}
+                onClick={() => { setShowFilterPanel(false); setShowGroupMenu((v) => !v); }}
+                aria-label="Group by"
+              >
+                <SquaresFour size={14} />
+                {groupBy === 'none' ? 'Group by' : GROUP_BY_LABELS[groupBy]}
+                <CaretDown size={11} />
+              </button>
+              {showGroupMenu && (
+                <div className={styles.groupMenu}>
+                  {(['none', 'property', 'assignee'] as GroupBy[]).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      className={`${styles.groupOption} ${groupBy === opt ? styles.groupOptionActive : ''}`}
+                      onClick={() => { setGroupBy(opt); setShowGroupMenu(false); }}
+                    >
+                      {GROUP_BY_LABELS[opt]}
+                      {groupBy === opt && <Check size={13} />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
         <div className={styles.meta}>
-          {search.trim()
-            ? `${totalFiltered} results`
-            : `${data.totalCount} tasks`}
+          {search.trim() ? `${totalFiltered} results` : `${data.totalCount} tasks`}
         </div>
       </div>
 
+      <FilterChips
+        filters={filters}
+        groupBy={groupBy}
+        onChange={setFilters}
+        onClear={() => setFilters(EMPTY_FILTERS)}
+        onGroupByChange={setGroupBy}
+      />
+
       {isPending ? (
         <ListSkeleton />
-      ) : activeView?.key === 'upcoming' ? (
+      ) : !isListView ? (
         <TasksUpcomingView tasks={data.upcomingTasks} onOpenTask={setDrawerTask} />
       ) : entityGroups ? (
         <div className={styles.list}>
@@ -332,11 +669,13 @@ export function TasksListView(props: Props) {
         </div>
       ) : (
         <div className={styles.list}>
-          {filteredGroups.length > 0 && <TaskListHeader />}
-          {filteredGroups.length === 0 ? (
-            <div className={styles.empty}>Nothing here.</div>
+          {activeFilterGroups.length > 0 && <TaskListHeader />}
+          {activeFilterGroups.length === 0 ? (
+            <div className={styles.empty}>
+              {activeFilterCount > 0 ? 'No tasks match the active filters.' : 'Nothing here.'}
+            </div>
           ) : null}
-          {filteredGroups.map((g) => (
+          {activeFilterGroups.map((g) => (
             <section key={g.bucket}>
               <header className={`${styles.groupHead} ${styles[g.bucket]}`}>
                 <span>{BUCKET_LABEL[g.bucket].toUpperCase()}</span>
