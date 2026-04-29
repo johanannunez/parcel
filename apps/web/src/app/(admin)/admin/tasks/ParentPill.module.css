@@ -23,3 +23,9 @@
 .purple .dot { background: #8B5CF6; }
 .gray   { background: rgba(107,114,128,0.10); color: #374151; border-color: rgba(107,114,128,0.24); }
 .gray   .dot { background: #6b7280; }
+
+.pillCompact {
+  font-size: 11px;
+  padding: 2px 5px;
+  gap: 4px;
+}

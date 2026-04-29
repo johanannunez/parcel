@@ -5,7 +5,7 @@ import type { TaskParent } from '@/lib/admin/task-types';
 import { parentLinkFor } from '@/lib/admin/parent-link';
 import styles from './ParentPill.module.css';
 
-export function ParentPill({ parent }: { parent: TaskParent | null }) {
+export function ParentPill({ parent, compact }: { parent: TaskParent | null; compact?: boolean }) {
   const link = parentLinkFor({
     type: parent?.type ?? null,
     id: parent?.id ?? null,
@@ -13,7 +13,7 @@ export function ParentPill({ parent }: { parent: TaskParent | null }) {
     fallbackLabel: parent?.label,
   });
   const content = (
-    <span className={`${styles.pill} ${styles[link.color]}`}>
+    <span className={`${styles.pill} ${styles[link.color]} ${compact ? styles.pillCompact : ''}`}>
       <span className={styles.dot} aria-hidden />
       <span className={styles.label}>{link.label}</span>
     </span>

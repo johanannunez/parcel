@@ -318,19 +318,6 @@ function ListSkeleton() {
   );
 }
 
-function TaskListHeader() {
-  return (
-    <div className={styles.columnHeader}>
-      <div />
-      <div className={styles.columnHeaderCell}>Task</div>
-      <div className={styles.columnHeaderCell}>Project</div>
-      <div className={`${styles.columnHeaderCell} ${styles.columnHeaderCellRight}`}>Due</div>
-      <div className={`${styles.columnHeaderCell} ${styles.columnHeaderCellCenter}`}>Assignee</div>
-      <div />
-    </div>
-  );
-}
-
 function AddTaskRow({ onCreated }: { onCreated: () => void }) {
   const [active, setActive] = useState(false);
   const [title, setTitle] = useState('');
@@ -692,7 +679,6 @@ export function TasksListView(props: Props) {
         <TasksUpcomingView tasks={data.upcomingTasks} onOpenTask={setDrawerTask} />
       ) : entityGroups ? (
         <div className={styles.list}>
-          <TaskListHeader />
           {entityGroups.length === 0 ? (
             <div className={styles.empty}>Nothing here.</div>
           ) : entityGroups.map((g) => (
@@ -720,7 +706,6 @@ export function TasksListView(props: Props) {
         </div>
       ) : (
         <div className={styles.list}>
-          {activeFilterGroups.length > 0 && <TaskListHeader />}
           {activeFilterGroups.length === 0 ? (
             <div className={styles.empty}>
               {activeFilterCount > 0 ? 'No tasks match the active filters.' : 'Nothing here.'}

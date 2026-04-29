@@ -1,204 +1,106 @@
+/* ─── Row ─────────────────────────────────────────────────────────────────── */
+
 .row {
-  display: grid;
-  grid-template-columns: 20px 1fr minmax(140px, auto) 90px 30px 24px;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 22px;
-  background: #fff;
-  transition: background 120ms ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  min-height: 52px;
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background 0.12s;
 }
 
-.row:hover { background: #fafbfc; }
-.rowDone .titleText { color: #9ca3af; text-decoration: line-through; }
+.row:hover {
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+}
+
+/* ─── Completion checkbox ─────────────────────────────────────────────────── */
 
 .check {
-  width: 16px; height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid #cbd5e1;
-  background: #fff;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong);
+  background: transparent;
   cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
 }
-.check:hover { border-color: #02AAEB; }
-.checkSm { width: 12px; height: 12px; border-radius: 3px; }
-.checkDone { background: #02AAEB; border-color: #02AAEB; }
 
-/* Title cell — flex column for title text + sub-line */
-.titleCell {
+.check:hover {
+  border-color: var(--color-brand);
+}
+
+.checkDone {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+/* ─── Title block ─────────────────────────────────────────────────────────── */
+
+.titleBlock {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 3px;
 }
 
-.titleText {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #0F3B6B;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.titleTextInner {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-.row:hover .titleTextInner { text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgba(15,59,107,0.3); }
-
-.chevron {
-  flex-shrink: 0;
-  color: #9ca3af;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.titleMeta {
+.titleLine {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
-.subtaskBadge {
-  font-size: 10.5px;
-  color: #9ca3af;
+.titleText {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.4;
 }
 
-/* Kept for backward compat, no longer primary */
-.subBadge {
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 10.5px;
-  padding: 1px 7px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
+.titleDone {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
 }
 
-.parent { justify-self: start; }
-
-.due { font-size: 11.5px; color: #6b7280; text-align: right; font-variant-numeric: tabular-nums; }
-.overdue { color: #b91c1c; font-weight: 600; }
-.today { color: #9a3412; font-weight: 600; }
-.soon { color: #0F3B6B; }
-
-.assignee { display: flex; justify-content: center; }
-.av { border-radius: 50%; }
-.avFallback {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: linear-gradient(135deg, #02AAEB, #1B77BE);
-  color: #fff; font-size: 9px; font-weight: 600;
-  display: flex; align-items: center; justify-content: center;
-}
-.avEmpty {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: #e5e7eb; color: #9ca3af; font-size: 10px;
-  display: flex; align-items: center; justify-content: center;
-}
-
-/* Hover actions */
-.actions {
+.expandBtn {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-.row:hover .actions { opacity: 1; }
-.actionBtn {
-  width: 22px; height: 22px;
-  display: flex; align-items: center; justify-content: center;
-  border: none; background: transparent;
-  border-radius: 4px;
-  color: #9ca3af;
-  cursor: pointer;
-  font-size: 13px;
-}
-.actionBtn:hover { background: #f3f4f6; color: #374151; }
-.actionBtnActive { background: #f3f4f6; color: #374151; }
-
-/* Wrapper for positioned popovers */
-.actionWrap { position: relative; }
-
-/* Quick-date popover */
-.quickDatePanel {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  width: 160px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08);
-  padding: 4px;
-  z-index: 20;
-}
-.quickDateOption {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 7px 10px;
-  font-size: 12px;
-  color: #374151;
+  justify-content: center;
+  color: var(--color-text-muted);
+  border-radius: 3px;
   background: transparent;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
-  font-family: inherit;
-  text-align: left;
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
 }
-.quickDateOption:hover { background: #f3f4f6; }
-.quickDateDay { color: #9ca3af; }
 
-/* Context menu */
-.contextMenu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  width: 148px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08);
-  padding: 4px;
-  z-index: 20;
+.expandBtn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
 }
-.contextOption {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 7px 10px;
-  font-size: 12px;
-  color: #374151;
-  background: transparent;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-}
-.contextOption:hover { background: #f3f4f6; }
-.contextOptionDanger { color: #dc2626; }
-.contextOptionDanger:hover { background: rgba(220,38,38,0.06); color: #dc2626; }
-.contextDivider { height: 1px; background: #f3f4f6; margin: 3px 0; }
 
-/* Unassigned badges */
-.needsOwnerBadge {
-  font-size: 10.5px;
-  background: rgba(217,119,6,0.12);
-  color: #b45309;
-  border-radius: 4px;
+.needsOwner {
+  font-size: 11px;
   padding: 1px 6px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  color: #b45309;
+  font-weight: 500;
 }
+
 .assignMeBtn {
-  font-size: 10.5px;
-  color: #c17b4e;
+  font-size: 11px;
+  color: #b45309;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -206,18 +108,298 @@
   padding: 0;
   font-family: inherit;
 }
-.assignMeBtn:hover { color: #a0622a; }
 
-.subWrap { background: #fafbfc; }
-.subRow {
-  display: flex; gap: 10px; align-items: center;
-  padding: 5px 22px 5px 60px;
-  color: #6b7280;
-  font-size: 11.5px;
+.assignMeBtn:hover {
+  color: #92400e;
 }
-.subDone .subTitle { color: #9ca3af; text-decoration: line-through; }
-.subTitle { flex: 1; }
+
+/* ─── Meta line ───────────────────────────────────────────────────────────── */
+
+.metaLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.metaSubtasks {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.metaDue {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.1s;
+}
+
+.metaDue:hover {
+  color: var(--color-brand);
+}
+
+.dueTone_overdue {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.dueTone_today {
+  color: #ea580c;
+  font-weight: 500;
+}
+
+.dueTone_soon {
+  color: var(--color-brand);
+}
+
+.dueTone_neutral {
+  color: var(--color-text-muted);
+}
+
+.metaParent {
+  display: flex;
+  align-items: center;
+}
+
+.metaTag {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+/* ─── Right column ────────────────────────────────────────────────────────── */
+
+.rightCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.assigneeWrap {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.av {
+  border-radius: 50%;
+  object-fit: cover;
+  width: 22px;
+  height: 22px;
+}
+
+.avFallback {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avEmpty {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-surface-hover);
+}
+
+/* ─── Hover actions ───────────────────────────────────────────────────────── */
+
+.hoverActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.row:hover .hoverActions {
+  opacity: 1;
+}
+
+.actionBtn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.actionBtn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.actionBtnActive {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+/* Wrapper for positioned popovers */
+.actionWrap {
+  position: relative;
+}
+
+/* ─── Quick-date popover ──────────────────────────────────────────────────── */
+
+.quickDatePanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  width: 160px;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 10px 24px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  z-index: 20;
+}
+
+.quickDateOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.quickDateOption:hover {
+  background: var(--color-surface-hover);
+}
+
+.quickDateDay {
+  color: var(--color-text-muted);
+}
+
+/* ─── Context menu ────────────────────────────────────────────────────────── */
+
+.contextMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  width: 148px;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 10px 24px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  z-index: 20;
+}
+
+.contextOption {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.contextOption:hover {
+  background: var(--color-surface-hover);
+}
+
+.contextOptionDanger {
+  color: #dc2626;
+}
+
+.contextOptionDanger:hover {
+  background: rgba(220, 38, 38, 0.06);
+  color: #dc2626;
+}
+
+.contextDivider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 3px 0;
+}
+
+/* ─── Subtask expansion ───────────────────────────────────────────────────── */
+
+.subWrap {
+  background: color-mix(in srgb, var(--color-text) 2%, transparent);
+  border-bottom: 1px solid var(--color-border);
+  padding: 4px 16px 4px 46px;
+}
+
+.subRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.subDone .subTitle {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.checkSm {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-strong);
+  display: inline-block;
+}
+
+.subTitle {
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+/* ─── Priority stripes ────────────────────────────────────────────────────── */
 
 .p1 { border-left: 3px solid #ef4444; }
-.p2 { border-left: 3px solid #f59e0b; }
-.p3 { border-left: 3px solid #60a5fa; }
+.p2 { border-left: 3px solid #f97316; }
+.p3 { border-left: 3px solid var(--color-brand); }
+
+/* ─── Done state ──────────────────────────────────────────────────────────── */
+
+.rowDone .titleText {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.rowDone {
+  opacity: 0.7;
+}
