@@ -54,7 +54,7 @@
 }
 
 .savedIndicatorSaving {
-  color: #c17b4e;
+  color: var(--color-brand);
 }
 
 .savedIndicatorSaved {
@@ -145,12 +145,12 @@
 }
 
 .completeCircle:hover {
-  border-color: #c17b4e;
+  border-color: var(--color-brand);
 }
 
 .completeCircleDone {
-  background: #c17b4e;
-  border-color: #c17b4e;
+  background: var(--color-brand);
+  border-color: var(--color-brand);
 }
 
 .titleEditable {
@@ -252,12 +252,12 @@
 }
 
 .subtaskCircle:hover {
-  border-color: #c17b4e;
+  border-color: var(--color-brand);
 }
 
 .subtaskCircleDone {
-  background: #c17b4e;
-  border-color: #c17b4e;
+  background: var(--color-brand);
+  border-color: var(--color-brand);
 }
 
 .subtaskTitle {
@@ -286,7 +286,7 @@
 }
 
 .addSubtaskBtn:hover {
-  color: #c17b4e;
+  color: var(--color-brand);
 }
 
 /* Comments */
@@ -294,23 +294,122 @@
   margin-bottom: 20px;
 }
 
-.commentComposer {
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  color: #374151;
-  line-height: 1.5;
-  resize: none;
-  height: 40px;
-  font-family: inherit;
-  padding: 8px 0;
+/* Existing comment entries */
+.commentEntry {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
   border-top: 1px solid #f3f4f6;
 }
 
-.commentComposer::placeholder {
+.commentEntryBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.commentEntryMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.commentEntryName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.commentEntryTime {
+  font-size: 11px;
   color: #9ca3af;
+}
+
+.commentEntryText {
+  font-size: 13.5px;
+  color: #374151;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Comment avatar (shared between entries + composer) */
+.commentAvatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: var(--color-white);
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Inline composer row — always visible at bottom */
+.commentComposerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.commentInlineInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13.5px;
+  color: #374151;
+  font-family: inherit;
+  padding: 0;
+}
+
+.commentInlineInput::placeholder {
+  color: #9ca3af;
+}
+
+.commentSendBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--color-brand);
+  border-radius: 50%;
+  color: var(--color-white);
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.commentSendBtn:hover {
+  opacity: 0.85;
+}
+
+.commentAttachBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.commentAttachBtn:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 /* Sidebar */
@@ -446,6 +545,10 @@
   gap: 7px;
 }
 
+.priorityCheck {
+  color: var(--color-brand);
+}
+
 /* Stub rows */
 .stubLink {
   font-size: 13px;
@@ -497,7 +600,7 @@
 }
 
 .tagChipRemove:hover {
-  color: #c17b4e;
+  color: var(--color-brand);
 }
 
 .tagInput {
@@ -505,7 +608,7 @@
   font-family: inherit;
   color: var(--text-primary, #111827);
   background: var(--surface-elevated, #f3f4f6);
-  border: 1px solid #c17b4e;
+  border: 1px solid var(--color-brand);
   border-radius: 4px;
   padding: 2px 6px;
   outline: none;

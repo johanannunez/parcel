@@ -16,6 +16,8 @@ import {
   DotsThree,
   CaretDown,
   CaretUp,
+  Paperclip,
+  PaperPlaneTilt,
 } from '@phosphor-icons/react';
 import styles from './TaskDetailModal.module.css';
 
@@ -155,6 +157,8 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [showPriorityMenu, setShowPriorityMenu] = useState(false);
   const [localTags, setLocalTags] = useState<string[]>([]);
+  const [commentText, setCommentText] = useState('');
+  const [localComments, setLocalComments] = useState<{ id: string; text: string; at: string }[]>([]);
 
   const titleRef = useRef<HTMLDivElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -175,6 +179,8 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
     setShowDeadlinePicker(false);
     setShowPriorityMenu(false);
     setSavedState(null);
+    setCommentText('');
+    setLocalComments([]);
 
     if (titleRef.current) {
       titleRef.current.innerText = task.title;
@@ -493,7 +499,7 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
                 <div className={styles.commentsSection}>
                   <div className={styles.sectionHeader}>
                     <span className={styles.sectionTitle}>
-                      Comments {0}
+                      Comments {localComments.length > 0 ? localComments.length : ''}
                     </span>
                     <button
                       type="button"
@@ -505,11 +511,66 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
                     </button>
                   </div>
                   {commentsExpanded && (
-                    <textarea
-                      className={styles.commentComposer}
-                      placeholder="Add a comment..."
-                      rows={1}
-                    />
+                    <>
+                      {localComments.map((c) => (
+                        <div key={c.id} className={styles.commentEntry}>
+                          <span className={styles.commentAvatar}>
+                            {task.assigneeName ? task.assigneeName.charAt(0).toUpperCase() : 'A'}
+                          </span>
+                          <div className={styles.commentEntryBody}>
+                            <div className={styles.commentEntryMeta}>
+                              <span className={styles.commentEntryName}>
+                                {task.assigneeName ?? 'Admin'}
+                              </span>
+                              <span className={styles.commentEntryTime}>{c.at}</span>
+                            </div>
+                            <p className={styles.commentEntryText}>{c.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {/* Inline composer row — always visible */}
+                      <div className={styles.commentComposerRow}>
+                        <span className={styles.commentAvatar}>
+                          {task.createdByName ? task.createdByName.charAt(0).toUpperCase() : 'A'}
+                        </span>
+                        <input
+                          className={styles.commentInlineInput}
+                          placeholder="Comment"
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && commentText.trim()) {
+                              setLocalComments((prev) => [
+                                ...prev,
+                                { id: `c-${Date.now()}`, text: commentText.trim(), at: 'Just now' },
+                              ]);
+                              setCommentText('');
+                            }
+                            if (e.key === 'Escape') setCommentText('');
+                          }}
+                        />
+                        {commentText.trim() ? (
+                          <button
+                            type="button"
+                            className={styles.commentSendBtn}
+                            aria-label="Send comment"
+                            onClick={() => {
+                              setLocalComments((prev) => [
+                                ...prev,
+                                { id: `c-${Date.now()}`, text: commentText.trim(), at: 'Just now' },
+                              ]);
+                              setCommentText('');
+                            }}
+                          >
+                            <PaperPlaneTilt size={14} weight="fill" />
+                          </button>
+                        ) : (
+                          <button type="button" className={styles.commentAttachBtn} aria-label="Attach file">
+                            <Paperclip size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -612,7 +673,7 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
                             <span style={{ color: '#111827', fontSize: 13 }}>{opt.label}</span>
                           </span>
                           {localPriority === opt.value && (
-                            <Check size={13} color="#c17b4e" weight="bold" />
+                            <Check size={13} className={styles.priorityCheck} weight="bold" />
                           )}
                         </button>
                       ))}
