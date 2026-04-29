@@ -107,6 +107,28 @@
   --dash-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
+/* ─── Admin Surface Tokens ─── */
+:root {
+  --surface-base: #ffffff;
+  --surface-elevated: #f9fafb;
+  --surface-floating: #ffffff;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+}
+:root.dark {
+  --surface-base: #111318;
+  --surface-elevated: #131418;
+  --surface-floating: #1a1b21;
+  --border: #1e2028;
+  --border-strong: #2a2d38;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #6b7280;
+}
+
 :root.dark {
   --dash-canvas: #0a0b0e;
   --dash-card: #111318;

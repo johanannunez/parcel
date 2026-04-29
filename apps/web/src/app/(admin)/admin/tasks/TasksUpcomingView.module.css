@@ -1,0 +1,182 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 40px;
+}
+
+/* ─── Week strip ─── */
+
+.weekStrip {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  scrollbar-width: none;
+}
+
+.weekStrip::-webkit-scrollbar {
+  display: none;
+}
+
+.dayButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 48px;
+  min-width: 48px;
+  padding: 6px 0 8px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease;
+}
+
+.dayButton:hover {
+  background: rgba(193, 123, 78, 0.08);
+}
+
+.dayButton:focus-visible {
+  outline: 2px solid #c17b4e;
+  outline-offset: 2px;
+}
+
+.dayButtonName {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.dayButtonNum {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.dayButtonNumToday {
+  background: #c17b4e;
+  color: #ffffff;
+}
+
+/* ─── Date-grouped list ─── */
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  scroll-margin-top: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 16px 0 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.headerDate {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.headerSep {
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+.headerRel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c17b4e;
+}
+
+.headerDay {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* ─── Task rows ─── */
+
+.taskRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-right: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.taskRow:hover {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.taskRow:focus-visible {
+  outline: 2px solid #c17b4e;
+  outline-offset: 2px;
+}
+
+.taskCheckbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+  margin-top: 1px;
+  display: block;
+}
+
+.taskMain {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.taskTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.taskMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.taskTime {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* ─── Add task placeholder ─── */
+
+.addTaskPlaceholder {
+  font-size: 13px;
+  color: #9ca3af;
+  padding: 8px 0 8px 13px;
+  cursor: default;
+  user-select: none;
+}

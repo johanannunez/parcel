@@ -12,11 +12,15 @@ export default async function TasksPage({ searchParams }: Props) {
     search: q ?? null,
   });
 
+  const upcomingTasks = view === 'upcoming' ? groups.flatMap((g) => g.tasks) : [];
+
   // Fetch subtasks for all parent tasks currently in view (for inline expansion).
   const parentIds = groups.flatMap((g) => g.tasks.map((t) => t.id));
   const subtasksByParent: Record<string, Task[]> = {};
+
+  const supabase = await createClient();
+
   if (parentIds.length > 0) {
-    const supabase = await createClient();
     const { data } = await supabase
       .from('tasks')
       .select('id, parent_task_id, title, status, due_at, created_at')
@@ -30,6 +34,7 @@ export default async function TasksPage({ searchParams }: Props) {
         title: s.title,
         description: null,
         status: s.status as Task['status'],
+        priority: 4 as const,
         assigneeId: null,
         assigneeName: null,
         assigneeAvatarUrl: null,
@@ -45,6 +50,9 @@ export default async function TasksPage({ searchParams }: Props) {
     }
   }
 
+  // Fetch current user for unassigned quick-assign feature.
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
+
   return (
     <TasksListView
       groups={groups}
@@ -52,6 +60,8 @@ export default async function TasksPage({ searchParams }: Props) {
       activeView={activeView}
       totalCount={totalCount}
       subtasksByParent={subtasksByParent}
+      upcomingTasks={upcomingTasks}
+      currentUserId={currentUser?.id ?? null}
     />
   );
 }

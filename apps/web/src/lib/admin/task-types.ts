@@ -17,6 +17,7 @@ export type Task = {
   title: string;
   description: string | null;
   status: TaskStatus;
+  priority: 1 | 2 | 3 | 4; // 1=Urgent, 2=High, 3=Medium, 4=None
   assigneeId: string | null;
   assigneeName: string | null;
   assigneeAvatarUrl: string | null;

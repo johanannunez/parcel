@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
   CheckSquare,
   AddressBook,
   Kanban,
+  Buildings,
+  House,
+  CalendarBlank,
 } from "@phosphor-icons/react";
 import styles from "./CreateMenu.module.css";
 
@@ -20,16 +24,40 @@ export type CreateKind =
   | "contact"
   | "project";
 
-const CONTEXTUAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
-  { kind: "task",     label: "Task",     icon: <CheckSquare size={13} weight="duotone" />,     kbd: "T" },
+type MenuItem =
+  | { kind: CreateKind; label: string; icon: React.ReactNode; kbd: string; action: "modal" }
+  | { kind: "meeting"; label: string; icon: React.ReactNode; kbd: string; action: "navigate"; href: string };
+
+type Section = {
+  label: string;
+  items: MenuItem[];
+};
+
+const SECTIONS: Section[] = [
+  {
+    label: "Work",
+    items: [
+      { kind: "task",    label: "Task",    icon: <CheckSquare   size={13} weight="duotone" />, kbd: "T", action: "modal" },
+      { kind: "meeting", label: "Meeting", icon: <CalendarBlank size={13} weight="duotone" />, kbd: "M", action: "navigate", href: "/admin/calendar" },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { kind: "contact", label: "Contact", icon: <AddressBook size={13} weight="duotone" />, kbd: "C", action: "modal" },
+      { kind: "owner",   label: "Owner",   icon: <Buildings    size={13} weight="duotone" />, kbd: "O", action: "modal" },
+    ],
+  },
+  {
+    label: "Business",
+    items: [
+      { kind: "property", label: "Property", icon: <House   size={13} weight="duotone" />, kbd: "P", action: "modal" },
+      { kind: "project",  label: "Project",  icon: <Kanban  size={13} weight="duotone" />, kbd: "J", action: "modal" },
+    ],
+  },
 ];
 
-const GLOBAL: Array<{ kind: CreateKind; label: string; icon: React.ReactNode; kbd: string }> = [
-  { kind: "contact", label: "Contact", icon: <AddressBook size={13} weight="duotone" />, kbd: "C" },
-  { kind: "project", label: "Project", icon: <Kanban size={13} weight="duotone" />,      kbd: "J" },
-];
-
-const MENU_WIDTH = 210;
+const MENU_WIDTH = 220;
 const GAP = 8;
 
 export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | "topbar" } = {}) {
@@ -39,6 +67,7 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
 
   useEffect(() => setMounted(true), []);
 
@@ -86,29 +115,42 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
     return () => window.removeEventListener("mousedown", handler);
   }, [open]);
 
-  function dispatch(kind: CreateKind) {
+  function dispatchModal(kind: CreateKind) {
     window.dispatchEvent(new CustomEvent("admin:create-open", { detail: { kind } }));
     setOpen(false);
   }
 
+  function handleItem(item: MenuItem) {
+    if (item.action === "navigate") {
+      router.push(item.href);
+      setOpen(false);
+    } else {
+      dispatchModal(item.kind);
+    }
+  }
+
   useEffect(() => {
     if (!open) return;
-    const keyMap: Record<string, CreateKind> = {
-      t: "task", c: "contact", j: "project",
-    };
+    const keyMap: Record<string, MenuItem | undefined> = {};
+    for (const section of SECTIONS) {
+      for (const item of section.items) {
+        keyMap[item.kbd.toLowerCase()] = item;
+      }
+    }
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
         return;
       }
-      const k = keyMap[e.key.toLowerCase()];
-      if (k) {
+      const item = keyMap[e.key.toLowerCase()];
+      if (item) {
         e.preventDefault();
-        dispatch(k);
+        handleItem(item);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const wrapClass =
@@ -122,30 +164,23 @@ export function CreateMenu({ placement = "sidebar" }: { placement?: "sidebar" | 
         role="menu"
         style={{ top: coords.top, left: coords.left }}
       >
-        {CONTEXTUAL.map((it) => (
-          <button
-            key={it.kind}
-            type="button"
-            className={styles.item}
-            onClick={() => dispatch(it.kind)}
-          >
-            <span className={styles.icon}>{it.icon}</span>
-            <span>{it.label}</span>
-            <span className={styles.kbd}>{it.kbd}</span>
-          </button>
-        ))}
-        <div className={styles.divider} />
-        {GLOBAL.map((it) => (
-          <button
-            key={it.kind}
-            type="button"
-            className={styles.item}
-            onClick={() => dispatch(it.kind)}
-          >
-            <span className={styles.icon}>{it.icon}</span>
-            <span>{it.label}</span>
-            <span className={styles.kbd}>{it.kbd}</span>
-          </button>
+        {SECTIONS.map((section, si) => (
+          <div key={section.label}>
+            {si > 0 ? <div className={styles.divider} /> : null}
+            <div className={styles.sectionLabel}>{section.label}</div>
+            {section.items.map((item) => (
+              <button
+                key={item.kind}
+                type="button"
+                className={styles.item}
+                onClick={() => handleItem(item)}
+              >
+                <span className={styles.icon}>{item.icon}</span>
+                <span>{item.label}</span>
+                <span className={styles.kbd}>{item.kbd}</span>
+              </button>
+            ))}
+          </div>
         ))}
       </div>
     ) : null;

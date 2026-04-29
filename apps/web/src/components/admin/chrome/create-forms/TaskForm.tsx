@@ -55,6 +55,7 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
   const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
   const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | null>(null);
   const [preNotifyHours, setPreNotifyHours] = useState<number | null>(null);
+  const [priority, setPriority] = useState<1 | 2 | 3 | 4>(4);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -135,6 +136,7 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
           estimatedMinutes: mins && !isNaN(mins) ? mins : null,
           recurrenceRule,
           preNotifyHours,
+          priority,
         });
         // Persist any uploaded files as attachment records linked to the new task.
         for (const att of attachments) {
@@ -147,6 +149,7 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
             sizeBytes: att.sizeBytes,
           });
         }
+        setPriority(4);
         onClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -197,6 +200,37 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Priority */}
+      <div className={styles.field}>
+        <label className={styles.label}>Priority</label>
+        <div className={styles.priorityRow}>
+          {([
+            [1, 'Urgent', '#ef4444'],
+            [2, 'High',   '#f59e0b'],
+            [3, 'Medium', '#60a5fa'],
+            [4, 'None',   ''],
+          ] as const).map(([val, label, color]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setPriority(val)}
+              className={styles.priorityPill}
+              style={
+                priority === val && color
+                  ? { borderColor: color, color, background: `${color}14` }
+                  : priority === val && !color
+                    ? { borderColor: '#647689', background: '#F6F8FB' }
+                    : undefined
+              }
+              aria-pressed={priority === val}
+              disabled={isPending}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Due date */}
@@ -326,7 +360,7 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           className={styles.btnCancel}
-          onClick={onClose}
+          onClick={() => { setPriority(4); onClose(); }}
           disabled={isPending}
         >
           Cancel

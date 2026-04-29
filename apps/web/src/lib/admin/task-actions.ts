@@ -23,10 +23,13 @@ export type CreateTaskInput = {
   estimatedMinutes?: number | null;
   recurrenceRule?: RecurrenceRule | null;
   preNotifyHours?: number | null;
+  priority?: 1 | 2 | 3 | 4;
 };
 
 export async function createTask(input: CreateTaskInput): Promise<{ id: string }> {
   const { supabase, user } = await requireAdminUser();
+
+  const caldav_uid = `task-${crypto.randomUUID()}@parcelco.com`;
 
   // Compute next_spawn_at when creating a recurring task
   let next_spawn_at: string | null = null;
@@ -50,11 +53,13 @@ export async function createTask(input: CreateTaskInput): Promise<{ id: string }
     recurrence_rule: input.recurrenceRule ?? null,
     pre_notify_hours: input.preNotifyHours ?? null,
     next_spawn_at,
+    priority: input.priority ?? 4,
+    caldav_uid,
   };
 
   const { data, error } = await supabase
     .from('tasks')
-    .insert(row)
+    .insert(row as any)
     .select('id')
     .single();
   if (error) throw error;
@@ -79,6 +84,7 @@ export async function updateTask(
     taskType: TaskType | null;
     tags: string[];
     estimatedMinutes: number | null;
+    priority: 1 | 2 | 3 | 4;
   }>,
 ): Promise<void> {
   const { supabase } = await requireAdminUser();
@@ -94,6 +100,7 @@ export async function updateTask(
   if (patch.taskType !== undefined && patch.taskType !== null) update.task_type = patch.taskType;
   if (patch.tags !== undefined) update.tags = patch.tags && patch.tags.length > 0 ? patch.tags : [];
   if (patch.estimatedMinutes !== undefined) update.estimated_minutes = patch.estimatedMinutes;
+  if (patch.priority !== undefined) (update as any).priority = patch.priority;
 
   const { error } = await supabase.from('tasks').update(update).eq('id', id);
   if (error) throw error;
@@ -127,7 +134,8 @@ export async function completeTask(id: string): Promise<void> {
       // Compute the spawn after THAT one so next_spawn_at is always one step ahead
       const afterNext = nextOccurrence(next, rule)?.toISOString() ?? null;
 
-      await supabase.from('tasks').insert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('tasks').insert({
         title: task.title,
         description: task.description,
         parent_type: task.parent_type,
@@ -141,6 +149,8 @@ export async function completeTask(id: string): Promise<void> {
         linked_property_id: task.linked_property_id,
         recurrence_rule: task.recurrence_rule,
         pre_notify_hours: task.pre_notify_hours,
+        priority: (task as any).priority ?? 4,
+        caldav_uid: `task-${crypto.randomUUID()}@parcelco.com`,
         spawned_from_task_id: task.id,
         due_at: nextDue,
         next_spawn_at: afterNext,

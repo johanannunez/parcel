@@ -30,6 +30,7 @@ export type PortalTask = {
   created_at: string;
   completed_at: string | null;
   property_id: string | null;
+  tags: string[] | null;
   task_subtasks: TaskSubtask[];
 };
 
@@ -46,7 +47,7 @@ export default async function TasksPage() {
     (client as any)
       .from("tasks")
       .select(
-        "id, title, description, task_type, status, priority, due_date, created_at, completed_at, property_id, task_subtasks(id, title, completed, sort_order)",
+        "id, title, description, task_type, status, priority, due_date, created_at, completed_at, property_id, tags, task_subtasks(id, title, completed, sort_order)",
       )
       .eq("owner_id", userId)
       .order("created_at", { ascending: false }),
@@ -60,6 +61,7 @@ export default async function TasksPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tasks: PortalTask[] = (tasksResult.data ?? []).map((t: any) => ({
     ...t,
+    tags: Array.isArray(t.tags) ? t.tags : [],
     task_subtasks: Array.isArray(t.task_subtasks)
       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [...t.task_subtasks].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
