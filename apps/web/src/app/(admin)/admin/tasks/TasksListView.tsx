@@ -278,13 +278,15 @@ function FilterChips({
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
 function SavedViewTabs({
-  views, activeKey, onSelect,
+  views, activeKey, onSelect, unassignedCount,
 }: {
   views: TasksSavedView[];
   activeKey: string;
   onSelect: (key: string) => void;
+  unassignedCount: number;
 }) {
   const primary = views.filter((v) => PRIMARY_TABS.includes(v.key));
+  const isUnassignedActive = activeKey === 'unassigned';
   return (
     <nav className={styles.views} aria-label="Saved views">
       {primary.map((v) => {
@@ -304,6 +306,19 @@ function SavedViewTabs({
           </button>
         );
       })}
+      <button
+        type="button"
+        aria-current={isUnassignedActive ? 'page' : undefined}
+        className={`${styles.tab} ${isUnassignedActive ? styles.tabActive : ''}`}
+        onClick={() => onSelect('unassigned')}
+      >
+        Unassigned
+        {unassignedCount > 0 && (
+          <span className={`${styles.count} ${isUnassignedActive ? styles.countActive : ''}`}>
+            {unassignedCount}
+          </span>
+        )}
+      </button>
     </nav>
   );
 }
@@ -441,6 +456,7 @@ export function TasksListView(props: Props) {
 
   const switchView = useCallback((key: string) => {
     setActiveKey(key);
+    if (key === 'unassigned') return;
     startTransition(async () => {
       const res = await fetch(`/api/tasks?view=${key}`);
       if (res.ok) setData(await res.json());
@@ -473,6 +489,11 @@ export function TasksListView(props: Props) {
     }
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [data.groups]);
+
+  const unassignedCount = useMemo(
+    () => data.groups.flatMap((g) => g.tasks).filter((t) => t.assigneeId === null && t.status !== 'done').length,
+    [data.groups],
+  );
 
   // Search + sort
   const filteredGroups = useMemo(() => {
@@ -531,10 +552,18 @@ export function TasksListView(props: Props) {
       .filter((g) => g.tasks.length > 0);
   }, [filteredGroups, filters]);
 
+  // Apply unassigned filter when the synthetic tab is active
+  const displayGroups = useMemo(() => {
+    if (activeKey !== 'unassigned') return activeFilterGroups;
+    return activeFilterGroups
+      .map((g) => ({ ...g, tasks: g.tasks.filter((t) => t.assigneeId === null) }))
+      .filter((g) => g.tasks.length > 0);
+  }, [activeFilterGroups, activeKey]);
+
   // Entity grouping (controlled by groupBy, not activeKey)
   const entityGroups = useMemo(() => {
     if (groupBy === 'none') return null;
-    const allTasks = activeFilterGroups.flatMap((g) => g.tasks);
+    const allTasks = displayGroups.flatMap((g) => g.tasks);
     const map = new Map<string, { tasks: Task[]; avatarUrl?: string | null; initials?: string }>();
     for (const t of allTasks) {
       const key = groupBy === 'property' ? (t.parent?.label ?? 'No Project') : (t.assigneeName ?? 'Unassigned');
@@ -553,13 +582,13 @@ export function TasksListView(props: Props) {
   }, [activeFilterGroups, groupBy]);
 
   const activeView = data.views.find((v) => v.key === activeKey) ?? data.views[0];
-  const totalFiltered = activeFilterGroups.flatMap((g) => g.tasks).length;
+  const totalFiltered = displayGroups.flatMap((g) => g.tasks).length;
   const activeFilterCount = countActiveFilters(filters);
-  const isListView = activeView?.key !== 'upcoming';
+  const isListView = activeKey !== 'upcoming';
 
   return (
     <div className={styles.page}>
-      <SavedViewTabs views={data.views} activeKey={activeKey} onSelect={switchView} />
+      <SavedViewTabs views={data.views} activeKey={activeKey} onSelect={switchView} unassignedCount={unassignedCount} />
 
       <div className={styles.toolbar}>
         <input
@@ -706,12 +735,12 @@ export function TasksListView(props: Props) {
         </div>
       ) : (
         <div className={styles.list}>
-          {activeFilterGroups.length === 0 ? (
+          {displayGroups.length === 0 ? (
             <div className={styles.empty}>
               {activeFilterCount > 0 ? 'No tasks match the active filters.' : 'Nothing here.'}
             </div>
           ) : null}
-          {activeFilterGroups.map((g) => (
+          {displayGroups.map((g) => (
             <section key={g.bucket}>
               <header className={`${styles.groupHead} ${styles[g.bucket]}`}>
                 <span>{BUCKET_LABEL[g.bucket].toUpperCase()}</span>
