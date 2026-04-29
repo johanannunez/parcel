@@ -11,12 +11,13 @@ import {
   ListChecks,
   BookOpenText,
   FolderOpen,
-  Users,
-  Wrench,
+  UsersThree,
+  UserPlus,
+  Key,
+  Toolbox,
   MagnifyingGlass,
   List as HamburgerIcon,
   CaretDown,
-  Bell,
   CalendarBlank,
 } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
@@ -64,8 +65,17 @@ const navEntries: NavEntry[] = [
   { kind: "item", href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
   { kind: "item", href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/calendar" },
   { kind: "item", href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
-  { kind: "item", href: "/admin/clients", label: "Clients", icon: <Users size={18} weight="duotone" />, matchPrefix: "/admin/clients" },
-  { kind: "item", href: "/admin/vendors", label: "Vendors", icon: <Wrench size={18} weight="duotone" />, matchPrefix: "/admin/vendors" },
+  {
+    kind: "group",
+    label: "People",
+    icon: <UsersThree size={18} weight="duotone" />,
+    storageKey: "nav-people-expanded",
+    items: [
+      { href: "/admin/clients", label: "Owners", icon: <Key size={16} weight="duotone" />, matchPrefix: "/admin/clients" },
+      { href: "/admin/leads", label: "Leads", icon: <UserPlus size={16} weight="duotone" />, matchPrefix: "/admin/leads" },
+      { href: "/admin/vendors", label: "Vendors", icon: <Toolbox size={16} weight="duotone" />, matchPrefix: "/admin/vendors" },
+    ],
+  },
   { kind: "item", href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
   { kind: "item", href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
@@ -350,6 +360,7 @@ function NavGroupRow({
             exit={{ height: 0, opacity: 0 }}
             transition={springCollapse}
             style={{
+              position: "relative",
               overflow: "hidden",
               listStyle: "none",
               margin: "1px 0 0",
@@ -359,6 +370,19 @@ function NavGroupRow({
               gap: "1px",
             }}
           >
+            <span
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: "21px",
+                top: "6px",
+                bottom: "6px",
+                width: "1px",
+                borderRadius: "999px",
+                backgroundColor: "rgba(255,255,255,0.18)",
+                pointerEvents: "none",
+              }}
+            />
             {group.items.map((item) => {
               const active = item.matchPrefix
                 ? !!pathname?.startsWith(item.matchPrefix)
@@ -472,63 +496,6 @@ export function AdminSidebar({
         }}
       >
         <SidebarSearch />
-        <button
-          type="button"
-          aria-label="Notifications"
-          onClick={(e) => {
-            const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-            window.dispatchEvent(new CustomEvent("admin:notifications-toggle", { detail: { rect } }));
-          }}
-          style={{
-            position: "relative",
-            flexShrink: 0,
-            width: "36px",
-            height: "36px",
-            borderRadius: "10px",
-            background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "rgba(255,255,255,0.72)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.13)";
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.16)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)";
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
-          }}
-        >
-          <Bell size={16} weight="duotone" />
-          {pendingBlockCount > 0 ? (
-            <span
-              aria-hidden
-              style={{
-                position: "absolute",
-                top: "-4px",
-                right: "-4px",
-                minWidth: "16px",
-                height: "16px",
-                background: "#F97316",
-                borderRadius: "8px",
-                border: "2px solid #0B1D36",
-                color: "#fff",
-                fontSize: "9px",
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0 4px",
-                pointerEvents: "none",
-              }}
-            >
-              {pendingBlockCount > 9 ? "9+" : pendingBlockCount}
-            </span>
-          ) : null}
-        </button>
         <CreateMenu />
       </div>
 
@@ -716,8 +683,7 @@ const adminRailItems: Array<{
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
   { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
   { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
-  { href: "/admin/clients", icon: <Users size={20} weight="duotone" />, label: "Clients", matchPrefix: "/admin/clients" },
-  { href: "/admin/vendors", icon: <Wrench size={20} weight="duotone" />, label: "Vendors", matchPrefix: "/admin/vendors" },
+  { href: "/admin/clients", icon: <UsersThree size={20} weight="duotone" />, label: "People", matchPrefix: "/admin/clients" },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
