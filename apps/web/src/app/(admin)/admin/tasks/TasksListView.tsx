@@ -464,6 +464,7 @@ export function TasksListView(props: Props) {
   }, []);
 
   const refreshCurrentView = useCallback(async (openTaskId?: string) => {
+    if (activeKey === 'unassigned') return;
     const res = await fetch(`/api/tasks?view=${activeKey}`);
     if (!res.ok) return;
     const fresh: ApiResponse = await res.json();
@@ -579,7 +580,7 @@ export function TasksListView(props: Props) {
       map.get(key)!.tasks.push(t);
     }
     return Array.from(map.entries()).map(([name, info]) => ({ name, ...info }));
-  }, [activeFilterGroups, groupBy]);
+  }, [displayGroups, groupBy]);
 
   const activeView = data.views.find((v) => v.key === activeKey) ?? data.views[0];
   const totalFiltered = displayGroups.flatMap((g) => g.tasks).length;
