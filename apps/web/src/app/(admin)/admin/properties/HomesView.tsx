@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState, useRef, useEffect } from "react";
-import { CaretDown, FunnelSimple, X } from "@phosphor-icons/react";
+import { FunnelSimple, X } from "@phosphor-icons/react";
 import styles from "./HomesView.module.css";
+import { CustomSelect } from "@/components/admin/CustomSelect";
 import type { HomesProperty } from "./homes-types";
 import { resolveOccupancy } from "./homes-types";
 import { GalleryCard } from "./GalleryCard";
@@ -264,6 +265,12 @@ export function HomesView({
     return Array.from(set).sort();
   }, [properties]);
 
+  useEffect(() => {
+    if (availableCities.length <= 1 && propFilters.cities.length > 0) {
+      setPropFilters((f) => ({ ...f, cities: [] }));
+    }
+  }, [availableCities.length, propFilters.cities.length]);
+
   const activeFilterCount =
     propFilters.occupancies.length +
     propFilters.homeTypes.length +
@@ -290,12 +297,13 @@ export function HomesView({
     }
     if (propFilters.bedrooms.length > 0) {
       list = list.filter((p) => {
-        if (p.bedrooms === null) return false;
-        return propFilters.bedrooms.some((b) => b === 5 ? p.bedrooms! >= 5 : p.bedrooms === b);
+        const beds = p.bedrooms;
+        if (beds === null) return false;
+        return propFilters.bedrooms.some((b) => (b === 5 ? beds >= 5 : beds === b));
       });
     }
     if (propFilters.cities.length > 0) {
-      list = list.filter((p) => propFilters.cities.includes(p.city));
+      list = list.filter((p) => p.city !== null && propFilters.cities.includes(p.city));
     }
     return list;
   }, [properties, selection, propFilters]);
@@ -367,19 +375,19 @@ export function HomesView({
               Sort
             </label>
             <div className={styles.sortSelect}>
-              <select
+              <CustomSelect
                 id="sort-key"
                 value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as SortKey)}
-              >
-                <option value="address">Address</option>
-                <option value="beds">Beds</option>
-                <option value="baths">Baths</option>
-                <option value="sqft">Sqft</option>
-                <option value="sleeps">Sleeps</option>
-                <option value="status">Status</option>
-              </select>
-              <CaretDown size={10} weight="bold" />
+                onChange={(v) => setSortKey(v as SortKey)}
+                options={[
+                  { value: "address", label: "Address" },
+                  { value: "beds", label: "Beds" },
+                  { value: "baths", label: "Baths" },
+                  { value: "sqft", label: "Sqft" },
+                  { value: "sleeps", label: "Sleeps" },
+                  { value: "status", label: "Status" },
+                ]}
+              />
             </div>
             <button
               type="button"
