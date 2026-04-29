@@ -20,14 +20,14 @@ function formatDueLabel(iso: string): string {
 
 export function SubtaskInlineForm({
   parentTaskId: _parentTaskId,
-  defaultPriority: _defaultPriority,
+  defaultPriority,
   onSave,
   onClose,
 }: SubtaskInlineFormProps) {
   const [title, setTitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [dueAt, setDueAt] = useState<string | null>(null);
-  const [priority, setPriority] = useState<1 | 2 | 3 | 4 | null>(null);
+  const [priority, setPriority] = useState<1 | 2 | 3 | 4 | null>(defaultPriority ?? null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
 

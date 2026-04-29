@@ -1,9 +1,9 @@
 .form {
   margin: 6px 0 0;
   padding: 10px 12px 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--color-surface-elevated);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
@@ -13,7 +13,7 @@
   outline: none;
   background: transparent;
   font-size: 14px;
-  color: #111827;
+  color: var(--color-text);
   line-height: 1.5;
   padding: 0;
   margin-bottom: 8px;
@@ -21,7 +21,7 @@
 }
 
 .titleInput::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .bottomRow {
@@ -107,14 +107,14 @@
 
 .priorityOptionActive {
   background: var(--color-brand);
-  color: #fff;
+  color: var(--color-white);
   border-color: var(--color-brand);
 }
 
 .prio1 { color: #ef4444; }
-.prio2 { color: #f97316; }
-.prio3 { color: var(--color-brand); }
-.prio4 { color: var(--color-text-muted); }
+.prio2 { color: #f59e0b; }
+.prio3 { color: #60a5fa; }
+.prio4 { color: #9ca3af; }
 
 .rightActions {
   display: flex;
@@ -126,7 +126,7 @@
   background: none;
   border: none;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 5px 8px;
   border-radius: 6px;
@@ -135,12 +135,12 @@
 }
 
 .cancelBtn:hover {
-  color: #111827;
+  color: var(--color-text);
 }
 
 .addBtn {
-  background: #111827;
-  color: #ffffff;
+  background: var(--color-text);
+  color: var(--color-white);
   border: none;
   font-size: 12px;
   border-radius: 6px;
@@ -152,7 +152,7 @@
 }
 
 .addBtn:hover {
-  background: #374151;
+  background: var(--color-surface-hover);
 }
 
 .addBtn:disabled {
