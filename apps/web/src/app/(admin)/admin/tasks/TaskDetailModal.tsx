@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useRouter } from 'next/navigation';
 import type { Task } from '@/lib/admin/task-types';
 import { updateTask, completeTask, uncompleteTask, createTask } from '@/lib/admin/task-actions';
 import { SubtaskInlineForm } from './SubtaskInlineForm';
@@ -32,17 +31,87 @@ function getPriorityConfig(p: 1 | 2 | 3 | 4) {
   return PRIORITY_OPTIONS.find((o) => o.value === p) ?? PRIORITY_OPTIONS[3];
 }
 
+function parseLocalDate(iso: string): Date {
+  const p = iso.split('T')[0].split('-').map(Number);
+  return new Date(p[0], p[1] - 1, p[2]);
+}
+
 function formatDateLabel(iso: string | null): string {
   if (!iso) return 'No date';
-  const d = new Date(iso);
+  const d = parseLocalDate(iso);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
+  const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
   if (diff === 0) return 'Today';
   if (diff === 1) return 'Tomorrow';
   if (diff === -1) return 'Yesterday';
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+// TagEditor — inline chip-based tag editor
+type TagEditorProps = {
+  tags: string[];
+  onChange: (newTags: string[]) => void;
+};
+
+function TagEditor({ tags, onChange }: TagEditorProps) {
+  const [adding, setAdding] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function commitTag() {
+    const trimmed = inputValue.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      onChange([...tags, trimmed]);
+    }
+    setInputValue('');
+    setAdding(false);
+  }
+
+  function removeTag(tag: string) {
+    onChange(tags.filter((t) => t !== tag));
+  }
+
+  return (
+    <div className={styles.tagEditor}>
+      {tags.map((tag) => (
+        <span key={tag} className={styles.tagChip}>
+          {tag}
+          <button
+            type="button"
+            className={styles.tagChipRemove}
+            onClick={() => removeTag(tag)}
+            aria-label={`Remove label ${tag}`}
+          >
+            ×
+          </button>
+        </span>
+      ))}
+      {adding ? (
+        <input
+          ref={inputRef}
+          className={styles.tagInput}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); commitTag(); }
+            if (e.key === 'Escape') { setInputValue(''); setAdding(false); }
+          }}
+          onBlur={commitTag}
+          autoFocus
+          placeholder="Label..."
+        />
+      ) : (
+        <button
+          type="button"
+          className={styles.stubLink}
+          onClick={() => setAdding(true)}
+        >
+          + Labels
+        </button>
+      )}
+    </div>
+  );
 }
 
 // Subtask row type used locally
@@ -67,10 +136,10 @@ function useSubtasks(task: Task | null) {
 export type TaskDetailModalProps = {
   task: Task | null;
   onClose: () => void;
+  onSaved?: (taskId: string) => void;
 };
 
-export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
-  const router = useRouter();
+export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps) {
   const [, startTransition] = useTransition();
 
   // Local state
@@ -85,6 +154,7 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [showPriorityMenu, setShowPriorityMenu] = useState(false);
+  const [localTags, setLocalTags] = useState<string[]>([]);
 
   const titleRef = useRef<HTMLDivElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
@@ -99,6 +169,7 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
     setLocalPriority(task.priority);
     setLocalDueAt(task.dueAt);
     setLocalDeadline(null);
+    setLocalTags(task.tags ?? []);
     setShowSubtaskForm(false);
     setShowDatePicker(false);
     setShowDeadlinePicker(false);
@@ -148,11 +219,13 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
 
   // Save wrapper
   async function withSave(fn: () => Promise<void>) {
+    if (!task) return;
     setSavedState('saving');
     try {
       await fn();
       setSavedState('saved');
       setTimeout(() => setSavedState(null), 2000);
+      onSaved?.(task.id);
     } catch {
       setSavedState(null);
     }
@@ -218,32 +291,29 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
       withSave(async () => {
         if (currentStatus === 'done') await uncompleteTask(subtaskId);
         else await completeTask(subtaskId);
-        router.refresh();
       });
     });
-  }, [router]);
+  }, [task]);
 
   const handleSubtaskSave = useCallback(async (title: string) => {
     if (!task) return;
     await createTask({ title, parentTaskId: task.id });
-    // Optimistically append
     setSubtasks((prev) => [...prev, { id: `optimistic-${Date.now()}`, title, status: 'todo' }]);
-    router.refresh();
-  }, [task, router]);
+    onSaved?.(task.id);
+  }, [task, onSaved]);
 
   const priorityConfig = getPriorityConfig(localPriority);
 
   return (
     <AnimatePresence>
       {task && (
-        <>
-          <motion.div
-            className={styles.backdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
+        <motion.div
+          className={styles.backdrop}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
           <motion.div
             className={styles.modal}
             initial={{ opacity: 0, scale: 0.96 }}
@@ -427,7 +497,6 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
                       className={styles.commentComposer}
                       placeholder="Add a comment..."
                       rows={1}
-                      readOnly
                     />
                   )}
                 </div>
@@ -539,10 +608,18 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
                   )}
                 </div>
 
-                {/* Labels (stub) */}
+                {/* Labels */}
                 <div className={styles.sidebarRow}>
                   <span className={styles.sidebarLabel}>Labels</span>
-                  <span className={styles.stubLink}>+ Labels</span>
+                  <TagEditor
+                    tags={localTags}
+                    onChange={(newTags) => {
+                      setLocalTags(newTags);
+                      startTransition(() => {
+                        withSave(() => updateTask(task.id, { tags: newTags }));
+                      });
+                    }}
+                  />
                 </div>
 
                 {/* Reminders (stub) */}
@@ -553,7 +630,7 @@ export function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
               </div>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

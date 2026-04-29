@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useTransition, useMemo, useRef, useEffect } from 'react';
-import type { Task, TasksSavedView, TasksFetchResult, TaskStatus } from '@/lib/admin/task-types';
+import type { Task, TasksSavedView, TasksFetchResult, TaskStatus, ParentType } from '@/lib/admin/task-types';
 import type { DueBucket } from '@/lib/admin/due-buckets';
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
 import { CaretDown, Check, Plus, FunnelSimple, SquaresFour, X } from '@phosphor-icons/react';
@@ -25,11 +25,12 @@ type FilterState = {
   priorities: (1 | 2 | 3 | 4)[];
   dueBucket: DueBucket | null;
   statuses: TaskStatus[];
+  parentTypes: (ParentType | 'standalone')[];
 };
 
 type GroupBy = 'none' | 'property' | 'assignee';
 
-const EMPTY_FILTERS: FilterState = { assignees: [], priorities: [], dueBucket: null, statuses: [] };
+const EMPTY_FILTERS: FilterState = { assignees: [], priorities: [], dueBucket: null, statuses: [], parentTypes: [] };
 const PRIMARY_TABS = ['inbox', 'today', 'upcoming', 'my-tasks'];
 
 const PRIORITY_CONFIG: Record<number, { label: string; color: string }> = {
@@ -46,6 +47,13 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: 'done', label: 'Done' },
 ];
 
+const PARENT_TYPE_LABELS: Record<ParentType | 'standalone', string> = {
+  contact: 'Contact',
+  property: 'Property',
+  project: 'Project',
+  standalone: 'Standalone',
+};
+
 const GROUP_BY_LABELS: Record<GroupBy, string> = {
   none: 'Group by',
   property: 'By Property',
@@ -53,7 +61,7 @@ const GROUP_BY_LABELS: Record<GroupBy, string> = {
 };
 
 function countActiveFilters(f: FilterState): number {
-  return f.assignees.length + f.priorities.length + (f.dueBucket ? 1 : 0) + f.statuses.length;
+  return f.assignees.length + f.priorities.length + (f.dueBucket ? 1 : 0) + f.statuses.length + f.parentTypes.length;
 }
 
 // ─── FilterPanel ───────────────────────────────────────────────────────────
@@ -183,6 +191,25 @@ function FilterPanel({
           })}
         </div>
       </div>
+
+      <div className={styles.filterSection}>
+        <div className={styles.filterSectionLabel}>Parent</div>
+        <div className={styles.filterPillRow}>
+          {(Object.keys(PARENT_TYPE_LABELS) as (ParentType | 'standalone')[]).map((pt) => {
+            const active = filters.parentTypes.includes(pt);
+            return (
+              <button
+                key={pt}
+                type="button"
+                className={`${styles.filterPill} ${active ? styles.filterPillActive : ''}`}
+                onClick={() => onChange({ ...filters, parentTypes: toggle(filters.parentTypes, pt) })}
+              >
+                {PARENT_TYPE_LABELS[pt]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -217,6 +244,13 @@ function FilterChips({
   for (const s of filters.statuses) {
     const lbl = STATUS_OPTIONS.find((x) => x.value === s)?.label ?? s;
     chips.push({ key: `s:${s}`, label: lbl, onRemove: () => onChange({ ...filters, statuses: filters.statuses.filter((x) => x !== s) }) });
+  }
+  for (const pt of filters.parentTypes) {
+    chips.push({
+      key: `pt:${pt}`,
+      label: PARENT_TYPE_LABELS[pt],
+      onRemove: () => onChange({ ...filters, parentTypes: filters.parentTypes.filter((x) => x !== pt) }),
+    });
   }
   if (groupBy !== 'none') {
     chips.push({ key: `g:${groupBy}`, label: GROUP_BY_LABELS[groupBy], onRemove: () => onGroupByChange('none') });
@@ -426,6 +460,18 @@ export function TasksListView(props: Props) {
     });
   }, []);
 
+  const refreshCurrentView = useCallback(async (openTaskId?: string) => {
+    const res = await fetch(`/api/tasks?view=${activeKey}`);
+    if (!res.ok) return;
+    const fresh: ApiResponse = await res.json();
+    setData(fresh);
+    if (openTaskId) {
+      const allTasks = fresh.groups.flatMap((g) => g.tasks);
+      const updated = allTasks.find((t) => t.id === openTaskId);
+      if (updated) setDrawerTask(updated);
+    }
+  }, [activeKey]);
+
   const handleSearch = useCallback((q: string) => setSearch(q), []);
 
   // Unique assignees for the filter panel
@@ -475,8 +521,9 @@ export function TasksListView(props: Props) {
 
   // Apply active filters on top
   const activeFilterGroups = useMemo(() => {
-    const { assignees, priorities, dueBucket, statuses } = filters;
-    const hasFilter = assignees.length > 0 || priorities.length > 0 || dueBucket || statuses.length > 0;
+    const { assignees, priorities, dueBucket, statuses, parentTypes } = filters;
+    const hasFilter =
+      assignees.length > 0 || priorities.length > 0 || dueBucket || statuses.length > 0 || parentTypes.length > 0;
     if (!hasFilter) return filteredGroups;
 
     return filteredGroups
@@ -487,6 +534,10 @@ export function TasksListView(props: Props) {
           if (assignees.length > 0 && !assignees.includes(t.assigneeName ?? '')) return false;
           if (priorities.length > 0 && !priorities.includes(t.priority)) return false;
           if (statuses.length > 0 && !statuses.includes(t.status)) return false;
+          if (parentTypes.length > 0) {
+            const taskParentType: ParentType | 'standalone' = t.parent ? t.parent.type : 'standalone';
+            if (!parentTypes.includes(taskParentType)) return false;
+          }
           return true;
         }),
       }))
@@ -697,7 +748,11 @@ export function TasksListView(props: Props) {
         </div>
       )}
 
-      <TaskDetailModal task={drawerTask} onClose={() => setDrawerTask(null)} />
+      <TaskDetailModal
+        task={drawerTask}
+        onClose={() => setDrawerTask(null)}
+        onSaved={(taskId) => refreshCurrentView(taskId)}
+      />
     </div>
   );
 }

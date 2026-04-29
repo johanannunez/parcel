@@ -51,7 +51,7 @@ export async function fetchAdminTasksList(
     .from('tasks')
     .select(`
       id, parent_task_id, parent_type, parent_id, title, description, status, priority,
-      assignee_id, created_by, due_at, completed_at, created_at,
+      assignee_id, created_by, due_at, completed_at, created_at, tags,
       assignee:profiles!tasks_assignee_id_fkey(full_name, avatar_url),
       creator:profiles!tasks_created_by_fkey1(full_name)
     `)
@@ -148,6 +148,7 @@ export async function fetchAdminTasksList(
     due_at: string | null;
     completed_at: string | null;
     created_at: string;
+    tags: string[] | null;
     assignee: { full_name?: string; avatar_url?: string } | { full_name?: string; avatar_url?: string }[] | null;
     creator: { full_name?: string } | { full_name?: string }[] | null;
   };
@@ -273,6 +274,7 @@ export async function fetchAdminTasksList(
       parent,
       subtaskCount: counts.total,
       subtaskDoneCount: counts.done,
+      tags: t.tags ?? [],
     };
   });
 

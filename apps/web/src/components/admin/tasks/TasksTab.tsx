@@ -45,6 +45,7 @@ export async function TasksTab({
         parent: null,
         subtaskCount: 0,
         subtaskDoneCount: 0,
+        tags: [],
       });
     }
   }
