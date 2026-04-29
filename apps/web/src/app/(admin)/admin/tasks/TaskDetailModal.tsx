@@ -295,10 +295,22 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
     });
   }, [task]);
 
-  const handleSubtaskSave = useCallback(async (title: string) => {
+  const handleSubtaskSave = useCallback(async (data: {
+    title: string;
+    dueAt: string | null;
+    priority: 1 | 2 | 3 | 4 | null;
+  }) => {
     if (!task) return;
-    await createTask({ title, parentTaskId: task.id });
-    setSubtasks((prev) => [...prev, { id: `optimistic-${Date.now()}`, title, status: 'todo' }]);
+    await createTask({
+      title: data.title,
+      parentTaskId: task.id,
+      dueAt: data.dueAt,
+      priority: data.priority ?? undefined,
+    });
+    setSubtasks((prev) => [
+      ...prev,
+      { id: `optimistic-${Date.now()}`, title: data.title, status: 'todo' },
+    ]);
     onSaved?.(task.id);
   }, [task, onSaved]);
 

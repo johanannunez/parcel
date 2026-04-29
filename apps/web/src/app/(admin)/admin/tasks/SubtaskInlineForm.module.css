@@ -37,16 +37,84 @@
   gap: 6px;
 }
 
-.stubBtn {
-  font-size: 11px;
-  color: #9ca3af;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  border-radius: 6px;
-  padding: 3px 8px;
-  cursor: default;
-  font-family: inherit;
+.btnWrap {
+  position: relative;
 }
+
+.metaBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+
+.metaBtn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border);
+}
+
+.metaBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.metaBtnActive {
+  color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand) 25%, transparent);
+}
+
+.pickerPopover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 60;
+}
+
+.priorityPicker {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 60;
+  display: flex;
+  gap: 4px;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+}
+
+.priorityOption {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s, color 0.1s;
+}
+
+.priorityOptionActive {
+  background: var(--color-brand);
+  color: #fff;
+  border-color: var(--color-brand);
+}
+
+.prio1 { color: #ef4444; }
+.prio2 { color: #f97316; }
+.prio3 { color: var(--color-brand); }
+.prio4 { color: var(--color-text-muted); }
 
 .rightActions {
   display: flex;
