@@ -582,7 +582,6 @@ export function TasksListView(props: Props) {
     return Array.from(map.entries()).map(([name, info]) => ({ name, ...info }));
   }, [displayGroups, groupBy]);
 
-  const activeView = data.views.find((v) => v.key === activeKey) ?? data.views[0];
   const totalFiltered = displayGroups.flatMap((g) => g.tasks).length;
   const activeFilterCount = countActiveFilters(filters);
   const isListView = activeKey !== 'upcoming';

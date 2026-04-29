@@ -204,7 +204,7 @@
   height: 22px;
   border-radius: 50%;
   background: var(--color-brand);
-  color: #fff;
+  color: var(--color-white);
   font-size: 9px;
   font-weight: 600;
   display: flex;
@@ -390,7 +390,7 @@
 /* ─── Priority stripes ────────────────────────────────────────────────────── */
 
 .p1 { border-left: 3px solid #ef4444; }
-.p2 { border-left: 3px solid #f97316; }
+.p2 { border-left: 3px solid #f59e0b; }
 .p3 { border-left: 3px solid var(--color-brand); }
 
 /* ─── Done state ──────────────────────────────────────────────────────────── */

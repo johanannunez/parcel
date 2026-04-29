@@ -152,7 +152,7 @@
 }
 
 .addBtn:hover {
-  background: var(--color-surface-hover);
+  background: color-mix(in srgb, var(--color-text) 85%, transparent);
 }
 
 .addBtn:disabled {
