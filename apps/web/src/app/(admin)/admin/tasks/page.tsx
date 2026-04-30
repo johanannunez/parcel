@@ -1,7 +1,7 @@
 import { fetchAdminTasksList } from '@/lib/admin/tasks-list';
 import { createClient } from '@/lib/supabase/server';
 import { TasksListView } from './TasksListView';
-import type { Task } from '@/lib/admin/task-types';
+import type { Task, TaskLabel } from '@/lib/admin/task-types';
 
 type Props = { searchParams: Promise<{ view?: string; q?: string }> };
 
@@ -55,8 +55,18 @@ export default async function TasksPage({ searchParams }: Props) {
     }
   }
 
-  // Fetch current user for unassigned quick-assign feature.
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  // Fetch current user and labels concurrently.
+  const [{ data: { user: currentUser } }, labelsResult] = await Promise.all([
+    supabase.auth.getUser(),
+    (supabase as any).from('task_labels').select('id, name, color, sort_order').order('sort_order'),
+  ]);
+
+  const labels: TaskLabel[] = (labelsResult.data ?? []).map((l: { id: string; name: string; color: string; sort_order: number }) => ({
+    id: l.id,
+    name: l.name,
+    color: l.color,
+    sortOrder: l.sort_order ?? 0,
+  }));
 
   return (
     <TasksListView
@@ -66,6 +76,7 @@ export default async function TasksPage({ searchParams }: Props) {
       totalCount={totalCount}
       subtasksByParent={subtasksByParent}
       upcomingTasks={upcomingTasks}
+      labels={labels}
       currentUserId={currentUser?.id ?? null}
     />
   );

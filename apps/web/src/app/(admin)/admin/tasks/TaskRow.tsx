@@ -2,88 +2,99 @@
 
 import { useState, useTransition, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import type { Task } from '@/lib/admin/task-types';
-import { ParentPill } from './ParentPill';
+import type { Task, TaskLabel } from '@/lib/admin/task-types';
 import { completeTask, uncompleteTask, updateTask, deleteTask } from '@/lib/admin/task-actions';
 import {
-  CaretDown,
-  CaretRight,
-  PencilSimple,
   CalendarBlank,
   DotsThreeVertical,
+  ArrowSquareOut,
+  DotsSixVertical,
+  GitBranch,
+  Check,
 } from '@phosphor-icons/react';
+import { DatePickerDropdown } from './DatePickerDropdown';
 import styles from './TaskRow.module.css';
 
-function dueDisplay(iso: string | null): { label: string; tone: string } {
-  if (!iso) return { label: '—', tone: 'neutral' };
-  const now = new Date();
-  const due = new Date(iso);
-  const diff = due.getTime() - now.getTime();
-  const days = Math.floor(diff / 86400_000);
-  if (diff < 0) {
-    const ago = Math.max(1, Math.abs(days));
-    return { label: `${ago}d late`, tone: 'overdue' };
-  }
-  if (days === 0) return { label: 'Today', tone: 'today' };
-  if (days === 1) return { label: 'Tomorrow', tone: 'soon' };
-  if (days < 7) return { label: due.toLocaleDateString(undefined, { weekday: 'short' }), tone: 'soon' };
-  return { label: due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), tone: 'neutral' };
-}
+// ─── Date helpers ─────────────────────────────────────────────────────────────
 
-function quickDateISO(daysFromNow: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromNow);
+function humanDueLabel(iso: string): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(iso);
   d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+  const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  if (diff === -1) return 'Yesterday';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-const QUICK_DATE_PRESETS = [
-  { label: 'Today', getISO: () => quickDateISO(0), dayLabel: () => new Date().toLocaleDateString(undefined, { weekday: 'short' }) },
-  { label: 'Tomorrow', getISO: () => quickDateISO(1), dayLabel: () => new Date(Date.now() + 86400000).toLocaleDateString(undefined, { weekday: 'short' }) },
-  { label: 'Next week', getISO: () => quickDateISO(7), dayLabel: () => new Date(Date.now() + 7 * 86400000).toLocaleDateString(undefined, { weekday: 'short' }) },
-  { label: 'No date', getISO: () => null, dayLabel: () => '' },
-] as const;
+function isOverdue(iso: string, status: string): boolean {
+  if (status === 'done') return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(iso);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() < today.getTime();
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+type Props = {
+  task: Task;
+  subtasks?: Task[];
+  labels: TaskLabel[];
+  onOpen: () => void;
+  showNeedsOwner?: boolean;
+  currentUserId?: string | null;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function TaskRow({
   task,
   subtasks = [],
+  labels,
   onOpen,
   showNeedsOwner,
   currentUserId,
-}: {
-  task: Task;
-  subtasks?: Task[];
-  onOpen?: () => void;
-  showNeedsOwner?: boolean;
-  currentUserId?: string | null;
-}) {
+  isSelected = false,
+  onToggleSelect,
+}: Props) {
   const [isPending, startTransition] = useTransition();
-  const [expanded, setExpanded] = useState(false);
-  const [assigned, setAssigned] = useState(false);
+  const [optimisticDone, setOptimisticDone] = useState(task.status === 'done');
   const [optimisticDeleted, setOptimisticDeleted] = useState(false);
-  const [showQuickDate, setShowQuickDate] = useState(false);
-  const [showContextMenu, setShowContextMenu] = useState(false);
   const [localDueAt, setLocalDueAt] = useState(task.dueAt);
+  const [assigned, setAssigned] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
 
   const calendarBtnRef = useRef<HTMLButtonElement>(null);
-  const quickDateRef = useRef<HTMLDivElement>(null);
+  const datePickerRef = useRef<HTMLDivElement>(null);
   const dotsBtnRef = useRef<HTMLButtonElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close quick-date on outside click
+  // Sync optimisticDone when task.status changes from outside
   useEffect(() => {
-    if (!showQuickDate) return;
+    setOptimisticDone(task.status === 'done');
+  }, [task.status]);
+
+  // Close date picker on outside click
+  useEffect(() => {
+    if (!showDatePicker) return;
     function handleDown(e: MouseEvent) {
       if (
-        quickDateRef.current && !quickDateRef.current.contains(e.target as Node) &&
+        datePickerRef.current && !datePickerRef.current.contains(e.target as Node) &&
         calendarBtnRef.current && !calendarBtnRef.current.contains(e.target as Node)
       ) {
-        setShowQuickDate(false);
+        setShowDatePicker(false);
       }
     }
     document.addEventListener('mousedown', handleDown);
     return () => document.removeEventListener('mousedown', handleDown);
-  }, [showQuickDate]);
+  }, [showDatePicker]);
 
   // Close context menu on outside click
   useEffect(() => {
@@ -102,20 +113,34 @@ export function TaskRow({
 
   if (optimisticDeleted) return null;
 
-  const due = dueDisplay(localDueAt);
-  const hasSubtasks = task.subtaskCount > 0 || subtasks.length > 0;
+  // ─── Computed values ──────────────────────────────────────────────────────
 
-  const priorityClass =
-    task.priority === 1 ? styles.p1 :
-    task.priority === 2 ? styles.p2 :
-    task.priority === 3 ? styles.p3 : '';
+  const isDone = optimisticDone;
+  const subtaskCount = task.subtaskCount || subtasks.length;
+  const subtaskDoneCount = task.subtaskDoneCount || subtasks.filter((s) => s.status === 'done').length;
+  const hasSubtasks = subtaskCount > 0;
+
+  const dueOverdue = localDueAt ? isOverdue(localDueAt, isDone ? 'done' : 'todo') : false;
+
+  // Resolve up to 2 label objects from task.labelIds
+  const taskLabels: TaskLabel[] = [];
+  for (const lid of task.labelIds ?? []) {
+    const found = labels.find((l) => l.id === lid);
+    if (found) taskLabels.push(found);
+    if (taskLabels.length >= 2) break;
+  }
+  const extraLabels = Math.max(0, (task.labelIds?.length ?? 0) - 2);
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
 
   const toggleComplete = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const nowDone = !isDone;
+    setOptimisticDone(nowDone);
     startTransition(async () => {
-      if (task.status === 'done') await uncompleteTask(task.id);
-      else await completeTask(task.id);
+      if (nowDone) await completeTask(task.id);
+      else await uncompleteTask(task.id);
     });
   };
 
@@ -129,12 +154,12 @@ export function TaskRow({
     });
   };
 
-  const handleQuickDate = (e: React.MouseEvent, getISO: () => string | null) => {
-    e.stopPropagation();
-    const iso = getISO();
+  const handleDueDateChange = (iso: string | null) => {
     setLocalDueAt(iso);
-    setShowQuickDate(false);
-    startTransition(async () => { await updateTask(task.id, { dueAt: iso }); });
+    setShowDatePicker(false);
+    startTransition(async () => {
+      await updateTask(task.id, { dueAt: iso });
+    });
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -147,194 +172,211 @@ export function TaskRow({
   const handleMarkComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowContextMenu(false);
+    setOptimisticDone(true);
     startTransition(async () => { await completeTask(task.id); });
   };
 
+  // Priority left-border class
+  const priorityClass =
+    task.priority === 1 ? styles.p1 :
+    task.priority === 2 ? styles.p2 :
+    task.priority === 3 ? styles.p3 : '';
+
   return (
-    <>
-      <div
-        className={`${styles.row} ${task.status === 'done' ? styles.rowDone : ''} ${priorityClass}`}
-        onClick={onOpen}
-        style={{ cursor: onOpen ? 'pointer' : undefined }}
-      >
+    <div
+      className={`${styles.row} ${isDone ? styles.rowDone : ''} ${priorityClass} ${isSelected ? styles.rowSelected : ''}`}
+    >
+      {/* ── Bulk select checkbox ─────────────────────────────────────────────── */}
+      <div className={`${styles.selectWrap} ${isSelected ? styles.selectWrapVisible : ''}`}>
         <button
           type="button"
-          aria-label={task.status === 'done' ? 'Mark as todo' : 'Complete task'}
-          className={`${styles.check} ${task.status === 'done' ? styles.checkDone : ''}`}
-          onClick={(e) => { e.stopPropagation(); toggleComplete(e); }}
-          disabled={isPending}
-        />
+          className={`${styles.selectBox} ${isSelected ? styles.selectBoxChecked : ''}`}
+          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id); }}
+          aria-label={isSelected ? 'Deselect task' : 'Select task'}
+        >
+          {isSelected && <Check size={10} weight="bold" color="#fff" />}
+        </button>
+      </div>
 
-        {/* Title cell */}
-        <div className={styles.titleCell}>
-          <div className={styles.titleText}>
-            <span className={styles.titleTextInner}>{task.title}</span>
-            {hasSubtasks ? (
-              <span
-                className={styles.chevron}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setExpanded((v) => !v);
-                }}
-                role="button"
-                aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
+      {/* ── Drag handle ─────────────────────────────────────────────────────── */}
+      <div className={styles.dragHandle}>
+        <DotsSixVertical size={14} color="var(--text-tertiary)" />
+      </div>
+
+      {/* ── Main body ────────────────────────────────────────────────────────── */}
+      <div className={styles.body}>
+        {/* Line 1: completion + title + hover actions */}
+        <div className={styles.line1}>
+          {/* Completion circle */}
+          <button
+            type="button"
+            className={`${styles.completeCircle} ${isDone ? styles.completeCircleDone : ''}`}
+            onClick={toggleComplete}
+            disabled={isPending}
+            aria-label={isDone ? 'Mark as to-do' : 'Complete task'}
+          >
+            {isDone && <Check size={9} weight="bold" color="#fff" />}
+          </button>
+
+          {/* Title */}
+          <span
+            className={`${styles.title} ${isDone ? styles.titleDone : ''}`}
+            onClick={onOpen}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter') onOpen(); }}
+          >
+            {task.title}
+          </span>
+
+          {/* Hover actions */}
+          <div className={styles.hoverActions}>
+            {/* Calendar / due date picker */}
+            <div className={styles.actionWrap}>
+              <button
+                ref={calendarBtnRef}
+                type="button"
+                className={`${styles.actionBtn} ${showDatePicker ? styles.actionBtnActive : ''}`}
+                onClick={(e) => { e.stopPropagation(); setShowContextMenu(false); setShowDatePicker((v) => !v); }}
+                aria-label="Set due date"
               >
-                {expanded
-                  ? <CaretDown size={12} weight="bold" />
-                  : <CaretRight size={12} weight="bold" />}
+                <CalendarBlank size={15} />
+              </button>
+              {showDatePicker && (
+                <div ref={datePickerRef} className={styles.datePickerWrap} onClick={(e) => e.stopPropagation()}>
+                  <DatePickerDropdown
+                    value={localDueAt}
+                    onChange={handleDueDateChange}
+                    onClose={() => setShowDatePicker(false)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Open modal */}
+            <button
+              type="button"
+              className={styles.actionBtn}
+              onClick={(e) => { e.stopPropagation(); onOpen(); }}
+              aria-label="Open task"
+            >
+              <ArrowSquareOut size={15} />
+            </button>
+
+            {/* Dots overflow */}
+            <div className={styles.actionWrap}>
+              <button
+                ref={dotsBtnRef}
+                type="button"
+                className={`${styles.actionBtn} ${showContextMenu ? styles.actionBtnActive : ''}`}
+                onClick={(e) => { e.stopPropagation(); setShowDatePicker(false); setShowContextMenu((v) => !v); }}
+                aria-label="More options"
+              >
+                <DotsThreeVertical size={15} />
+              </button>
+              {showContextMenu && (
+                <div ref={contextMenuRef} className={styles.contextMenu} onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className={styles.contextOption}
+                    onClick={(e) => { e.stopPropagation(); setShowContextMenu(false); onOpen(); }}
+                  >
+                    Open
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.contextOption}
+                    onClick={handleMarkComplete}
+                  >
+                    Mark complete
+                  </button>
+                  <div className={styles.contextDivider} />
+                  <button
+                    type="button"
+                    className={`${styles.contextOption} ${styles.contextOptionDanger}`}
+                    onClick={handleDelete}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Line 2: metadata */}
+        {(hasSubtasks || localDueAt || taskLabels.length > 0 || task.parent || task.assigneeName || task.assigneeAvatarUrl || (showNeedsOwner && !assigned)) && (
+          <div className={styles.line2}>
+            {/* Subtask count */}
+            {hasSubtasks && (
+              <span className={`${styles.metaChip} ${styles.subtaskChip}`}>
+                <GitBranch size={11} />
+                {subtaskDoneCount}/{subtaskCount}
+              </span>
+            )}
+
+            {/* Due date */}
+            {localDueAt && (
+              <span className={`${styles.metaChip} ${dueOverdue ? styles.metaChipOverdue : ''}`}>
+                <CalendarBlank size={11} />
+                {humanDueLabel(localDueAt)}
+              </span>
+            )}
+
+            {/* Label chips */}
+            {taskLabels.map((label) => (
+              <span key={label.id} className={styles.labelChip}>
+                <span className={styles.labelDot} style={{ background: label.color }} />
+                {label.name}
+              </span>
+            ))}
+            {extraLabels > 0 && (
+              <span className={styles.labelChipMore}>+{extraLabels} more</span>
+            )}
+
+            {/* Needs owner badge */}
+            {showNeedsOwner && !assigned && !task.assigneeName && !task.assigneeAvatarUrl && (
+              <>
+                <span className={styles.needsOwnerBadge}>
+                  <span className={styles.needsOwnerDot} />
+                  Needs owner
+                </span>
+                {currentUserId && (
+                  <button
+                    type="button"
+                    className={styles.assignMeBtn}
+                    onClick={handleAssignToMe}
+                  >
+                    Assign to me
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Parent chip — pushed to right */}
+            {task.parent && (
+              <span className={styles.parentChip}>
+                {task.parent.label}
+              </span>
+            )}
+
+            {/* Assignee avatar */}
+            {task.assigneeAvatarUrl ? (
+              <Image
+                src={task.assigneeAvatarUrl}
+                alt={task.assigneeName ?? 'Assignee'}
+                width={16}
+                height={16}
+                className={styles.avatar}
+              />
+            ) : task.assigneeName ? (
+              <span className={styles.avatarFallback} aria-label={task.assigneeName}>
+                {task.assigneeName.split(' ').map((p) => p[0]).slice(0, 2).join('')}
               </span>
             ) : null}
           </div>
-          {(hasSubtasks || (showNeedsOwner && !assigned)) && (
-            <div className={styles.titleMeta}>
-              {hasSubtasks && (
-                <span className={styles.subtaskBadge}>
-                  {task.subtaskDoneCount}/{task.subtaskCount} subtasks
-                </span>
-              )}
-              {showNeedsOwner && !assigned && (
-                <>
-                  <span className={styles.needsOwnerBadge}>Needs owner</span>
-                  {currentUserId && (
-                    <button
-                      type="button"
-                      className={styles.assignMeBtn}
-                      onClick={handleAssignToMe}
-                    >
-                      Assign to me
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className={styles.parent}>
-          <ParentPill parent={task.parent} />
-        </div>
-        <div
-          className={`${styles.due} ${
-            due.tone === 'overdue' ? styles.overdue :
-            due.tone === 'today' ? styles.today :
-            due.tone === 'soon' ? styles.soon : ''
-          }`}
-        >
-          {due.label}
-        </div>
-        <div className={styles.assignee}>
-          {task.assigneeAvatarUrl ? (
-            <Image
-              src={task.assigneeAvatarUrl}
-              alt={task.assigneeName ?? 'Assignee'}
-              width={22}
-              height={22}
-              className={styles.av}
-            />
-          ) : task.assigneeName ? (
-            <span className={styles.avFallback} aria-label={task.assigneeName}>
-              {task.assigneeName.split(' ').map((p) => p[0]).slice(0, 2).join('')}
-            </span>
-          ) : (
-            <span className={styles.avEmpty} aria-label="Unassigned">—</span>
-          )}
-        </div>
-
-        {/* Hover actions */}
-        <div className={styles.actions}>
-          {/* Pencil — opens modal */}
-          <button
-            type="button"
-            className={styles.actionBtn}
-            aria-label="Edit task"
-            onClick={(e) => { e.stopPropagation(); onOpen?.(); }}
-          >
-            <PencilSimple size={16} />
-          </button>
-
-          {/* Calendar — quick-date popover */}
-          <div className={styles.actionWrap}>
-            <button
-              ref={calendarBtnRef}
-              type="button"
-              className={`${styles.actionBtn} ${showQuickDate ? styles.actionBtnActive : ''}`}
-              aria-label="Set due date"
-              onClick={(e) => { e.stopPropagation(); setShowContextMenu(false); setShowQuickDate((v) => !v); }}
-            >
-              <CalendarBlank size={16} />
-            </button>
-            {showQuickDate && (
-              <div ref={quickDateRef} className={styles.quickDatePanel} onClick={(e) => e.stopPropagation()}>
-                {QUICK_DATE_PRESETS.map((p) => (
-                  <button
-                    key={p.label}
-                    type="button"
-                    className={styles.quickDateOption}
-                    onClick={(e) => handleQuickDate(e, p.getISO)}
-                  >
-                    <span>{p.label}</span>
-                    {p.dayLabel() && <span className={styles.quickDateDay}>{p.dayLabel()}</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Dots — context menu */}
-          <div className={styles.actionWrap}>
-            <button
-              ref={dotsBtnRef}
-              type="button"
-              className={`${styles.actionBtn} ${showContextMenu ? styles.actionBtnActive : ''}`}
-              aria-label="More options"
-              onClick={(e) => { e.stopPropagation(); setShowQuickDate(false); setShowContextMenu((v) => !v); }}
-            >
-              <DotsThreeVertical size={16} />
-            </button>
-            {showContextMenu && (
-              <div ref={contextMenuRef} className={styles.contextMenu} onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  className={styles.contextOption}
-                  onClick={(e) => { e.stopPropagation(); setShowContextMenu(false); onOpen?.(); }}
-                >
-                  Open
-                </button>
-                <button
-                  type="button"
-                  className={styles.contextOption}
-                  onClick={handleMarkComplete}
-                >
-                  Mark complete
-                </button>
-                <div className={styles.contextDivider} />
-                <button
-                  type="button"
-                  className={`${styles.contextOption} ${styles.contextOptionDanger}`}
-                  onClick={handleDelete}
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
-
-      {expanded && subtasks.length > 0 ? (
-        <div className={styles.subWrap}>
-          {subtasks.map((s) => (
-            <div
-              key={s.id}
-              className={`${styles.subRow} ${s.status === 'done' ? styles.subDone : ''}`}
-            >
-              <span className={`${styles.check} ${styles.checkSm} ${s.status === 'done' ? styles.checkDone : ''}`} />
-              <span className={styles.subTitle}>{s.title}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </>
+    </div>
   );
 }

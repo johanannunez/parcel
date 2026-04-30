@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Task } from '@/lib/admin/task-types';
-import { updateTask, completeTask, uncompleteTask, createTask } from '@/lib/admin/task-actions';
+import { updateTask, completeTask, uncompleteTask } from '@/lib/admin/task-actions';
 import { SubtaskInlineForm } from './SubtaskInlineForm';
 import { DatePickerDropdown } from './DatePickerDropdown';
 import {
@@ -114,23 +114,37 @@ function TagEditor({ tags, onChange }: TagEditorProps) {
   );
 }
 
-// Subtask row type used locally
-type SubtaskRow = {
-  id: string;
-  title: string;
-  status: string;
-};
+function makeOptimisticSubtask(id: string, title: string): Task {
+  return {
+    id,
+    parentTaskId: null,
+    title,
+    description: null,
+    status: 'todo',
+    priority: 4,
+    assigneeId: null,
+    assigneeName: null,
+    assigneeAvatarUrl: null,
+    createdById: null,
+    createdByName: null,
+    dueAt: null,
+    completedAt: null,
+    createdAt: new Date().toISOString(),
+    parent: null,
+    subtaskCount: 0,
+    subtaskDoneCount: 0,
+    tags: [],
+    labelIds: [],
+    linkedPropertyId: null,
+    linkedContactId: null,
+    linkedProjectId: null,
+  };
+}
 
 function useSubtasks(task: Task | null) {
-  // Subtasks are managed optimistically. On open, start empty.
-  // Created subtasks are appended; toggled subtasks update in place.
-  const [subtasks, setSubtasks] = useState<SubtaskRow[]>([]);
-
-  useEffect(() => {
-    setSubtasks([]);
-  }, [task?.id]);
-
-  return { subtasks, setSubtasks };
+  const [subtasks, setSubtasks] = useState<Task[]>([]);
+  useEffect(() => { setSubtasks([]); }, [task?.id]);
+  return { subtasks };
 }
 
 export type TaskDetailModalProps = {
@@ -148,9 +162,7 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
   const [localDueAt, setLocalDueAt] = useState<string | null>(null);
   const [localDeadline, setLocalDeadline] = useState<string | null>(null);
   const [savedState, setSavedState] = useState<null | 'saving' | 'saved'>(null);
-  const [subtasksExpanded, setSubtasksExpanded] = useState(true);
   const [commentsExpanded, setCommentsExpanded] = useState(true);
-  const [showSubtaskForm, setShowSubtaskForm] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [showPriorityMenu, setShowPriorityMenu] = useState(false);
@@ -160,7 +172,7 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
   const descRef = useRef<HTMLTextAreaElement>(null);
   const priorityMenuRef = useRef<HTMLDivElement>(null);
 
-  const { subtasks, setSubtasks } = useSubtasks(task);
+  const { subtasks } = useSubtasks(task);
 
   // Re-initialize state when task changes
   useEffect(() => {
@@ -170,7 +182,6 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
     setLocalDueAt(task.dueAt);
     setLocalDeadline(null);
     setLocalTags(task.tags ?? []);
-    setShowSubtaskForm(false);
     setShowDatePicker(false);
     setShowDeadlinePicker(false);
     setShowPriorityMenu(false);
@@ -279,26 +290,8 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
     });
   }, [task]);
 
-  const handleToggleSubtask = useCallback((subtaskId: string, currentStatus: string) => {
-    setSubtasks((prev) =>
-      prev.map((s) =>
-        s.id === subtaskId
-          ? { ...s, status: currentStatus === 'done' ? 'todo' : 'done' }
-          : s
-      )
-    );
-    startTransition(() => {
-      withSave(async () => {
-        if (currentStatus === 'done') await uncompleteTask(subtaskId);
-        else await completeTask(subtaskId);
-      });
-    });
-  }, [task]);
-
-  const handleSubtaskSave = useCallback(async (title: string) => {
+  const handleSubtaskCreated = useCallback(() => {
     if (!task) return;
-    await createTask({ title, parentTaskId: task.id });
-    setSubtasks((prev) => [...prev, { id: `optimistic-${Date.now()}`, title, status: 'todo' }]);
     onSaved?.(task.id);
   }, [task, onSaved]);
 
@@ -420,61 +413,12 @@ export function TaskDetailModal({ task, onClose, onSaved }: TaskDetailModalProps
 
                 {/* Subtasks section */}
                 <div className={styles.subtasksSection}>
-                  <div className={styles.sectionHeader}>
-                    <span className={styles.sectionTitle}>
-                      Subtasks{' '}
-                      {subtasks.length > 0 &&
-                        `${subtasks.filter((s) => s.status === 'done').length}/${subtasks.length}`}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.chevronBtn}
-                      onClick={() => setSubtasksExpanded((v) => !v)}
-                      aria-label={subtasksExpanded ? 'Collapse subtasks' : 'Expand subtasks'}
-                    >
-                      {subtasksExpanded ? <CaretUp size={14} /> : <CaretDown size={14} />}
-                    </button>
-                  </div>
-
-                  {subtasksExpanded && (
-                    <>
-                      {subtasks.map((s) => (
-                        <div key={s.id} className={styles.subtaskRow}>
-                          <button
-                            type="button"
-                            className={`${styles.subtaskCircle} ${
-                              s.status === 'done' ? styles.subtaskCircleDone : ''
-                            }`}
-                            onClick={() => handleToggleSubtask(s.id, s.status)}
-                            aria-label={s.status === 'done' ? 'Mark incomplete' : 'Mark complete'}
-                          />
-                          <span
-                            className={`${styles.subtaskTitle} ${
-                              s.status === 'done' ? styles.subtaskTitleDone : ''
-                            }`}
-                          >
-                            {s.title}
-                          </span>
-                        </div>
-                      ))}
-
-                      {showSubtaskForm ? (
-                        <SubtaskInlineForm
-                          parentTaskId={task.id}
-                          onSave={handleSubtaskSave}
-                          onClose={() => setShowSubtaskForm(false)}
-                        />
-                      ) : (
-                        <button
-                          type="button"
-                          className={styles.addSubtaskBtn}
-                          onClick={() => setShowSubtaskForm(true)}
-                        >
-                          + Add sub-task
-                        </button>
-                      )}
-                    </>
-                  )}
+                  <SubtaskInlineForm
+                    parentTaskId={task.id}
+                    subtasks={subtasks}
+                    labels={[]}
+                    onCreated={handleSubtaskCreated}
+                  />
                 </div>
 
                 {/* Comments section */}

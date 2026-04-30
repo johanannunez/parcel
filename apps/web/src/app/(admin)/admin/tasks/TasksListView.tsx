@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useTransition, useMemo, useRef, useEffect } from 'react';
-import type { Task, TasksSavedView, TasksFetchResult, TaskStatus, ParentType } from '@/lib/admin/task-types';
+import type { Task, TaskLabel, TasksSavedView, TasksFetchResult, TaskStatus, ParentType } from '@/lib/admin/task-types';
 import type { DueBucket } from '@/lib/admin/due-buckets';
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
 import { CaretDown, Check, Plus, FunnelSimple, SquaresFour, X } from '@phosphor-icons/react';
@@ -14,6 +14,7 @@ import styles from './TasksListView.module.css';
 type ApiResponse = TasksFetchResult & {
   subtasksByParent: Record<string, Task[]>;
   upcomingTasks: Task[];
+  labels: TaskLabel[];
 };
 
 type Props = ApiResponse & {
@@ -711,6 +712,7 @@ export function TasksListView(props: Props) {
                   key={t.id}
                   task={t}
                   subtasks={data.subtasksByParent[t.id] ?? []}
+                  labels={data.labels ?? []}
                   onOpen={() => setDrawerTask(t)}
                 />
               ))}
@@ -737,6 +739,7 @@ export function TasksListView(props: Props) {
                   key={t.id}
                   task={t}
                   subtasks={data.subtasksByParent[t.id] ?? []}
+                  labels={data.labels ?? []}
                   onOpen={() => setDrawerTask(t)}
                   showNeedsOwner={activeKey === 'unassigned'}
                   currentUserId={activeKey === 'unassigned' ? (props.currentUserId ?? null) : null}

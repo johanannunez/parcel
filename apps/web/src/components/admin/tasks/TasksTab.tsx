@@ -69,6 +69,8 @@ export async function TasksTab({
                   key={t.id}
                   task={t}
                   subtasks={subtasksByParent[t.id] ?? []}
+                  labels={[]}
+                  onOpen={() => undefined}
                 />
               ))}
             </section>

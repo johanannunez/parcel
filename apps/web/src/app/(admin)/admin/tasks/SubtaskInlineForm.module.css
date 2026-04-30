@@ -1,54 +1,249 @@
-.form {
-  margin: 6px 0 0;
-  padding: 10px 12px 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+/* ── Section wrapper ─────────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
 }
 
-.titleInput {
+/* ── Section header ─────────────────────────────────────────────────────── */
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 0 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sectionCount {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary, #9ca3af);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.sectionChevron {
+  color: var(--text-tertiary, #9ca3af);
+  display: flex;
+  align-items: center;
+}
+
+/* ── Body ───────────────────────────────────────────────────────────────── */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* ── Subtask row ─────────────────────────────────────────────────────────── */
+
+.subtaskRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  transition: background 100ms ease;
+}
+
+.subtaskRow:hover {
+  background: var(--surface-elevated, #f8fafc);
+}
+
+/* Completion circle */
+
+.subtaskCircle {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border, #cbd5e1);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: border-color 100ms ease, background 100ms ease;
+}
+
+.subtaskCircle:hover {
+  border-color: #c17b4e;
+}
+
+.subtaskCircleDone {
+  background: #c17b4e;
+  border-color: #c17b4e;
+}
+
+/* Title */
+
+.subtaskTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--text-primary, #0f172a);
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  outline: none;
+  border-radius: 3px;
+}
+
+.subtaskTitle:hover {
+  text-decoration: underline;
+  text-underline-offset: 1px;
+  text-decoration-color: rgba(15, 23, 42, 0.2);
+}
+
+.subtaskTitleDone {
+  text-decoration: line-through;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.subtaskTitleDone:hover {
+  text-decoration: line-through;
+}
+
+.subtaskTitleEditing {
+  cursor: text;
+  white-space: pre-wrap;
+  overflow: visible;
+  border: 1px solid #c17b4e;
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+/* Right metadata */
+
+.subtaskMeta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subtaskPriorityDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.subtaskDueChip {
+  font-size: 10.5px;
+  color: var(--text-tertiary, #9ca3af);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Add row ─────────────────────────────────────────────────────────────── */
+
+.addRow {
+  display: flex;
+  align-items: center;
+  padding: 6px 6px;
+  font-size: 12px;
+  color: var(--text-tertiary, #9ca3af);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: 6px;
+  text-align: left;
+  transition: color 100ms ease, background 100ms ease;
+}
+
+.addRow:hover {
+  color: var(--text-secondary, #475569);
+  background: var(--surface-elevated, #f8fafc);
+}
+
+/* ── Inline form ─────────────────────────────────────────────────────────── */
+
+.form {
+  margin: 4px 0;
+  padding: 8px 10px 7px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.formInput {
   width: 100%;
   border: none;
   outline: none;
   background: transparent;
-  font-size: 14px;
-  color: #111827;
+  font-size: 13px;
+  color: var(--text-primary, #0f172a);
   line-height: 1.5;
   padding: 0;
   margin-bottom: 8px;
   font-family: inherit;
 }
 
-.titleInput::placeholder {
-  color: #9ca3af;
+.formInput::placeholder {
+  color: var(--text-tertiary, #9ca3af);
 }
 
-.bottomRow {
+.formActions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.leftActions {
+.formLeft {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
 }
 
-.stubBtn {
-  font-size: 11px;
-  color: #9ca3af;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  border-radius: 6px;
-  padding: 3px 8px;
-  cursor: default;
+.formIconBtn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  color: var(--text-tertiary, #9ca3af);
+  cursor: pointer;
   font-family: inherit;
 }
 
-.rightActions {
+.formIconBtn:hover:not(:disabled) {
+  background: var(--surface-elevated, #f3f4f6);
+  color: var(--text-secondary, #475569);
+}
+
+.formIconBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.formRight {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -58,29 +253,29 @@
   background: none;
   border: none;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-tertiary, #6b7280);
   cursor: pointer;
-  padding: 5px 8px;
-  border-radius: 6px;
+  padding: 4px 8px;
+  border-radius: 5px;
   font-family: inherit;
-  transition: color 0.15s ease;
+  transition: color 100ms ease;
 }
 
 .cancelBtn:hover {
-  color: #111827;
+  color: var(--text-primary, #111827);
 }
 
 .addBtn {
   background: #111827;
-  color: #ffffff;
+  color: #fff;
   border: none;
   font-size: 12px;
-  border-radius: 6px;
-  padding: 5px 12px;
+  border-radius: 5px;
+  padding: 4px 11px;
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;
-  transition: background 0.15s ease;
+  transition: background 100ms ease;
 }
 
 .addBtn:hover {
