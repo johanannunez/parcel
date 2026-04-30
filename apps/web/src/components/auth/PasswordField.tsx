@@ -9,7 +9,10 @@ type PasswordFieldProps = {
   autoComplete?: string;
   required?: boolean;
   minLength?: number;
+  placeholder?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
 export function PasswordField({
@@ -18,7 +21,10 @@ export function PasswordField({
   autoComplete,
   required,
   minLength,
+  placeholder,
   onChange,
+  onFocus: onFocusProp,
+  onBlur: onBlurProp,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -32,10 +38,10 @@ export function PasswordField({
         autoComplete={autoComplete}
         required={required}
         minLength={minLength}
-        placeholder={visible ? "Your password" : "••••••••••••"}
+        placeholder={visible ? "Your password" : (placeholder || "••••••••••••")}
         onChange={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onFocus={() => { setFocused(true); onFocusProp?.(); }}
+        onBlur={() => { setFocused(false); onBlurProp?.(); }}
         style={{
           width: "100%",
           border: `1.5px solid ${focused ? "var(--color-brand)" : "#dce8f0"}`,

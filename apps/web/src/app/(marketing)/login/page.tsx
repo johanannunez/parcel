@@ -39,34 +39,13 @@ export default async function LoginPage({
             <Image
               src="/brand/logo-mark.png"
               alt="The Parcel Co."
-              width={48}
-              height={48}
+              width={72}
+              height={72}
               style={{
-                width: "48px",
-                height: "48px",
+                width: "72px",
+                height: "72px",
                 objectFit: "contain",
                 mixBlendMode: "multiply",
-                marginBottom: "10px",
-              }}
-            />
-            <span
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "#1a1a1a",
-                letterSpacing: "-0.01em",
-                marginBottom: "14px",
-              }}
-            >
-              The Parcel Co.
-            </span>
-            {/* Brand accent line */}
-            <div
-              style={{
-                width: "36px",
-                height: "2px",
-                background: "linear-gradient(90deg, rgba(27,119,190,0.2), var(--color-brand), rgba(27,119,190,0.2))",
-                borderRadius: "1px",
               }}
             />
           </div>

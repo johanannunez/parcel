@@ -353,14 +353,14 @@ body:has(.auth-page-root) {
     display: none;
   }
 
-  /* Mobile branding: visible, gradient accent replaces hairline */
+  /* Mobile branding: logo only, no text, no separator */
   .auth-mobile-branding {
     display: flex;
     flex-direction: column;
     align-items: center;
     margin-bottom: 28px;
-    padding-bottom: 0;
-    border-bottom: none;
+    padding-bottom: 0 !important;
+    border: none !important;
   }
 
   /* Mobile: strip the card — content sits flat on white */

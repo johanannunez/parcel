@@ -2,7 +2,7 @@
 
 import { useState, useActionState } from "react";
 import { PasswordField } from "@/components/auth/PasswordField";
-import { useTypewriterPlaceholder } from "@/components/auth/useTypewriterPlaceholder";
+import { useTypewriterPlaceholder, usePasswordPlaceholder } from "@/components/auth/useTypewriterPlaceholder";
 import { login, type LoginState } from "./actions";
 
 const initialState: LoginState = {};
@@ -30,6 +30,7 @@ const labelStyle: React.CSSProperties = {
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const [state, formAction, pending] = useActionState(login, initialState);
   const { emailPlaceholder, onFocus, onBlur } = useTypewriterPlaceholder();
+  const { passwordPlaceholder, onPasswordFocus, onPasswordBlur } = usePasswordPlaceholder();
   const [role, setRole] = useState<"owner" | "admin">("owner");
 
   // Only allow role switching when no specific redirect was requested.
@@ -56,29 +57,41 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
               gap: "3px",
             }}
           >
-            {(["owner", "admin"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                style={{
-                  flex: 1,
-                  padding: "6px 14px",
-                  borderRadius: "7px",
-                  fontSize: "12.5px",
-                  fontWeight: role === r ? 600 : 400,
-                  background: role === r ? "#ffffff" : "transparent",
-                  color: role === r ? "#1a1a1a" : "#6b7280",
-                  border: "none",
-                  cursor: "pointer",
-                  boxShadow: role === r ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                  transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
-                  fontFamily: "inherit",
-                }}
-              >
-                {r === "owner" ? "Owner" : "Admin"}
-              </button>
-            ))}
+            {(["owner", "admin"] as const).map((r) => {
+              const isActive = role === r;
+              const isAdmin = r === "admin";
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRole(r)}
+                  style={{
+                    flex: 1,
+                    padding: "6px 14px",
+                    borderRadius: "7px",
+                    fontSize: "12.5px",
+                    fontWeight: isActive ? 600 : 400,
+                    background: isActive
+                      ? isAdmin
+                        ? "linear-gradient(135deg, #02aaeb 0%, #1b77be 60%, #155fa0 100%)"
+                        : "#ffffff"
+                      : "transparent",
+                    color: isActive ? (isAdmin ? "#ffffff" : "#1a1a1a") : "#6b7280",
+                    border: "none",
+                    cursor: "pointer",
+                    boxShadow: isActive
+                      ? isAdmin
+                        ? "0 2px 10px rgba(27,119,190,0.45)"
+                        : "0 1px 3px rgba(0,0,0,0.08)"
+                      : "none",
+                    transition: "background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {r === "owner" ? "Owner" : "Admin"}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -139,6 +152,9 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
           name="password"
           autoComplete="current-password"
           required
+          placeholder={passwordPlaceholder}
+          onFocus={onPasswordFocus}
+          onBlur={onPasswordBlur}
         />
       </div>
 

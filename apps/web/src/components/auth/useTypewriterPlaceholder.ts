@@ -86,3 +86,86 @@ export function useTypewriterPlaceholder() {
     onBlur:  () => { focusedRef.current = false; },
   };
 }
+
+const PASSWORD_ENTRIES = [
+  "p@$$w0rd!",
+  "Secure*123",
+  "Tr0phy#99!",
+  "M@ng0_K3y",
+  "Blu3*Sky!2",
+  "#N3stl3d!",
+  "W!nt3r@22",
+  "X!23mKr7*",
+];
+
+const PWD_TYPE_MS   = 48;
+const PWD_DELETE_MS = 20;
+const PWD_HOLD_MS   = 1800;
+const PWD_GAP_MS    = 320;
+
+export function usePasswordPlaceholder() {
+  const [display, setDisplay] = useState("");
+  const focusedRef = useRef(false);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    let idx = 0;
+    let charIdx = 0;
+    type Phase = "typing" | "hold" | "deleting" | "gap";
+    let phase: Phase = "gap";
+
+    function tick() {
+      if (focusedRef.current) {
+        timer = setTimeout(tick, 80);
+        return;
+      }
+
+      const word = PASSWORD_ENTRIES[idx];
+
+      switch (phase) {
+        case "typing":
+          charIdx++;
+          setDisplay(word.slice(0, charIdx));
+          if (charIdx >= word.length) {
+            phase = "hold";
+            timer = setTimeout(tick, PWD_HOLD_MS);
+          } else {
+            timer = setTimeout(tick, PWD_TYPE_MS);
+          }
+          break;
+
+        case "hold":
+          phase = "deleting";
+          timer = setTimeout(tick, PWD_DELETE_MS);
+          break;
+
+        case "deleting":
+          charIdx--;
+          setDisplay(word.slice(0, charIdx));
+          if (charIdx <= 0) {
+            idx = (idx + 1) % PASSWORD_ENTRIES.length;
+            charIdx = 0;
+            phase = "gap";
+            timer = setTimeout(tick, PWD_GAP_MS);
+          } else {
+            timer = setTimeout(tick, PWD_DELETE_MS);
+          }
+          break;
+
+        case "gap":
+          phase = "typing";
+          timer = setTimeout(tick, PWD_TYPE_MS);
+          break;
+      }
+    }
+
+    timer = setTimeout(tick, 1400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return {
+    passwordPlaceholder: display,
+    onPasswordFocus: () => { focusedRef.current = true; },
+    onPasswordBlur:  () => { focusedRef.current = false; },
+  };
+}
