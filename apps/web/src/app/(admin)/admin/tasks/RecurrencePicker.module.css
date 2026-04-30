@@ -1,0 +1,40 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0;
+}
+
+.optRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary);
+  transition: background 0.1s ease;
+}
+
+.optRow:hover {
+  background: var(--surface-elevated);
+}
+
+.optRowActive .optLabel {
+  color: #c17b4e;
+  font-weight: 500;
+}
+
+.optCheck {
+  color: #c17b4e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.optLabel {
+  color: var(--text-primary);
+}

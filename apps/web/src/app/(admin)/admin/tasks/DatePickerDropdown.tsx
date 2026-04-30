@@ -1,216 +1,179 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { useState } from 'react';
+import { CaretLeft, CaretRight, Repeat } from '@phosphor-icons/react';
 import styles from './DatePickerDropdown.module.css';
+import { RecurrencePicker } from './RecurrencePicker';
 
-export type DatePickerDropdownProps = {
+// ─── Recurrence types ────────────────────────────────────────────────────────
+
+export type RecurrenceFreq = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+export type RecurrenceRule = { freq: RecurrenceFreq; interval: number };
+
+// ─── Props ───────────────────────────────────────────────────────────────────
+
+type Props = {
   value: string | null;
   onChange: (iso: string | null) => void;
   onClose: () => void;
+  showRepeat?: boolean;
+  onRepeatChange?: (rule: RecurrenceRule | null) => void;
+  repeatValue?: RecurrenceRule | null;
 };
 
-const DAY_NAMES = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+// ─── Date helpers ────────────────────────────────────────────────────────────
+
+function toISO(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function fromISO(s: string): Date {
+  const parts = s.split('T')[0].split('-').map(Number);
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function humanLabel(iso: string | null): string {
+  if (!iso) return 'No date';
+  const today = new Date();
+  const todayISO = toISO(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+  const tomorrowDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const tomorrowISO = toISO(tomorrowDate);
+  if (iso === todayISO) return 'Today';
+  if (iso === tomorrowISO) return 'Tomorrow';
+  const d = fromISO(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function getDaysInMonth(year: number, month: number): Date[] {
+  const count = new Date(year, month + 1, 0).getDate();
+  const days: Date[] = [];
+  for (let i = 1; i <= count; i++) {
+    days.push(new Date(year, month, i));
+  }
+  return days;
+}
+
+function getWeekOffset(firstDay: Date): number {
+  return firstDay.getDay(); // 0 = Sunday
+}
+
+function getNextWeekday(dayOfWeek: number): Date {
+  const today = new Date();
+  const base = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diff = ((dayOfWeek - base.getDay() + 7) % 7) || 7;
+  return new Date(base.getFullYear(), base.getMonth(), base.getDate() + diff);
+}
+
+function recurrenceLabel(rule: RecurrenceRule | null): string {
+  if (!rule) return 'No repeat';
+  const labels: Record<RecurrenceFreq, string> = {
+    daily: 'Daily',
+    weekly: 'Weekly',
+    biweekly: 'Biweekly',
+    monthly: 'Monthly',
+    quarterly: 'Quarterly',
+    yearly: 'Yearly',
+  };
+  return labels[rule.freq];
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const DAY_HEADERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 const SHORT_DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function toLocalMidnight(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
+// ─── Component ───────────────────────────────────────────────────────────────
 
-function toISODate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+export function DatePickerDropdown({
+  value,
+  onChange,
+  onClose,
+  showRepeat = false,
+  onRepeatChange,
+  repeatValue,
+}: Props) {
+  const initDate = value ? fromISO(value) : new Date();
+  const [calYear, setCalYear] = useState(initDate.getFullYear());
+  const [calMonth, setCalMonth] = useState(initDate.getMonth());
+  const [showRepeatPicker, setShowRepeatPicker] = useState(false);
 
-function parseISODate(iso: string): Date {
-  const datePart = iso.split('T')[0];
-  const parts = datePart.split('-').map(Number);
-  return new Date(parts[0], parts[1] - 1, parts[2]);
-}
+  const today = new Date();
+  const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayISO = toISO(todayNorm);
 
-function formatChipDate(iso: string): string {
-  const d = parseISODate(iso);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function getNextWeekday(dayOfWeek: number): Date {
-  const today = toLocalMidnight(new Date());
-  const diff = ((dayOfWeek - today.getDay() + 7) % 7) || 7;
-  const result = new Date(today);
-  result.setDate(today.getDate() + diff);
-  return result;
-}
-
-type CalendarState = {
-  year: number;
-  month: number;
-};
-
-type MonthCalendarProps = {
-  calState: CalendarState;
-  onPrev: () => void;
-  onNext: () => void;
-  selected: string | null;
-  onSelect: (iso: string) => void;
-};
-
-function MonthCalendar({ calState, onPrev, onNext, selected, onSelect }: MonthCalendarProps) {
-  const today = toLocalMidnight(new Date());
-  const todayISO = toISODate(today);
-
-  const firstDay = new Date(calState.year, calState.month, 1);
-  const startOffset = firstDay.getDay();
-  const daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(calState.year, calState.month, 0).getDate();
-
-  const cells: Array<{ iso: string; day: number; otherMonth: boolean }> = [];
-
-  for (let i = startOffset - 1; i >= 0; i--) {
-    const d = new Date(calState.year, calState.month - 1, daysInPrevMonth - i);
-    cells.push({ iso: toISODate(d), day: daysInPrevMonth - i, otherMonth: true });
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(calState.year, calState.month, d);
-    cells.push({ iso: toISODate(date), day: d, otherMonth: false });
-  }
-
-  const remaining = 42 - cells.length;
-  for (let d = 1; d <= remaining; d++) {
-    const date = new Date(calState.year, calState.month + 1, d);
-    cells.push({ iso: toISODate(date), day: d, otherMonth: true });
-  }
-
-  return (
-    <>
-      <div className={styles.calHeader}>
-        <button type="button" className={styles.calNavBtn} onClick={onPrev} aria-label="Previous month">
-          <CaretLeft size={14} weight="bold" />
-        </button>
-        <span className={styles.calMonthLabel}>
-          {MONTH_NAMES[calState.month]} {calState.year}
-        </span>
-        <button type="button" className={styles.calNavBtn} onClick={onNext} aria-label="Next month">
-          <CaretRight size={14} weight="bold" />
-        </button>
-      </div>
-
-      <div className={styles.calDayNames}>
-        {DAY_NAMES.map((name, idx) => (
-          <div key={idx} className={styles.calDayName}>{name}</div>
-        ))}
-      </div>
-
-      <div className={styles.calGrid}>
-        {cells.map(({ iso, day, otherMonth }) => {
-          const isToday = iso === todayISO;
-          const isSelected = iso === selected;
-          let cellClass = styles.calCell;
-          if (otherMonth) cellClass += ` ${styles.calCellOtherMonth}`;
-          if (isToday) cellClass += ` ${styles.calCellToday}`;
-          if (isSelected && !isToday) cellClass += ` ${styles.calCellSelected}`;
-          return (
-            <button
-              key={iso}
-              type="button"
-              className={cellClass}
-              onClick={() => onSelect(iso)}
-              aria-label={iso}
-              aria-pressed={isSelected}
-            >
-              {day}
-            </button>
-          );
-        })}
-      </div>
-    </>
-  );
-}
-
-export function DatePickerDropdown({ value, onChange, onClose }: DatePickerDropdownProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const initDate = value ? parseISODate(value) : new Date();
-  const [calDisplay, setCalDisplay] = useState<CalendarState>({
-    year: initDate.getFullYear(),
-    month: initDate.getMonth(),
-  });
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
-
-  const today = toLocalMidnight(new Date());
-  const todayISO = toISODate(today);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const tomorrowISO = toISODate(tomorrow);
+  const tomorrow = new Date(todayNorm.getFullYear(), todayNorm.getMonth(), todayNorm.getDate() + 1);
+  const tomorrowISO = toISO(tomorrow);
   const nextSat = getNextWeekday(6);
   const nextMon = getNextWeekday(1);
 
-  function prevMonth() {
-    setCalDisplay((prev) => {
-      let m = prev.month - 1;
-      let y = prev.year;
-      if (m < 0) { m = 11; y--; }
-      return { year: y, month: m };
-    });
-  }
-
-  function nextMonth() {
-    setCalDisplay((prev) => {
-      let m = prev.month + 1;
-      let y = prev.year;
-      if (m > 11) { m = 0; y++; }
-      return { year: y, month: m };
-    });
-  }
-
   const presets = [
-    {
-      label: 'Today',
-      iso: todayISO,
-      right: SHORT_DAY_NAMES[today.getDay()],
-    },
-    {
-      label: 'Tomorrow',
-      iso: tomorrowISO,
-      right: SHORT_DAY_NAMES[tomorrow.getDay()],
-    },
+    { label: 'Today', iso: todayISO, right: SHORT_DAY_NAMES[todayNorm.getDay()] },
+    { label: 'Tomorrow', iso: tomorrowISO, right: SHORT_DAY_NAMES[tomorrow.getDay()] },
     {
       label: 'This weekend',
-      iso: toISODate(nextSat),
+      iso: toISO(nextSat),
       right: `Sat ${nextSat.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`,
     },
     {
       label: 'Next week',
-      iso: toISODate(nextMon),
+      iso: toISO(nextMon),
       right: `Mon ${nextMon.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`,
     },
-    { label: 'No date', iso: null, right: '' },
+    { label: 'No date', iso: null as string | null, right: '' },
   ];
 
+  function prevMonth() {
+    if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
+    else { setCalMonth(m => m - 1); }
+  }
+
+  function nextMonth() {
+    if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); }
+    else { setCalMonth(m => m + 1); }
+  }
+
+  // Build calendar grid cells
+  const firstDay = new Date(calYear, calMonth, 1);
+  const offset = getWeekOffset(firstDay);
+  const daysInMonth = getDaysInMonth(calYear, calMonth);
+  const prevMonthDayCount = new Date(calYear, calMonth, 0).getDate();
+
+  type Cell = { iso: string; day: number; otherMonth: boolean };
+  const cells: Cell[] = [];
+
+  for (let i = offset - 1; i >= 0; i--) {
+    const d = new Date(calYear, calMonth - 1, prevMonthDayCount - i);
+    cells.push({ iso: toISO(d), day: prevMonthDayCount - i, otherMonth: true });
+  }
+
+  for (const d of daysInMonth) {
+    cells.push({ iso: toISO(d), day: d.getDate(), otherMonth: false });
+  }
+
+  const remaining = 42 - cells.length;
+  for (let i = 1; i <= remaining; i++) {
+    const d = new Date(calYear, calMonth + 1, i);
+    cells.push({ iso: toISO(d), day: i, otherMonth: true });
+  }
+
   return (
-    <div ref={panelRef} className={styles.panel}>
+    <div className={styles.panel}>
+      {/* Section 1: Selected chip */}
       {value && (
         <div className={styles.chipRow}>
           <span className={styles.chip}>
-            {formatChipDate(value)}
+            {humanLabel(value)}
             <button
               type="button"
               className={styles.chipClear}
-              onClick={() => { onChange(null); onClose(); }}
+              onClick={() => onChange(null)}
               aria-label="Clear date"
             >
               ×
@@ -219,12 +182,13 @@ export function DatePickerDropdown({ value, onChange, onClose }: DatePickerDropd
         </div>
       )}
 
-      <div>
+      {/* Section 2: Presets */}
+      <div className={styles.presets}>
         {presets.map(({ label, iso, right }) => (
           <button
             key={label}
             type="button"
-            className={styles.presetBtn}
+            className={styles.presetRow}
             onClick={() => { onChange(iso); onClose(); }}
           >
             <span className={value && iso === value ? styles.presetLabelActive : styles.presetLabel}>
@@ -237,22 +201,76 @@ export function DatePickerDropdown({ value, onChange, onClose }: DatePickerDropd
 
       <hr className={styles.divider} />
 
-      <MonthCalendar
-        calState={calDisplay}
-        onPrev={prevMonth}
-        onNext={nextMonth}
-        selected={value}
-        onSelect={(iso) => { onChange(iso); onClose(); }}
-      />
-
-      <div className={styles.timeRow}>
-        <span className={styles.timeLabel}>Time</span>
-        <span className={styles.timePlaceholder}>
-          {value && value.includes('T') && value.length > 10
-            ? new Date(value).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-            : '—'}
+      {/* Section 3: Mini calendar */}
+      <div className={styles.calHeader}>
+        <button type="button" className={styles.calNavBtn} onClick={prevMonth} aria-label="Previous month">
+          <CaretLeft size={13} weight="bold" />
+        </button>
+        <span className={styles.calMonthLabel}>
+          {MONTH_NAMES[calMonth]} {calYear}
         </span>
+        <button type="button" className={styles.calNavBtn} onClick={nextMonth} aria-label="Next month">
+          <CaretRight size={13} weight="bold" />
+        </button>
       </div>
+
+      <div className={styles.calDayHeaders}>
+        {DAY_HEADERS.map((h, i) => (
+          <div key={i} className={styles.calDayHeader}>{h}</div>
+        ))}
+      </div>
+
+      <div className={styles.calGrid}>
+        {cells.map(({ iso, day, otherMonth }) => {
+          const isToday = iso === todayISO;
+          const isSelected = iso === value;
+          let cls = styles.calCell;
+          if (otherMonth) cls += ` ${styles.calCellOther}`;
+          if (isToday && !isSelected) cls += ` ${styles.calCellToday}`;
+          if (isSelected) cls += ` ${styles.calCellSelected}`;
+          return (
+            <button
+              key={iso}
+              type="button"
+              className={cls}
+              onClick={() => { onChange(iso); onClose(); }}
+              aria-label={iso}
+              aria-pressed={isSelected}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Section 4: Repeat row */}
+      {showRepeat && (
+        <>
+          <hr className={styles.divider} />
+          <button
+            type="button"
+            className={styles.repeatRow}
+            onClick={() => setShowRepeatPicker(v => !v)}
+          >
+            <span className={styles.repeatIcon}>
+              <Repeat size={14} />
+            </span>
+            <span className={styles.repeatLabel}>Repeat</span>
+            <span className={styles.repeatValue}>
+              {recurrenceLabel(repeatValue ?? null)}
+            </span>
+          </button>
+          {showRepeatPicker && (
+            <RecurrencePicker
+              value={repeatValue ?? null}
+              onChange={(rule) => {
+                onRepeatChange?.(rule);
+                setShowRepeatPicker(false);
+              }}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }

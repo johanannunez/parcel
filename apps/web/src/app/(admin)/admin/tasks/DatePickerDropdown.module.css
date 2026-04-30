@@ -1,17 +1,16 @@
 .panel {
   position: absolute;
-  z-index: 100;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  z-index: 200;
+  background: var(--surface-floating);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 10px 32px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   padding: 8px;
-  width: 260px;
-  min-height: 100px;
+  min-width: 260px;
 }
 
-/* Selected date chip */
+/* ── Chip ──────────────────────────────────────────────────────────────────── */
+
 .chipRow {
   padding: 4px 4px 6px;
 }
@@ -20,13 +19,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(193, 123, 78, 0.1);
+  background: rgba(193, 123, 78, 0.12);
   color: #c17b4e;
   border-radius: 999px;
   font-size: 12px;
   padding: 3px 10px;
-  border: none;
-  cursor: default;
+  font-weight: 500;
 }
 
 .chipClear {
@@ -35,25 +33,31 @@
   padding: 0;
   cursor: pointer;
   color: #c17b4e;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1;
   display: flex;
   align-items: center;
-  opacity: 0.7;
-  transition: opacity 0.15s ease;
+  opacity: 0.65;
+  transition: opacity 0.12s ease;
 }
 
 .chipClear:hover {
   opacity: 1;
 }
 
-/* Presets */
-.presetBtn {
+/* ── Presets ───────────────────────────────────────────────────────────────── */
+
+.presets {
+  display: flex;
+  flex-direction: column;
+}
+
+.presetRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 7px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
   font-size: 13px;
   background: none;
@@ -63,31 +67,34 @@
   transition: background 0.1s ease;
 }
 
-.presetBtn:hover {
-  background: #f3f4f6;
+.presetRow:hover {
+  background: var(--surface-elevated);
 }
 
 .presetLabel {
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .presetLabelActive {
   color: #c17b4e;
+  font-weight: 500;
 }
 
 .presetRight {
-  color: #9ca3af;
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 
-/* Divider */
+/* ── Divider ───────────────────────────────────────────────────────────────── */
+
 .divider {
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border);
   margin: 6px 0;
 }
 
-/* Mini calendar */
+/* ── Calendar header ───────────────────────────────────────────────────────── */
+
 .calHeader {
   display: flex;
   align-items: center;
@@ -102,7 +109,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-tertiary);
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -110,26 +117,28 @@
 }
 
 .calNavBtn:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
 }
 
 .calMonthLabel {
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
 }
 
-.calDayNames {
+/* ── Calendar grid ─────────────────────────────────────────────────────────── */
+
+.calDayHeaders {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
-.calDayName {
+.calDayHeader {
   text-align: center;
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text-tertiary);
   padding: 2px 0;
   font-weight: 500;
 }
@@ -144,28 +153,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  aspect-ratio: 1;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto;
   border-radius: 50%;
   font-size: 12px;
   background: none;
   border: none;
   cursor: pointer;
-  color: #111827;
+  color: var(--text-primary);
   transition: background 0.1s ease, color 0.1s ease;
 }
 
 .calCell:hover:not(.calCellToday):not(.calCellSelected) {
-  background: #f3f4f6;
+  background: var(--surface-elevated);
 }
 
-.calCellOtherMonth {
-  color: #d1d5db;
+.calCellOther {
+  color: var(--text-tertiary);
+  opacity: 0.5;
 }
 
 .calCellToday {
-  background: #c17b4e;
-  color: #ffffff;
+  outline: 2px solid #c17b4e;
+  outline-offset: -2px;
 }
 
 .calCellSelected {
@@ -173,20 +184,39 @@
   color: #ffffff;
 }
 
-/* Time row */
-.timeRow {
+/* ── Repeat row ────────────────────────────────────────────────────────────── */
+
+.repeatRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px 4px;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
   font-size: 13px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease;
 }
 
-.timeLabel {
-  color: #6b7280;
+.repeatRow:hover {
+  background: var(--surface-elevated);
 }
 
-.timePlaceholder {
-  color: #9ca3af;
-  font-size: 13px;
+.repeatIcon {
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+}
+
+.repeatLabel {
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.repeatValue {
+  color: var(--text-tertiary);
+  font-size: 12px;
 }

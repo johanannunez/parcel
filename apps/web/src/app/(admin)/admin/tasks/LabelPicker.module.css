@@ -1,0 +1,213 @@
+.panel {
+  position: absolute;
+  z-index: 200;
+  background: var(--surface-floating);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  padding: 8px;
+  min-width: 220px;
+}
+
+/* ── Label list ────────────────────────────────────────────────────────────── */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease;
+}
+
+.labelRow:hover {
+  background: var(--surface-elevated);
+}
+
+.swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.labelName {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.1s ease, border-color 0.1s ease;
+}
+
+.checkboxChecked {
+  background: #c17b4e;
+  border-color: #c17b4e;
+}
+
+.checkmark {
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ── Create row ────────────────────────────────────────────────────────────── */
+
+.createRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-secondary);
+  transition: background 0.1s ease, color 0.1s ease;
+  margin-top: 2px;
+}
+
+.createRow:hover {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+
+/* ── Create form ───────────────────────────────────────────────────────────── */
+
+.createForm {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nameInput {
+  width: 100%;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.nameInput:focus {
+  border-color: #c17b4e;
+}
+
+.nameInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.swatchBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.1s ease, transform 0.1s ease;
+}
+
+.swatchBtn:hover {
+  transform: scale(1.15);
+}
+
+.swatchBtnActive {
+  border-color: var(--text-primary);
+}
+
+.createActions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.cancelBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.1s ease;
+}
+
+.cancelBtn:hover {
+  background: var(--surface-elevated);
+}
+
+.addBtn {
+  background: #c17b4e;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #ffffff;
+  font-weight: 500;
+  transition: opacity 0.1s ease;
+}
+
+.addBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addBtn:not(:disabled):hover {
+  opacity: 0.88;
+}
+
+/* ── Done button ───────────────────────────────────────────────────────────── */
+
+.doneBtn {
+  display: block;
+  width: 100%;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-primary);
+  margin-top: 4px;
+  transition: background 0.1s ease;
+}
+
+.doneBtn:hover {
+  background: var(--border);
+}
