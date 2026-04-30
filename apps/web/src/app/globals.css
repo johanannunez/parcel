@@ -342,6 +342,22 @@ body:has(.auth-page-root) {
     padding-bottom: 20px;
     border-bottom: 1px solid #e8f2fa;
   }
+
+  /* White background on mobile — blue feels heavy on a small screen */
+  html:has(.auth-page-root),
+  body:has(.auth-page-root) {
+    background: #ffffff;
+  }
+  .auth-page-grid {
+    background: #ffffff;
+  }
+
+  /* Prevent iOS Safari auto-zoom (triggers when font-size < 16px) */
+  .auth-page-root input[type="email"],
+  .auth-page-root input[type="password"],
+  .auth-page-root input[type="text"] {
+    font-size: 16px;
+  }
 }
 
 /* ─── Focus Indicators ─── */

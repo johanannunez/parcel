@@ -95,26 +95,50 @@ export default function SignupPage() {
 
             <SignupForm />
 
-            <p
+            <div
               style={{
-                textAlign: "center",
-                marginTop: "16px",
-                fontSize: "13px",
-                color: "#6b7280",
+                marginTop: "20px",
+                display: "flex",
+                background: "#f0f4f8",
+                borderRadius: "13px",
+                padding: "4px",
+                gap: "3px",
               }}
             >
-              Already have an account?{" "}
               <Link
                 href="/login"
                 style={{
-                  color: "var(--color-brand)",
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "9px 12px",
+                  borderRadius: "9px",
+                  fontSize: "13.5px",
                   fontWeight: 500,
+                  color: "#6b7280",
                   textDecoration: "none",
                 }}
               >
                 Log in
               </Link>
-            </p>
+              <div
+                style={{
+                  flex: 1,
+                  textAlign: "center",
+                  padding: "9px 12px",
+                  borderRadius: "9px",
+                  fontSize: "13.5px",
+                  fontWeight: 600,
+                  background: "white",
+                  color: "#1a1a1a",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                  userSelect: "none",
+                }}
+              >
+                Create account
+              </div>
+            </div>
         </div>
       </div>
     </div>
