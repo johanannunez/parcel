@@ -427,6 +427,13 @@ body:has(.auth-page-root) {
     border-top-color: rgba(255, 255, 255, 0.25) !important;
   }
 
+  /* Sign in button: white with dark text on the blue background */
+  body.auth-admin-mode .auth-form-card form button[type="submit"] {
+    background: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+    color: #0f172a !important;
+  }
+
   /* Error messages — lighter pink so they read on blue */
   body.auth-admin-mode .auth-form-card form p[role="alert"] {
     color: #ffd0d0 !important;
