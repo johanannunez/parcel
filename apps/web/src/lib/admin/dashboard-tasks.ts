@@ -84,6 +84,10 @@ export async function fetchDashboardTasks(): Promise<DashboardTask[]> {
       subtaskCount: 0,
       subtaskDoneCount: 0,
       tags: [],
+      labelIds: [],
+      linkedPropertyId: null,
+      linkedContactId: null,
+      linkedProjectId: null,
       propertyName: t.parent_type === 'property' && t.parent_id != null
         ? (propNames.get(t.parent_id as string) ?? null)
         : null,

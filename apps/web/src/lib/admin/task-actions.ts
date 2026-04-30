@@ -24,6 +24,10 @@ export type CreateTaskInput = {
   recurrenceRule?: RecurrenceRule | null;
   preNotifyHours?: number | null;
   priority?: 1 | 2 | 3 | 4;
+  labelIds?: string[];
+  linkedPropertyId?: string | null;
+  linkedContactId?: string | null;
+  linkedProjectId?: string | null;
 };
 
 export async function createTask(input: CreateTaskInput): Promise<{ id: string }> {
@@ -55,6 +59,10 @@ export async function createTask(input: CreateTaskInput): Promise<{ id: string }
     next_spawn_at,
     priority: input.priority ?? 4,
     caldav_uid,
+    label_ids: input.labelIds && input.labelIds.length > 0 ? input.labelIds : [],
+    linked_property_id: input.linkedPropertyId ?? null,
+    linked_contact_id: input.linkedContactId ?? null,
+    linked_project_id: input.linkedProjectId ?? null,
   };
 
   const { data, error } = await supabase
@@ -85,6 +93,10 @@ export async function updateTask(
     tags: string[];
     estimatedMinutes: number | null;
     priority: 1 | 2 | 3 | 4;
+    labelIds: string[];
+    linkedPropertyId: string | null;
+    linkedContactId: string | null;
+    linkedProjectId: string | null;
   }>,
 ): Promise<void> {
   const { supabase } = await requireAdminUser();
@@ -101,6 +113,10 @@ export async function updateTask(
   if (patch.tags !== undefined) update.tags = patch.tags && patch.tags.length > 0 ? patch.tags : [];
   if (patch.estimatedMinutes !== undefined) update.estimated_minutes = patch.estimatedMinutes;
   if (patch.priority !== undefined) (update as any).priority = patch.priority;
+  if (patch.labelIds !== undefined) (update as any).label_ids = patch.labelIds;
+  if (patch.linkedPropertyId !== undefined) (update as any).linked_property_id = patch.linkedPropertyId;
+  if (patch.linkedContactId !== undefined) (update as any).linked_contact_id = patch.linkedContactId;
+  if (patch.linkedProjectId !== undefined) (update as any).linked_project_id = patch.linkedProjectId;
 
   const { error } = await supabase.from('tasks').update(update).eq('id', id);
   if (error) throw error;
@@ -171,4 +187,73 @@ export async function deleteTask(id: string): Promise<void> {
   const { error } = await supabase.from('tasks').delete().eq('id', id);
   if (error) throw error;
   revalidatePath('/admin/tasks');
+}
+
+export async function addTaskComment(taskId: string, body: string): Promise<{ id: string }> {
+  const { supabase, user } = await requireAdminUser();
+  const { data, error } = await (supabase as any)
+    .from('task_comments')
+    .insert({ task_id: taskId, author_id: user.id, body: body.trim() })
+    .select('id')
+    .single();
+  if (error) throw error;
+  await (supabase as any).from('task_activity').insert({
+    task_id: taskId, actor_id: user.id, field: 'comment', old_value: null, new_value: 'added',
+  });
+  return { id: data.id };
+}
+
+export async function deleteTaskComment(commentId: string): Promise<void> {
+  const { supabase, user } = await requireAdminUser();
+  const { error } = await (supabase as any)
+    .from('task_comments')
+    .delete()
+    .eq('id', commentId)
+    .eq('author_id', user.id);
+  if (error) throw error;
+}
+
+export async function logTaskActivity(
+  taskId: string,
+  field: string,
+  oldValue: string | null,
+  newValue: string | null,
+): Promise<void> {
+  const { supabase, user } = await requireAdminUser();
+  await (supabase as any).from('task_activity').insert({
+    task_id: taskId, actor_id: user.id, field, old_value: oldValue, new_value: newValue,
+  });
+}
+
+export async function bulkUpdateTasks(
+  ids: string[],
+  patch: Partial<{ status: string; priority: 1 | 2 | 3 | 4; assigneeId: string | null; labelIds: string[] }>,
+): Promise<void> {
+  const { supabase } = await requireAdminUser();
+  const update: Record<string, unknown> = {};
+  if (patch.status !== undefined) update.status = patch.status;
+  if (patch.priority !== undefined) update.priority = patch.priority;
+  if (patch.assigneeId !== undefined) update.assignee_id = patch.assigneeId;
+  if (patch.labelIds !== undefined) update.label_ids = patch.labelIds;
+  const { error } = await (supabase as any).from('tasks').update(update).in('id', ids);
+  if (error) throw error;
+  revalidatePath('/admin/tasks');
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  const { supabase, user } = await requireAdminUser();
+  await (supabase as any)
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', notificationId)
+    .eq('user_id', user.id);
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const { supabase, user } = await requireAdminUser();
+  await (supabase as any)
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('user_id', user.id)
+    .is('read_at', null);
 }

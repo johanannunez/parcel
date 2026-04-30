@@ -49,6 +49,10 @@ export async function GET(req: NextRequest) {
           subtaskCount: 0,
           subtaskDoneCount: 0,
           tags: [],
+          labelIds: [],
+          linkedPropertyId: null,
+          linkedContactId: null,
+          linkedProjectId: null,
         });
       }
     }

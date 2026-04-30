@@ -13,6 +13,7 @@ type Options = {
   viewKey?: string;
   search?: string | null;
   parentFilter?: { type: 'contact' | 'property' | 'project'; id: string } | null;
+  month?: string;
 };
 
 export async function fetchAdminTasksList(
@@ -52,6 +53,7 @@ export async function fetchAdminTasksList(
     .select(`
       id, parent_task_id, parent_type, parent_id, title, description, status, priority,
       assignee_id, created_by, due_at, completed_at, created_at, tags,
+      label_ids, linked_property_id, linked_contact_id, linked_project_id,
       assignee:profiles!tasks_assignee_id_fkey(full_name, avatar_url),
       creator:profiles!tasks_created_by_fkey1(full_name)
     `)
@@ -103,6 +105,13 @@ export async function fetchAdminTasksList(
     case 'unassigned':
       query = query.is('assignee_id', null).neq('status', 'done');
       break;
+    case 'calendar': {
+      const month = opts.month ?? new Date().toISOString().slice(0, 7);
+      const start = new Date(`${month}-01T00:00:00.000Z`).toISOString();
+      const end = new Date(new Date(`${month}-01`).setMonth(new Date(`${month}-01`).getMonth() + 1)).toISOString();
+      query = query.gte('due_at', start).lt('due_at', end);
+      break;
+    }
     default:
       query = query.neq('status', 'done');
   }
@@ -275,6 +284,10 @@ export async function fetchAdminTasksList(
       subtaskCount: counts.total,
       subtaskDoneCount: counts.done,
       tags: t.tags ?? [],
+      labelIds: (t as any).label_ids ?? [],
+      linkedPropertyId: (t as any).linked_property_id ?? null,
+      linkedContactId: (t as any).linked_contact_id ?? null,
+      linkedProjectId: (t as any).linked_project_id ?? null,
     };
   });
 

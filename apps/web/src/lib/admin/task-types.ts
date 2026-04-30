@@ -30,6 +30,10 @@ export type Task = {
   subtaskCount: number;
   subtaskDoneCount: number;
   tags: string[];
+  labelIds: string[];
+  linkedPropertyId: string | null;
+  linkedContactId: string | null;
+  linkedProjectId: string | null;
 };
 
 export type TaskGroup = {
@@ -49,4 +53,42 @@ export type TasksFetchResult = {
   views: TasksSavedView[];
   activeView: TasksSavedView;
   totalCount: number;
+};
+
+export type TaskLabel = {
+  id: string;
+  name: string;
+  color: string;
+  sortOrder: number;
+};
+
+export type TaskComment = {
+  id: string;
+  taskId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatarUrl: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TaskActivityEntry = {
+  id: string;
+  field: string;
+  oldValue: string | null;
+  newValue: string | null;
+  actorName: string | null;
+  actorAvatarUrl: string | null;
+  createdAt: string;
+};
+
+export type AppNotification = {
+  id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  data: Record<string, string> | null;
+  readAt: string | null;
+  createdAt: string;
 };

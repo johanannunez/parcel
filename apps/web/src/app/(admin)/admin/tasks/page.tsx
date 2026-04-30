@@ -47,6 +47,10 @@ export default async function TasksPage({ searchParams }: Props) {
         subtaskCount: 0,
         subtaskDoneCount: 0,
         tags: [],
+        labelIds: [],
+        linkedPropertyId: null,
+        linkedContactId: null,
+        linkedProjectId: null,
       });
     }
   }
