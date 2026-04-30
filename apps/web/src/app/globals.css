@@ -312,12 +312,30 @@ body:has(.auth-page-root) {
   align-items: stretch;
 }
 
+/* Desktop: form panel centers the card vertically */
+.auth-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 0;
+}
+
+/* Desktop: card floats on the blue background */
+.auth-form-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 8px 28px rgba(0,0,0,0.09), 0 20px 60px rgba(27,119,190,0.07);
+  padding: 42px 38px 34px;
+  width: 100%;
+}
+
 @media (max-width: 767px) {
   html:has(.auth-page-root),
   body:has(.auth-page-root) {
     overflow: auto;
     height: auto;
     min-height: 100%;
+    background: #ffffff;
   }
 
   .auth-page-grid {
@@ -325,31 +343,37 @@ body:has(.auth-page-root) {
     height: auto;
     min-height: 100dvh;
     overflow: visible;
-    padding: 40px 20px;
+    padding: 48px 28px 40px;
     gap: 0;
     align-items: flex-start;
+    background: #ffffff;
   }
 
   .auth-left-hide-mobile {
     display: none;
   }
 
+  /* Mobile branding: visible, gradient accent replaces hairline */
   .auth-mobile-branding {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 22px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #e8f2fa;
+    margin-bottom: 28px;
+    padding-bottom: 0;
+    border-bottom: none;
   }
 
-  /* White background on mobile — blue feels heavy on a small screen */
-  html:has(.auth-page-root),
-  body:has(.auth-page-root) {
-    background: #ffffff;
+  /* Mobile: strip the card — content sits flat on white */
+  .auth-form-panel {
+    padding: 0;
+    align-items: flex-start;
   }
-  .auth-page-grid {
-    background: #ffffff;
+
+  .auth-form-card {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
   }
 
   /* Prevent iOS Safari auto-zoom (triggers when font-size < 16px) */

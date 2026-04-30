@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import { PasswordField } from "@/components/auth/PasswordField";
 import { useTypewriterPlaceholder } from "@/components/auth/useTypewriterPlaceholder";
 import { login, type LoginState } from "./actions";
@@ -30,10 +30,58 @@ const labelStyle: React.CSSProperties = {
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const [state, formAction, pending] = useActionState(login, initialState);
   const { emailPlaceholder, onFocus, onBlur } = useTypewriterPlaceholder();
+  const [role, setRole] = useState<"owner" | "admin">("owner");
+
+  // Only allow role switching when no specific redirect was requested.
+  // If the user was sent here from a protected page (/portal/settings, etc.), honor that.
+  const isDefaultRedirect = redirectTo === "/portal/dashboard";
+  const effectiveRedirect = isDefaultRedirect && role === "admin" ? "/admin" : redirectTo;
 
   return (
     <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-      <input type="hidden" name="redirect" value={redirectTo} />
+      <input type="hidden" name="redirect" value={effectiveRedirect} />
+
+      {/* Role selector — only shown when using the default redirect */}
+      {isDefaultRedirect && (
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ marginBottom: "6px" }}>
+            <span style={labelStyle}>Signing in as</span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              background: "#f0f4f8",
+              borderRadius: "10px",
+              padding: "3px",
+              gap: "3px",
+            }}
+          >
+            {(["owner", "admin"] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                style={{
+                  flex: 1,
+                  padding: "6px 14px",
+                  borderRadius: "7px",
+                  fontSize: "12.5px",
+                  fontWeight: role === r ? 600 : 400,
+                  background: role === r ? "#ffffff" : "transparent",
+                  color: role === r ? "#1a1a1a" : "#6b7280",
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: role === r ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                  transition: "background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
+                  fontFamily: "inherit",
+                }}
+              >
+                {r === "owner" ? "Owner" : "Admin"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ marginBottom: "14px" }}>
         <div style={{ marginBottom: "6px" }}>

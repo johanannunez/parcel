@@ -74,6 +74,13 @@ export async function login(
     const isInternalRedirect = redirectTo.startsWith("/") && !redirectTo.startsWith("//");
     const safeRedirect = isInternalRedirect ? redirectTo : "/portal/dashboard";
 
+    // Admin access guard: if the user explicitly selected Admin but their profile is not admin,
+    // deny immediately rather than silently bouncing them via middleware.
+    if (safeRedirect === "/admin" && profile?.role !== "admin") {
+      await supabase.auth.signOut();
+      return { error: "This account doesn't have admin access." };
+    }
+
     // If no specific destination was requested (still on the default), route by role.
     // If the user was sent here from a specific page (e.g., /portal/settings), honor that.
     const destination =
