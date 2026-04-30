@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Lora } from "next/font/google";
 import { SignupForm } from "./SignupForm";
 import { AuthLeftPanel } from "@/components/auth/AuthLeftPanel";
@@ -18,22 +19,10 @@ export const metadata: Metadata = {
 
 export default function SignupPage() {
   return (
-    <div
-      className={`${lora.variable} auth-page-root`}
-      style={{
-        height: "100vh",
-        overflow: "hidden",
-        background: "#e8f2fa",
-        display: "grid",
-        gridTemplateColumns: "1fr 400px",
-        maxWidth: "1100px",
-        margin: "0 auto",
-        padding: "0 48px",
-        gap: "64px",
-        alignItems: "stretch",
-      }}
-    >
-      <AuthLeftPanel />
+    <div className={`${lora.variable} auth-page-root auth-page-grid`}>
+      <div className="auth-left-hide-mobile">
+        <AuthLeftPanel />
+      </div>
 
       <div
         style={{
@@ -53,6 +42,32 @@ export default function SignupPage() {
             width: "100%",
           }}
         >
+            <div className="auth-mobile-branding">
+              <Image
+                src="/brand/logo-mark.png"
+                alt="The Parcel Co."
+                width={40}
+                height={40}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  objectFit: "contain",
+                  mixBlendMode: "multiply",
+                  marginBottom: "8px",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#1a1a1a",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                The Parcel Co.
+              </span>
+            </div>
+
             <h2
               style={{
                 fontFamily: "var(--font-lora), Georgia, serif",
