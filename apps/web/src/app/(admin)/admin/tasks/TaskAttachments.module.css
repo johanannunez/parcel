@@ -1,0 +1,197 @@
+/* ── Container ──────────────────────────────────────────────────────────────── */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.containerDragging {
+  background: rgba(193, 123, 78, 0.06);
+  outline: 2px dashed #c17b4e;
+  outline-offset: -2px;
+}
+
+/* ── List ───────────────────────────────────────────────────────────────────── */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Row ────────────────────────────────────────────────────────────────────── */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--surface-elevated);
+}
+
+.fileIcon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.filename {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.size {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Action icon buttons ────────────────────────────────────────────────────── */
+
+.actionIconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: color 0.1s ease, background 0.1s ease;
+}
+
+.actionIconBtn:hover {
+  color: var(--text-primary);
+  background: var(--surface-base);
+}
+
+/* ── Inline confirm ─────────────────────────────────────────────────────────── */
+
+.inlineConfirm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.confirmText {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.confirmYes {
+  background: none;
+  border: none;
+  padding: 1px 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #ef4444;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+}
+
+.confirmYes:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.confirmNo {
+  background: none;
+  border: none;
+  padding: 1px 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  border-radius: 4px;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.confirmNo:hover {
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+
+/* ── Empty / drop zone ──────────────────────────────────────────────────────── */
+
+.emptyDropZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.emptyIcon {
+  color: var(--text-tertiary);
+}
+
+.emptyText {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.emptyState {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  padding: 4px 0;
+}
+
+/* ── Uploading row ──────────────────────────────────────────────────────────── */
+
+.uploadingRow {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  padding: 4px 8px;
+}
+
+/* ── Upload button ──────────────────────────────────────────────────────────── */
+
+.uploadBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  width: 100%;
+  justify-content: center;
+  background: none;
+  font-family: inherit;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.uploadBtn:hover {
+  border-color: #c17b4e;
+  color: #c17b4e;
+  background: rgba(193, 123, 78, 0.04);
+}
+
+.uploadBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Hidden file input ──────────────────────────────────────────────────────── */
+
+.hiddenInput {
+  display: none;
+}

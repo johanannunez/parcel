@@ -1,0 +1,101 @@
+/* ── Section ─────────────────────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  transition: color 0.1s ease;
+}
+
+.header:hover {
+  color: var(--text-primary);
+}
+
+/* ── List ───────────────────────────────────────────────────────────────────── */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+}
+
+.emptyState {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  padding: 4px 0;
+}
+
+/* ── Row ────────────────────────────────────────────────────────────────────── */
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 4px 0;
+}
+
+.sentence {
+  flex: 1;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.timestamp {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ── Avatars ────────────────────────────────────────────────────────────────── */
+
+.avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-elevated);
+  flex-shrink: 0;
+  margin-top: 2px;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(193, 123, 78, 0.15);
+  color: #c17b4e;
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── Load more ──────────────────────────────────────────────────────────────── */
+
+.loadMore {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 4px 0;
+}

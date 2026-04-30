@@ -1,0 +1,217 @@
+/* ── Thread ─────────────────────────────────────────────────────────────────── */
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyState {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  padding: 4px 0;
+}
+
+/* ── Comment item ───────────────────────────────────────────────────────────── */
+
+.commentItem {
+  display: flex;
+  gap: 8px;
+}
+
+.commentContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.commentMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+
+.authorName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1;
+}
+
+.commentBody {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Actions ────────────────────────────────────────────────────────────────── */
+
+.commentActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 2px;
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  padding: 1px 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  border-radius: 4px;
+  transition: color 0.1s ease, background 0.1s ease;
+}
+
+.actionBtn:hover {
+  color: var(--text-primary);
+  background: var(--surface-elevated);
+}
+
+.actionBtnDanger {
+  background: none;
+  border: none;
+  padding: 1px 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #ef4444;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+}
+
+.actionBtnDanger:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.actionText {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ── Edit textarea ──────────────────────────────────────────────────────────── */
+
+.editTextarea {
+  width: 100%;
+  resize: none;
+  min-height: 60px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.12s ease;
+}
+
+.editTextarea:focus {
+  border-color: #c17b4e;
+}
+
+/* ── Avatar ─────────────────────────────────────────────────────────────────── */
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--surface-elevated);
+}
+
+.avatarFallback {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(193, 123, 78, 0.15);
+  color: #c17b4e;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Add comment area ───────────────────────────────────────────────────────── */
+
+.addCommentArea {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  align-items: flex-start;
+}
+
+.composerWrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.composerTextarea {
+  flex: 1;
+  resize: none;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.12s ease;
+}
+
+.composerTextarea:focus {
+  border-color: #c17b4e;
+}
+
+.composerTextarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.composerTextarea:disabled {
+  opacity: 0.6;
+}
+
+.sendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: #c17b4e;
+  color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.sendBtn:hover {
+  background: #a8693f;
+}
+
+.sendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

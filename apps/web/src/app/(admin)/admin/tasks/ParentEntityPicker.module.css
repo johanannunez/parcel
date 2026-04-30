@@ -1,0 +1,145 @@
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+/* ── Triggers ──────────────────────────────────────────────────────────────── */
+
+.triggerFilled {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.12s ease, color 0.12s ease;
+  text-align: left;
+}
+
+.triggerFilled:hover {
+  text-decoration-color: var(--border-strong);
+  color: #c17b4e;
+}
+
+.triggerEmpty {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  transition: color 0.12s ease;
+  text-align: left;
+}
+
+.triggerEmpty:hover {
+  color: var(--text-secondary);
+}
+
+/* ── Panel ─────────────────────────────────────────────────────────────────── */
+
+.panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 300;
+  background: var(--surface-floating);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  padding: 8px;
+  min-width: 220px;
+  max-width: 280px;
+}
+
+/* ── Search input ──────────────────────────────────────────────────────────── */
+
+.searchInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.12s ease;
+}
+
+.searchInput:focus {
+  border-color: #c17b4e;
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ── Results ───────────────────────────────────────────────────────────────── */
+
+.results {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.resultRow {
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  background: none;
+  border: none;
+  text-align: left;
+  color: var(--text-primary);
+  transition: background 0.1s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resultRow:hover {
+  background: var(--surface-elevated);
+}
+
+.resultRowActive {
+  color: #c17b4e;
+  font-weight: 500;
+}
+
+.emptyState {
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+/* ── Divider + clear ───────────────────────────────────────────────────────── */
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 6px 0;
+}
+
+.clearRow {
+  width: 100%;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  background: none;
+  border: none;
+  text-align: left;
+  color: var(--text-secondary);
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.clearRow:hover {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
