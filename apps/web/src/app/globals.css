@@ -310,6 +310,7 @@ body:has(.auth-page-root) {
   padding: 0 48px;
   gap: 64px;
   align-items: stretch;
+  transition: background 0.4s ease;
 }
 
 /* Desktop: form panel centers the card vertically */
@@ -327,6 +328,7 @@ body:has(.auth-page-root) {
   box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 8px 28px rgba(0,0,0,0.09), 0 20px 60px rgba(27,119,190,0.07);
   padding: 42px 38px 34px;
   width: 100%;
+  transition: background 0.4s ease, border-radius 0.4s ease, box-shadow 0.4s ease, padding 0.4s ease;
 }
 
 @media (max-width: 767px) {
@@ -381,6 +383,40 @@ body:has(.auth-page-root) {
   .auth-page-root input[type="password"],
   .auth-page-root input[type="text"] {
     font-size: 16px;
+  }
+}
+
+/* ─── Admin mode: full-page dark shift on mobile ─── */
+@media (max-width: 767px) {
+  body.auth-admin-mode {
+    background: #091e38;
+  }
+
+  body.auth-admin-mode .auth-page-grid {
+    background: linear-gradient(160deg, #091e38 0%, #102d55 55%, #0c2447 100%);
+    min-height: 100dvh;
+    align-items: center;
+    padding: 40px 24px;
+  }
+
+  body.auth-admin-mode .auth-form-panel {
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  body.auth-admin-mode .auth-form-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow:
+      0 2px 4px rgba(0,0,0,0.2),
+      0 12px 40px rgba(0,0,0,0.35),
+      0 36px 80px rgba(0,0,0,0.28);
+    padding: 42px 38px 34px;
+  }
+
+  body.auth-admin-mode .auth-mobile-branding {
+    margin-bottom: 24px;
   }
 }
 

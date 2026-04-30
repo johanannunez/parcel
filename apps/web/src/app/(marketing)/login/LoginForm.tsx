@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useEffect } from "react";
 import { PasswordField } from "@/components/auth/PasswordField";
 import { useTypewriterPlaceholder, usePasswordPlaceholder } from "@/components/auth/useTypewriterPlaceholder";
 import { login, type LoginState } from "./actions";
@@ -32,6 +32,11 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const { emailPlaceholder, onFocus, onBlur } = useTypewriterPlaceholder();
   const { passwordPlaceholder, onPasswordFocus, onPasswordBlur } = usePasswordPlaceholder();
   const [role, setRole] = useState<"owner" | "admin">("owner");
+
+  useEffect(() => {
+    document.body.classList.toggle("auth-admin-mode", role === "admin");
+    return () => document.body.classList.remove("auth-admin-mode");
+  }, [role]);
 
   // Only allow role switching when no specific redirect was requested.
   // If the user was sent here from a protected page (/portal/settings, etc.), honor that.
