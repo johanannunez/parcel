@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 // Dev-only: reads Supabase implicit-flow tokens from the hash fragment,
 // establishes the session, then redirects to the requested page.
 // This page returns nothing useful in production.
-export default function DevAuthCallback() {
+function DevAuthCallbackInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -44,5 +44,17 @@ export default function DevAuthCallback() {
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "sans-serif", color: "#666" }}>
       Signing in (dev mode)...
     </div>
+  );
+}
+
+export default function DevAuthCallback() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "sans-serif", color: "#666" }}>
+        Signing in (dev mode)...
+      </div>
+    }>
+      <DevAuthCallbackInner />
+    </Suspense>
   );
 }
