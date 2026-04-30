@@ -387,8 +387,9 @@ body:has(.auth-page-root) {
 
 /* ─── Admin mode: brand-blue page, flat layout, white text ─── */
 @media (max-width: 767px) {
+  html:has(body.auth-admin-mode),
   body.auth-admin-mode {
-    background: #1b77be;
+    background: #1565a8;
   }
 
   body.auth-admin-mode .auth-page-grid {
