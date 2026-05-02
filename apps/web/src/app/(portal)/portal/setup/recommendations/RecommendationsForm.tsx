@@ -1,47 +1,28 @@
 "use client";
 
-import { useActionState, useState, useId } from "react";
-import { Plus, Trash, WarningCircle } from "@phosphor-icons/react";
+import { useActionState, useId } from "react";
+import { WarningCircle } from "@phosphor-icons/react";
 import { StepSaveBar } from "@/components/portal/setup/StepShell";
 import { saveRecommendations, type SaveRecommendationsState } from "./actions";
 
-type Spot = { name: string; why: string; address: string };
+export type { SaveRecommendationsState };
 
 const initialState: SaveRecommendationsState = {};
 
 export function RecommendationsForm({
   propertyId,
-  savedSpots,
+  initial,
   isEditing,
 }: {
   propertyId: string;
-  savedSpots: Spot[];
+  initial: Record<string, unknown>;
   isEditing: boolean;
 }) {
   const [state, formAction, pending] = useActionState(saveRecommendations, initialState);
-  const [spots, setSpots] = useState<Spot[]>(
-    savedSpots.length > 0 ? savedSpots : [{ name: "", why: "", address: "" }],
-  );
-
-  function addSpot() {
-    if (spots.length >= 5) return;
-    setSpots((prev) => [...prev, { name: "", why: "", address: "" }]);
-  }
-
-  function removeSpot(idx: number) {
-    setSpots((prev) => prev.filter((_, i) => i !== idx));
-  }
-
-  function updateSpot(idx: number, field: keyof Spot, value: string) {
-    setSpots((prev) =>
-      prev.map((s, i) => (i === idx ? { ...s, [field]: value } : s)),
-    );
-  }
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
       <input type="hidden" name="property_id" value={propertyId} />
-      <input type="hidden" name="spots" value={JSON.stringify(spots)} />
 
       {state.error ? (
         <div
@@ -55,87 +36,133 @@ export function RecommendationsForm({
       ) : null}
 
       <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-        Add 3 to 5 of your favorite nearby spots. Restaurants, coffee shops,
-        parks, attractions. Anything a guest would appreciate knowing about.
+        Write one place per line. Include the name, address, and why you recommend it. Guests see this in their welcome guide.
       </p>
 
-      {spots.map((spot, idx) => (
-        <div
-          key={idx}
-          className="rounded-2xl border p-5"
-          style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)" }}
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Spot {idx + 1}
-            </span>
-            {spots.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeSpot(idx)}
-                className="flex items-center gap-1 text-xs font-medium transition-colors"
-                style={{ color: "#c0372a" }}
-              >
-                <Trash size={12} weight="bold" />
-                Remove
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 gap-3">
-            <TextInput
-              label="Place name"
-              value={spot.name}
-              onChange={(v) => updateSpot(idx, "name", v)}
-              placeholder="e.g. Main Street Coffee"
-            />
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>
-                Why you recommend it
-              </label>
-              <textarea
-                value={spot.why}
-                onChange={(e) => updateSpot(idx, "why", e.target.value)}
-                rows={2}
-                placeholder="Best breakfast burritos in town..."
-                className="rounded-lg border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2"
-                style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)", color: "var(--color-text-primary)" }}
-              />
-            </div>
-            <TextInput
-              label="Full address"
-              value={spot.address}
-              onChange={(v) => updateSpot(idx, "address", v)}
-              placeholder="123 Main St, City, ST 12345"
-            />
-          </div>
-        </div>
-      ))}
+      <Section title="Restaurants">
+        <TextAreaInput
+          name="restaurants"
+          label="Restaurants"
+          defaultValue={initial.restaurants as string | undefined}
+          placeholder={"Best Burger: 123 Main St — great burgers and local craft beers\nMaria's Kitchen: 456 Oak Ave — authentic Mexican, order the tacos al pastor"}
+          rows={5}
+        />
+      </Section>
 
-      {spots.length < 5 && (
-        <button
-          type="button"
-          onClick={addSpot}
-          className="inline-flex items-center gap-2 self-start rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-warm-gray-50)]"
-          style={{ borderColor: "var(--color-warm-gray-200)", color: "var(--color-text-primary)" }}
-        >
-          <Plus size={14} weight="bold" />
-          Add another spot
-        </button>
-      )}
+      <Section title="Coffee shops">
+        <TextAreaInput
+          name="coffee_shops"
+          label="Coffee shops"
+          defaultValue={initial.coffee_shops as string | undefined}
+          placeholder="Morning Grind: 789 Pine St — best espresso in town, cozy vibe"
+          rows={5}
+        />
+      </Section>
+
+      <Section title="Grocery stores">
+        <TextAreaInput
+          name="grocery_stores"
+          label="Grocery stores"
+          defaultValue={initial.grocery_stores as string | undefined}
+          placeholder={"Whole Foods: 321 Market Blvd — full selection, organic produce\nALDI: 654 Commerce Way — best prices for basics"}
+          rows={5}
+        />
+      </Section>
+
+      <Section title="Activities and attractions">
+        <TextAreaInput
+          name="activities"
+          label="Activities and attractions"
+          defaultValue={initial.activities as string | undefined}
+          placeholder={"Columbia River Walk: free trail along the riverfront, great for sunsets\nRichland Waterfront Park: kayak rentals, picnic area"}
+          rows={5}
+        />
+      </Section>
+
+      <Section title="Beaches, parks, and nature">
+        <TextAreaInput
+          name="beaches_parks"
+          label="Beaches, parks, and nature"
+          defaultValue={initial.beaches_parks as string | undefined}
+          placeholder="Howard Amon Park: 0.5 mi away, large grassy areas, river beach"
+          rows={5}
+        />
+      </Section>
+
+      <Section title="Local tips and hidden gems">
+        <TextAreaInput
+          name="local_tips"
+          label="Local tips and hidden gems"
+          defaultValue={initial.local_tips as string | undefined}
+          placeholder="Park on the side streets — the main lot fills up fast on weekends"
+          rows={5}
+        />
+      </Section>
+
+      <Section title="Emergency services">
+        <TextAreaInput
+          name="emergency_services"
+          label="Emergency services nearby"
+          defaultValue={initial.emergency_services as string | undefined}
+          placeholder={"Kadlec Regional Medical Center: 888 Swift Blvd (5 min away)\nUrgent Care: 123 Health Way (3 min away)\nWalgreens: 456 Medical Dr (2 min away)"}
+          rows={5}
+        />
+      </Section>
 
       <StepSaveBar pending={pending} isEditing={isEditing} />
     </form>
   );
 }
 
-function TextInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section
+      className="rounded-2xl border p-6"
+      style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)" }}
+    >
+      <h2 className="mb-4 text-base font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function TextAreaInput({
+  name,
+  label,
+  placeholder,
+  defaultValue,
+  rows = 4,
+}: {
+  name: string;
+  label: string;
+  placeholder?: string;
+  defaultValue?: string;
+  rows?: number;
+}) {
   const id = useId();
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[12px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--color-text-tertiary)" }}>{label}</label>
-      <input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="rounded-lg border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2"
-        style={{ borderColor: "var(--color-warm-gray-200)", backgroundColor: "var(--color-white)", color: "var(--color-text-primary)" }}
+      <label
+        htmlFor={id}
+        className="text-[12px] font-semibold uppercase tracking-[0.08em]"
+        style={{ color: "var(--color-text-tertiary)" }}
+      >
+        {label}
+      </label>
+      <textarea
+        id={id}
+        name={name}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        rows={rows}
+        className="resize-none rounded-lg border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2"
+        style={{
+          borderColor: "var(--color-warm-gray-200)",
+          backgroundColor: "var(--color-white)",
+          color: "var(--color-text-primary)",
+        }}
       />
     </div>
   );

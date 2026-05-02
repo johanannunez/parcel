@@ -341,6 +341,44 @@ export const setupSearchIndex: SetupStepEntry[] = [
     disabled: true,
   },
 
+  // Group: Compliance
+  {
+    stepKey: "str_permit",
+    label: "STR permit",
+    keywords: ["str permit", "permit", "short-term rental license", "license", "city permit", "vacation rental permit", "permit number", "expiration"],
+    href: "/portal/setup/str-permit",
+    track: "property",
+    group: "Compliance",
+    estimateMinutes: 3,
+  },
+  {
+    stepKey: "hoa_info",
+    label: "HOA information",
+    keywords: ["hoa", "homeowners association", "hoa contact", "str allowed", "hoa restrictions", "management company", "cc&rs"],
+    href: "/portal/setup/hoa-info",
+    track: "property",
+    group: "Compliance",
+    estimateMinutes: 3,
+  },
+  {
+    stepKey: "insurance_certificate",
+    label: "Insurance certificate",
+    keywords: ["insurance", "certificate", "carrier", "policy", "liability", "homeowners insurance", "vacation rental insurance", "coverage"],
+    href: "/portal/setup/insurance-certificate",
+    track: "property",
+    group: "Compliance",
+    estimateMinutes: 3,
+  },
+  {
+    stepKey: "platform_authorization",
+    label: "Platform authorization",
+    keywords: ["platform", "airbnb", "vrbo", "booking.com", "furnished finder", "co-host", "account access", "listing platform", "ota"],
+    href: "/portal/setup/platform-authorization",
+    track: "property",
+    group: "Compliance",
+    estimateMinutes: 4,
+  },
+
   // ── Owner Essentials ────────────────────────────────────
   // Group: About you
   {

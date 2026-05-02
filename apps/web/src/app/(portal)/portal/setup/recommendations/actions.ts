@@ -5,23 +5,19 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { logTimelineEvent } from "@/lib/timeline";
-import { recordVersion } from "@/lib/wizard/version-history";
-
-const spotSchema = z.object({
-  name: z.string().trim().max(200),
-  why: z.string().trim().max(1000),
-  address: z.string().trim().max(500),
-});
 
 const schema = z.object({
   property_id: z.string().uuid("Property ID is required."),
-  spots: z.string().optional().default("[]"),
+  restaurants: z.string().trim().max(5000).optional().default(""),
+  coffee_shops: z.string().trim().max(5000).optional().default(""),
+  grocery_stores: z.string().trim().max(5000).optional().default(""),
+  activities: z.string().trim().max(5000).optional().default(""),
+  beaches_parks: z.string().trim().max(5000).optional().default(""),
+  local_tips: z.string().trim().max(5000).optional().default(""),
+  emergency_services: z.string().trim().max(5000).optional().default(""),
 });
 
-export type SaveRecommendationsState = {
-  error?: string;
-};
+export type SaveRecommendationsState = { error?: string; };
 
 export async function saveRecommendations(
   _prev: SaveRecommendationsState,
@@ -29,71 +25,45 @@ export async function saveRecommendations(
 ): Promise<SaveRecommendationsState> {
   const raw = Object.fromEntries(formData.entries());
   const parsed = schema.safeParse(raw);
-
-  if (!parsed.success) {
-    return { error: "Something went wrong. Please try again." };
-  }
+  if (!parsed.success) return { error: "Something went wrong. Please try again." };
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "You must be signed in." };
 
   const v = parsed.data;
 
-  let spots: { name: string; why: string; address: string }[] = [];
-  try {
-    const rawSpots = JSON.parse(v.spots);
-    if (Array.isArray(rawSpots)) {
-      spots = rawSpots
-        .filter((s: unknown) => {
-          const result = spotSchema.safeParse(s);
-          return result.success && result.data.name.length > 0;
-        });
-    }
-  } catch {
-    return { error: "Invalid recommendations data." };
-  }
-
-  const { error } = await supabase
-    .from("properties")
-    .update({ guidebook_spots: spots as unknown as import("@/types/supabase").Json })
-    .eq("id", v.property_id)
-    .eq("owner_id", user.id);
+  const { error } = await (supabase as any)
+    .from("property_forms")
+    .upsert(
+      {
+        property_id: v.property_id,
+        form_key: "guidebook",
+        data: {
+          restaurants: v.restaurants,
+          coffee_shops: v.coffee_shops,
+          grocery_stores: v.grocery_stores,
+          activities: v.activities,
+          beaches_parks: v.beaches_parks,
+          local_tips: v.local_tips,
+          emergency_services: v.emergency_services,
+        },
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "property_id,form_key" },
+    );
 
   if (error) return { error: error.message };
 
-  // Log activity (fire-and-forget)
   const svc = createServiceClient();
-  svc.from("activity_log").insert({
+  svc.from("activity_log" as any).insert({
     action: "property_updated",
     entity_type: "property",
     entity_id: v.property_id,
     actor_id: user.id,
-    metadata: {
-      field_name: "recommendations",
-      spot_count: spots.length,
-      description: `Local recommendations updated (${spots.length} spots)`,
-    },
+    metadata: { field_name: "guidebook", description: "Guidebook recommendations saved" },
   }).then(() => {}, () => {});
-
-  void logTimelineEvent({
-    ownerId: user.id,
-    eventType: "onboarding_step",
-    category: "account",
-    title: "Completed onboarding: Recommendations",
-    propertyId: v.property_id,
-    visibility: "admin_only",
-    metadata: { step: "recommendations" },
-  });
-
-  await recordVersion(supabase, {
-    userId: user.id,
-    propertyId: v.property_id,
-    stepKey: "recommendations",
-    data: { guidebook_spots: spots },
-  });
 
   revalidatePath("/portal/setup");
   redirect(`/portal/setup?just=recommendations&property=${v.property_id}`);

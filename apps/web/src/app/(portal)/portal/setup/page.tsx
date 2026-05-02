@@ -82,6 +82,10 @@ function resolvePropertyStepState(
     setup_amenities: propertyFormsDone.has("setup_amenities"),
     setup_listing: propertyFormsDone.has("setup_listing"),
     setup_communication: propertyFormsDone.has("setup_communication"),
+    str_permit: propertyFormsDone.has("str_permit"),
+    hoa_info: propertyFormsDone.has("hoa_info"),
+    insurance_certificate: propertyFormsDone.has("insurance_certificate"),
+    platform_authorization: propertyFormsDone.has("platform_authorization"),
   };
 
   const isDone = completionChecks[stepKey] ?? false;

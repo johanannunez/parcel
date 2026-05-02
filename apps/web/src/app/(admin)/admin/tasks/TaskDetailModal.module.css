@@ -11,13 +11,12 @@
 }
 
 /* Modal panel — rendered INSIDE the backdrop div so flexbox handles centering.
-   No transform-based centering, which would conflict with motion/react's scale animation. */
+   Fixed height so only .main scrolls; no overflow on .modal keeps sidebar dropdowns unclipped. */
 .modal {
   position: relative;
-  width: 740px;
+  width: 900px;
   max-width: calc(100vw - 48px);
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
+  height: min(720px, calc(100vh - 80px));
   z-index: 201;
   background: #ffffff;
   border-radius: 12px;
@@ -107,14 +106,15 @@
   background: #f3f4f6;
 }
 
-/* Body layout */
+/* Body layout — overflow: visible so sidebar dropdowns are never clipped */
 .body {
   display: flex;
   flex: 1;
   min-height: 0;
+  overflow: visible;
 }
 
-/* Main column */
+/* Main column — only this scrolls */
 .main {
   flex: 1;
   min-width: 0;
@@ -122,6 +122,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow-y: auto;
 }
 
 /* Title */
@@ -510,7 +511,7 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  z-index: 100;
+  z-index: 300;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -561,7 +562,7 @@
   position: absolute;
   top: calc(100% + 4px);
   left: -8px;
-  z-index: 100;
+  z-index: 300;
 }
 
 /* Tag editor */
