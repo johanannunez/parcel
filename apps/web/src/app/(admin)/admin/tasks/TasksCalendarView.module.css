@@ -1,0 +1,241 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.monthLabel {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  text-align: center;
+}
+
+.navBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.navBtn:hover {
+  background: var(--surface-base);
+}
+
+.todayBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.todayBtn:hover {
+  background: var(--surface-base);
+}
+
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: auto;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+}
+
+.dayHeader {
+  padding: 6px 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-base);
+}
+
+.dayCell {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 6px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  cursor: pointer;
+  position: relative;
+}
+
+.dayCell:hover {
+  background: var(--surface-base);
+}
+
+.dayCellToday {
+  border: 2px solid #c17b4e !important;
+}
+
+.dayCellEmpty {
+  background: var(--surface-base);
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dayCellEmpty:hover {
+  background: var(--surface-base);
+}
+
+.dateNumber {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.dateNumberToday {
+  color: #c17b4e;
+  font-weight: 700;
+}
+
+.taskChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-primary);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.taskChip:hover {
+  background: var(--border);
+}
+
+.priorityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chipTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.moreLink {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.moreLink:hover {
+  color: var(--text-secondary);
+}
+
+.popover {
+  position: absolute;
+  z-index: 20;
+  background: var(--surface-floating);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  min-width: 180px;
+  max-width: 260px;
+  top: 100%;
+  left: 0;
+}
+
+.popoverItem {
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.popoverItem:hover {
+  background: var(--surface-base);
+}
+
+.createForm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.createInput {
+  width: 100%;
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.createInput:focus {
+  border-color: #c17b4e;
+}
+
+.createActions {
+  display: flex;
+  gap: 4px;
+}
+
+.createBtn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  background: #c17b4e;
+  color: white;
+}
+
+.createBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-secondary);
+}

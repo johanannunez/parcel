@@ -68,6 +68,15 @@ export default async function TasksPage({ searchParams }: Props) {
     sortOrder: l.sort_order ?? 0,
   }));
 
+  const currentUserName: string | null =
+    (currentUser?.user_metadata?.full_name as string | undefined) ??
+    (currentUser?.user_metadata?.name as string | undefined) ??
+    (currentUser?.email as string | undefined) ??
+    null;
+
+  const currentUserAvatarUrl: string | null =
+    (currentUser?.user_metadata?.avatar_url as string | undefined) ?? null;
+
   return (
     <TasksListView
       groups={groups}
@@ -78,6 +87,8 @@ export default async function TasksPage({ searchParams }: Props) {
       upcomingTasks={upcomingTasks}
       labels={labels}
       currentUserId={currentUser?.id ?? null}
+      currentUserName={currentUserName}
+      currentUserAvatarUrl={currentUserAvatarUrl}
     />
   );
 }

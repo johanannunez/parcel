@@ -1,14 +1,41 @@
 'use client';
 
-import { useState, useCallback, useTransition, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useTransition, useMemo, useRef, useEffect, Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
+import { AnimatePresence } from 'motion/react';
+
+class ModalErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(error: Error, info: ErrorInfo) { console.error('[ModalErrorBoundary]', error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#fff', borderRadius: 8, padding: 24, maxWidth: 480, fontFamily: 'monospace', fontSize: 13 }}>
+            <strong style={{ color: '#ef4444' }}>Modal crashed:</strong>
+            <pre style={{ marginTop: 8, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{this.state.error.message}{'\n'}{this.state.error.stack}</pre>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import type { Task, TaskLabel, TasksSavedView, TasksFetchResult, TaskStatus, ParentType } from '@/lib/admin/task-types';
 import type { DueBucket } from '@/lib/admin/due-buckets';
 import { BUCKET_LABEL } from '@/lib/admin/due-buckets';
-import { CaretDown, Check, Plus, FunnelSimple, SquaresFour, X } from '@phosphor-icons/react';
+import { CaretDown, Check, Plus, FunnelSimple, SquaresFour, X, Rows, Columns, CalendarBlank, Clock } from '@phosphor-icons/react';
 import { TaskRow } from './TaskRow';
 import { TasksUpcomingView } from './TasksUpcomingView';
+import { TasksBoardView } from './TasksBoardView';
+import { TasksCalendarView } from './TasksCalendarView';
 import { TaskDetailModal } from './TaskDetailModal';
-import { createTask } from '@/lib/admin/task-actions';
+import { TasksBulkBar } from './TasksBulkBar';
+import { createTask, updateTask, bulkUpdateTasks, deleteTask } from '@/lib/admin/task-actions';
 import styles from './TasksListView.module.css';
 
 type ApiResponse = TasksFetchResult & {
@@ -19,6 +46,8 @@ type ApiResponse = TasksFetchResult & {
 
 type Props = ApiResponse & {
   currentUserId?: string | null;
+  currentUserName?: string | null;
+  currentUserAvatarUrl?: string | null;
 };
 
 type FilterState = {
@@ -319,19 +348,6 @@ function ListSkeleton() {
   );
 }
 
-function TaskListHeader() {
-  return (
-    <div className={styles.columnHeader}>
-      <div />
-      <div className={styles.columnHeaderCell}>Task</div>
-      <div className={styles.columnHeaderCell}>Project</div>
-      <div className={`${styles.columnHeaderCell} ${styles.columnHeaderCellRight}`}>Due</div>
-      <div className={`${styles.columnHeaderCell} ${styles.columnHeaderCellCenter}`}>Assignee</div>
-      <div />
-    </div>
-  );
-}
-
 function AddTaskRow({ onCreated }: { onCreated: () => void }) {
   const [active, setActive] = useState(false);
   const [title, setTitle] = useState('');
@@ -411,11 +427,23 @@ export function TasksListView(props: Props) {
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [showGroupMenu, setShowGroupMenu] = useState(false);
 
+  // View type toggle: list | board | calendar | upcoming
+  const [viewType, setViewType] = useState<'list' | 'board' | 'calendar' | 'upcoming'>('list');
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Keyboard focus state (j/k navigation)
+  const [focusedTaskIndex, setFocusedTaskIndex] = useState<number | null>(null);
+
   const sortMenuRef = useRef<HTMLDivElement>(null);
   const filterBtnRef = useRef<HTMLButtonElement>(null);
   const filterPanelRef = useRef<HTMLDivElement>(null);
   const groupBtnRef = useRef<HTMLButtonElement>(null);
   const groupMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  // View data cache: key -> ApiResponse so tab switching is instant on second visit
+  const viewCacheRef = useRef<Map<string, ApiResponse>>(new Map());
 
   // Close sort menu on outside click
   useEffect(() => {
@@ -455,9 +483,18 @@ export function TasksListView(props: Props) {
 
   const switchView = useCallback((key: string) => {
     setActiveKey(key);
+    setSelectedIds(new Set());
+    setFocusedTaskIndex(null);
+    // Show cached data immediately if available, then refresh in background
+    const cached = viewCacheRef.current.get(key);
+    if (cached) setData(cached);
     startTransition(async () => {
       const res = await fetch(`/api/tasks?view=${key}`);
-      if (res.ok) setData(await res.json());
+      if (res.ok) {
+        const fresh: ApiResponse = await res.json();
+        viewCacheRef.current.set(key, fresh);
+        setData(fresh);
+      }
     });
   }, []);
 
@@ -474,6 +511,104 @@ export function TasksListView(props: Props) {
   }, [activeKey]);
 
   const handleSearch = useCallback((q: string) => setSearch(q), []);
+
+  // Bulk selection handlers
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  }, []);
+
+  const handleBulkUpdate = useCallback(
+    (ids: string[], patch: Partial<{ status: TaskStatus; priority: 1 | 2 | 3 | 4; labelIds: string[] }>) => {
+      // Optimistic update
+      setData((prev) => ({
+        ...prev,
+        groups: prev.groups.map((g) => ({
+          ...g,
+          tasks: g.tasks.map((t) => (ids.includes(t.id) ? { ...t, ...patch } : t)),
+        })),
+      }));
+      startTransition(async () => {
+        await bulkUpdateTasks(ids, patch);
+      });
+    },
+    [],
+  );
+
+  const handleBulkDelete = useCallback((ids: string[]) => {
+    const idSet = new Set(ids);
+    // Optimistic removal
+    setData((prev) => ({
+      ...prev,
+      groups: prev.groups.map((g) => ({
+        ...g,
+        tasks: g.tasks.filter((t) => !idSet.has(t.id)),
+      })),
+    }));
+    setSelectedIds(new Set());
+    startTransition(async () => {
+      await Promise.all(ids.map((id) => deleteTask(id)));
+    });
+  }, []);
+
+  // Optimistically update a single task (top-level or subtask) + persist to server
+  const handleTaskUpdate = useCallback((id: string, patch: Partial<Task>) => {
+    setData((prev) => ({
+      ...prev,
+      groups: prev.groups.map((g) => ({
+        ...g,
+        tasks: g.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+      })),
+    }));
+    startTransition(async () => {
+      await updateTask(id, patch);
+    });
+  }, []);
+
+  // Keyboard shortcuts: j/k to navigate tasks, Enter to open, Cmd+Shift+F for search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (drawerTask) return;
+      const target = document.activeElement as HTMLElement | null;
+      const inText =
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        (target?.isContentEditable ?? false);
+      if (inText) return;
+
+      const topLevelTasks = data.groups.flatMap((g) => g.tasks).filter((t) => !t.parentTaskId);
+
+      if (e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        setFocusedTaskIndex((i) => Math.min((i ?? -1) + 1, topLevelTasks.length - 1));
+      }
+      if (e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        setFocusedTaskIndex((i) => Math.max((i ?? topLevelTasks.length) - 1, 0));
+      }
+      if (e.key === 'Enter') {
+        setFocusedTaskIndex((i) => {
+          if (i !== null) {
+            const task = topLevelTasks[i];
+            if (task) {
+              e.preventDefault();
+              setDrawerTask(task);
+            }
+          }
+          return i;
+        });
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [drawerTask, data.groups]);
 
   // Unique assignees for the filter panel
   const assigneeOptions = useMemo(() => {
@@ -566,10 +701,25 @@ export function TasksListView(props: Props) {
     return Array.from(map.entries()).map(([name, info]) => ({ name, ...info }));
   }, [activeFilterGroups, groupBy]);
 
+  // All tasks flat (includes subtasks from upcomingTasks + groups) for modal navigation and views
+  const allTasks = useMemo(
+    () => [...data.groups.flatMap((g) => g.tasks), ...data.upcomingTasks],
+    [data.groups, data.upcomingTasks],
+  );
+
   const activeView = data.views.find((v) => v.key === activeKey) ?? data.views[0];
   const totalFiltered = activeFilterGroups.flatMap((g) => g.tasks).length;
   const activeFilterCount = countActiveFilters(filters);
-  const isListView = activeView?.key !== 'upcoming';
+  // isListView: true when viewType is 'list' (the saved-view tab list layout)
+  const isListView = viewType === 'list';
+
+  // Flat list of top-level tasks for keyboard focus tracking
+  const topLevelTasksFlat = useMemo(
+    () => data.groups.flatMap((g) => g.tasks).filter((t) => !t.parentTaskId),
+    [data.groups],
+  );
+  const focusedTaskId =
+    focusedTaskIndex !== null ? (topLevelTasksFlat[focusedTaskIndex]?.id ?? null) : null;
 
   return (
     <div className={styles.page}>
@@ -577,6 +727,7 @@ export function TasksListView(props: Props) {
 
       <div className={styles.toolbar}>
         <input
+          ref={searchInputRef}
           type="text"
           placeholder="Search tasks"
           className={styles.search}
@@ -677,6 +828,42 @@ export function TasksListView(props: Props) {
         <div className={styles.meta}>
           {search.trim() ? `${totalFiltered} results` : `${data.totalCount} tasks`}
         </div>
+
+        {/* View type toggle */}
+        <div className={styles.viewToggle}>
+          <button
+            type="button"
+            aria-label="List view"
+            className={`${styles.viewToggleBtn} ${viewType === 'list' ? styles.viewToggleBtnActive : ''}`}
+            onClick={() => setViewType('list')}
+          >
+            <Rows size={15} weight={viewType === 'list' ? 'bold' : 'regular'} />
+          </button>
+          <button
+            type="button"
+            aria-label="Board view"
+            className={`${styles.viewToggleBtn} ${viewType === 'board' ? styles.viewToggleBtnActive : ''}`}
+            onClick={() => setViewType('board')}
+          >
+            <Columns size={15} weight={viewType === 'board' ? 'bold' : 'regular'} />
+          </button>
+          <button
+            type="button"
+            aria-label="Calendar view"
+            className={`${styles.viewToggleBtn} ${viewType === 'calendar' ? styles.viewToggleBtnActive : ''}`}
+            onClick={() => setViewType('calendar')}
+          >
+            <CalendarBlank size={15} weight={viewType === 'calendar' ? 'bold' : 'regular'} />
+          </button>
+          <button
+            type="button"
+            aria-label="Upcoming view"
+            className={`${styles.viewToggleBtn} ${viewType === 'upcoming' ? styles.viewToggleBtnActive : ''}`}
+            onClick={() => setViewType('upcoming')}
+          >
+            <Clock size={15} weight={viewType === 'upcoming' ? 'bold' : 'regular'} />
+          </button>
+        </div>
       </div>
 
       <FilterChips
@@ -689,11 +876,32 @@ export function TasksListView(props: Props) {
 
       {isPending ? (
         <ListSkeleton />
-      ) : !isListView ? (
-        <TasksUpcomingView tasks={data.upcomingTasks} onOpenTask={setDrawerTask} />
+      ) : viewType === 'board' ? (
+        <TasksBoardView
+          tasks={allTasks.filter((t) => t.parentTaskId === null)}
+          labels={data.labels ?? []}
+          onOpenTask={setDrawerTask}
+          onTaskUpdate={handleTaskUpdate}
+        />
+      ) : viewType === 'calendar' ? (
+        <TasksCalendarView
+          tasks={allTasks}
+          labels={data.labels ?? []}
+          onOpenTask={setDrawerTask}
+          onTaskUpdate={handleTaskUpdate}
+        />
+      ) : viewType === 'upcoming' ? (
+        <TasksUpcomingView
+          tasks={allTasks}
+          labels={data.labels ?? []}
+          onOpenTask={setDrawerTask}
+          onTaskUpdate={handleTaskUpdate}
+          onCreateTask={() => {
+            // No-op placeholder: user can open a task after creation to fill details
+          }}
+        />
       ) : entityGroups ? (
         <div className={styles.list}>
-          <TaskListHeader />
           {entityGroups.length === 0 ? (
             <div className={styles.empty}>Nothing here.</div>
           ) : entityGroups.map((g) => (
@@ -714,6 +922,9 @@ export function TasksListView(props: Props) {
                   subtasks={data.subtasksByParent[t.id] ?? []}
                   labels={data.labels ?? []}
                   onOpen={() => setDrawerTask(t)}
+                  isSelected={selectedIds.has(t.id)}
+                  onToggleSelect={handleToggleSelect}
+                  isFocused={focusedTaskId === t.id}
                 />
               ))}
             </section>
@@ -722,7 +933,6 @@ export function TasksListView(props: Props) {
         </div>
       ) : (
         <div className={styles.list}>
-          {activeFilterGroups.length > 0 && <TaskListHeader />}
           {activeFilterGroups.length === 0 ? (
             <div className={styles.empty}>
               {activeFilterCount > 0 ? 'No tasks match the active filters.' : 'Nothing here.'}
@@ -743,6 +953,9 @@ export function TasksListView(props: Props) {
                   onOpen={() => setDrawerTask(t)}
                   showNeedsOwner={activeKey === 'unassigned'}
                   currentUserId={activeKey === 'unassigned' ? (props.currentUserId ?? null) : null}
+                  isSelected={selectedIds.has(t.id)}
+                  onToggleSelect={handleToggleSelect}
+                  isFocused={focusedTaskId === t.id}
                 />
               ))}
             </section>
@@ -751,11 +964,39 @@ export function TasksListView(props: Props) {
         </div>
       )}
 
-      <TaskDetailModal
-        task={drawerTask}
-        onClose={() => setDrawerTask(null)}
-        onSaved={(taskId) => refreshCurrentView(taskId)}
-      />
+      <ModalErrorBoundary>
+        <AnimatePresence>
+          {drawerTask && (
+            <TaskDetailModal
+              key={drawerTask.id}
+              task={drawerTask}
+              tasks={allTasks}
+              subtasks={data.subtasksByParent[drawerTask.id] ?? []}
+              labels={data.labels ?? []}
+              currentUserId={props.currentUserId ?? null}
+              currentUserName={props.currentUserName ?? null}
+              currentUserAvatarUrl={props.currentUserAvatarUrl ?? null}
+              onClose={() => setDrawerTask(null)}
+              onSaved={(taskId) => refreshCurrentView(taskId)}
+              onNavigate={(t) => setDrawerTask(t)}
+              onUpdate={handleTaskUpdate}
+            />
+          )}
+        </AnimatePresence>
+      </ModalErrorBoundary>
+
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <TasksBulkBar
+            selectedIds={selectedIds}
+            tasks={allTasks}
+            labels={data.labels ?? []}
+            onClear={() => setSelectedIds(new Set())}
+            onBulkUpdate={handleBulkUpdate}
+            onBulkDelete={handleBulkDelete}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

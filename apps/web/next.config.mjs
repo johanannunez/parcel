@@ -1,6 +1,14 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   devIndicators: false,
+  turbopack: {
+    root: path.resolve(__dirname, '../..'),
+  },
   experimental: {
     serverActions: {
       // Default is 1MB which is easily exceeded by base64-encoded photos.

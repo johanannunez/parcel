@@ -7,6 +7,7 @@ import { toggleShowTestDataAction } from "@/lib/admin/test-data";
 import { derivePageTitle, type PageTitleInfo } from "@/lib/admin/derive-page-title";
 import { CreateMenu } from "./CreateMenu";
 import { useTopBarSlots } from "./TopBarSlotsContext";
+import { NotificationBell } from "../notifications/NotificationBell";
 import styles from "./AdminTopBar.module.css";
 
 type Props = {
@@ -163,6 +164,9 @@ export function AdminTopBar({ showTestData = false }: Props) {
           <div className={styles.compactUtils}>
             <CreateMenu placement="topbar" />
           </div>
+          <NotificationBell
+            onOpenTask={(taskId) => router.push(`/admin/tasks?task=${taskId}`)}
+          />
           {searchOverride ? (
             <div className={styles.searchSlot}>{searchOverride}</div>
           ) : (

@@ -1,153 +1,160 @@
 'use client';
 
-import { useMemo } from 'react';
-import { format, addDays, startOfDay, isToday, isTomorrow } from 'date-fns';
-import type { Task } from '@/lib/admin/task-types';
-import { ParentPill } from './ParentPill';
+import { useRef, useMemo } from 'react';
+import type { Task, TaskLabel } from '@/lib/admin/task-types';
+import { TaskRow } from './TaskRow';
+import { Plus } from '@phosphor-icons/react';
 import styles from './TasksUpcomingView.module.css';
-
-const PRIORITY_COLORS: Record<number, string> = {
-  1: '#ef4444',
-  2: '#f59e0b',
-  3: '#60a5fa',
-};
 
 const DAYS_SHOWN = 14;
 
-function relativeLabel(date: Date): string | null {
-  if (isToday(date)) return 'Today';
-  if (isTomorrow(date)) return 'Tomorrow';
-  return null;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getLocalDateStr(isoStr: string | null): string | null {
+  if (!isoStr) return null;
+  const d = new Date(isoStr);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function hasTimeComponent(dueAt: string): boolean {
-  const d = new Date(dueAt);
-  return d.getHours() !== 0 || d.getMinutes() !== 0 || d.getSeconds() !== 0;
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export function TasksUpcomingView({
-  tasks,
-  onOpenTask,
-}: {
+function dayLabel(date: Date, index: number): string {
+  const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+  if (index === 0) return `${dateStr} · Today · ${weekday}`;
+  if (index === 1) return `${dateStr} · Tomorrow · ${weekday}`;
+  return `${dateStr} · ${weekday}`;
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+type Props = {
   tasks: Task[];
-  onOpenTask?: (task: Task) => void;
-}) {
-  const todayStart = startOfDay(new Date());
+  labels: TaskLabel[];
+  onOpenTask: (task: Task) => void;
+  onTaskUpdate?: (id: string, patch: Partial<Task>) => void;
+  onCreateTask?: (dueAt: string) => void;
+};
 
-  const days = useMemo(
-    () => Array.from({ length: DAYS_SHOWN }, (_, i) => addDays(todayStart, i)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [todayStart.getTime()],
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function TasksUpcomingView({ tasks, labels, onOpenTask, onCreateTask }: Props) {
+  const dayRefs = useRef<Map<string, HTMLElement>>(new Map());
+
+  // Build the 14-day window starting from today
+  const days = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Array.from({ length: DAYS_SHOWN }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      return d;
+    });
+  }, []);
+
+  // Week strip: first 7 days only
+  const weekDays = days.slice(0, 7);
+
+  // Group top-level non-done tasks by local date
+  const topLevelTasks = useMemo(
+    () => tasks.filter((t) => t.parentTaskId === null && t.status !== 'done'),
+    [tasks],
   );
 
   const tasksByDay = useMemo(() => {
     const map = new Map<string, Task[]>();
-    for (const t of tasks) {
-      if (!t.dueAt) continue;
-      const key = format(startOfDay(new Date(t.dueAt)), 'yyyy-MM-dd');
+    for (const t of topLevelTasks) {
+      const key = getLocalDateStr(t.dueAt);
+      if (!key) continue;
       const arr = map.get(key) ?? [];
       arr.push(t);
       map.set(key, arr);
     }
     return map;
+  }, [topLevelTasks]);
+
+  // Subtask lookup for TaskRow
+  const subtasksByParent = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of tasks) {
+      if (!t.parentTaskId) continue;
+      const arr = map.get(t.parentTaskId) ?? [];
+      arr.push(t);
+      map.set(t.parentTaskId, arr);
+    }
+    return map;
   }, [tasks]);
 
-  function scrollToDay(key: string) {
-    document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function scrollToDay(dateStr: string) {
+    const el = dayRefs.current.get(dateStr);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   return (
-    <div className={styles.root}>
+    <div className={styles.container}>
       {/* Week strip */}
       <div className={styles.weekStrip}>
-        {days.map((day) => {
-          const key = format(day, 'yyyy-MM-dd');
-          const today = isToday(day);
+        {weekDays.map((day, i) => {
+          const dateStr = toDateStr(day);
+          const isToday = i === 0;
           return (
             <button
-              key={key}
+              key={dateStr}
               type="button"
-              className={`${styles.dayButton} ${today ? styles.dayButtonToday : ''}`}
-              onClick={() => scrollToDay(key)}
+              className={styles.weekDay}
+              onClick={() => scrollToDay(dateStr)}
+              aria-label={dayLabel(day, i)}
             >
-              <span className={styles.dayButtonName}>{format(day, 'EEE')}</span>
-              <span className={`${styles.dayButtonNum} ${today ? styles.dayButtonNumToday : ''}`}>
-                {format(day, 'd')}
+              <span className={styles.weekDayLabel}>
+                {day.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}
+              </span>
+              <span className={`${styles.weekDayNumber} ${isToday ? styles.weekDayNumberToday : ''}`}>
+                {day.getDate()}
               </span>
             </button>
           );
         })}
       </div>
 
-      {/* Date-grouped list */}
-      <div className={styles.list}>
-        {days.map((day) => {
-          const key = format(day, 'yyyy-MM-dd');
-          const dayTasks = tasksByDay.get(key) ?? [];
-          const rel = relativeLabel(day);
+      {/* Body: 14 day sections */}
+      <div className={styles.body}>
+        {days.map((day, i) => {
+          const dateStr = toDateStr(day);
+          const dayTasks = tasksByDay.get(dateStr) ?? [];
 
           return (
-            <div key={key} id={key} className={styles.section}>
-              {/* Section header */}
-              <div className={styles.sectionHeader}>
-                <span className={styles.headerDate}>{format(day, 'MMM d')}</span>
-                {rel && (
-                  <>
-                    <span className={styles.headerSep}>·</span>
-                    <span className={styles.headerRel}>{rel}</span>
-                  </>
-                )}
-                <span className={styles.headerSep}>·</span>
-                <span className={styles.headerDay}>{format(day, 'EEEE')}</span>
-              </div>
+            <div
+              key={dateStr}
+              className={styles.daySection}
+              ref={(el) => {
+                if (el) dayRefs.current.set(dateStr, el);
+              }}
+            >
+              <div className={styles.dayHeader}>{dayLabel(day, i)}</div>
 
-              {/* Task rows */}
-              {dayTasks.map((task) => {
-                const priorityColor =
-                  task.priority < 4 ? PRIORITY_COLORS[task.priority] : undefined;
-                const showTime = task.dueAt != null && hasTimeComponent(task.dueAt);
+              {dayTasks.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  subtasks={subtasksByParent.get(task.id) ?? []}
+                  labels={labels}
+                  onOpen={() => onOpenTask(task)}
+                />
+              ))}
 
-                return (
-                  <div
-                    key={task.id}
-                    className={styles.taskRow}
-                    style={
-                      priorityColor
-                        ? { borderLeft: `3px solid ${priorityColor}`, paddingLeft: '10px' }
-                        : { paddingLeft: '13px' }
-                    }
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onOpenTask?.(task)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onOpenTask?.(task);
-                      }
-                    }}
-                  >
-                    <span className={styles.taskCheckbox} aria-hidden />
-                    <div className={styles.taskMain}>
-                      <span className={styles.taskTitle}>{task.title}</span>
-                      {(showTime || task.parent) && (
-                        <div className={styles.taskMeta}>
-                          {showTime && task.dueAt && (
-                            <span className={styles.taskTime}>
-                              {format(new Date(task.dueAt), 'h:mm a')}
-                            </span>
-                          )}
-                          {task.parent && <ParentPill parent={task.parent} />}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Empty placeholder */}
-              {dayTasks.length === 0 && (
-                <div className={styles.addTaskPlaceholder}>+ Add task</div>
-              )}
+              <button
+                type="button"
+                className={styles.addTaskRow}
+                onClick={() => {
+                  const iso = day.toISOString();
+                  onCreateTask?.(iso);
+                }}
+              >
+                <Plus size={13} className={styles.addIcon} />
+                <span>Add task</span>
+              </button>
             </div>
           );
         })}

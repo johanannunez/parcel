@@ -45,9 +45,9 @@ export function TaskActivityLog({ taskId }: Props) {
     if (!expanded || fetched) return;
     setLoading(true);
     fetch(`/api/tasks/${taskId}/activity`)
-      .then((r) => r.json())
-      .then((data: TaskActivityEntry[]) => {
-        setEntries(data);
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data: unknown) => {
+        setEntries(Array.isArray(data) ? data : []);
         setFetched(true);
       })
       .catch(() => {

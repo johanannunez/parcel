@@ -42,9 +42,6 @@
 /* ── Panel ─────────────────────────────────────────────────────────────────── */
 
 .panel {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
   z-index: 300;
   background: var(--surface-floating);
   border: 1px solid var(--border);

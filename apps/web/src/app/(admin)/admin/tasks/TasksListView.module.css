@@ -77,29 +77,6 @@
 
 .empty { padding: 40px 24px; color: #6b7280; font-size: 13px; text-align: center; }
 
-/* Column header row */
-.columnHeader {
-  display: grid;
-  grid-template-columns: 20px 1fr minmax(140px, auto) 90px 30px 24px;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 22px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fafbfc;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-.columnHeaderCell {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #9ca3af;
-}
-.columnHeaderCellRight { text-align: right; }
-.columnHeaderCellCenter { text-align: center; }
-
 /* Sort control */
 .sortControl { display: flex; align-items: center; }
 .sortBtn {
@@ -364,3 +341,30 @@
 }
 .addTaskSubmitBtn:hover { background: #374151; }
 .addTaskSubmitBtn:disabled { opacity: 0.4; cursor: default; }
+
+/* View type toggle */
+.viewToggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 2px;
+  margin-left: auto;
+}
+.viewToggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 26px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  transition: background 120ms ease, color 120ms ease;
+}
+.viewToggleBtn:hover { background: #e5e7eb; color: #374151; }
+.viewToggleBtnActive { background: #fff; color: #c17b4e; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.viewToggleBtnActive:hover { background: #fff; color: #a0622a; }

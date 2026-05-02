@@ -183,9 +183,9 @@ export function TaskComments({ taskId, currentUserId, currentUserName, currentUs
     let cancelled = false;
     setLoading(true);
     fetch(`/api/tasks/${taskId}/comments`)
-      .then((r) => r.json())
-      .then((data: TaskComment[]) => {
-        if (!cancelled) setComments(data);
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data: unknown) => {
+        if (!cancelled) setComments(Array.isArray(data) ? data : []);
       })
       .catch(() => {
         if (!cancelled) setComments([]);

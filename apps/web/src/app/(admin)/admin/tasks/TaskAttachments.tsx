@@ -53,9 +53,9 @@ export function TaskAttachments({ taskId }: Props) {
     let cancelled = false;
     setLoading(true);
     fetch(`/api/tasks/${taskId}/attachments`)
-      .then((r) => r.json())
-      .then((data: Attachment[]) => {
-        if (!cancelled) setAttachments(data);
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data: unknown) => {
+        if (!cancelled) setAttachments(Array.isArray(data) ? data : []);
       })
       .catch(() => {
         if (!cancelled) setAttachments([]);

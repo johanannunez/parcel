@@ -6,6 +6,7 @@ import type { Task, TaskLabel } from '@/lib/admin/task-types';
 import { completeTask, uncompleteTask, updateTask, deleteTask } from '@/lib/admin/task-actions';
 import {
   CalendarBlank,
+  CaretRight,
   DotsThreeVertical,
   ArrowSquareOut,
   DotsSixVertical,
@@ -49,6 +50,7 @@ type Props = {
   currentUserId?: string | null;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
+  isFocused?: boolean;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -62,6 +64,7 @@ export function TaskRow({
   currentUserId,
   isSelected = false,
   onToggleSelect,
+  isFocused = false,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [optimisticDone, setOptimisticDone] = useState(task.status === 'done');
@@ -70,6 +73,7 @@ export function TaskRow({
   const [assigned, setAssigned] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
+  const [subtasksExpanded, setSubtasksExpanded] = useState(false);
 
   const calendarBtnRef = useRef<HTMLButtonElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
@@ -183,8 +187,10 @@ export function TaskRow({
     task.priority === 3 ? styles.p3 : '';
 
   return (
+    <>
     <div
-      className={`${styles.row} ${isDone ? styles.rowDone : ''} ${priorityClass} ${isSelected ? styles.rowSelected : ''}`}
+      className={`${styles.row} ${isDone ? styles.rowDone : ''} ${priorityClass} ${isSelected ? styles.rowSelected : ''} ${isFocused ? styles.rowFocused : ''}`}
+      data-keyboard-focused={isFocused || undefined}
     >
       {/* ── Bulk select checkbox ─────────────────────────────────────────────── */}
       <div className={`${styles.selectWrap} ${isSelected ? styles.selectWrapVisible : ''}`}>
@@ -309,10 +315,16 @@ export function TaskRow({
           <div className={styles.line2}>
             {/* Subtask count */}
             {hasSubtasks && (
-              <span className={`${styles.metaChip} ${styles.subtaskChip}`}>
+              <button
+                type="button"
+                className={`${styles.metaChip} ${styles.subtaskChip} ${styles.subtaskChipBtn}`}
+                onClick={(e) => { e.stopPropagation(); setSubtasksExpanded((v) => !v); }}
+                aria-expanded={subtasksExpanded}
+              >
+                <CaretRight size={10} weight="bold" className={subtasksExpanded ? styles.subtaskChevronOpen : styles.subtaskChevron} />
                 <GitBranch size={11} />
                 {subtaskDoneCount}/{subtaskCount}
-              </span>
+              </button>
             )}
 
             {/* Due date */}
@@ -378,5 +390,38 @@ export function TaskRow({
         )}
       </div>
     </div>
+
+    {subtasksExpanded && subtasks.length > 0 && (
+      <div className={styles.subtaskDrawer}>
+        {subtasks.map((sub) => (
+          <div key={sub.id} className={styles.subtaskDrawerRow}>
+            <button
+              type="button"
+              className={`${styles.completeCircle} ${sub.status === 'done' ? styles.completeCircleDone : ''}`}
+              onClick={(e) => { e.stopPropagation(); startTransition(async () => { await completeTask(sub.id); }); }}
+              aria-label={sub.status === 'done' ? 'Mark as to-do' : 'Complete subtask'}
+            >
+              {sub.status === 'done' && <Check size={9} weight="bold" color="#fff" />}
+            </button>
+            <span
+              className={`${styles.subtaskTitle} ${sub.status === 'done' ? styles.titleDone : ''}`}
+              onClick={onOpen}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter') onOpen(); }}
+            >
+              {sub.title}
+            </span>
+            {sub.dueAt && (
+              <span className={`${styles.metaChip} ${isOverdue(sub.dueAt, sub.status) ? styles.metaChipOverdue : ''}`}>
+                <CalendarBlank size={10} />
+                {humanDueLabel(sub.dueAt)}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+    </>
   );
 }

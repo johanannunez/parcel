@@ -1,0 +1,297 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ─── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.groupToggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.groupBtn {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.groupBtn:hover {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+
+.groupBtnActive {
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+
+/* ─── Board ───────────────────────────────────────────────────────────────── */
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  overflow-x: auto;
+  flex: 1;
+  align-items: start;
+}
+
+/* ─── Column ──────────────────────────────────────────────────────────────── */
+
+.column {
+  background: var(--surface-base);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 180px);
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  flex-shrink: 0;
+}
+
+.columnDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.columnLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.columnCount {
+  font-size: 11px;
+  background: var(--border);
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.columnCards {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.columnFooter {
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Add button + form ───────────────────────────────────────────────────── */
+
+.addBtn {
+  width: 100%;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.addBtn:hover {
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+}
+
+.addForm {
+  padding: 4px;
+}
+
+.addInput {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-elevated);
+  outline: none;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.addInput:focus {
+  border-color: var(--accent, #3b82f6);
+}
+
+/* ─── Card ────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: grab;
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+  user-select: none;
+}
+
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--border-strong);
+}
+
+.card:active,
+.cardDragging {
+  cursor: grabbing;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.cardLine1 {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.completeCircle {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, border-color 120ms ease;
+  padding: 0;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.completeCircle:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.completeCircleDone {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.cardTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.cardTitle:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cardTitleDone {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.cardPriorityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cardDueChip {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--surface-base);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.cardDueChipOverdue {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.cardParentChip {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.cardAvatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cardAvatarFallback {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}

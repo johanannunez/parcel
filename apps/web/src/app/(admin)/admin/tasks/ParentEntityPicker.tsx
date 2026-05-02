@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './ParentEntityPicker.module.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,8 +35,11 @@ export function ParentEntityPicker({ type, value, label, onChange }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,7 +81,10 @@ export function ParentEntityPicker({ type, value, label, onChange }: Props) {
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inContainer = containerRef.current?.contains(target) ?? false;
+      const inPanel = panelRef.current?.contains(target) ?? false;
+      if (!inContainer && !inPanel) {
         setOpen(false);
       }
     }
@@ -99,16 +106,26 @@ export function ParentEntityPicker({ type, value, label, onChange }: Props) {
     <div className={styles.container} ref={containerRef}>
       {/* Trigger */}
       <button
+        ref={triggerRef}
         type="button"
         className={value ? styles.triggerFilled : styles.triggerEmpty}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          const rect = triggerRef.current?.getBoundingClientRect();
+          if (rect) setPanelPos({ top: rect.bottom + 4, left: rect.left });
+          setOpen((v) => !v);
+        }}
       >
         {value ? label : PLACEHOLDER_LABELS[type]}
       </button>
 
-      {/* Dropdown panel */}
-      {open && (
-        <div className={styles.panel}>
+      {/* Dropdown panel — rendered in a portal to escape sidebar overflow clipping */}
+      {open && panelPos && createPortal(
+        <div
+          ref={panelRef}
+          className={styles.panel}
+          style={{ position: 'fixed', top: panelPos.top, left: panelPos.left }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <input
             ref={inputRef}
             type="text"
@@ -154,7 +171,8 @@ export function ParentEntityPicker({ type, value, label, onChange }: Props) {
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
