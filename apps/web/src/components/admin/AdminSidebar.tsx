@@ -12,11 +12,10 @@ import {
   BookOpenText,
   FolderOpen,
   Files,
-  UsersThree,
-  AddressBook,
+  ShareNetwork,
+  IdentificationBadge,
   UserPlus,
-  Key,
-  Toolbox,
+  Storefront,
   MagnifyingGlass,
   List as HamburgerIcon,
   CaretDown,
@@ -70,13 +69,13 @@ const navEntries: NavEntry[] = [
   {
     kind: "group",
     label: "Relationships",
-    icon: <UsersThree size={18} weight="duotone" />,
+    icon: <ShareNetwork size={18} weight="duotone" />,
     storageKey: "nav-people-expanded",
     items: [
       { href: "/admin/prospects", label: "Prospects", icon: <UserPlus size={16} weight="duotone" />, matchPrefix: "/admin/prospects" },
-      { href: "/admin/entities?view=active-owners", label: "Entities", icon: <Key size={16} weight="duotone" />, matchPrefix: "/admin/entities" },
-      { href: "/admin/people?mode=compact", label: "People", icon: <AddressBook size={16} weight="duotone" />, matchPrefix: "/admin/people" },
-      { href: "/admin/vendors", label: "Vendors", icon: <Toolbox size={16} weight="duotone" />, matchPrefix: "/admin/vendors" },
+      { href: "/admin/entities?view=active-owners", label: "Entities", icon: <Buildings size={16} weight="duotone" />, matchPrefix: "/admin/entities" },
+      { href: "/admin/people?mode=compact", label: "People", icon: <IdentificationBadge size={16} weight="duotone" />, matchPrefix: "/admin/people" },
+      { href: "/admin/vendors", label: "Vendors", icon: <Storefront size={16} weight="duotone" />, matchPrefix: "/admin/vendors" },
     ],
   },
   { kind: "item", href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
@@ -477,7 +476,7 @@ export function AdminSidebar({
             alt="Parcel"
             width={48}
             height={48}
-            style={{ flexShrink: 0 }}
+            style={{ width: "48px", height: "auto", flexShrink: 0 }}
           />
           <span
             style={{
@@ -625,7 +624,7 @@ export function AdminTopBar({
           alt="Parcel"
           width={26}
           height={26}
-          style={{ flexShrink: 0 }}
+          style={{ width: "26px", height: "auto", flexShrink: 0 }}
         />
         <span
           style={{
@@ -695,7 +694,7 @@ const adminRailItems: Array<{
   { href: "/admin/meetings", icon: <CalendarBlank size={20} weight="duotone" />, label: "Meetings", matchPrefix: "/admin/meetings" },
   {
     href: "/admin/entities?view=active-owners",
-    icon: <UsersThree size={20} weight="duotone" />,
+    icon: <ShareNetwork size={20} weight="duotone" />,
     label: "Relationships",
     matchPrefixes: ["/admin/entities", "/admin/prospects", "/admin/people", "/admin/vendors"],
   },
@@ -739,7 +738,13 @@ export function AdminIconRail() {
           textDecoration: "none",
         }}
       >
-        <Image src="/brand/logo-mark-white.png" alt="Parcel" width={24} height={24} />
+        <Image
+          src="/brand/logo-mark-white.png"
+          alt="Parcel"
+          width={24}
+          height={24}
+          style={{ width: "24px", height: "auto" }}
+        />
       </Link>
 
       {/* Search trigger */}

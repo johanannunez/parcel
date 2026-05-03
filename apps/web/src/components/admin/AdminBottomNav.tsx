@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   House,
-  UsersThree,
+  ShareNetwork,
   ChatCircle,
   List,
   Buildings,
@@ -20,10 +20,9 @@ import {
   CalendarBlank,
   FolderOpen,
   Files,
-  Key,
   UserPlus,
-  Toolbox,
-  AddressBook,
+  Storefront,
+  IdentificationBadge,
   CaretDown,
   Receipt,
 } from "@phosphor-icons/react";
@@ -78,8 +77,8 @@ const navItems: NavItem[] = [
   {
     href: "/admin/entities?view=active-owners",
     label: "Relations",
-    icon: <UsersThree size={22} weight="regular" />,
-    activeIcon: <UsersThree size={22} weight="fill" />,
+    icon: <ShareNetwork size={22} weight="regular" />,
+    activeIcon: <ShareNetwork size={22} weight="fill" />,
     matchPrefixes: ["/admin/entities", "/admin/prospects", "/admin/people", "/admin/vendors"],
   },
 ];
@@ -94,13 +93,13 @@ const sheetItems: SheetEntry[] = [
   {
     kind: "group",
     label: "Relationships",
-    icon: <UsersThree size={19} weight="duotone" />,
+    icon: <ShareNetwork size={19} weight="duotone" />,
     storageKey: "mobile-nav-people-expanded",
     items: [
       { href: "/admin/prospects", label: "Prospects", icon: <UserPlus size={17} weight="duotone" />, matchPrefix: "/admin/prospects" },
-      { href: "/admin/entities?view=active-owners", label: "Entities", icon: <Key size={17} weight="duotone" />, matchPrefix: "/admin/entities" },
-      { href: "/admin/people?mode=compact", label: "People", icon: <AddressBook size={17} weight="duotone" />, matchPrefix: "/admin/people" },
-      { href: "/admin/vendors", label: "Vendors", icon: <Toolbox size={17} weight="duotone" />, matchPrefix: "/admin/vendors" },
+      { href: "/admin/entities?view=active-owners", label: "Entities", icon: <Buildings size={17} weight="duotone" />, matchPrefix: "/admin/entities" },
+      { href: "/admin/people?mode=compact", label: "People", icon: <IdentificationBadge size={17} weight="duotone" />, matchPrefix: "/admin/people" },
+      { href: "/admin/vendors", label: "Vendors", icon: <Storefront size={17} weight="duotone" />, matchPrefix: "/admin/vendors" },
     ],
   },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
