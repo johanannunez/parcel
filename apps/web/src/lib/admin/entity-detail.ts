@@ -33,10 +33,9 @@ export { formatMonthYear } from "@/lib/admin/entity-detail-types";
  *
  *   Overview state (onboarding vs operating):
  *     - The Launchpad completion data is not tracked in a single table yet,
- *       so we approximate: an entity is "onboarding" if the primary profile
- *       has `onboarding_completed_at IS NULL` OR any of their properties
- *       have a `setup_status` other than `published`. Otherwise the entity
- *       is "operating".
+ *       so we approximate from the linked portal profile when one exists.
+ *       Contact-only entities stay in onboarding until they have a portal
+ *       profile and published properties.
  *
  *   Status pill:
  *     - `not_invited`  all members have `@pending.theparcelco.com` emails
@@ -85,7 +84,7 @@ function deriveOverviewState(args: {
 export async function fetchEntityDetail(entityId: string): Promise<EntityDetailData | null> {
   const supabase = await createClient();
 
-  const [{ data: entity }, { data: members }] = await Promise.all([
+  const [{ data: entity }, { data: profileMembers }] = await Promise.all([
     supabase
       .from("entities")
       .select("id, name, type, created_at")
@@ -101,21 +100,118 @@ export async function fetchEntityDetail(entityId: string): Promise<EntityDetailD
       .order("created_at", { ascending: true }),
   ]);
 
-  if (!entity || !members || members.length === 0) {
+  if (!entity) {
     return null;
   }
 
-  const memberIds = members.map((m) => m.id);
+  const profileIds = (profileMembers ?? []).map((m) => m.id);
+  const [{ data: entityContacts }, { data: linkedContacts }] = await Promise.all([
+    (supabase as any)
+      .from("contacts")
+      .select(
+        "id, profile_id, full_name, email, phone, avatar_url, created_at, lifecycle_stage, stage_changed_at, source, source_detail, estimated_mrr, assigned_to",
+      )
+      .eq("entity_id", entityId)
+      .order("created_at", { ascending: true }) as Promise<{
+      data: Array<{
+        id: string;
+        profile_id: string | null;
+        full_name: string | null;
+        email: string | null;
+        phone: string | null;
+        avatar_url: string | null;
+        created_at: string;
+        lifecycle_stage: string | null;
+        stage_changed_at: string | null;
+        source: string | null;
+        source_detail: string | null;
+        estimated_mrr: number | null;
+        assigned_to: string | null;
+      }> | null;
+    }>,
+    profileIds.length > 0
+      ? ((supabase as any)
+          .from("contacts")
+          .select(
+            "id, profile_id, full_name, email, phone, avatar_url, created_at, lifecycle_stage, stage_changed_at, source, source_detail, estimated_mrr, assigned_to",
+          )
+          .in("profile_id", profileIds)
+          .order("created_at", { ascending: true }) as Promise<{
+          data: Array<{
+            id: string;
+            profile_id: string | null;
+            full_name: string | null;
+            email: string | null;
+            phone: string | null;
+            avatar_url: string | null;
+            created_at: string;
+            lifecycle_stage: string | null;
+            stage_changed_at: string | null;
+            source: string | null;
+            source_detail: string | null;
+            estimated_mrr: number | null;
+            assigned_to: string | null;
+          }> | null;
+        }>)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const contactById = new Map<string, NonNullable<typeof entityContacts>[number]>();
+  for (const contact of [...(entityContacts ?? []), ...(linkedContacts ?? [])]) {
+    contactById.set(contact.id, contact);
+  }
+  const contacts = Array.from(contactById.values());
+
+  const profileById = new Map((profileMembers ?? []).map((m) => [m.id, m]));
+  const members = contacts.length > 0
+    ? contacts.map((contact) => {
+        const profile = contact.profile_id ? profileById.get(contact.profile_id) : null;
+        return {
+          id: contact.id,
+          profileId: contact.profile_id,
+          full_name: contact.full_name ?? profile?.full_name ?? contact.email ?? "Unnamed person",
+          email: contact.email ?? profile?.email ?? "",
+          phone: contact.phone ?? profile?.phone ?? null,
+          avatar_url: contact.avatar_url ?? profile?.avatar_url ?? null,
+          created_at: contact.created_at ?? profile?.created_at ?? entity.created_at,
+          onboarding_completed_at: profile?.onboarding_completed_at ?? null,
+          contact,
+        };
+      })
+    : (profileMembers ?? []).map((profile) => ({
+        id: profile.id,
+        profileId: profile.id,
+        full_name: profile.full_name ?? profile.email,
+        email: profile.email,
+        phone: profile.phone ?? null,
+        avatar_url: profile.avatar_url ?? null,
+        created_at: profile.created_at,
+        onboarding_completed_at: profile.onboarding_completed_at ?? null,
+        contact: null,
+      }));
+
+  if (members.length === 0) {
+    return null;
+  }
+
+  const ownerProfileIds = Array.from(
+    new Set(members.map((m) => m.profileId).filter((id): id is string => !!id)),
+  );
+  const contactIds = members.map((m) => m.id);
   const primaryRaw = members[0];
 
   const [{ data: primaryProps }, { data: coOwnedProps }] = await Promise.all([
-    supabase.from("properties").select("id").in("owner_id", memberIds),
-    (supabase as any)
-      .from("property_owners")
-      .select("property_id")
-      .in("owner_id", memberIds) as Promise<{
-      data: Array<{ property_id: string }> | null;
-    }>,
+    ownerProfileIds.length > 0
+      ? supabase.from("properties").select("id").in("owner_id", ownerProfileIds)
+      : Promise.resolve({ data: [] }),
+    ownerProfileIds.length > 0
+      ? ((supabase as any)
+          .from("property_owners")
+          .select("property_id")
+          .in("owner_id", ownerProfileIds) as Promise<{
+          data: Array<{ property_id: string }> | null;
+        }>)
+      : Promise.resolve({ data: [] }),
   ]);
   const propertyIds = Array.from(
     new Set([
@@ -134,54 +230,46 @@ export async function fetchEntityDetail(entityId: string): Promise<EntityDetailD
         .order("created_at", { ascending: true })
     : Promise.resolve({ data: [] as any[] });
 
-  const activityPromise = (supabase as any)
-    .from("activity_log")
-    .select("id, actor_id, action, entity_type, entity_id, metadata, created_at")
-    .or(
-      [
-        `and(entity_type.eq.profile,entity_id.in.(${memberIds.join(",")}))`,
-        propertyIds.length > 0
-          ? `and(entity_type.eq.property,entity_id.in.(${propertyIds.join(",")}))`
-          : null,
-      ]
-        .filter(Boolean)
-        .join(","),
-    )
-    .order("created_at", { ascending: false })
-    .limit(12);
+  const activityFilters = [
+    ownerProfileIds.length > 0
+      ? `and(entity_type.eq.profile,entity_id.in.(${ownerProfileIds.join(",")}))`
+      : null,
+    contactIds.length > 0
+      ? `and(entity_type.eq.contact,entity_id.in.(${contactIds.join(",")}))`
+      : null,
+    propertyIds.length > 0
+      ? `and(entity_type.eq.property,entity_id.in.(${propertyIds.join(",")}))`
+      : null,
+  ].filter(Boolean);
 
-  // Query the contacts row linked to the primary profile so we can derive
-  // lifecycle_stage and expose contact-level fields to the overview components.
-  const contactPromise = (supabase as any)
-    .from("contacts")
-    .select(
-      "id, lifecycle_stage, stage_changed_at, source, source_detail, estimated_mrr, assigned_to",
-    )
-    .eq("profile_id", primaryRaw.id)
-    .maybeSingle() as Promise<{
-    data: {
-      id: string;
-      lifecycle_stage: string | null;
-      stage_changed_at: string | null;
-      source: string | null;
-      source_detail: string | null;
-      estimated_mrr: number | null;
-      assigned_to: string | null;
-    } | null;
-  }>;
+  const activityPromise = activityFilters.length > 0
+    ? (supabase as any)
+        .from("activity_log")
+        .select("id, actor_id, action, entity_type, entity_id, metadata, created_at")
+        .or(activityFilters.join(","))
+        .order("created_at", { ascending: false })
+        .limit(12)
+    : Promise.resolve({ data: [] });
 
-  const [{ data: properties }, { data: activityRaw }, { data: contactRow }] =
-    await Promise.all([propertiesPromise, activityPromise, contactPromise]);
+  const contactRow = primaryRaw.contact;
+
+  const [{ data: properties }, { data: activityRaw }] =
+    await Promise.all([propertiesPromise, activityPromise]);
 
   // Build the switcher list in the same pass so the identity band dropdown
   // can navigate between entities without another round trip.
-  const [{ data: allEntities }, { data: allProfiles }, { data: allProps }, { data: allCo }] =
+  const [{ data: allEntities }, { data: allProfiles }, { data: allContacts }, { data: allProps }, { data: allCo }] =
     await Promise.all([
       supabase.from("entities").select("id, name, type"),
       supabase
         .from("profiles")
         .select("id, email, onboarding_completed_at, entity_id")
         .eq("role", "owner"),
+      (supabase as any)
+        .from("contacts")
+        .select("id, email, profile_id, entity_id") as Promise<{
+        data: Array<{ id: string; email: string | null; profile_id: string | null; entity_id: string | null }> | null;
+      }>,
       supabase.from("properties").select("id, owner_id"),
       (supabase as any)
         .from("property_owners")
@@ -190,19 +278,43 @@ export async function fetchEntityDetail(entityId: string): Promise<EntityDetailD
       }>,
     ]);
 
-  const isPending = (email: string) =>
-    email.endsWith("@pending.theparcelco.com");
+  const isPending = (email: string | null) =>
+    !email || email.endsWith("@pending.theparcelco.com");
 
-  const membersByEntity = new Map<string, Array<{ id: string; email: string; onboardedAt: string | null }>>();
+  const membersByEntity = new Map<string, Array<{ id: string; email: string | null; onboardedAt: string | null }>>();
+  const profileOnboardedById = new Map(
+    (allProfiles ?? []).map((p) => [p.id, p.onboarding_completed_at ?? null]),
+  );
+  const seenMembersByEntity = new Map<string, Set<string>>();
+  const pushSwitcherMember = (
+    entityIdForMember: string | null,
+    member: { id: string; email: string | null; onboardedAt: string | null },
+  ) => {
+    if (!entityIdForMember) return;
+    const dedupeKey = member.id;
+    const seen = seenMembersByEntity.get(entityIdForMember) ?? new Set<string>();
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    seenMembersByEntity.set(entityIdForMember, seen);
+    const arr = membersByEntity.get(entityIdForMember) ?? [];
+    arr.push(member);
+    membersByEntity.set(entityIdForMember, arr);
+  };
+
+  for (const c of allContacts ?? []) {
+    pushSwitcherMember(c.entity_id, {
+      id: c.profile_id ?? c.id,
+      email: c.email,
+      onboardedAt: c.profile_id ? profileOnboardedById.get(c.profile_id) ?? null : null,
+    });
+  }
+
   for (const p of allProfiles ?? []) {
-    if (!p.entity_id) continue;
-    const arr = membersByEntity.get(p.entity_id) ?? [];
-    arr.push({
+    pushSwitcherMember(p.entity_id, {
       id: p.id,
       email: p.email,
       onboardedAt: p.onboarding_completed_at ?? null,
     });
-    membersByEntity.set(p.entity_id, arr);
   }
 
   const profileToEntity = new Map<string, string>();

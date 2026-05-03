@@ -123,7 +123,7 @@ export async function fetchEntityContactDetail(contactId: string): Promise<Entit
   const { data: contact, error } = await db
     .from<Record<string, unknown>>("contacts")
     .select(
-      `id, profile_id, full_name, display_name, company_name,
+      `id, profile_id, entity_id, full_name, display_name, company_name,
        email, phone, avatar_url, source, lifecycle_stage,
        stage_changed_at, assigned_to, created_at, management_fee_percent`
     )
@@ -144,7 +144,7 @@ export async function fetchEntityContactDetail(contactId: string): Promise<Entit
     .single();
 
   const profileId: string | null = (contact.profile_id as string | null) ?? null;
-  let entityId: string | null = null;
+  let entityId: string | null = (contact.entity_id as string | null) ?? null;
   let onboardingCompletedAt: string | null = null;
   let properties: EntityContactProperty[] = [];
   let lifetimeRevenue: number | null = null;
