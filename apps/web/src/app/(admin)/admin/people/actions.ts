@@ -106,7 +106,7 @@ export async function createSavedView(
 
   revalidatePath('/admin/people');
   revalidatePath('/admin/prospects');
-  revalidatePath('/admin/entities');
+  revalidatePath('/admin/workspaces');
   return { ok: true, data: { id: data.id } };
 }
 
@@ -148,7 +148,7 @@ export async function renameSavedView(
 
   revalidatePath('/admin/people');
   revalidatePath('/admin/prospects');
-  revalidatePath('/admin/entities');
+  revalidatePath('/admin/workspaces');
   return { ok: true, data: null };
 }
 
@@ -174,7 +174,7 @@ export async function deleteSavedView(
 
   revalidatePath('/admin/people');
   revalidatePath('/admin/prospects');
-  revalidatePath('/admin/entities');
+  revalidatePath('/admin/workspaces');
   return { ok: true, data: null };
 }
 
@@ -329,7 +329,7 @@ export async function markContractSigned(
   await seedOnboardingTasks(contactId);
 
   revalidatePath('/admin/people');
-  revalidatePath('/admin/entities');
+  revalidatePath('/admin/workspaces');
   revalidatePath('/admin/prospects');
   return { ok: true, data: null };
 }

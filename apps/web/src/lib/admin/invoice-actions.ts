@@ -62,7 +62,7 @@ export async function createInvoiceForOwnerAction(
       createdBy: user.id,
     });
     revalidatePath("/admin/billing");
-    revalidatePath("/admin/entities");
+    revalidatePath("/admin/workspaces");
     return {
       ok: true,
       invoiceId: result.invoiceId,

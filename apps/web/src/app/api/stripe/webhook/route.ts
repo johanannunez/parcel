@@ -5,6 +5,11 @@ import {
   syncInvoiceFromStripe,
   syncSubscriptionFromStripe,
 } from "@/lib/stripe";
+import {
+  recordWorkspaceBillingStripeEvent,
+  syncWorkspaceInvoiceFromStripe,
+  syncWorkspacePaymentMethodFromStripe,
+} from "@/lib/billing/stripe-workspace";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,14 +42,38 @@ export async function POST(req: Request) {
   }
 
   try {
+    await recordWorkspaceBillingStripeEvent(event);
+
     switch (event.type) {
       case "invoice.finalized":
       case "invoice.paid":
       case "invoice.payment_failed":
       case "invoice.voided":
       case "invoice.updated":
+        await syncWorkspaceInvoiceFromStripe(event.data.object as Stripe.Invoice);
         await syncInvoiceFromStripe(event.data.object as Stripe.Invoice);
         break;
+      case "payment_method.attached":
+        await syncWorkspacePaymentMethodFromStripe({
+          paymentMethod: event.data.object as Stripe.PaymentMethod,
+        });
+        break;
+      case "setup_intent.succeeded": {
+        const intent = event.data.object as Stripe.SetupIntent;
+        const paymentMethodId =
+          typeof intent.payment_method === "string"
+            ? intent.payment_method
+            : intent.payment_method?.id;
+        if (paymentMethodId && intent.metadata?.parcel_workspace_id) {
+          const paymentMethod =
+            await getStripe().paymentMethods.retrieve(paymentMethodId);
+          await syncWorkspacePaymentMethodFromStripe({
+            paymentMethod,
+            workspaceId: intent.metadata.parcel_workspace_id,
+          });
+        }
+        break;
+      }
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted":

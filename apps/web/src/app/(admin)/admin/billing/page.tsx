@@ -1,10 +1,13 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import {
+  CreditCard,
   FileText,
   Repeat,
   Receipt,
   Tag,
 } from "@phosphor-icons/react/dist/ssr";
+import { fetchBillingDashboard } from "@/lib/admin/billing-dashboard";
 import styles from "./BillingPage.module.css";
 
 export const metadata: Metadata = {
@@ -13,32 +16,50 @@ export const metadata: Metadata = {
 
 const BILLING_AREAS = [
   {
-    title: "Invoices",
-    eyebrow: "Collect",
-    detail: "One-time charges, payment status, and owner-facing records.",
-    icon: FileText,
-  },
-  {
     title: "Recurring invoices",
     eyebrow: "Repeat",
-    detail: "Monthly management fees, technology fees, and standing services.",
+    detail: "Flexible Workspace schedules, review windows, auto-charge, and service lines.",
     icon: Repeat,
   },
   {
-    title: "Proposals",
-    eyebrow: "Offer",
-    detail: "Premium owner proposals before an Entity becomes active.",
-    icon: Receipt,
+    title: "Invoices",
+    eyebrow: "Collect",
+    detail: "Drafts, payment status, owner-facing records, credits, and refunds.",
+    icon: FileText,
   },
   {
     title: "Catalog",
     eyebrow: "Price",
-    detail: "Reusable services, fees, packages, margins, and tax rules.",
+    detail: "Reusable services, fees, packages, costs, margins, and tax rules.",
     icon: Tag,
+  },
+  {
+    title: "Proposals",
+    eyebrow: "Offer",
+    detail: "Premium owner proposals that convert into billing setup.",
+    icon: Receipt,
   },
 ] as const;
 
-export default function BillingPage() {
+function formatCents(cents: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export default async function BillingPage() {
+  const data = await fetchBillingDashboard();
+
   return (
     <main className={styles.shell}>
       <section className={styles.hero}>
@@ -46,12 +67,69 @@ export default function BillingPage() {
           <p className={styles.eyebrow}>Billing</p>
           <h1 className={styles.title}>Revenue operations</h1>
           <p className={styles.subtitle}>
-            Invoices, recurring revenue, proposals, and the Parcel service catalog.
+            Workspace billing, Stripe collection, recurring services, credits, refunds, and proposal conversion.
           </p>
         </div>
         <div className={styles.summary}>
-          <span className={styles.summaryLabel}>Next build focus</span>
-          <strong>Recurring invoices</strong>
+          <span className={styles.summaryLabel}>Processor</span>
+          <strong>Stripe</strong>
+          <span className={styles.summarySub}>Card, ACH, Apple Pay, Google Pay, and Link when eligible.</span>
+        </div>
+      </section>
+
+      <section className={styles.metrics} aria-label="Billing metrics">
+        <Metric label="Billing profiles" value={data.billingProfileCount.toLocaleString("en-US")} />
+        <Metric label="Active schedules" value={data.activeScheduleCount.toLocaleString("en-US")} />
+        <Metric label="Ready for review" value={data.reviewReadyInvoiceCount.toLocaleString("en-US")} />
+        <Metric label="Open balance" value={formatCents(data.totalOpenCents)} />
+        <Metric label="Failed payments" value={data.failedPaymentCount.toLocaleString("en-US")} tone="danger" />
+        <Metric label="Payment methods" value={data.paymentMethodCount.toLocaleString("en-US")} />
+      </section>
+
+      <section className={styles.workbench} aria-label="Billing workbench">
+        <div className={styles.panel}>
+          <div className={styles.panelHead}>
+            <div>
+              <p className={styles.panelEyebrow}>Next charge queue</p>
+              <h2 className={styles.panelTitle}>Recurring schedules</h2>
+            </div>
+            <CreditCard size={20} weight="duotone" />
+          </div>
+
+          {data.schedules.length === 0 ? (
+            <div className={styles.emptyState}>
+              No recurring schedules yet. The next build creates them from Workspace, property, and catalog lines.
+            </div>
+          ) : (
+            <div className={styles.scheduleList}>
+              {data.schedules.map((schedule) => (
+                <Link
+                  key={schedule.id}
+                  href={`/admin/workspaces/${schedule.workspaceId}?tab=billing`}
+                  className={styles.scheduleRow}
+                >
+                  <div>
+                    <strong>{schedule.workspaceName}</strong>
+                    <span>{schedule.name}</span>
+                  </div>
+                  <div className={styles.scheduleMeta}>
+                    <span>{schedule.lineCount} line item{schedule.lineCount === 1 ? "" : "s"}</span>
+                    <b>{schedule.nextInvoiceDate ? formatDate(schedule.nextInvoiceDate) : "No next date"}</b>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.rail}>
+          <p className={styles.panelEyebrow}>Build order</p>
+          <ol>
+            <li>Workspace billing profile and payment method setup</li>
+            <li>Recurring schedule creation</li>
+            <li>Draft review and Stripe collection</li>
+            <li>Credits, refunds, catalog, and proposals</li>
+          </ol>
         </div>
       </section>
 
@@ -73,5 +151,22 @@ export default function BillingPage() {
         })}
       </section>
     </main>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "danger";
+}) {
+  return (
+    <div className={`${styles.metric} ${tone === "danger" ? styles.metricDanger : ""}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }

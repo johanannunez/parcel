@@ -92,9 +92,16 @@
 .heroStat {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 11px;
-  padding: 10px 12px;
+  padding: 10px 12px 11px;
   background: rgba(255, 255, 255, 0.07);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.statHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .statValue {
@@ -107,12 +114,64 @@
 
 .statLabel {
   display: block;
-  margin-top: 6px;
   color: rgba(255, 255, 255, 0.72);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.statNote {
+  display: block;
+  overflow: hidden;
+  margin-top: 7px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 11px;
+  font-weight: 620;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heroBrief {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.heroBrief div {
+  min-width: 0;
+  padding: 9px 11px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.heroBrief span,
+.nextDetails span {
+  display: block;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.heroBrief strong,
+.nextDetails strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 11px;
+  font-weight: 740;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nextCard {
@@ -156,9 +215,27 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  min-width: 0;
   color: rgba(255, 255, 255, 0.82);
   font-size: 12px;
   line-height: 1.35;
+}
+
+.nextDetails {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin-top: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nextDetails div {
+  min-width: 0;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .nextActions {
@@ -217,6 +294,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
   gap: 22px;
+  align-items: start;
   margin-top: 22px;
 }
 
@@ -465,57 +543,65 @@
 
 .insightGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 18px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 249, 246, 0.9));
 }
 
 .insight {
-  min-height: 128px;
-  border: 1px solid var(--color-warm-gray-200);
-  border-radius: 13px;
-  padding: 15px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(250, 249, 246, 0.86));
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px 12px 11px;
+  background: transparent;
 }
 
-.insightTop {
+.insight:not(:last-child) {
+  border-right: 1px solid var(--color-warm-gray-200);
+}
+
+.insightTopline {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .insightIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   background: rgba(2, 170, 235, 0.09);
   color: var(--color-brand);
 }
 
 .insightNumber {
+  justify-self: end;
   color: var(--color-text-primary);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 780;
   line-height: 1;
 }
 
 .insightLabel {
-  margin-top: 14px;
+  overflow: hidden;
   color: var(--color-text-primary);
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 730;
-}
-
-.insightText {
-  margin-top: 5px;
-  color: var(--color-text-tertiary);
-  font-size: 11px;
-  line-height: 1.45;
+  letter-spacing: 0.07em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .recentList {
@@ -524,16 +610,18 @@
 
 .recentItems {
   display: grid;
-  gap: 12px;
-  padding: 18px;
+  gap: 8px;
+  padding: 12px;
 }
 
 .recentItem {
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(248px, 0.36fr);
+  gap: 14px;
+  align-items: start;
   border: 1px solid var(--color-warm-gray-200);
   border-radius: 12px;
-  padding: 15px;
+  padding: 12px;
   background: var(--color-white);
   color: inherit;
   text-decoration: none;
@@ -549,6 +637,10 @@
   transform: translateY(-1px);
 }
 
+.recapMain {
+  min-width: 0;
+}
+
 .recentTitle {
   margin: 0;
   color: var(--color-text-primary);
@@ -559,24 +651,23 @@
 
 .recapFacts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 5px;
 }
 
 .recapFact {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 7px;
-  row-gap: 3px;
+  column-gap: 6px;
+  row-gap: 1px;
   align-items: center;
   min-width: 0;
   border: 1px solid var(--color-warm-gray-200);
-  border-radius: 10px;
-  padding: 9px 10px;
+  border-radius: 9px;
+  padding: 5px 7px;
   background:
     linear-gradient(180deg, rgba(250, 249, 246, 0.74), rgba(255, 255, 255, 0.9));
   color: var(--color-text-tertiary);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 780;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -590,7 +681,7 @@
   grid-column: 2;
   overflow: hidden;
   color: var(--color-text-primary);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 720;
   letter-spacing: 0;
   line-height: 1.35;
@@ -600,10 +691,14 @@
 }
 
 .recentMeta {
-  margin: 0;
+  margin: 7px 0 0;
+  display: -webkit-box;
+  overflow: hidden;
   color: var(--color-text-tertiary);
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.42;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .empty {
@@ -661,12 +756,31 @@
     padding: 18px;
   }
 
-  .heroStats,
-  .insightGrid {
+  .heroStats {
     grid-template-columns: 1fr;
   }
 
+  .insightGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insight:not(:last-child) {
+    border-right: 0;
+  }
+
+  .insight:nth-child(odd) {
+    border-right: 1px solid var(--color-warm-gray-200);
+  }
+
+  .insight:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--color-warm-gray-200);
+  }
+
   .recapFacts {
+    grid-template-columns: 1fr;
+  }
+
+  .recentItem {
     grid-template-columns: 1fr;
   }
 

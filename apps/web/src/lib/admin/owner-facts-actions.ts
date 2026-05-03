@@ -46,17 +46,17 @@ export async function saveInternalNote(
 
   const { data: actingProfile } = await supabase
     .from("profiles")
-    .select("role, entity_id")
+    .select("role, workspace_id")
     .eq("id", user.id)
     .maybeSingle();
   if (actingProfile?.role !== "admin") {
     return { ok: false, error: "Admin access required." };
   }
 
-  // Find the owner's entity for revalidation later.
+  // Find the owner's Workspace for revalidation later.
   const { data: ownerProfile } = await supabase
     .from("profiles")
-    .select("entity_id")
+    .select("workspace_id")
     .eq("id", parsed.data.ownerId)
     .maybeSingle();
 
@@ -85,8 +85,8 @@ export async function saveInternalNote(
       .update({ suppressed: true, updated_at: new Date().toISOString() })
       .eq("id", existing.id);
     if (error) return { ok: false, error: error.message };
-    if (ownerProfile?.entity_id) {
-      revalidatePath(`/admin/entities/${ownerProfile.entity_id}`);
+    if (ownerProfile?.workspace_id) {
+      revalidatePath(`/admin/workspaces/${ownerProfile.workspace_id}`);
     }
     return { ok: true, id: existing.id };
   }
@@ -101,8 +101,8 @@ export async function saveInternalNote(
       })
       .eq("id", existing.id);
     if (error) return { ok: false, error: error.message };
-    if (ownerProfile?.entity_id) {
-      revalidatePath(`/admin/entities/${ownerProfile.entity_id}`);
+    if (ownerProfile?.workspace_id) {
+      revalidatePath(`/admin/workspaces/${ownerProfile.workspace_id}`);
     }
     return { ok: true, id: existing.id };
   }
@@ -123,8 +123,8 @@ export async function saveInternalNote(
     return { ok: false, error: error?.message ?? "Could not save note." };
   }
 
-  if (ownerProfile?.entity_id) {
-    revalidatePath(`/admin/entities/${ownerProfile.entity_id}`);
+  if (ownerProfile?.workspace_id) {
+    revalidatePath(`/admin/workspaces/${ownerProfile.workspace_id}`);
   }
   return { ok: true, id: inserted.id };
 }

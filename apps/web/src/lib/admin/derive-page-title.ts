@@ -6,8 +6,8 @@ export type PageTitleInfo = {
 };
 
 const STATIC_ROUTES: Array<{ prefix: string; title: string; subtitle?: string }> = [
-  { prefix: "/admin/entities", title: "Entities", subtitle: "Owner relationships, people, properties, and operating context." },
-  { prefix: "/admin/prospects", title: "Prospects", subtitle: "Owner opportunities before they become entities." },
+  { prefix: "/admin/workspaces", title: "Workspaces", subtitle: "Owner relationships, people, properties, and operating context." },
+  { prefix: "/admin/prospects", title: "Prospects", subtitle: "Owner opportunities before they become Workspaces." },
   { prefix: "/admin/people", title: "People", subtitle: "Global directory for everyone tied to Parcel." },
   { prefix: "/admin/properties", title: "Properties", subtitle: "Every home under Parcel management." },
   { prefix: "/admin/inbox", title: "Inbox", subtitle: "All owner and guest conversations." },

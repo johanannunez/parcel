@@ -189,7 +189,7 @@ export async function fetchColdLeads(): Promise<ColdLeadsData> {
 // ─── Owner Activity ───────────────────────────────────────────────────────────
 
 export type OwnerActivityRow = {
-  entityId: string;
+  workspaceId: string;
   name: string;
   lastActivity: string | null;
   propertyCount: number;
@@ -219,7 +219,7 @@ export async function fetchOwnerActivity(): Promise<OwnerActivityData> {
       .limit(50),
     supabase
       .from('profiles')
-      .select('entity_id')
+      .select('workspace_id')
       .like('email', '%@pending.theparcelco.com'),
     supabase
       .from('properties')
@@ -227,7 +227,7 @@ export async function fetchOwnerActivity(): Promise<OwnerActivityData> {
       .eq('active', true),
   ]);
 
-  const pendingEntityIds = new Set((pendingProfiles ?? []).map((p) => p.entity_id));
+  const pendingWorkspaceIds = new Set((pendingProfiles ?? []).map((p) => p.workspace_id));
   const propCountMap = new Map<string, number>();
   for (const p of propCounts ?? []) {
     if (p.contact_id) {
@@ -240,7 +240,7 @@ export async function fetchOwnerActivity(): Promise<OwnerActivityData> {
   const recentlyActive: OwnerActivityRow[] = [];
 
   for (const c of contacts ?? []) {
-    const isInvited = pendingEntityIds.has(c.id);
+    const isInvited = pendingWorkspaceIds.has(c.id);
     if (isInvited) continue;
 
     const isDark = !c.last_activity_at || c.last_activity_at < thirtyDaysAgo;
@@ -251,7 +251,7 @@ export async function fetchOwnerActivity(): Promise<OwnerActivityData> {
 
     if (recentlyActive.length < 4) {
       recentlyActive.push({
-        entityId: c.id,
+        workspaceId: c.id,
         name: c.full_name,
         lastActivity: c.last_activity_at,
         propertyCount: propCountMap.get(c.id) ?? 0,

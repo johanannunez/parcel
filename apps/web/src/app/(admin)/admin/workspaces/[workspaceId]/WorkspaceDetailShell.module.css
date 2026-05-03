@@ -1,0 +1,813 @@
+/* ============================================================================
+   WorkspaceDetailShell
+   ============================================================================ */
+
+.shell {
+  --avatar-shadow-base: 0 2px 4px color-mix(in srgb, var(--color-navy, #1a2b4b) 6%, transparent);
+  --avatar-shadow-glow: 0 10px 24px -14px color-mix(in srgb, var(--color-brand-light) 40%, transparent);
+  --avatar-shadow: var(--avatar-shadow-base), var(--avatar-shadow-glow);
+
+  display: flex;
+  flex-direction: row;
+  height: calc(100dvh - 64px);
+  background: var(--color-warm-gray-50);
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-warm-gray-100);
+  flex-shrink: 0;
+}
+
+.headerGrid {
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  grid-template-rows: auto auto;
+  min-width: 0;
+}
+
+.contactBlock {
+  grid-row: 1 / 3;
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-right: 1px solid var(--color-warm-gray-100);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: var(--avatar-shadow);
+}
+
+.avatarFallback {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-brand-gradient);
+  color: var(--color-white, #fff);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-family: inherit;
+  box-shadow: var(--avatar-shadow);
+}
+
+/* ── Idworkspace block (workspace-first header layout) ────────────────────────── */
+
+.idworkspaceBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.workspaceRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.workspaceName {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workspaceTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--color-warm-gray-100);
+  border: 1px solid var(--color-warm-gray-200);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Person chips (multi-member only) ─────────────────────────────────── */
+
+.personChipsRow {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+
+.personChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 4px;
+  border-radius: 20px;
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 100ms ease, border-color 100ms ease, color 100ms ease;
+}
+
+.personChip:hover {
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-primary);
+}
+
+.personChip:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.personChipActive {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+
+.personChipActive:hover {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+
+.personChipAvatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.personChipInitials {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-warm-gray-200);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.name {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.namePartEditing {
+  color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 9%, transparent);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin: -1px -5px;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.contactStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 2px;
+}
+
+.contactItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.contactValue {
+  color: var(--color-text-secondary);
+}
+
+/* ── Copy button ──────────────────────────────────────────────────────────── */
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  opacity: 1;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.copyBtn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-warm-gray-100);
+}
+
+.copyBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 1px;
+  opacity: 1;
+}
+
+.copyBtnCopied {
+  opacity: 1;
+  color: var(--color-success);
+}
+
+/* ── Pills row ───────────────────────────────────────────────────────────── */
+
+.pillsRow {
+  grid-row: 1;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--color-warm-gray-100);
+  min-width: 0;
+  position: relative;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--color-warm-gray-50);
+  border: 1px solid var(--color-warm-gray-200);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pillHighlight {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.pillSep {
+  width: 1px;
+  height: 13px;
+  background: var(--color-warm-gray-200);
+  flex-shrink: 0;
+}
+
+/* ── Inline status line (replaces bordered strip) ───────────────────────── */
+
+.statusLine {
+  grid-row: 2;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  padding: 8px 18px;
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+  transition: background 200ms ease;
+}
+
+.statusLineOverdue {
+  background: color-mix(in srgb, #ef4444 5%, var(--color-warm-gray-50));
+}
+
+.statusLinePiece {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.statusLineSep {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  background: var(--color-warm-gray-200);
+  margin: 0 12px;
+  flex-shrink: 0;
+}
+
+.statusLineLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.statusLineMuted {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.statusLineFollowUpBtn {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  line-height: inherit;
+  transition: opacity 100ms ease;
+}
+
+.statusLineFollowUpBtn:hover {
+  opacity: 0.75;
+}
+
+.statusLineFollowUpBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.statusLineFollowUpBtn[data-state="overdue"] {
+  color: #b91c1c;
+}
+
+.statusLineFollowUpBtn[data-state="upcoming"] {
+  color: #b45309;
+}
+
+.statusLineDoneBtn {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, #ef4444 28%, transparent);
+  background: transparent;
+  color: #b91c1c;
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+
+.statusLineDoneBtn:hover {
+  background: color-mix(in srgb, #ef4444 8%, transparent);
+}
+
+.statusLineDoneBtn:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+.statusLineAddBtn,
+.statusLineSetBtn {
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-brand);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 100ms ease;
+}
+
+.statusLineAddBtn:hover,
+.statusLineSetBtn:hover {
+  text-decoration-color: var(--color-brand);
+}
+
+.statusLineAddBtn:focus-visible,
+.statusLineSetBtn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.statusLineMeetingText {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #15803d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Custom date-picker popover ───────────────────────────────────────────── */
+
+.datePicker {
+  position: fixed;
+  z-index: 300;
+  background: var(--color-surface);
+  border: 1px solid var(--color-warm-gray-200);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(11,27,43,0.06), 0 16px 32px -8px rgba(11,27,43,0.14);
+  padding: 12px;
+  width: 252px;
+  font-family: inherit;
+}
+
+.datePickerQuick {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.datePickerChip {
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid var(--color-warm-gray-200);
+  background: var(--color-warm-gray-50);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+.datePickerChip:hover {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+}
+
+.datePickerNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+.datePickerNavBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--color-warm-gray-200);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 100ms ease;
+}
+.datePickerNavBtn:hover {
+  background: var(--color-warm-gray-100);
+  color: var(--color-text-primary);
+}
+
+.datePickerMonthLabel {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.datePickerGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.datePickerDow {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  padding: 3px 0 5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.datePickerDay {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 80ms ease;
+}
+.datePickerDay:hover { background: var(--color-warm-gray-100); }
+
+.datePickerDayToday {
+  background: color-mix(in srgb, var(--color-brand) 10%, transparent);
+  color: var(--color-brand);
+  font-weight: 700;
+}
+.datePickerDayToday:hover { background: color-mix(in srgb, var(--color-brand) 16%, transparent); }
+
+.datePickerDaySelected {
+  background: var(--color-brand) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.datePickerDayPast {
+  color: var(--color-text-tertiary);
+}
+
+/* ── Tab column ───────────────────────────────────────────────────────────── */
+
+.tabColumn {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Tab bar ──────────────────────────────────────────────────────────────── */
+
+.tabBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 32px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-warm-gray-200);
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  transition: color 120ms ease;
+}
+
+.tab::before {
+  content: attr(data-label);
+  font-weight: 700;
+  font-size: 13px;
+  height: 0;
+  visibility: hidden;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.tab:active {
+  opacity: 0.75;
+}
+
+.tab[data-active="true"] {
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1b77be 0%, #02aaeb 100%);
+  border-radius: 6px 6px 0 0;
+  box-shadow: inset 0 -2px 0 0 #1a1a1a;
+}
+
+.tab[data-active="true"]::after {
+  display: none;
+}
+
+/* ── Content wrapper ──────────────────────────────────────────────────────── */
+
+.contentWrapper {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Skeleton loader ──────────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { background-position: -800px 0; }
+  100% { background-position:  800px 0; }
+}
+
+@keyframes skFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.skContent {
+  flex: 1;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  animation: skFadeIn 120ms ease;
+}
+
+.skBone {
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    var(--color-warm-gray-100) 25%,
+    var(--color-warm-gray-200) 50%,
+    var(--color-warm-gray-100) 75%
+  );
+  background-size: 1600px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-warm-gray-100);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.skRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.skRow3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.skFlex1 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.skListRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.skTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.skTaskRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--color-warm-gray-100);
+}
+
+.skMeetingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skInsightRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.skMessageRow {
+  display: flex;
+}
+
+.skMessageRowRight {
+  justify-content: flex-end;
+}
+
+.skBubble {
+  background: var(--color-warm-gray-50);
+  border: 1px solid var(--color-warm-gray-100);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.skDocGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.skTableRow {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-warm-gray-100);
+}
+
+.skFormField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* ── Tab content ──────────────────────────────────────────────────────────── */
+
+@keyframes contentIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px 32px;
+  animation: contentIn 180ms ease;
+}

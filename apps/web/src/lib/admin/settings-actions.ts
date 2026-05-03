@@ -6,21 +6,21 @@ import { createClient } from "@/lib/supabase/server";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-const EntitySchema = z.object({
-  entityId: z.string().uuid(),
+const BusinessEntitySchema = z.object({
+  workspaceId: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
   type: z.enum(["LLC", "S-Corp", "C-Corp", "Sole Proprietor", "Partnership", ""]),
   ein: z.string().trim().max(20),
   notes: z.string().trim().max(4000),
 });
 
-export async function updateEntity(input: z.infer<typeof EntitySchema>): Promise<ActionResult> {
-  const parsed = EntitySchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Invalid entity data." };
+export async function updateWorkspaceBusinessEntity(input: z.infer<typeof BusinessEntitySchema>): Promise<ActionResult> {
+  const parsed = BusinessEntitySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid business entity data." };
   const supabase = await createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
-    .from("entities")
+    .from("workspaces")
     .update({
       name: parsed.data.name,
       type: parsed.data.type ? parsed.data.type : null,
@@ -28,9 +28,9 @@ export async function updateEntity(input: z.infer<typeof EntitySchema>): Promise
       notes: parsed.data.notes ? parsed.data.notes : null,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", parsed.data.entityId);
+    .eq("id", parsed.data.workspaceId);
   if (error) return { ok: false, error: error.message };
-  revalidatePath(`/admin/entities/${parsed.data.entityId}`);
+  revalidatePath(`/admin/workspaces/${parsed.data.workspaceId}`);
   return { ok: true };
 }
 
@@ -50,6 +50,6 @@ export async function updateProfileRegion(
     .update({ timezone: parsed.data.timezone, updated_at: new Date().toISOString() })
     .eq("id", parsed.data.profileId);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/admin/entities");
+  revalidatePath("/admin/workspaces");
   return { ok: true };
 }

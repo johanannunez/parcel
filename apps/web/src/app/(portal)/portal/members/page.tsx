@@ -58,14 +58,14 @@ export default async function MembersPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const profileAny = profile as any;
-  const entityId = profileAny?.entity_id ?? null;
+  const workspaceId = profileAny?.workspace_id ?? null;
 
-  if (entityId) {
+  if (workspaceId) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: membersRaw } = await (client as any)
       .from("profiles")
       .select("id, full_name, email, phone, avatar_url, location")
-      .eq("entity_id", entityId)
+      .eq("workspace_id", workspaceId)
       .eq("role", "owner")
       .order("created_at", { ascending: true });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

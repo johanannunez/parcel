@@ -41,7 +41,7 @@ export type ContactFilterOptions = {
 
 type RawContactRow = {
   id: string;
-  entity_id: string | null;
+  workspace_id: string | null;
   profile_id: string | null;
   full_name: string;
   display_name: string | null;
@@ -223,13 +223,13 @@ export async function fetchAdminContactsList({
     views[0];
 
   if (!activeView) {
-    throw new Error('No saved views found for entity contact');
+    throw new Error('No saved views found for contacts');
   }
 
   let query = untypedDatabase(supabase)
     .from<RawContactRow[]>('contacts')
     .select(
-      `id, entity_id, profile_id, full_name, display_name, company_name, email, phone,
+      `id, workspace_id, profile_id, full_name, display_name, company_name, email, phone,
        avatar_url, source, source_detail, lifecycle_stage, stage_changed_at,
        assigned_to, estimated_mrr, last_activity_at, created_at,
        assigned_profile:profiles!contacts_assigned_to_fkey(full_name),
@@ -311,7 +311,7 @@ export async function fetchAdminContactsList({
       : [];
     return {
       id: r.id,
-      entityId: (r.entity_id as string | null) ?? null,
+      workspaceId: (r.workspace_id as string | null) ?? null,
       profileId: r.profile_id,
       fullName: r.full_name,
       displayName: r.display_name,

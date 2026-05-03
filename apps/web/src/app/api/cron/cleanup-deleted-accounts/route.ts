@@ -14,7 +14,7 @@ import { createServiceClient } from "@/lib/supabase/service";
  * 1. Find profiles with deleted_at older than 30 days.
  * 2. Delete the auth.users record (cascades to profile and all related data
  *    via FK constraints with ON DELETE CASCADE).
- * 3. After deleting profiles, clean up any orphaned entities (entities with
+ * 3. After deleting profiles, clean up any orphaned workspaces (workspaces with
  *    zero remaining members).
  * 4. Return a summary for the Vercel Cron logs.
  */
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 
   const { data: toDelete, error: findError } = await svc
     .from("profiles")
-    .select("id, entity_id, email, deleted_at")
+    .select("id, workspace_id, email, deleted_at")
     .lt("deleted_at", cutoff);
 
   if (findError) {
@@ -60,14 +60,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       deletedProfiles: 0,
-      deletedEntities: 0,
+      deletedWorkspaces: 0,
       message: "No accounts past grace period",
     });
   }
 
-  // Track entity IDs that may need orphan cleanup later
-  const affectedEntityIds = [
-    ...new Set(toDelete.map((p) => p.entity_id).filter(Boolean)),
+  // Track workspace IDs that may need orphan cleanup later.
+  const affectedWorkspaceIds = [
+    ...new Set(toDelete.map((p) => p.workspace_id).filter(Boolean)),
   ] as string[];
 
   // Delete profiles one at a time. We delete the profile FIRST (which cascades
@@ -114,34 +114,34 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Clean up orphaned entities (entities with zero remaining profiles)
-  let deletedEntityCount = 0;
-  for (const entityId of affectedEntityIds) {
+  // Clean up orphaned workspaces (workspaces with zero remaining profiles)
+  let deletedWorkspaceCount = 0;
+  for (const workspaceId of affectedWorkspaceIds) {
     const { count } = await svc
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .eq("entity_id", entityId);
+      .eq("workspace_id", workspaceId);
 
     if ((count ?? 0) === 0) {
-      const { error: entityDeleteError } = await svc
-        .from("entities")
+      const { error: workspaceDeleteError } = await svc
+        .from("workspaces")
         .delete()
-        .eq("id", entityId);
+        .eq("id", workspaceId);
 
-      if (!entityDeleteError) {
-        deletedEntityCount++;
+      if (!workspaceDeleteError) {
+        deletedWorkspaceCount++;
       }
     }
   }
 
   console.log(
-    `[Cron] Cleanup complete. Deleted ${deletedCount} profiles, ${deletedEntityCount} orphaned entities.`,
+    `[Cron] Cleanup complete. Deleted ${deletedCount} profiles, ${deletedWorkspaceCount} orphaned workspaces.`,
   );
 
   return NextResponse.json({
     ok: true,
     deletedProfiles: deletedCount,
-    deletedEntities: deletedEntityCount,
+    deletedWorkspaces: deletedWorkspaceCount,
     failures: failures.length > 0 ? failures : undefined,
     timestamp: new Date().toISOString(),
   });

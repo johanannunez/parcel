@@ -122,14 +122,13 @@
   z-index: 5;
 }
 
-/* Strip Mapbox popup chrome — MapPopover provides all styling */
-:global(.global-map-popup .mapboxgl-popup-content) {
+.shell :global(.global-map-popup .mapboxgl-popup-content) {
   padding: 0;
   border-radius: 12px;
   box-shadow: none;
   background: transparent;
 }
 
-:global(.global-map-popup .mapboxgl-popup-tip) {
+.shell :global(.global-map-popup .mapboxgl-popup-tip) {
   display: none;
 }

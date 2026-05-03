@@ -29,7 +29,7 @@ function KindBadge({ kind }: { kind: string }) {
 
 function InvoiceRow({ invoice }: { invoice: OpenInvoiceRow }) {
   return (
-    <Link href="/admin/entities?view=active-owners" className={styles.invoiceRow}>
+    <Link href="/admin/workspaces?view=active-owners" className={styles.invoiceRow}>
       <div className={styles.rowMain}>
         <span className={styles.ownerName}>{invoice.ownerName}</span>
         <KindBadge kind={invoice.kind} />

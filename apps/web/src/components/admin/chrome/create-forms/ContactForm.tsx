@@ -60,7 +60,7 @@ export function ContactForm({ onClose }: { onClose: () => void }) {
           lifecycleStage,
           notes: notes || null,
         });
-        router.push(`/admin/entities/${result.entityId}`);
+        router.push(`/admin/workspaces/${result.workspaceId}`);
         onClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');

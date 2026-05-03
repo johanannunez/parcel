@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       { onConflict: "owner_id,provider" },
     );
 
-    return NextResponse.redirect(`${appUrl}/admin/entities?calendar_connected=1`);
+    return NextResponse.redirect(`${appUrl}/admin/workspaces?calendar_connected=1`);
   } catch {
     return NextResponse.redirect(`${appUrl}/admin?error=calendar_auth_failed`);
   }

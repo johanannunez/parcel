@@ -20,18 +20,18 @@ export type CreateContactInput = {
 
 export async function createContact(
   input: CreateContactInput,
-): Promise<{ id: string; entityId: string }> {
+): Promise<{ id: string; workspaceId: string }> {
   const { supabase, user } = await requireAdminUser();
 
-  const entityName = input.companyName?.trim() || input.fullName.trim();
+  const workspaceName = input.companyName?.trim() || input.fullName.trim();
 
-  const { data: entity, error: entityError } = await supabase
-    .from('entities')
-    .insert({ name: entityName, type: 'individual' })
+  const { data: workspace, error: workspaceError } = await supabase
+    .from('workspaces')
+    .insert({ name: workspaceName, type: 'individual' })
     .select('id')
     .single();
 
-  if (entityError) throw entityError;
+  if (workspaceError) throw workspaceError;
 
   const metadata = input.notes?.trim()
     ? { notes: input.notes.trim() }
@@ -49,14 +49,14 @@ export async function createContact(
       lifecycle_stage: (input.lifecycleStage ?? 'lead_new') as DbLifecycleStage,
       metadata,
       assigned_to: user.id,
-      entity_id: entity.id,
+      workspace_id: workspace.id,
     } as any)
     .select('id')
     .single();
 
   if (error) throw error;
   revalidatePath('/admin/people');
-  return { id: data.id as string, entityId: entity.id as string };
+  return { id: data.id as string, workspaceId: workspace.id as string };
 }
 
 export async function updateContactStage(

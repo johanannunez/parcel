@@ -15,10 +15,10 @@ type Props = {
   rows: ContactRow[];
   insightsMap: Record<string, Insight[]>;
   basePath?: string;
-  useEntityId?: boolean;
+  useWorkspaceId?: boolean;
 };
 
-export function StatusBoardClient({ viewKey, rows, insightsMap, basePath = '/admin/people', useEntityId = false }: Props) {
+export function StatusBoardClient({ viewKey, rows, insightsMap, basePath = '/admin/people', useWorkspaceId = false }: Props) {
   const { sources, assignees } = useContactsFilters();
   const { setTools } = useBoardTools();
   const [stageOverrides, setStageOverrides] = useState<Record<string, LifecycleStage>>({});
@@ -44,8 +44,8 @@ export function StatusBoardClient({ viewKey, rows, insightsMap, basePath = '/adm
   );
 
   const columns = useMemo(
-    () => buildContactStatusBoard(appliedRows, insightsMap, viewKey, basePath, useEntityId),
-    [appliedRows, insightsMap, viewKey, basePath, useEntityId],
+    () => buildContactStatusBoard(appliedRows, insightsMap, viewKey, basePath, useWorkspaceId),
+    [appliedRows, insightsMap, viewKey, basePath, useWorkspaceId],
   );
 
   const boardKey = `contacts:${viewKey}`;

@@ -24,7 +24,7 @@ function mapRow(r: Record<string, unknown>): CommunicationEvent {
     recordingUrl: (r.recording_url as string | null) ?? null,
     quoSummary: (r.quo_summary as string | null) ?? null,
     entityType: (r.entity_type as CommunicationEvent['entityType']) ?? null,
-    entityId: (r.entity_id as string | null) ?? null,
+    workspaceId: (r.entity_id as string | null) ?? null,
     processAfter: (r.process_after as string | null) ?? null,
     processedAt: (r.processed_at as string | null) ?? null,
     tier: (r.tier as CommunicationEvent['tier']) ?? null,
@@ -35,14 +35,14 @@ function mapRow(r: Record<string, unknown>): CommunicationEvent {
 
 export async function fetchCommunications(
   entityType: 'owner' | 'contact' | 'vendor',
-  entityId: string
+  workspaceId: string
 ): Promise<CommunicationsData> {
   const supabase = await createClient();
   const { data, error } = await (supabase as any)
     .from('communication_events')
     .select('*')
     .eq('entity_type', entityType)
-    .eq('entity_id', entityId)
+    .eq('entity_id', workspaceId)
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -53,8 +53,8 @@ export async function fetchCommunications(
 
   const events = (data ?? []).map(mapRow);
 
-  const insightMap = await fetchInsightsByParentWithPayload(entityType, [entityId]).catch(() => ({} as Record<string, never[]>));
-  const insights = insightMap[entityId] ?? [];
+  const insightMap = await fetchInsightsByParentWithPayload(entityType, [workspaceId]).catch(() => ({} as Record<string, never[]>));
+  const insights = insightMap[workspaceId] ?? [];
   const commInsight = insights.find((i) => i.agentKey.startsWith('communication:'));
   const payload = commInsight?.actionPayload as CommunicationInsightPayload | undefined;
 
@@ -77,7 +77,7 @@ export type CommunicationsDashboardData = {
     title: string;
     body: string;
     entityType: string;
-    entityId: string;
+    workspaceId: string;
     createdAt: string;
   }>;
   unresolvedCallers: UnresolvedCaller[];
@@ -110,7 +110,7 @@ export async function fetchCommunicationsDashboard(): Promise<CommunicationsDash
     title: r.title as string,
     body: r.body as string,
     entityType: r.parent_type as string,
-    entityId: r.parent_id as string,
+    workspaceId: r.parent_id as string,
     createdAt: r.created_at as string,
   }));
 

@@ -39,7 +39,7 @@ export default async function ProspectsLayout({ children }: { children: ReactNod
         <div className={styles.shell}>
           <PageTitle
             title="Prospects"
-            subtitle="Owner opportunities before they become entities"
+            subtitle="Owner opportunities before they become Workspaces"
           />
           <ContactsViewSwitcher />
           <div className={styles.boardNav}>

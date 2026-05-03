@@ -29,10 +29,10 @@ export default async function ContactDetailPage({ params, searchParams }: Props)
   ]);
   if (!contact) notFound();
 
-  // Onboarded owners already have a richer Entity page.
+  // Onboarded owners already have a richer Workspace page.
   // Keep the contact detail route focused on pre-owner records.
   if (contact.profileId) {
-    redirect(contact.entityId ? `/admin/entities/${contact.entityId}` : "/admin/entities?view=active-owners");
+    redirect(contact.workspaceId ? `/admin/workspaces/${contact.workspaceId}` : "/admin/workspaces?view=active-owners");
   }
 
   const activity = await fetchRecentActivity('contact', contact.id, 10);

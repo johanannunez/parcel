@@ -4,11 +4,11 @@ import { useState, useCallback, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  House,
+  Gauge,
   ShareNetwork,
-  ChatCircle,
+  ChatsCircle,
   List,
-  Buildings,
+  DoorOpen,
   UserSwitch,
   ListChecks,
   BookOpenText,
@@ -17,12 +17,13 @@ import {
   Power,
   Sun,
   Moon,
-  CalendarBlank,
+  CalendarDots,
   FolderOpen,
   Files,
-  UserPlus,
-  Storefront,
-  IdentificationBadge,
+  Funnel,
+  Stack,
+  Handshake,
+  UserList,
   CaretDown,
   Receipt,
 } from "@phosphor-icons/react";
@@ -64,8 +65,8 @@ const navItems: NavItem[] = [
   {
     href: "/admin",
     label: "Dashboard",
-    icon: <House size={22} weight="regular" />,
-    activeIcon: <House size={22} weight="fill" />,
+    icon: <Gauge size={22} weight="regular" />,
+    activeIcon: <Gauge size={22} weight="fill" />,
   },
   {
     href: "/admin/tasks",
@@ -75,34 +76,34 @@ const navItems: NavItem[] = [
     matchPrefix: "/admin/tasks",
   },
   {
-    href: "/admin/entities?view=active-owners",
+    href: "/admin/workspaces?view=active-owners",
     label: "Relations",
     icon: <ShareNetwork size={22} weight="regular" />,
     activeIcon: <ShareNetwork size={22} weight="fill" />,
-    matchPrefixes: ["/admin/entities", "/admin/prospects", "/admin/people", "/admin/vendors"],
+    matchPrefixes: ["/admin/workspaces", "/admin/prospects", "/admin/people", "/admin/vendors"],
   },
 ];
 
 /* ── Sheet items (mirrors desktop sidebar) ── */
 
 const sheetItems: SheetEntry[] = [
-  { href: "/admin", label: "Dashboard", icon: <House size={19} weight="duotone" /> },
-  { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
+  { href: "/admin", label: "Dashboard", icon: <Gauge size={19} weight="duotone" /> },
+  { href: "/admin/inbox", label: "Inbox", icon: <ChatsCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/meetings", label: "Meetings", icon: <CalendarBlank size={19} weight="duotone" />, matchPrefix: "/admin/meetings" },
+  { href: "/admin/meetings", label: "Meetings", icon: <CalendarDots size={19} weight="duotone" />, matchPrefix: "/admin/meetings" },
   {
     kind: "group",
     label: "Relationships",
     icon: <ShareNetwork size={19} weight="duotone" />,
     storageKey: "mobile-nav-people-expanded",
     items: [
-      { href: "/admin/prospects", label: "Prospects", icon: <UserPlus size={17} weight="duotone" />, matchPrefix: "/admin/prospects" },
-      { href: "/admin/entities?view=active-owners", label: "Entities", icon: <Buildings size={17} weight="duotone" />, matchPrefix: "/admin/entities" },
-      { href: "/admin/people?mode=compact", label: "People", icon: <IdentificationBadge size={17} weight="duotone" />, matchPrefix: "/admin/people" },
-      { href: "/admin/vendors", label: "Vendors", icon: <Storefront size={17} weight="duotone" />, matchPrefix: "/admin/vendors" },
+      { href: "/admin/prospects", label: "Prospects", icon: <Funnel size={17} weight="duotone" />, matchPrefix: "/admin/prospects" },
+      { href: "/admin/workspaces?view=active-owners", label: "Workspaces", icon: <Stack size={17} weight="duotone" />, matchPrefix: "/admin/workspaces" },
+      { href: "/admin/people?mode=compact", label: "People", icon: <UserList size={17} weight="duotone" />, matchPrefix: "/admin/people" },
+      { href: "/admin/vendors", label: "Vendors", icon: <Handshake size={17} weight="duotone" />, matchPrefix: "/admin/vendors" },
     ],
   },
-  { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
+  { href: "/admin/properties", label: "Properties", icon: <DoorOpen size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
   { href: "/admin/documents", label: "Documents", icon: <Files size={19} weight="duotone" />, matchPrefix: "/admin/documents" },
   { href: "/admin/projects", label: "Projects", icon: <FolderOpen size={19} weight="duotone" />, matchPrefix: "/admin/projects" },
   { href: "/admin/billing", label: "Billing", icon: <Receipt size={19} weight="duotone" />, matchPrefix: "/admin/billing" },
@@ -114,14 +115,14 @@ const sheetItems: SheetEntry[] = [
 const mainNavPrefixes = [
   "/admin",
   "/admin/tasks",
-  "/admin/entities",
+  "/admin/workspaces",
   "/admin/prospects",
   "/admin/people",
   "/admin/vendors",
 ];
 
 function shouldPrefetchAdminHref(href: string): boolean {
-  return !href.startsWith("/admin/entities");
+  return !href.startsWith("/admin/workspaces");
 }
 
 const springCollapse = { type: "spring" as const, stiffness: 380, damping: 36, mass: 0.7 };

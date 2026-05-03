@@ -30,7 +30,7 @@ type ActionItem = {
 type MeetingCard = {
   id: string;
   ownerId: string;
-  entityId: string | null;
+  workspaceId: string | null;
   title: string;
   scheduledAt: string | null;
   durationMinutes: number | null;
@@ -124,6 +124,25 @@ function durationLabel(minutes: number | null): string {
   return remaining ? `${hours} hr ${remaining} min` : `${hours} hr`;
 }
 
+function visibilityLabel(visibility: string): string {
+  if (visibility === "shared") return "Owner visible";
+  if (visibility === "private") return "Internal";
+  return visibility.charAt(0).toUpperCase() + visibility.slice(1);
+}
+
+function shortDateLabel(iso: string | null): string {
+  if (!iso) return "Not scheduled";
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function completedDateTimeLabel(iso: string): string {
+  const date = formatDateParts(iso);
+  return `${date.full} at ${date.time}`;
+}
+
 function statusLabel(status: string): string {
   if (status === "completed") return "Recapped";
   if (status === "cancelled") return "Cancelled";
@@ -137,9 +156,9 @@ function statusClass(status: string): string {
 }
 
 function ownerMeetingHref(meeting: MeetingCard): string {
-  return meeting.entityId
-    ? `/admin/entities/${meeting.entityId}?tab=meetings`
-    : "/admin/entities?view=active-owners";
+  return meeting.workspaceId
+    ? `/admin/workspaces/${meeting.workspaceId}?tab=meetings`
+    : "/admin/workspaces?view=active-owners";
 }
 
 function recapSummary(meeting: MeetingCard): string {
@@ -161,7 +180,7 @@ async function fetchMeetings(): Promise<MeetingCard[]> {
       visibility,
       ai_summary,
       action_items,
-      profiles!owner_meetings_owner_id_fkey(full_name, email, entity_id),
+      profiles!owner_meetings_owner_id_fkey(full_name, email, workspace_id),
       properties!owner_meetings_property_id_fkey(address_line1, address_line2, city, state, postal_code)
     `)
     .order("scheduled_at", { ascending: true, nullsFirst: false })
@@ -184,7 +203,7 @@ async function fetchMeetings(): Promise<MeetingCard[]> {
     return {
       id: textValue(record.id) ?? "",
       ownerId: textValue(record.owner_id) ?? "",
-      entityId: textValue(owner.entity_id),
+      workspaceId: textValue(owner.workspace_id),
       title: textValue(record.title) ?? "Owner meeting",
       scheduledAt: textValue(record.scheduled_at),
       durationMinutes: numberValue(record.duration_minutes),
@@ -223,6 +242,16 @@ export default async function AdminMeetingsPage() {
     0,
   );
   const recappedCount = meetings.filter((meeting) => meeting.aiSummary).length;
+  const latestRecap = meetings
+    .filter((meeting) => meeting.status === "completed" && meeting.scheduledAt)
+    .sort(
+      (first, second) =>
+        new Date(second.scheduledAt ?? "").getTime() -
+        new Date(first.scheduledAt ?? "").getTime(),
+    )[0];
+  const nextMeetingDate = nextMeeting
+    ? formatDateParts(nextMeeting.scheduledAt)
+    : null;
 
   return (
     <main className={styles.shell}>
@@ -241,16 +270,51 @@ export default async function AdminMeetingsPage() {
               </p>
               <div className={styles.heroStats}>
                 <div className={styles.heroStat}>
-                  <span className={styles.statValue}>{upcoming.length}</span>
-                  <span className={styles.statLabel}>Upcoming</span>
+                  <div className={styles.statHeader}>
+                    <span className={styles.statValue}>{upcoming.length}</span>
+                    <span className={styles.statLabel}>Upcoming</span>
+                  </div>
+                  <span className={styles.statNote}>
+                    {nextMeeting
+                      ? `Next on ${shortDateLabel(nextMeeting.scheduledAt)}`
+                      : "No owner touchpoint queued"}
+                  </span>
                 </div>
                 <div className={styles.heroStat}>
-                  <span className={styles.statValue}>{recappedCount}</span>
-                  <span className={styles.statLabel}>With recaps</span>
+                  <div className={styles.statHeader}>
+                    <span className={styles.statValue}>{recappedCount}</span>
+                    <span className={styles.statLabel}>With recaps</span>
+                  </div>
+                  <span className={styles.statNote}>
+                    {meetings.length > 0
+                      ? `${recappedCount} of ${meetings.length} summarized`
+                      : "Summaries will appear here"}
+                  </span>
                 </div>
                 <div className={styles.heroStat}>
-                  <span className={styles.statValue}>{actionItemCount}</span>
-                  <span className={styles.statLabel}>Open items</span>
+                  <div className={styles.statHeader}>
+                    <span className={styles.statValue}>{actionItemCount}</span>
+                    <span className={styles.statLabel}>Open items</span>
+                  </div>
+                  <span className={styles.statNote}>
+                    {actionItemCount === 1
+                      ? "1 relationship follow-up"
+                      : `${actionItemCount} relationship follow-ups`}
+                  </span>
+                </div>
+              </div>
+              <div className={styles.heroBrief}>
+                <div>
+                  <span>Owner visibility</span>
+                  <strong>{sharedCount} shared</strong>
+                </div>
+                <div>
+                  <span>Last recap</span>
+                  <strong>{latestRecap ? shortDateLabel(latestRecap.scheduledAt) : "None yet"}</strong>
+                </div>
+                <div>
+                  <span>Meeting link</span>
+                  <strong>{nextMeeting?.meetLink ? "Ready" : "Needed"}</strong>
                 </div>
               </div>
             </div>
@@ -270,8 +334,7 @@ export default async function AdminMeetingsPage() {
                     </div>
                     <div className={styles.nextMetaRow}>
                       <Clock size={15} weight="duotone" />
-                      {formatDateParts(nextMeeting.scheduledAt).full} at{" "}
-                      {formatDateParts(nextMeeting.scheduledAt).time}
+                      {nextMeetingDate?.full} at {nextMeetingDate?.time}
                     </div>
                     {nextMeeting.propertyName ? (
                       <div className={styles.nextMetaRow}>
@@ -279,6 +342,24 @@ export default async function AdminMeetingsPage() {
                         {nextMeeting.propertyName}
                       </div>
                     ) : null}
+                  </div>
+                  <div className={styles.nextDetails}>
+                    <div>
+                      <span>Duration</span>
+                      <strong>{durationLabel(nextMeeting.durationMinutes)}</strong>
+                    </div>
+                    <div>
+                      <span>Visibility</span>
+                      <strong>{visibilityLabel(nextMeeting.visibility)}</strong>
+                    </div>
+                    <div>
+                      <span>Link</span>
+                      <strong>{nextMeeting.meetLink ? "Ready" : "Needed"}</strong>
+                    </div>
+                    <div>
+                      <span>Contact</span>
+                      <strong>{nextMeeting.ownerEmail ?? "Email not set"}</strong>
+                    </div>
                   </div>
                   <div className={styles.nextActions}>
                     <Link
@@ -305,15 +386,15 @@ export default async function AdminMeetingsPage() {
                 <>
                   <h2 className={styles.nextTitle}>No meetings scheduled</h2>
                   <p className={styles.subtitle}>
-                    Create the next owner touchpoint from an entity meeting tab.
+                    Create the next owner touchpoint from a Workspace meeting tab.
                   </p>
                   <div className={styles.nextActions}>
                     <Link
                       className={styles.primaryAction}
-                      href="/admin/entities"
+                      href="/admin/workspaces"
                       prefetch={false}
                     >
-                      Find an entity
+                      Find a Workspace
                       <ArrowRight size={13} weight="bold" />
                     </Link>
                   </div>
@@ -416,7 +497,7 @@ export default async function AdminMeetingsPage() {
             ) : (
               <EmptyState
                 title="No upcoming owner meetings"
-                copy="The agenda will fill in as meetings are scheduled from entity pages."
+                copy="The agenda will fill in as meetings are scheduled from Workspace pages."
               />
             )}
           </div>
@@ -431,27 +512,27 @@ export default async function AdminMeetingsPage() {
             </div>
             <div className={styles.insightGrid}>
               <InsightCard
-                icon={<VideoCamera size={18} weight="duotone" />}
+                icon={<VideoCamera size={16} weight="duotone" />}
                 value={String(sharedCount)}
-                label="Shared with owners"
+                label="Shared"
                 text="Visible touchpoints owners can see from their portal."
               />
               <InsightCard
-                icon={<NotePencil size={18} weight="duotone" />}
+                icon={<NotePencil size={16} weight="duotone" />}
                 value={String(completed.length)}
-                label="Recently completed"
+                label="Completed"
                 text="Finished conversations ready for review or follow-up."
               />
               <InsightCard
-                icon={<CheckCircle size={18} weight="duotone" />}
+                icon={<CheckCircle size={16} weight="duotone" />}
                 value={String(actionItemCount)}
-                label="Open follow-ups"
+                label="Follow-ups"
                 text="Action items still waiting for completion."
               />
               <InsightCard
-                icon={<Sparkle size={18} weight="duotone" />}
+                icon={<Sparkle size={16} weight="duotone" />}
                 value={String(recappedCount)}
-                label="AI recapped"
+                label="Recapped"
                 text="Meetings with a summary already attached."
               />
             </div>
@@ -475,11 +556,14 @@ export default async function AdminMeetingsPage() {
                   href={ownerMeetingHref(meeting)}
                   prefetch={false}
                 >
-                  <h3 className={styles.recentTitle}>{meeting.title}</h3>
+                  <div className={styles.recapMain}>
+                    <h3 className={styles.recentTitle}>{meeting.title}</h3>
+                    <p className={styles.recentMeta}>{recapSummary(meeting)}</p>
+                  </div>
                   <div className={styles.recapFacts}>
                     <span className={styles.recapFact}>
                       <UserCircle size={13} weight="duotone" />
-                      <span>Met with</span>
+                      <span>With</span>
                       <strong>{meeting.ownerName}</strong>
                     </span>
                     {meeting.propertyName ? (
@@ -493,11 +577,10 @@ export default async function AdminMeetingsPage() {
                       <span className={styles.recapFact}>
                         <CalendarCheck size={13} weight="duotone" />
                         <span>Completed</span>
-                        <strong>{formatDateParts(meeting.scheduledAt).full}</strong>
+                        <strong>{completedDateTimeLabel(meeting.scheduledAt)}</strong>
                       </span>
                     ) : null}
                   </div>
-                  <p className={styles.recentMeta}>{recapSummary(meeting)}</p>
                 </Link>
               ))}
             </div>
@@ -525,13 +608,12 @@ function InsightCard({
   text: string;
 }) {
   return (
-    <div className={styles.insight}>
-      <div className={styles.insightTop}>
+    <div className={styles.insight} aria-label={`${label}: ${value}. ${text}`}>
+      <div className={styles.insightTopline}>
         <span className={styles.insightIcon}>{icon}</span>
         <span className={styles.insightNumber}>{value}</span>
       </div>
       <div className={styles.insightLabel}>{label}</div>
-      <div className={styles.insightText}>{text}</div>
     </div>
   );
 }

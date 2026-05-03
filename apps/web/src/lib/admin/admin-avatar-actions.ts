@@ -86,21 +86,21 @@ export async function uploadAdminAvatar(args: {
   // Sync to the linked contact row so the header/sidebar also reflect the new photo.
   const { data: contactRow } = await (svc as any)
     .from("contacts")
-    .select("id, entity_id")
+    .select("id, workspace_id")
     .eq("profile_id", pid)
-    .maybeSingle() as { data: { id: string; entity_id: string | null } | null };
+    .maybeSingle() as { data: { id: string; workspace_id: string | null } | null };
 
   if (contactRow?.id) {
     await (svc as any)
       .from("contacts")
       .update({ avatar_url: publicUrl })
       .eq("id", contactRow.id);
-    revalidatePath(`/admin/entities/${contactRow.id}`);
-    revalidatePath("/admin/entities");
+    revalidatePath(`/admin/workspaces/${contactRow.id}`);
+    revalidatePath("/admin/workspaces");
   }
 
-  if (contactRow?.entity_id) {
-    revalidatePath(`/admin/entities/${contactRow.entity_id}`);
+  if (contactRow?.workspace_id) {
+    revalidatePath(`/admin/workspaces/${contactRow.workspace_id}`);
   }
 
   return { success: true, avatarUrl: publicUrl };
@@ -156,21 +156,21 @@ export async function removeAdminAvatar(
   // Sync to linked contact.
   const { data: contactRow } = await (svc as any)
     .from("contacts")
-    .select("id, entity_id")
+    .select("id, workspace_id")
     .eq("profile_id", targetProfileId)
-    .maybeSingle() as { data: { id: string; entity_id: string | null } | null };
+    .maybeSingle() as { data: { id: string; workspace_id: string | null } | null };
 
   if (contactRow?.id) {
     await (svc as any)
       .from("contacts")
       .update({ avatar_url: null })
       .eq("id", contactRow.id);
-    revalidatePath(`/admin/entities/${contactRow.id}`);
-    revalidatePath("/admin/entities");
+    revalidatePath(`/admin/workspaces/${contactRow.id}`);
+    revalidatePath("/admin/workspaces");
   }
 
-  if (contactRow?.entity_id) {
-    revalidatePath(`/admin/entities/${contactRow.entity_id}`);
+  if (contactRow?.workspace_id) {
+    revalidatePath(`/admin/workspaces/${contactRow.workspace_id}`);
   }
 
   return { success: true };

@@ -9,7 +9,7 @@ import { InstallAppSection } from "./components/InstallAppSection";
 import { RegionSection } from "./components/RegionSection";
 import { DataExportSection } from "./components/DataExportSection";
 import { DangerZoneSection } from "./components/DangerZoneSection";
-import { EntitySection } from "./components/EntitySection";
+import { WorkspaceSection } from "./components/WorkspaceSection";
 
 export const metadata: Metadata = { title: "Account" };
 export const dynamic = "force-dynamic";
@@ -24,30 +24,29 @@ export default async function AccountPage() {
     .eq("id", userId)
     .single();
 
-  // Fetch entity and other members (only if profile has an entity)
-  let entity = null;
-  let entityMembers: Array<{
+  let workspace = null;
+  let workspaceMembers: Array<{
     id: string;
     full_name: string | null;
     email: string;
     avatar_url: string | null;
   }> = [];
 
-  if (profile?.entity_id) {
-    const [{ data: entityData }, { data: members }] = await Promise.all([
+  if (profile?.workspace_id) {
+    const [{ data: workspaceData }, { data: members }] = await Promise.all([
       client
-        .from("entities")
+        .from("workspaces")
         .select("id, name, type, ein")
-        .eq("id", profile.entity_id)
+        .eq("id", profile.workspace_id)
         .single(),
       client
         .from("profiles")
         .select("id, full_name, email, avatar_url")
-        .eq("entity_id", profile.entity_id)
+        .eq("workspace_id", profile.workspace_id)
         .order("created_at", { ascending: true }),
     ]);
-    entity = entityData;
-    entityMembers = members ?? [];
+    workspace = workspaceData;
+    workspaceMembers = members ?? [];
   }
 
   const displayEmail = isImpersonating
@@ -95,10 +94,10 @@ export default async function AccountPage() {
             }}
           />
 
-          {entity ? (
-            <EntitySection
-              entity={entity}
-              members={entityMembers}
+          {workspace ? (
+            <WorkspaceSection
+              workspace={workspace}
+              members={workspaceMembers}
               currentUserId={userId}
             />
           ) : null}

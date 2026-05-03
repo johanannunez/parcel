@@ -87,7 +87,7 @@ export async function updatePersonalInfo(
 
   const { data: targetProfile, error: fetchError } = await supabase
     .from("profiles")
-    .select("id, entity_id")
+    .select("id, workspace_id")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -128,8 +128,8 @@ export async function updatePersonalInfo(
       () => {},
     );
 
-  if (targetProfile.entity_id) {
-    revalidatePath(`/admin/entities/${targetProfile.entity_id}`);
+  if (targetProfile.workspace_id) {
+    revalidatePath(`/admin/workspaces/${targetProfile.workspace_id}`);
   }
 
   // Sync name and phone back to the linked contact so the sidebar stays in sync.
@@ -152,8 +152,8 @@ export async function updatePersonalInfo(
       .update(contactUpdate)
       .eq("id", contactRow.id);
 
-    revalidatePath(`/admin/entities/${contactRow.id}`);
-    revalidatePath("/admin/entities");
+    revalidatePath(`/admin/workspaces/${contactRow.id}`);
+    revalidatePath("/admin/workspaces");
   }
 
   return { ok: true };

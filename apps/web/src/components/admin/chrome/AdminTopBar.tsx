@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Bell } from "@phosphor-icons/react";
 import { useTopBarSlots } from "./TopBarSlotsContext";
@@ -25,9 +25,13 @@ function AdminClock() {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    setNow(new Date());
-    const id = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(id);
+    const tick = () => setNow(new Date());
+    const initial = window.setTimeout(tick, 0);
+    const interval = window.setInterval(tick, 1000);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(interval);
+    };
   }, []);
 
   if (!now) return <div className={styles.clockPlaceholder} />;
@@ -66,7 +70,7 @@ const SECTION_LABELS: Record<string, string> = {
   calendar: "Calendar",
   meetings: "Meetings",
   projects: "Projects",
-  entities: "Entities",
+  workspaces: "Workspaces",
   vendors: "Vendors",
   properties: "Properties",
   billing: "Billing",

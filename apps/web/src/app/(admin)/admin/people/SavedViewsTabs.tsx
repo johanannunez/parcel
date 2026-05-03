@@ -15,7 +15,7 @@ export function SavedViewsTabs({ views }: { views: ContactSavedView[] }) {
   const pathname = usePathname();
   const { hiddenViews } = useContactsFilters();
   const activeViewId = searchParams?.get('view_id') ?? null;
-  const defaultViewKey = pathname?.startsWith('/admin/entities')
+  const defaultViewKey = pathname?.startsWith('/admin/workspaces')
     ? 'active-owners'
     : 'lead-pipeline';
   const activeKey = searchParams?.get('view') ?? defaultViewKey;
@@ -23,8 +23,8 @@ export function SavedViewsTabs({ views }: { views: ContactSavedView[] }) {
 
   const basePath = pathname?.startsWith('/admin/prospects')
     ? '/admin/prospects'
-    : pathname?.startsWith('/admin/entities')
-    ? '/admin/entities'
+    : pathname?.startsWith('/admin/workspaces')
+    ? '/admin/workspaces'
     : '/admin/people';
 
   const visibleViews = views.filter(
@@ -74,7 +74,7 @@ export function SavedViewsTabs({ views }: { views: ContactSavedView[] }) {
 
 function displayViewName(view: ContactSavedView): string {
   if (view.key === 'lead-pipeline') return 'Prospect Pipeline';
-  if (view.key === 'active-owners') return 'Active Entities';
+  if (view.key === 'active-owners') return 'Active Workspaces';
   return view.name;
 }
 

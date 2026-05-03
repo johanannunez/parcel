@@ -24,12 +24,45 @@ type ClaudeAnalysis = {
   sentiment: 'positive' | 'neutral' | 'concerned';
 };
 
-type EntityGroup = {
-  entityType: 'owner' | 'contact' | 'vendor' | 'unknown';
-  entityId: string | null;
+type CommunicationTargetGroup = {
+  targetType: 'owner' | 'contact' | 'vendor' | 'unknown';
+  targetId: string | null;
   phoneFrom: string;
   events: EventRow[];
 };
+
+type QueryResult<Row> = {
+  data: Row[] | null;
+  error: { message: string } | null;
+};
+
+type MaybeSingleResult<Row> = {
+  data: Row | null;
+  error: { message: string } | null;
+};
+
+type QueryChain<Row> = PromiseLike<QueryResult<Row>> & {
+  select(columns: string): QueryChain<Row>;
+  update(values: Record<string, unknown>): QueryChain<Row>;
+  upsert(values: Record<string, unknown>, options?: Record<string, unknown>): Promise<QueryResult<Row>>;
+  eq(column: string, value: unknown): QueryChain<Row>;
+  lte(column: string, value: unknown): QueryChain<Row>;
+  is(column: string, value: unknown): QueryChain<Row>;
+  order(column: string, options?: Record<string, unknown>): QueryChain<Row>;
+  in(column: string, values: unknown[]): QueryChain<Row>;
+  maybeSingle(): Promise<MaybeSingleResult<Row>>;
+};
+
+type UntypedServiceClient = {
+  from<Row extends Record<string, unknown>>(table: string): QueryChain<Row>;
+};
+
+function table<Row extends Record<string, unknown>>(
+  supabase: ReturnType<typeof createServiceClient>,
+  name: string
+): QueryChain<Row> {
+  return (supabase as unknown as UntypedServiceClient).from<Row>(name);
+}
 
 async function callClaude(
   apiKey: string,
@@ -93,9 +126,9 @@ If tier is "noise", actionItems must be an empty array.
 Always return valid JSON. No markdown, no explanation outside the JSON object.`;
 }
 
-function buildUserPrompt(group: EntityGroup, entityContext: string): string {
+function buildUserPrompt(group: CommunicationTargetGroup, targetContext: string): string {
   const lines: string[] = [
-    `Contact: ${entityContext}`,
+    `Contact: ${targetContext}`,
     `Communication window:`,
   ];
   for (const ev of group.events) {
@@ -106,35 +139,32 @@ function buildUserPrompt(group: EntityGroup, entityContext: string): string {
   return lines.join('\n');
 }
 
-async function getEntityContext(
+async function getTargetContext(
   supabase: ReturnType<typeof createServiceClient>,
-  group: EntityGroup
+  group: CommunicationTargetGroup
 ): Promise<string> {
-  if (!group.entityId || group.entityType === 'unknown') {
+  if (!group.targetId || group.targetType === 'unknown') {
     return `Unknown caller (${group.phoneFrom})`;
   }
-  if (group.entityType === 'owner') {
-    const { data } = await (supabase as any)
-      .from('profiles')
+  if (group.targetType === 'owner') {
+    const { data } = await table<{ full_name: string | null }>(supabase, 'profiles')
       .select('full_name')
-      .eq('id', group.entityId)
+      .eq('id', group.targetId)
       .maybeSingle();
     return data?.full_name ? `Owner: ${data.full_name}` : `Owner (${group.phoneFrom})`;
   }
-  if (group.entityType === 'contact') {
-    const { data } = await (supabase as any)
-      .from('contacts')
+  if (group.targetType === 'contact') {
+    const { data } = await table<{ full_name: string | null; display_name: string | null; lifecycle_stage: string | null }>(supabase, 'contacts')
       .select('full_name, display_name, lifecycle_stage')
-      .eq('id', group.entityId)
+      .eq('id', group.targetId)
       .maybeSingle();
     const name = data?.display_name ?? data?.full_name ?? group.phoneFrom;
     return `Contact: ${name} (${data?.lifecycle_stage ?? 'unknown stage'})`;
   }
-  if (group.entityType === 'vendor') {
-    const { data } = await (supabase as any)
-      .from('vendors')
+  if (group.targetType === 'vendor') {
+    const { data } = await table<{ full_name: string | null; trade: string | null; company_name: string | null }>(supabase, 'vendors')
       .select('full_name, trade, company_name')
-      .eq('id', group.entityId)
+      .eq('id', group.targetId)
       .maybeSingle();
     const name = data?.full_name ?? group.phoneFrom;
     const trade = data?.trade ?? data?.company_name ?? 'vendor';
@@ -153,8 +183,7 @@ export async function runCommunicationIntelligenceSync(): Promise<{
   if (!apiKey) throw new Error('OPENROUTER_API_PARCEL is not set');
 
   const now = new Date().toISOString();
-  const { data: events, error } = await (supabase as any)
-    .from('communication_events')
+  const { data: events, error } = await table<EventRow>(supabase, 'communication_events')
     .select(
       'id, channel, direction, phone_from, raw_transcript, duration_seconds, entity_type, entity_id, created_at'
     )
@@ -165,7 +194,7 @@ export async function runCommunicationIntelligenceSync(): Promise<{
   if (error) throw new Error(`[comm-intel] query error: ${error.message}`);
   if (!events || events.length === 0) return { processed: 0, skipped: 0, errors: 0 };
 
-  const groupMap = new Map<string, EntityGroup>();
+  const groupMap = new Map<string, CommunicationTargetGroup>();
   for (const ev of events as EventRow[]) {
     const key =
       ev.entity_id && ev.entity_type && ev.entity_type !== 'unknown'
@@ -173,8 +202,8 @@ export async function runCommunicationIntelligenceSync(): Promise<{
         : `unknown:${ev.phone_from}`;
     if (!groupMap.has(key)) {
       groupMap.set(key, {
-        entityType: (ev.entity_type as EntityGroup['entityType']) ?? 'unknown',
-        entityId: ev.entity_id,
+        targetType: (ev.entity_type as CommunicationTargetGroup['targetType']) ?? 'unknown',
+        targetId: ev.entity_id,
         phoneFrom: ev.phone_from,
         events: [],
       });
@@ -190,19 +219,18 @@ export async function runCommunicationIntelligenceSync(): Promise<{
     const hasContent = group.events.some((e) => e.raw_transcript);
     if (!hasContent) {
       const ids = group.events.map((e) => e.id);
-      await (supabase as any)
-        .from('communication_events')
+      await table<EventRow>(supabase, 'communication_events')
         .update({ processed_at: now, tier: 'noise' })
         .in('id', ids);
       skipped++;
       continue;
     }
 
-    const entityContext = await getEntityContext(supabase, group);
+    const targetContext = await getTargetContext(supabase, group);
     const analysis = await callClaude(
       apiKey,
       buildSystemPrompt(),
-      buildUserPrompt(group, entityContext)
+      buildUserPrompt(group, targetContext)
     );
 
     if (!analysis) {
@@ -218,8 +246,7 @@ export async function runCommunicationIntelligenceSync(): Promise<{
         ? 'sms'
         : 'mixed';
 
-    const { error: evUpdateError } = await (supabase as any)
-      .from('communication_events')
+    const { error: evUpdateError } = await table<EventRow>(supabase, 'communication_events')
       .update({
         processed_at: now,
         tier: analysis.tier,
@@ -232,8 +259,8 @@ export async function runCommunicationIntelligenceSync(): Promise<{
 
     if (
       analysis.tier !== 'noise' &&
-      group.entityType !== 'unknown' &&
-      group.entityId
+      group.targetType !== 'unknown' &&
+      group.targetId
     ) {
       const hourKey = now.slice(0, 13).replace('T', ':');
       const agentKey = `communication:${hourKey}`;
@@ -246,16 +273,16 @@ export async function runCommunicationIntelligenceSync(): Promise<{
         channel,
       };
 
-      const { error: insightError } = await (supabase as any).from('ai_insights').upsert(
+      const { error: insightError } = await table<Record<string, unknown>>(supabase, 'ai_insights').upsert(
         {
-          parent_type: group.entityType,
-          parent_id: group.entityId,
+          parent_type: group.targetType,
+          parent_id: group.targetId,
           agent_key: agentKey,
           severity: analysis.tier === 'action_required' ? 'recommendation' : 'info',
           title:
             analysis.tier === 'action_required'
               ? `Action needed: ${analysis.actionItems[0] ?? 'follow up'}`
-              : `Update from ${entityContext.split(':')[1]?.trim() ?? 'contact'}`,
+              : `Update from ${targetContext.split(':')[1]?.trim() ?? 'contact'}`,
           body: analysis.summary,
           action_payload: payload,
           dismissed_at: null,

@@ -142,7 +142,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       raw_transcript: rawTranscript,
       duration_seconds: durationSeconds,
       entity_type: resolved?.type ?? null,
-      entity_id: resolved && resolved.type !== 'unknown' ? resolved.entityId : null,
+      entity_id: resolved && resolved.type !== 'unknown' ? resolved.targetId : null,
       process_after: processAfter,
     },
     { onConflict: 'quo_id', ignoreDuplicates: true }

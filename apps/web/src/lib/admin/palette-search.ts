@@ -61,7 +61,7 @@ async function queryOwners(q: string, limit: number): Promise<PaletteHit[]> {
   const supabase = await createClient();
   let query = supabase
     .from("profiles")
-    .select("id, full_name, email, entity_id")
+    .select("id, full_name, email, workspace_id")
     .eq("role", "owner");
 
   if (q) {
@@ -78,7 +78,7 @@ async function queryOwners(q: string, limit: number): Promise<PaletteHit[]> {
       kind: "owner",
       label: name,
       subtitle: r.email ?? undefined,
-      href: r.entity_id ? `/admin/entities/${r.entity_id}` : "/admin/entities?view=active-owners",
+      href: r.workspace_id ? `/admin/workspaces/${r.workspace_id}` : "/admin/workspaces?view=active-owners",
     };
   });
 }

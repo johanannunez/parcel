@@ -20,7 +20,7 @@ export type CreateKind =
   | "note"
   | "property"
   | "invoice"
-  | "entity"
+  | "workspace"
   | "contact"
   | "project";
 
@@ -45,7 +45,7 @@ const SECTIONS: Section[] = [
     label: "Relationships",
     items: [
       { kind: "contact", label: "Person", icon: <AddressBook size={13} weight="duotone" />, kbd: "C", action: "modal" },
-      { kind: "entity",  label: "Entity",  icon: <Buildings    size={13} weight="duotone" />, kbd: "E", action: "modal" },
+      { kind: "workspace", label: "Workspace", icon: <Buildings size={13} weight="duotone" />, kbd: "W", action: "modal" },
     ],
   },
   {

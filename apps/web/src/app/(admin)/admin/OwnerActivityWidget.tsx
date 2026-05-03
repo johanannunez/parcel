@@ -33,7 +33,7 @@ export function OwnerActivityWidget({ data }: { data: OwnerActivityData }) {
   return (
     <WidgetShell
       label="Owner Activity"
-      href="/admin/entities?view=active-owners"
+      href="/admin/workspaces?view=active-owners"
     >
       <div className={styles.stats}>
         <div className={styles.statChip}>
@@ -60,7 +60,7 @@ export function OwnerActivityWidget({ data }: { data: OwnerActivityData }) {
       ) : (
         <div className={styles.list}>
           {data.recentlyActive.map((owner) => (
-            <div key={owner.entityId} className={styles.row}>
+            <div key={owner.workspaceId} className={styles.row}>
               <div
                 className={styles.avatar}
                 style={{ color: avatarColor(owner.status) }}

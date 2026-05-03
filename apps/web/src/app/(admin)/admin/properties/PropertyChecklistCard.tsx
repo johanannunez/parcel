@@ -144,7 +144,7 @@ function OwnerPill({ owner }: { owner: Owner }) {
   const label = owner.name ?? "Unknown";
   return (
     <Link
-      href="/admin/entities?view=active-owners"
+      href="/admin/workspaces?view=active-owners"
       style={{
         display: "inline-flex",
         alignItems: "center",

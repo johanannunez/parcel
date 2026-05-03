@@ -1,9 +1,9 @@
 // apps/web/src/lib/admin/communication-types.ts
 
-export type ResolvedEntity =
-  | { type: 'owner';   entityId: string; displayName: string; propertyIds: string[] }
-  | { type: 'contact'; entityId: string; displayName: string; propertyIds: string[] }
-  | { type: 'vendor';  entityId: string; displayName: string; propertyIds: string[] }
+export type ResolvedCommunicationTarget =
+  | { type: 'owner';   targetId: string; displayName: string; propertyIds: string[] }
+  | { type: 'contact'; targetId: string; displayName: string; propertyIds: string[] }
+  | { type: 'vendor';  targetId: string; displayName: string; propertyIds: string[] }
   | { type: 'unknown'; phone: string };
 
 export type CommunicationEvent = {
@@ -18,7 +18,7 @@ export type CommunicationEvent = {
   recordingUrl: string | null;
   quoSummary: string | null;
   entityType: 'owner' | 'contact' | 'vendor' | 'unknown' | null;
-  entityId: string | null;
+  workspaceId: string | null;
   processAfter: string | null;
   processedAt: string | null;
   tier: 'action_required' | 'fyi' | 'noise' | null;

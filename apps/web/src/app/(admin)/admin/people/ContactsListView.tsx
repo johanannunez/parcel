@@ -13,7 +13,7 @@ type Props = {
   rows: ContactRow[];
   activeView: ContactSavedView;
   basePath?: string;
-  useEntityId?: boolean;
+  useWorkspaceId?: boolean;
 };
 
 type LocalFilters = {
@@ -300,7 +300,7 @@ function ContactsFilterChips({
   );
 }
 
-export function ContactsListView({ rows, activeView, basePath = '/admin/people', useEntityId = false }: Props) {
+export function ContactsListView({ rows, activeView, basePath = '/admin/people', useWorkspaceId = false }: Props) {
   const [search, setSearch] = useState('');
   const [localFilters, setLocalFilters] = useState<LocalFilters>(EMPTY_LOCAL);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
@@ -441,7 +441,7 @@ export function ContactsListView({ rows, activeView, basePath = '/admin/people',
         </div>
 
         {filtered.map((r) => {
-          const href = `${basePath}/${useEntityId ? (r.entityId ?? r.id) : r.id}`;
+          const href = `${basePath}/${useWorkspaceId ? (r.workspaceId ?? r.id) : r.id}`;
           const pillClass = STAGE_PILL_CLASS[stageGroup(r.lifecycleStage)];
           return (
             <Link key={r.id} href={href} className={styles.row}>

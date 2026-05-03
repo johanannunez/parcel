@@ -7,7 +7,7 @@ import type { CreateKind } from "./CreateMenu";
 import { TaskForm } from "./create-forms/TaskForm";
 import { ProjectForm } from "./create-forms/ProjectForm";
 import { ContactForm } from "./create-forms/ContactForm";
-import { EntityForm } from "./create-forms/EntityForm";
+import { WorkspaceForm } from "./create-forms/WorkspaceForm";
 import { PropertyForm } from "./create-forms/PropertyForm";
 import styles from "./CreateModal.module.css";
 
@@ -18,13 +18,13 @@ const KIND_TITLES: Record<CreateKind, string> = {
   note: "New note",
   property: "New property",
   invoice: "New invoice",
-  entity: "New entity",
+  workspace: "New Workspace",
   contact: "New person",
   project: "New project",
 };
 
 // Kinds that are always global (no scope chip).
-const GLOBAL_KINDS = new Set<CreateKind>(["entity", "contact", "project", "property"]);
+const GLOBAL_KINDS = new Set<CreateKind>(["workspace", "contact", "project", "property"]);
 
 export function CreateModal() {
   const { target, setTarget } = useCreateScope();
@@ -142,8 +142,8 @@ export function CreateModal() {
             <ProjectForm onClose={() => setKind(null)} />
           ) : kind === "contact" ? (
             <ContactForm onClose={() => setKind(null)} />
-          ) : kind === "entity" ? (
-            <EntityForm onClose={() => setKind(null)} />
+          ) : kind === "workspace" ? (
+            <WorkspaceForm onClose={() => setKind(null)} />
           ) : kind === "property" ? (
             <PropertyForm onClose={() => setKind(null)} />
           ) : (
@@ -158,7 +158,7 @@ export function CreateModal() {
           <span>
             <kbd>Esc</kbd>to close
           </span>
-          {kind !== "task" && kind !== "project" && kind !== "contact" && kind !== "entity" && kind !== "property" ? (
+          {kind !== "task" && kind !== "project" && kind !== "contact" && kind !== "workspace" && kind !== "property" ? (
             <div className={styles.footerActions}>
               <button
                 type="button"

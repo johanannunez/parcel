@@ -10,7 +10,7 @@ import styles from './ActiveOwnersGrid.module.css';
 type Props = {
   rows: ContactRow[];
   basePath?: string;
-  useEntityId?: boolean;
+  useWorkspaceId?: boolean;
 };
 
 type HealthTone = 'healthy' | 'attention' | 'risk';
@@ -49,12 +49,12 @@ const HEALTH_COPY: Record<HealthTone, string> = {
   risk: 'At Risk',
 };
 
-function rowHref(row: ContactRow, basePath: string, useEntityId: boolean): string {
-  if (useEntityId) return `${basePath}/${row.entityId ?? row.id}`;
+function rowHref(row: ContactRow, basePath: string, useWorkspaceId: boolean): string {
+  if (useWorkspaceId) return `${basePath}/${row.workspaceId ?? row.id}`;
   return `${basePath}/${row.id}`;
 }
 
-export function ActiveOwnersGrid({ rows, basePath = '/admin/people', useEntityId = false }: Props) {
+export function ActiveOwnersGrid({ rows, basePath = '/admin/people', useWorkspaceId = false }: Props) {
   const { sources, assignees } = useContactsFilters();
 
   const filteredRows = useMemo(() => {
@@ -104,7 +104,7 @@ export function ActiveOwnersGrid({ rows, basePath = '/admin/people', useEntityId
         {filteredRows.map((r) => {
           const days = daysSince(r.lastActivityAt);
           const health = healthFor(days);
-          const href = rowHref(r, basePath, useEntityId);
+          const href = rowHref(r, basePath, useWorkspaceId);
 
           const displayedProperties = r.properties.slice(0, 5);
           const extraProperties = r.properties.length - 5;

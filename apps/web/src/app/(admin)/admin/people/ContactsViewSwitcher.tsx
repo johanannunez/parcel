@@ -29,7 +29,7 @@ const BOARD_DEFAULT: Record<string, PipelineViewMode> = {
 export function ContactsViewSwitcher() {
   const sp = useSearchParams();
   const pathname = usePathname();
-  const defaultViewKey = pathname?.startsWith('/admin/entities')
+  const defaultViewKey = pathname?.startsWith('/admin/workspaces')
     ? 'active-owners'
     : 'lead-pipeline';
   const viewKey = sp?.get('view') ?? defaultViewKey;

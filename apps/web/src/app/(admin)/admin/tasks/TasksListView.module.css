@@ -101,7 +101,7 @@
 .sortOption:hover { background: #f3f4f6; }
 .sortOptionActive { color: #c17b4e; font-weight: 500; }
 
-/* Entity group header (By Property / By Assignee) */
+/* Workspace group header (By Property / By Assignee) */
 .entityHead {
   display: flex;
   align-items: center;

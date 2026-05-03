@@ -6,7 +6,7 @@ import styles from './OnboardingPhaseBoard.module.css';
 type Props = {
   rows: ContactRow[];
   basePath?: string;
-  useEntityId?: boolean;
+  useWorkspaceId?: boolean;
 };
 
 function initials(name: string): string {
@@ -73,7 +73,7 @@ const PHASES = [
 
 type PhaseKey = 'documents' | 'finances' | 'listings';
 
-export async function OnboardingPhaseBoard({ rows, basePath = '/admin/people', useEntityId = false }: Props) {
+export async function OnboardingPhaseBoard({ rows, basePath = '/admin/people', useWorkspaceId = false }: Props) {
   const onboardingRows = rows.filter((r) => r.lifecycleStage === 'onboarding');
   const phaseCounts = await fetchOnboardingPhaseCounts(onboardingRows);
 
@@ -117,7 +117,7 @@ export async function OnboardingPhaseBoard({ rows, basePath = '/admin/people', u
               ) : (
                 contactsInPhase.map((row) => {
                   const counts = phaseCounts[row.id];
-                  const href = `${basePath}/${useEntityId ? (row.entityId ?? row.id) : row.id}`;
+                  const href = `${basePath}/${useWorkspaceId ? (row.workspaceId ?? row.id) : row.id}`;
 
                   return (
                     <Link key={row.id} href={href} className={styles.card}>

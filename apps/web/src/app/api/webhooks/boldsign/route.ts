@@ -185,7 +185,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         }
 
         revalidatePath('/admin/people');
-        revalidatePath('/admin/entities');
+        revalidatePath('/admin/workspaces');
         console.log('[boldsign-webhook] contact moved to onboarding:', contact.id);
       }
     }

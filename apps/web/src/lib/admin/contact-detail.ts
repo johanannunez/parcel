@@ -4,7 +4,7 @@ import type { LifecycleStage } from './contact-types';
 
 export type ContactDetail = {
   id: string;
-  entityId: string | null;
+  workspaceId: string | null;
   profileId: string | null;
   fullName: string;
   displayName: string | null;
@@ -46,8 +46,8 @@ export async function fetchContactDetail(
 
   if (error || !data) return null;
 
-  const entityId = data.profile_id
-    ? await fetchEntityIdForProfile(data.profile_id)
+  const workspaceId = data.profile_id
+    ? await fetchWorkspaceIdForProfile(data.profile_id)
     : null;
 
   const assignedProfile =
@@ -65,7 +65,7 @@ export async function fetchContactDetail(
 
   return {
     id: data.id,
-    entityId,
+    workspaceId,
     profileId: data.profile_id,
     fullName: data.full_name,
     displayName: data.display_name,
@@ -86,13 +86,13 @@ export async function fetchContactDetail(
   };
 }
 
-async function fetchEntityIdForProfile(profileId: string): Promise<string | null> {
+async function fetchWorkspaceIdForProfile(profileId: string): Promise<string | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from('profiles')
-    .select('entity_id')
+    .select('workspace_id')
     .eq('id', profileId)
     .maybeSingle();
 
-  return data?.entity_id ?? null;
+  return data?.workspace_id ?? null;
 }

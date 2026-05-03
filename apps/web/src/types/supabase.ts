@@ -388,7 +388,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           estimated_mrr: number | null
-          entity_id: string | null
+          workspace_id: string | null
           first_name: string | null
           full_name: string
           home_lat: number | null
@@ -413,7 +413,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           estimated_mrr?: number | null
-          entity_id?: string | null
+          workspace_id?: string | null
           first_name?: string | null
           full_name: string
           home_lat?: number | null
@@ -438,7 +438,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           estimated_mrr?: number | null
-          entity_id?: string | null
+          workspace_id?: string | null
           first_name?: string | null
           full_name?: string
           home_lat?: number | null
@@ -464,10 +464,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "contacts_entity_id_fkey"
-            columns: ["entity_id"]
+            foreignKeyName: "contacts_workspace_id_fkey"
+            columns: ["workspace_id"]
             isOneToOne: false
-            referencedRelation: "entities"
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
           {
@@ -589,7 +589,7 @@ export type Database = {
         }
         Relationships: []
       }
-      entities: {
+      workspaces: {
         Row: {
           created_at: string
           ein: string | null
@@ -1737,7 +1737,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           email: string
-          entity_id: string | null
+          workspace_id: string | null
           full_name: string | null
           id: string
           location: string | null
@@ -1760,7 +1760,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           email: string
-          entity_id?: string | null
+          workspace_id?: string | null
           full_name?: string | null
           id: string
           location?: string | null
@@ -1783,7 +1783,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           email?: string
-          entity_id?: string | null
+          workspace_id?: string | null
           full_name?: string | null
           id?: string
           location?: string | null
@@ -1802,10 +1802,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_entity_id_fkey"
-            columns: ["entity_id"]
+            foreignKeyName: "profiles_workspace_id_fkey"
+            columns: ["workspace_id"]
             isOneToOne: false
-            referencedRelation: "entities"
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]

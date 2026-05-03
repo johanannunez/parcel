@@ -561,7 +561,7 @@ export function TasksListView(props: Props) {
       .filter((g) => g.tasks.length > 0);
   }, [activeFilterGroups, activeKey]);
 
-  // Entity grouping (controlled by groupBy, not activeKey)
+  // Workspace grouping (controlled by groupBy, not activeKey)
   const entityGroups = useMemo(() => {
     if (groupBy === 'none') return null;
     const allTasks = displayGroups.flatMap((g) => g.tasks);

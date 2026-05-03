@@ -33,7 +33,7 @@ import styles from "./CommandPalette.module.css";
 
 type CreateKind =
   | "task" | "email" | "meeting" | "note"
-  | "property" | "invoice" | "contact" | "entity" | "project";
+  | "property" | "invoice" | "contact" | "workspace" | "project";
 
 type CreateItem = {
   id: string;
@@ -46,6 +46,7 @@ type CreateItem = {
 const CREATE_ITEMS: CreateItem[] = [
   { id: "c-task",     label: "Task",     icon: CheckSquare,     kbd: "T", createKind: "task" },
   { id: "c-contact",  label: "Person",   icon: AddressBook,     kbd: "C", createKind: "contact" },
+  { id: "c-workspace", label: "Workspace", icon: Buildings,     kbd: "W", createKind: "workspace" },
   { id: "c-project",  label: "Project",  icon: Kanban,          kbd: "J", createKind: "project" },
 ];
 
@@ -56,11 +57,11 @@ const SUGGESTED_ITEMS: SuggestedItem[] = [
   { id: "s-tasks",      label: "Open tasks across all properties",  icon: ListChecks, href: "/admin/tasks" },
 ];
 
-/* ───── Entity kind → icon + group label ───── */
+/* ───── Result kind to icon and group label ───── */
 
 const KIND_META: Record<PaletteHit["kind"], { icon: Icon; group: string }> = {
   contact:  { icon: AddressBook, group: "People"     },
-  owner:    { icon: UserCircle,  group: "Entities"   },
+  owner:    { icon: UserCircle,  group: "Workspaces" },
   property: { icon: Buildings,   group: "Properties" },
   task:     { icon: CheckSquare, group: "Tasks"      },
   project:  { icon: Kanban,      group: "Projects"   },
@@ -117,7 +118,7 @@ function labelFromPathname(pathname: string): { label: string; icon: string } | 
   const map: Record<string, { label: string; icon: string }> = {
     inbox:      { label: "Inbox",      icon: "ChatCircle" },
     tasks:      { label: "Tasks",      icon: "ListChecks" },
-    entities:   { label: "Entities",   icon: "UserCircle" },
+    workspaces: { label: "Workspaces", icon: "UserCircle" },
     people:     { label: "People",     icon: "UsersThree" },
     prospects:  { label: "Prospects",  icon: "AddressBook" },
     properties: { label: "Properties", icon: "Buildings" },
@@ -145,7 +146,7 @@ function scopeFromPath(pathname: string): PaletteScope | null {
   const map: Record<string, PaletteScope> = {
     people:     "contacts",
     prospects:  "contacts",
-    entities:   "owners",
+    workspaces: "owners",
     properties: "properties",
     tasks:      "tasks",
     projects:   "projects",
@@ -156,7 +157,7 @@ function scopeFromPath(pathname: string): PaletteScope | null {
 function scopeHeader(scope: PaletteScope): { label: string; icon: Icon } {
   const m: Record<PaletteScope, { label: string; icon: Icon }> = {
     contacts:   { label: "In People",     icon: UsersThree },
-    owners:     { label: "In Entities",   icon: UserCircle },
+    owners:     { label: "In Workspaces", icon: UserCircle },
     properties: { label: "In Properties", icon: Buildings  },
     tasks:      { label: "In Tasks",      icon: ListChecks },
     projects:   { label: "In Projects",   icon: Kanban     },
@@ -410,7 +411,7 @@ export function CommandPalette() {
           <input
             ref={inputRef}
             className={styles.input}
-            placeholder="Search people, entities, properties, tasks, projects"
+            placeholder="Search people, Workspaces, properties, tasks, projects"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onInputKeyDown}
@@ -444,7 +445,7 @@ export function CommandPalette() {
             </ul>
           </div>
 
-          {/* Middle: Suggested + Recent (idle) or grouped entity results (typing) */}
+          {/* Middle: Suggested and Recent idle state or grouped results while typing */}
           <div className={styles.col}>
             {typing ? (
               <GroupedResults
@@ -553,7 +554,7 @@ function IdleCenter({
   );
 }
 
-/* ───── Grouped entity search results ───── */
+/* ───── Grouped search results ───── */
 
 function GroupedResults({
   results,
