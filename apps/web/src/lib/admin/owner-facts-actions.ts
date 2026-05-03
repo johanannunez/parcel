@@ -86,7 +86,7 @@ export async function saveInternalNote(
       .eq("id", existing.id);
     if (error) return { ok: false, error: error.message };
     if (ownerProfile?.entity_id) {
-      revalidatePath(`/admin/owners/${ownerProfile.entity_id}`);
+      revalidatePath(`/admin/entities/${ownerProfile.entity_id}`);
     }
     return { ok: true, id: existing.id };
   }
@@ -102,7 +102,7 @@ export async function saveInternalNote(
       .eq("id", existing.id);
     if (error) return { ok: false, error: error.message };
     if (ownerProfile?.entity_id) {
-      revalidatePath(`/admin/owners/${ownerProfile.entity_id}`);
+      revalidatePath(`/admin/entities/${ownerProfile.entity_id}`);
     }
     return { ok: true, id: existing.id };
   }
@@ -124,7 +124,7 @@ export async function saveInternalNote(
   }
 
   if (ownerProfile?.entity_id) {
-    revalidatePath(`/admin/owners/${ownerProfile.entity_id}`);
+    revalidatePath(`/admin/entities/${ownerProfile.entity_id}`);
   }
   return { ok: true, id: inserted.id };
 }

@@ -9,6 +9,8 @@ import type { RecurrenceRule } from '@/lib/admin/recurrence';
 import { RichDescriptionEditor } from '@/components/admin/tasks/RichDescriptionEditor';
 import { AttachmentsField } from '@/components/admin/tasks/AttachmentsField';
 import { RecurrenceField } from '@/components/admin/tasks/RecurrenceField';
+import { CustomSelect } from '@/components/admin/CustomSelect';
+import { DatePickerInput } from '@/components/admin/DatePickerInput';
 import type { UploadedAttachment, AttachmentScope } from '@/lib/admin/attachment-upload';
 import styles from './TaskForm.module.css';
 
@@ -21,6 +23,11 @@ const TASK_TYPE_OPTIONS: { value: TaskType; label: string; icon: string }[] = [
   { value: 'email',     label: 'Email',      icon: '✉️' },
   { value: 'milestone', label: 'Milestone',  icon: '🏁' },
 ];
+
+const TASK_TYPE_SELECT_OPTIONS = TASK_TYPE_OPTIONS.map((opt) => ({
+  value: opt.value,
+  label: `${opt.icon} ${opt.label}`,
+}));
 
 function addDays(base: Date, days: number): Date {
   const d = new Date(base);
@@ -187,19 +194,13 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
         <label className={styles.label} htmlFor="task-type">
           Type
         </label>
-        <select
+        <CustomSelect
           id="task-type"
-          className={styles.select}
           value={taskType}
-          onChange={(e) => setTaskType(e.target.value as TaskType)}
+          onChange={(value) => setTaskType(value as TaskType)}
           disabled={isPending}
-        >
-          {TASK_TYPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.icon} {opt.label}
-            </option>
-          ))}
-        </select>
+          options={TASK_TYPE_SELECT_OPTIONS}
+        />
       </div>
 
       {/* Priority */}
@@ -257,16 +258,14 @@ export function TaskForm({ onClose }: { onClose: () => void }) {
             </button>
           ))}
         </div>
-        <input
+        <DatePickerInput
           id="task-due"
-          type="date"
           className={styles.input}
           value={dateValue}
-          onChange={(e) => {
-            setDateValue(e.target.value);
+          onChange={(value) => {
+            setDateValue(value);
             setActivePreset(null);
           }}
-          disabled={isPending}
         />
         {dateValue ? (
           <input

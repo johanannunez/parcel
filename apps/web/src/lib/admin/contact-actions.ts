@@ -55,7 +55,7 @@ export async function createContact(
     .single();
 
   if (error) throw error;
-  revalidatePath('/admin/contacts');
+  revalidatePath('/admin/people');
   return { id: data.id as string, entityId: entity.id as string };
 }
 
@@ -74,8 +74,8 @@ export async function updateContactStage(
     await seedOnboardingTasks(contactId);
   }
 
-  revalidatePath('/admin/contacts');
-  revalidatePath(`/admin/contacts/${contactId}`);
+  revalidatePath('/admin/people');
+  revalidatePath(`/admin/people/${contactId}`);
 }
 
 export type UpdatableContactField =
@@ -120,6 +120,6 @@ export async function updateContactField(
     .update(update as any)
     .eq('id', contactId);
   if (error) throw error;
-  revalidatePath(`/admin/contacts/${contactId}`);
-  revalidatePath('/admin/contacts');
+  revalidatePath(`/admin/people/${contactId}`);
+  revalidatePath('/admin/people');
 }

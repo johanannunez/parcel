@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createContact } from '@/lib/admin/contact-actions';
 import type { LifecycleStage } from '@/lib/admin/contact-types';
 import { STAGE_LABEL } from '@/lib/admin/lifecycle-stage';
+import { CustomSelect } from '@/components/admin/CustomSelect';
 import styles from './ContactForm.module.css';
 
 const SOURCE_OPTIONS = [
@@ -23,6 +24,12 @@ const INITIAL_STAGES: LifecycleStage[] = [
   'contract_sent',
   'onboarding',
 ];
+
+const SOURCE_SELECT_OPTIONS = SOURCE_OPTIONS.map((value) => ({ value, label: value }));
+const STAGE_SELECT_OPTIONS = INITIAL_STAGES.map((value) => ({
+  value,
+  label: STAGE_LABEL[value],
+}));
 
 export function ContactForm({ onClose }: { onClose: () => void }) {
   const [fullName, setFullName] = useState('');
@@ -53,7 +60,7 @@ export function ContactForm({ onClose }: { onClose: () => void }) {
           lifecycleStage,
           notes: notes || null,
         });
-        router.push(`/admin/clients/${result.entityId}`);
+        router.push(`/admin/entities/${result.entityId}`);
         onClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -121,16 +128,12 @@ export function ContactForm({ onClose }: { onClose: () => void }) {
       <div className={styles.row}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="contact-source">Source</label>
-          <select
+          <CustomSelect
             id="contact-source"
-            className={styles.select}
             value={source}
-            onChange={(e) => setSource(e.target.value)}
-          >
-            {SOURCE_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            onChange={setSource}
+            options={SOURCE_SELECT_OPTIONS}
+          />
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="contact-mrr">Estimated MRR</label>
@@ -149,18 +152,12 @@ export function ContactForm({ onClose }: { onClose: () => void }) {
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="contact-stage">Initial stage</label>
-        <select
+        <CustomSelect
           id="contact-stage"
-          className={styles.select}
           value={lifecycleStage}
-          onChange={(e) => setLifecycleStage(e.target.value as LifecycleStage)}
-        >
-          {INITIAL_STAGES.map((s) => (
-            <option key={s} value={s}>
-              {STAGE_LABEL[s]}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => setLifecycleStage(value as LifecycleStage)}
+          options={STAGE_SELECT_OPTIONS}
+        />
       </div>
 
       <div className={styles.field}>
@@ -171,7 +168,7 @@ export function ContactForm({ onClose }: { onClose: () => void }) {
           rows={3}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Optional context about this contact"
+          placeholder="Optional context about this person"
         />
       </div>
 
@@ -186,7 +183,7 @@ export function ContactForm({ onClose }: { onClose: () => void }) {
           className={styles.btnPrimary}
           disabled={!fullName.trim() || isPending}
         >
-          {isPending ? 'Creating…' : 'Create contact'}
+          {isPending ? 'Creating…' : 'Create person'}
         </button>
       </div>
     </form>

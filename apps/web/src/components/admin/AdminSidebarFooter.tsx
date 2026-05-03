@@ -11,6 +11,7 @@ function getPortalUrl(pathname: string): string {
   const map: Array<[string, string]> = [
     ["/admin/properties", "/portal/properties"],
     ["/admin/calendar", "/portal/calendar"],
+    ["/admin/meetings", "/portal/meetings"],
     ["/admin/inbox", "/portal/messages"],
     ["/admin/tasks", "/portal/tasks"],
     ["/admin/timeline", "/portal/timeline"],

@@ -21,7 +21,7 @@ export function ColdLeadsWidget({ data }: { data: ColdLeadsData }) {
     <WidgetShell
       label="Cold Leads"
       count={data.total}
-      href="/admin/contacts?view=cold"
+      href="/admin/people?view=cold"
     >
       {data.topLeads.length === 0 ? (
         <div className={styles.emptyGood}>
@@ -33,7 +33,7 @@ export function ColdLeadsWidget({ data }: { data: ColdLeadsData }) {
           {data.topLeads.map((lead) => (
             <Link
               key={lead.id}
-              href={`/admin/contacts/${lead.id}`}
+              href={`/admin/people/${lead.id}`}
               className={styles.row}
             >
               <span className={styles.name}>{lead.name}</span>

@@ -184,8 +184,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           await seedOnboardingTasksForContact(supabase, contact.id, adminProfile.id);
         }
 
-        revalidatePath('/admin/contacts');
-        revalidatePath('/admin/clients');
+        revalidatePath('/admin/people');
+        revalidatePath('/admin/entities');
         console.log('[boldsign-webhook] contact moved to onboarding:', contact.id);
       }
     }

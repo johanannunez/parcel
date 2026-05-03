@@ -20,7 +20,7 @@ export type CreateKind =
   | "note"
   | "property"
   | "invoice"
-  | "owner"
+  | "entity"
   | "contact"
   | "project";
 
@@ -38,14 +38,14 @@ const SECTIONS: Section[] = [
     label: "Work",
     items: [
       { kind: "task",    label: "Task",    icon: <CheckSquare   size={13} weight="duotone" />, kbd: "T", action: "modal" },
-      { kind: "meeting", label: "Meeting", icon: <CalendarBlank size={13} weight="duotone" />, kbd: "M", action: "navigate", href: "/admin/calendar" },
+      { kind: "meeting", label: "Meeting", icon: <CalendarBlank size={13} weight="duotone" />, kbd: "M", action: "navigate", href: "/admin/meetings" },
     ],
   },
   {
-    label: "People",
+    label: "Relationships",
     items: [
-      { kind: "contact", label: "Contact", icon: <AddressBook size={13} weight="duotone" />, kbd: "C", action: "modal" },
-      { kind: "owner",   label: "Owner",   icon: <Buildings    size={13} weight="duotone" />, kbd: "O", action: "modal" },
+      { kind: "contact", label: "Person", icon: <AddressBook size={13} weight="duotone" />, kbd: "C", action: "modal" },
+      { kind: "entity",  label: "Entity",  icon: <Buildings    size={13} weight="duotone" />, kbd: "E", action: "modal" },
     ],
   },
   {

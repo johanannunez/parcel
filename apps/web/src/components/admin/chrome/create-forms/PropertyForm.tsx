@@ -7,6 +7,7 @@ import {
   quickCreateAdminProperty,
   type OwnerPickerItem,
 } from '@/app/(admin)/admin/properties/actions';
+import { CustomSelect } from '@/components/admin/CustomSelect';
 import styles from './ContactForm.module.css';
 
 const PROPERTY_TYPES = [
@@ -25,6 +26,8 @@ const US_STATES = [
   'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
   'DC',
 ];
+
+const STATE_OPTIONS = US_STATES.map((s) => ({ value: s, label: s }));
 
 export function PropertyForm({ onClose }: { onClose: () => void }) {
   const [owners, setOwners] = useState<OwnerPickerItem[]>([]);
@@ -81,38 +84,25 @@ export function PropertyForm({ onClose }: { onClose: () => void }) {
     >
       <div className={styles.field}>
         <label className={styles.label} htmlFor="prop-owner">Owner</label>
-        <select
+        <CustomSelect
           id="prop-owner"
-          className={styles.select}
           value={ownerId}
-          onChange={(e) => setOwnerId(e.target.value)}
+          onChange={setOwnerId}
           disabled={loadingOwners}
           required
-        >
-          {loadingOwners ? (
-            <option value="">Loading owners…</option>
-          ) : owners.length === 0 ? (
-            <option value="">No owners found</option>
-          ) : (
-            owners.map((o) => (
-              <option key={o.id} value={o.id}>{o.label}</option>
-            ))
-          )}
-        </select>
+          placeholder={loadingOwners ? "Loading owners..." : "No owners found"}
+          options={owners.map((o) => ({ value: o.id, label: o.label }))}
+        />
       </div>
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="prop-type">Property type</label>
-        <select
+        <CustomSelect
           id="prop-type"
-          className={styles.select}
           value={propertyType}
-          onChange={(e) => setPropertyType(e.target.value)}
-        >
-          {PROPERTY_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
+          onChange={setPropertyType}
+          options={[...PROPERTY_TYPES]}
+        />
       </div>
 
       <div className={styles.field}>
@@ -142,16 +132,12 @@ export function PropertyForm({ onClose }: { onClose: () => void }) {
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="prop-state">State</label>
-          <select
+          <CustomSelect
             id="prop-state"
-            className={styles.select}
             value={state}
-            onChange={(e) => setState(e.target.value)}
-          >
-            {US_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            onChange={setState}
+            options={STATE_OPTIONS}
+          />
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="prop-zip">ZIP</label>

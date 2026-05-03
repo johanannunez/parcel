@@ -106,6 +106,7 @@ export function PortalBottomNav({
     const map: Array<[string, string]> = [
       ["/portal/properties", "/admin/properties"],
       ["/portal/calendar", "/admin/calendar"],
+      ["/portal/meetings", "/admin/meetings"],
       ["/portal/payouts", "/admin/payouts"],
       ["/portal/messages", "/admin/inbox"],
       ["/portal/tasks", "/admin/tasks"],

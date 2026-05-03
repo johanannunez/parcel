@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useTransition } from "react";
+import { CustomSelect } from "@/components/admin/CustomSelect";
 import { HelpArticleEditor } from "@/components/help/HelpArticleEditor";
 import { checkSlugExists } from "./actions";
 import { PORTAL_ROUTE_GROUPS } from "./portal-routes";
@@ -28,6 +29,12 @@ const CONTENT_TYPE_OPTIONS: { value: ContentType; label: string }[] = [
   { value: "policy", label: "Policy" },
   { value: "blog", label: "Blog" },
   { value: "flagship", label: "Flagship" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "published", label: "Published" },
+  { value: "archived", label: "Archived" },
 ];
 
 function slugify(text: string): string {
@@ -217,7 +224,7 @@ export function ArticleForm({
         />
         {contentType === "flagship" && (
           <p className="text-[11px]" style={{ color: "var(--color-warning, #d97706)" }}>
-            Flagship slugs are premium namespace. Enter one manually — short and deliberate.
+            Flagship slugs are premium namespace. Enter one manually, short and deliberate.
           </p>
         )}
       </div>
@@ -228,35 +235,25 @@ export function ArticleForm({
           <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
             Category
           </label>
-          <select
+          <CustomSelect
             name="category_id"
             defaultValue={initialData?.category_id ?? ""}
-            className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
-            style={fieldStyle}
-          >
-            <option value="">No category</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: "No category" },
+              ...categories.map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
             Status
           </label>
-          <select
+          <CustomSelect
             name="status"
             defaultValue={initialData?.status ?? "draft"}
-            className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
-            style={fieldStyle}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
+            options={STATUS_OPTIONS}
+          />
         </div>
       </div>
 
@@ -331,23 +328,24 @@ export function ArticleForm({
           <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
             Portal Path (optional)
           </label>
-          <select
+          <CustomSelect
             name="related_portal_path"
             defaultValue={initialData?.related_portal_path ?? ""}
-            className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
-            style={fieldStyle}
-          >
-            <option value="">— No portal path —</option>
-            {PORTAL_ROUTE_GROUPS.map((group) => (
-              <optgroup key={group.label} label={group.label}>
-                {group.routes.map((r) => (
-                  <option key={r.path} value={r.path}>
-                    {r.label} ({r.path})
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+            placeholder="No portal path"
+            groups={[
+              {
+                label: "General",
+                options: [{ value: "", label: "No portal path" }],
+              },
+              ...PORTAL_ROUTE_GROUPS.map((group) => ({
+                label: group.label,
+                options: group.routes.map((route) => ({
+                  value: route.path,
+                  label: `${route.label} (${route.path})`,
+                })),
+              })),
+            ]}
+          />
           <span className="text-[11px]" style={{ color: "var(--color-text-tertiary, #9ca3af)" }}>
             Links this article to a portal page for contextual help.
           </span>

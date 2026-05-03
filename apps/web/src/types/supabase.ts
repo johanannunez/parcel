@@ -388,11 +388,14 @@ export type Database = {
           display_name: string | null
           email: string | null
           estimated_mrr: number | null
+          entity_id: string | null
+          first_name: string | null
           full_name: string
           home_lat: number | null
           home_lng: number | null
           id: string
           last_activity_at: string | null
+          last_name: string | null
           lifecycle_stage: Database["public"]["Enums"]["contact_lifecycle_stage"]
           metadata: Json
           phone: string | null
@@ -410,11 +413,14 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           estimated_mrr?: number | null
+          entity_id?: string | null
+          first_name?: string | null
           full_name: string
           home_lat?: number | null
           home_lng?: number | null
           id?: string
           last_activity_at?: string | null
+          last_name?: string | null
           lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
           metadata?: Json
           phone?: string | null
@@ -432,11 +438,14 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           estimated_mrr?: number | null
+          entity_id?: string | null
+          first_name?: string | null
           full_name?: string
           home_lat?: number | null
           home_lng?: number | null
           id?: string
           last_activity_at?: string | null
+          last_name?: string | null
           lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
           metadata?: Json
           phone?: string | null
@@ -452,6 +461,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
             referencedColumns: ["id"]
           },
           {

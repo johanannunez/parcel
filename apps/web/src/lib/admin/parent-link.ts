@@ -12,10 +12,8 @@ export function parentLinkFor(args: {
   switch (args.type) {
     case 'contact':
       return {
-        href: args.contactProfileId
-          ? `/admin/owners/${args.contactProfileId}`
-          : `/admin/contacts/${args.id}`,
-        label: args.fallbackLabel ?? 'Contact',
+        href: `/admin/people/${args.id}`,
+        label: args.fallbackLabel ?? 'Person',
         color: 'blue',
       };
     case 'property':

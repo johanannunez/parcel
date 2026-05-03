@@ -33,7 +33,7 @@ import styles from "./CommandPalette.module.css";
 
 type CreateKind =
   | "task" | "email" | "meeting" | "note"
-  | "property" | "invoice" | "contact" | "owner" | "project";
+  | "property" | "invoice" | "contact" | "entity" | "project";
 
 type CreateItem = {
   id: string;
@@ -45,7 +45,7 @@ type CreateItem = {
 
 const CREATE_ITEMS: CreateItem[] = [
   { id: "c-task",     label: "Task",     icon: CheckSquare,     kbd: "T", createKind: "task" },
-  { id: "c-contact",  label: "Contact",  icon: AddressBook,     kbd: "C", createKind: "contact" },
+  { id: "c-contact",  label: "Person",   icon: AddressBook,     kbd: "C", createKind: "contact" },
   { id: "c-project",  label: "Project",  icon: Kanban,          kbd: "J", createKind: "project" },
 ];
 
@@ -59,8 +59,8 @@ const SUGGESTED_ITEMS: SuggestedItem[] = [
 /* ───── Entity kind → icon + group label ───── */
 
 const KIND_META: Record<PaletteHit["kind"], { icon: Icon; group: string }> = {
-  contact:  { icon: AddressBook, group: "Contacts"   },
-  owner:    { icon: UserCircle,  group: "Owners"     },
+  contact:  { icon: AddressBook, group: "People"     },
+  owner:    { icon: UserCircle,  group: "Entities"   },
   property: { icon: Buildings,   group: "Properties" },
   task:     { icon: CheckSquare, group: "Tasks"      },
   project:  { icon: Kanban,      group: "Projects"   },
@@ -117,13 +117,16 @@ function labelFromPathname(pathname: string): { label: string; icon: string } | 
   const map: Record<string, { label: string; icon: string }> = {
     inbox:      { label: "Inbox",      icon: "ChatCircle" },
     tasks:      { label: "Tasks",      icon: "ListChecks" },
-    contacts:   { label: "Contacts",   icon: "UsersThree" },
+    entities:   { label: "Entities",   icon: "UserCircle" },
+    people:     { label: "People",     icon: "UsersThree" },
+    prospects:  { label: "Prospects",  icon: "AddressBook" },
     properties: { label: "Properties", icon: "Buildings" },
     projects:   { label: "Projects",   icon: "Kanban" },
     calendar:   { label: "Calendar",   icon: "CalendarBlank" },
+    billing:    { label: "Billing",    icon: "Wallet" },
+    meetings:   { label: "Meetings",   icon: "CalendarBlank" },
     timeline:   { label: "Timeline",   icon: "ClockCounterClockwise" },
     payouts:    { label: "Payouts",    icon: "Wallet" },
-    owners:     { label: "Owners",     icon: "UserCircle" },
   };
 
   const base = map[segs[1]];
@@ -140,8 +143,9 @@ function scopeFromPath(pathname: string): PaletteScope | null {
   if (segs.length > 2) return null; // detail pages — skip scope list for now
   const section = segs[1];
   const map: Record<string, PaletteScope> = {
-    contacts:   "contacts",
-    owners:     "owners",
+    people:     "contacts",
+    prospects:  "contacts",
+    entities:   "owners",
     properties: "properties",
     tasks:      "tasks",
     projects:   "projects",
@@ -151,8 +155,8 @@ function scopeFromPath(pathname: string): PaletteScope | null {
 
 function scopeHeader(scope: PaletteScope): { label: string; icon: Icon } {
   const m: Record<PaletteScope, { label: string; icon: Icon }> = {
-    contacts:   { label: "In Contacts",   icon: UsersThree },
-    owners:     { label: "In Owners",     icon: UserCircle },
+    contacts:   { label: "In People",     icon: UsersThree },
+    owners:     { label: "In Entities",   icon: UserCircle },
     properties: { label: "In Properties", icon: Buildings  },
     tasks:      { label: "In Tasks",      icon: ListChecks },
     projects:   { label: "In Projects",   icon: Kanban     },
@@ -406,7 +410,7 @@ export function CommandPalette() {
           <input
             ref={inputRef}
             className={styles.input}
-            placeholder="Search contacts, owners, properties, tasks, projects"
+            placeholder="Search people, entities, properties, tasks, projects"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onInputKeyDown}

@@ -1,6 +1,15 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const appDir = path.dirname(fileURLToPath(import.meta.url));
+const workspaceRoot = path.resolve(appDir, "../..");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   devIndicators: false,
+  turbopack: {
+    root: workspaceRoot,
+  },
   experimental: {
     serverActions: {
       // Default is 1MB which is easily exceeded by base64-encoded photos.

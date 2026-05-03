@@ -51,7 +51,7 @@ export async function fetchDailyBriefing(
     const snapshot = `
 Business snapshot for ${today}:
 - Overdue tasks: ${strip.overdueTasks}
-- Pipeline leads: ${strip.pipelineValue > 0 ? `$${strip.pipelineValue}/mo in pipeline` : 'empty pipeline'}
+- Pipeline prospects: ${strip.pipelineValue > 0 ? `$${strip.pipelineValue}/mo in pipeline` : 'empty pipeline'}
 - Cold leads needing re-engagement: ${context.coldLeadsCount}
 - Owners in onboarding: ${context.onboardingCount}
 - AI critical insights: ${context.criticalInsights}

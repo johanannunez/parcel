@@ -5,7 +5,6 @@ import {
   MagnifyingGlass,
   Bank,
   Lightning,
-  CaretDown,
   ArrowUp,
   ArrowDown,
   Warning,
@@ -14,6 +13,8 @@ import {
   Receipt,
 } from "@phosphor-icons/react";
 import { currency2 } from "@/lib/format";
+import { CustomSelect } from "@/components/admin/CustomSelect";
+import { DatePickerInput } from "@/components/admin/DatePickerInput";
 import {
   fetchTransactions,
   confirmDedupMatch,
@@ -261,119 +262,44 @@ export default function TransactionsShell({
         </div>
 
         {/* Account selector */}
-        <div style={{ position: "relative" }}>
-          <select
+        <div style={{ minWidth: "160px" }}>
+          <CustomSelect
             value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            style={{
-              appearance: "none",
-              paddingLeft: "12px",
-              paddingRight: "28px",
-              paddingTop: "8px",
-              paddingBottom: "8px",
-              fontSize: "13px",
-              borderRadius: "9px",
-              border: "1.5px solid var(--color-warm-gray-200)",
-              backgroundColor: "var(--color-white)",
-              color: "var(--color-text-primary)",
-              cursor: "pointer",
-              outline: "none",
-            }}
-          >
-            <option value="">All accounts</option>
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-          <CaretDown
-            size={12}
-            weight="bold"
-            color="var(--color-text-tertiary)"
-            style={{
-              position: "absolute",
-              right: "9px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              pointerEvents: "none",
-            }}
+            onChange={setAccountId}
+            options={[
+              { value: "", label: "All accounts" },
+              ...accounts.map((account) => ({
+                value: account.id,
+                label: account.name,
+              })),
+            ]}
           />
         </div>
 
         {/* Category selector */}
-        <div style={{ position: "relative" }}>
-          <select
+        <div style={{ minWidth: "160px" }}>
+          <CustomSelect
             value={category}
-            onChange={(e) => setCategory(e.target.value as TransactionCategory | "")}
-            style={{
-              appearance: "none",
-              paddingLeft: "12px",
-              paddingRight: "28px",
-              paddingTop: "8px",
-              paddingBottom: "8px",
-              fontSize: "13px",
-              borderRadius: "9px",
-              border: "1.5px solid var(--color-warm-gray-200)",
-              backgroundColor: "var(--color-white)",
-              color: "var(--color-text-primary)",
-              cursor: "pointer",
-              outline: "none",
-            }}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          <CaretDown
-            size={12}
-            weight="bold"
-            color="var(--color-text-tertiary)"
-            style={{
-              position: "absolute",
-              right: "9px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              pointerEvents: "none",
-            }}
+            onChange={(value) => setCategory(value as TransactionCategory | "")}
+            options={CATEGORIES}
           />
         </div>
 
         {/* Date from */}
-        <input
-          type="date"
+        <DatePickerInput
           value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          style={{
-            padding: "8px 10px",
-            fontSize: "13px",
-            borderRadius: "9px",
-            border: "1.5px solid var(--color-warm-gray-200)",
-            backgroundColor: "var(--color-white)",
-            color: "var(--color-text-primary)",
-            outline: "none",
-            cursor: "pointer",
-          }}
+          onChange={setDateFrom}
+          className="flex h-10 items-center rounded-lg border px-3 text-sm"
+          placeholder="Date from"
           aria-label="Date from"
         />
 
         {/* Date to */}
-        <input
-          type="date"
+        <DatePickerInput
           value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          style={{
-            padding: "8px 10px",
-            fontSize: "13px",
-            borderRadius: "9px",
-            border: "1.5px solid var(--color-warm-gray-200)",
-            backgroundColor: "var(--color-white)",
-            color: "var(--color-text-primary)",
-            outline: "none",
-            cursor: "pointer",
-          }}
+          onChange={setDateTo}
+          className="flex h-10 items-center rounded-lg border px-3 text-sm"
+          placeholder="Date to"
           aria-label="Date to"
         />
 

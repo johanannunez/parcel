@@ -66,7 +66,7 @@ export async function createTask(input: CreateTaskInput): Promise<{ id: string }
 
   revalidatePath('/admin/tasks');
   if (input.parentType && input.parentId) {
-    if (input.parentType === 'contact') revalidatePath('/admin/contacts');
+    if (input.parentType === 'contact') revalidatePath('/admin/people');
     if (input.parentType === 'property') revalidatePath('/admin/properties');
     if (input.parentType === 'project') revalidatePath('/admin/projects');
   }

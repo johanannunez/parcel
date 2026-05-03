@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Warning } from "@phosphor-icons/react";
 import type { BucketCategory } from "@/lib/treasury/types";
 import ConfirmModal from "@/components/admin/ConfirmModal";
+import { CustomSelect } from "@/components/admin/CustomSelect";
 import { removeAccount } from "./actions";
 
 const ALL_BUCKET_OPTIONS: { value: BucketCategory; label: string }[] = [
@@ -159,29 +160,16 @@ function AccountCategorizerCard({ account }: { account: UncategorizedAccount }) 
           >
             Bucket
           </label>
-          <select
+          <CustomSelect
             defaultValue=""
-            onChange={(e) => handleCategoryChange(e.target.value as BucketCategory | "")}
+            onChange={(value) => handleCategoryChange(value as BucketCategory | "")}
             disabled={saving || removing}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "8px",
-              border: "1.5px solid var(--color-warm-gray-200)",
-              backgroundColor: "var(--color-white)",
-              fontSize: "13px",
-              color: "var(--color-text-tertiary)",
-              cursor: saving || removing ? "not-allowed" : "pointer",
-              outline: "none",
-              width: "100%",
-            }}
-          >
-            <option value="">Select a bucket...</option>
-            {ALL_BUCKET_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            placeholder="Select a bucket..."
+            options={[
+              { value: "", label: "Select a bucket..." },
+              ...ALL_BUCKET_OPTIONS,
+            ]}
+          />
         </div>
 
         {saving && (

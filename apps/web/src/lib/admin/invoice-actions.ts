@@ -61,8 +61,8 @@ export async function createInvoiceForOwnerAction(
       ...parsed.data,
       createdBy: user.id,
     });
-    revalidatePath(`/admin/owners`);
-    revalidatePath(`/admin/owners/${parsed.data.ownerId}`);
+    revalidatePath("/admin/billing");
+    revalidatePath("/admin/entities");
     return {
       ok: true,
       invoiceId: result.invoiceId,

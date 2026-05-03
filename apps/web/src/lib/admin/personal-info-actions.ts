@@ -129,7 +129,7 @@ export async function updatePersonalInfo(
     );
 
   if (targetProfile.entity_id) {
-    revalidatePath(`/admin/owners/${targetProfile.entity_id}`);
+    revalidatePath(`/admin/entities/${targetProfile.entity_id}`);
   }
 
   // Sync name and phone back to the linked contact so the sidebar stays in sync.
@@ -152,8 +152,8 @@ export async function updatePersonalInfo(
       .update(contactUpdate)
       .eq("id", contactRow.id);
 
-    revalidatePath(`/admin/clients/${contactRow.id}`);
-    revalidatePath("/admin/clients");
+    revalidatePath(`/admin/entities/${contactRow.id}`);
+    revalidatePath("/admin/entities");
   }
 
   return { ok: true };

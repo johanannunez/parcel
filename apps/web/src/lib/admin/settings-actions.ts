@@ -30,7 +30,7 @@ export async function updateEntity(input: z.infer<typeof EntitySchema>): Promise
     })
     .eq("id", parsed.data.entityId);
   if (error) return { ok: false, error: error.message };
-  revalidatePath(`/admin/owners/${parsed.data.entityId}`);
+  revalidatePath(`/admin/entities/${parsed.data.entityId}`);
   return { ok: true };
 }
 
@@ -50,6 +50,6 @@ export async function updateProfileRegion(
     .update({ timezone: parsed.data.timezone, updated_at: new Date().toISOString() })
     .eq("id", parsed.data.profileId);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/admin/owners");
+  revalidatePath("/admin/entities");
   return { ok: true };
 }

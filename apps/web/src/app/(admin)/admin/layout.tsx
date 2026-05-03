@@ -64,7 +64,7 @@ export default async function AdminLayout({
         className="flex h-screen overflow-hidden"
         style={{ backgroundColor: "var(--color-navy)" }}
       >
-        <AdminIconRail pendingBlockCount={pendingBlockCount ?? 0} />
+        <AdminIconRail />
         <AdminSidebar
           userName={fullName}
           userEmail={user.email ?? ""}

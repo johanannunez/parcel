@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { CustomSelect } from "@/components/admin/CustomSelect";
 import { createChangelog, type Changelog } from "@/lib/admin/changelogs";
 
 const TAG_OPTIONS = ["feature", "fix", "improvement", "breaking"] as const;
+const TAG_SELECT_OPTIONS = [
+  { value: "", label: "No tag" },
+  ...TAG_OPTIONS.map((tag) => ({
+    value: tag,
+    label: tag.charAt(0).toUpperCase() + tag.slice(1),
+  })),
+];
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -128,18 +136,11 @@ export function ChangelogTab({ initialEntries }: { initialEntries: Changelog[] }
               placeholder="v1.2.0"
               style={{ ...inputStyle, width: "100px", flex: "none" }}
             />
-            <select
+            <CustomSelect
               value={tag}
-              onChange={(e) => setTag(e.target.value)}
-              style={{ ...inputStyle, width: "130px", flex: "none" }}
-            >
-              <option value="">No tag</option>
-              {TAG_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </option>
-              ))}
-            </select>
+              onChange={setTag}
+              options={TAG_SELECT_OPTIONS}
+            />
           </div>
           <textarea
             value={body}

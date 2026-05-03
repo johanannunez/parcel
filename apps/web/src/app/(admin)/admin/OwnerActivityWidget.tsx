@@ -33,7 +33,7 @@ export function OwnerActivityWidget({ data }: { data: OwnerActivityData }) {
   return (
     <WidgetShell
       label="Owner Activity"
-      href="/admin/owners"
+      href="/admin/entities?view=active-owners"
     >
       <div className={styles.stats}>
         <div className={styles.statChip}>

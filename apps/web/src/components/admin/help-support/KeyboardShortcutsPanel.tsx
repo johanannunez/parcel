@@ -11,7 +11,7 @@ const SHORTCUTS: Category[] = [
       { keys: ["G", "P"], label: "Go to Properties" },
       { keys: ["G", "I"], label: "Go to Inbox" },
       { keys: ["G", "T"], label: "Go to Tasks" },
-      { keys: ["G", "C"], label: "Go to Contacts" },
+      { keys: ["G", "C"], label: "Go to People" },
     ],
   },
   {

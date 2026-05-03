@@ -13,7 +13,7 @@ function ContactRow({ contact }: { contact: WinbackContact }) {
   const isChurned = contact.stage === 'churned';
 
   return (
-    <Link href={`/admin/contacts/${contact.id}`} className={styles.contactRow}>
+    <Link href={`/admin/people/${contact.id}`} className={styles.contactRow}>
       <div className={styles.rowTop}>
         <span
           className={`${styles.stageBadge} ${isChurned ? styles.badgeChurned : styles.badgePaused}`}
@@ -44,7 +44,7 @@ export function WinbackQueueWidget({ data }: { data: WinbackQueueData }) {
     <WidgetShell
       label="Winback"
       count={data.total > 0 ? data.total : undefined}
-      href="/admin/contacts?view=archived"
+      href="/admin/people?view=archived"
       hrefLabel="View all"
     >
       {!isEmpty && totalPotentialMrr > 0 && (

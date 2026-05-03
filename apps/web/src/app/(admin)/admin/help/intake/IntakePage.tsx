@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { CustomSelect } from "@/components/admin/CustomSelect";
 import { HelpArticleEditor } from "@/components/help/HelpArticleEditor";
 import { parseAlcoveDraft, type ContentType } from "@/lib/admin/help-intake-parser";
 import { createArticle, checkSlugExists } from "../actions";
@@ -15,7 +16,7 @@ const CONTENT_TYPE_OPTIONS: { value: ContentType; label: string; hint: string }[
   { value: "help", label: "Help", hint: "3-4 word descriptive slug" },
   { value: "policy", label: "Policy", hint: "2-3 word authoritative slug" },
   { value: "blog", label: "Blog", hint: "4-5 word SEO slug, no portal path" },
-  { value: "flagship", label: "Flagship", hint: "Manually enter a short slug — premium namespace" },
+  { value: "flagship", label: "Flagship", hint: "Manually enter a short slug, premium namespace" },
 ];
 
 const STOP_WORDS = new Set([
@@ -449,19 +450,14 @@ NEEDS_VISUAL: false
         <label className="text-xs font-semibold uppercase tracking-wide" style={labelStyle}>
           Category
         </label>
-        <select
+        <CustomSelect
           value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
-          style={fieldStyle}
-        >
-          <option value="">No category</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          onChange={setCategoryId}
+          options={[
+            { value: "", label: "No category" },
+            ...categories.map((category) => ({ value: category.id, label: category.name })),
+          ]}
+        />
       </div>
 
       <SectionDivider label="Content" />
@@ -591,26 +587,27 @@ NEEDS_VISUAL: false
               </button>
             </div>
           ) : (
-            <select
+            <CustomSelect
               value={portalPath}
-              onChange={(e) => {
-                setPortalPath(e.target.value);
-                if (e.target.value) setPortalPathEditing(false);
+              onChange={(value) => {
+                setPortalPath(value);
+                if (value) setPortalPathEditing(false);
               }}
-              className="rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors"
-              style={fieldStyle}
-            >
-              <option value="">— No portal path —</option>
-              {PORTAL_ROUTE_GROUPS.map((group) => (
-                <optgroup key={group.label} label={group.label}>
-                  {group.routes.map((r) => (
-                    <option key={r.path} value={r.path}>
-                      {r.label} ({r.path})
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+              placeholder="No portal path"
+              groups={[
+                {
+                  label: "General",
+                  options: [{ value: "", label: "No portal path" }],
+                },
+                ...PORTAL_ROUTE_GROUPS.map((group) => ({
+                  label: group.label,
+                  options: group.routes.map((route) => ({
+                    value: route.path,
+                    label: `${route.label} (${route.path})`,
+                  })),
+                })),
+              ]}
+            />
           )}
 
           <p className="text-[11px]" style={{ color: "var(--color-text-tertiary, #9ca3af)" }}>

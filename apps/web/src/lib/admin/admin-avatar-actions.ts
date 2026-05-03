@@ -95,12 +95,12 @@ export async function uploadAdminAvatar(args: {
       .from("contacts")
       .update({ avatar_url: publicUrl })
       .eq("id", contactRow.id);
-    revalidatePath(`/admin/clients/${contactRow.id}`);
-    revalidatePath("/admin/clients");
+    revalidatePath(`/admin/entities/${contactRow.id}`);
+    revalidatePath("/admin/entities");
   }
 
   if (contactRow?.entity_id) {
-    revalidatePath(`/admin/owners/${contactRow.entity_id}`);
+    revalidatePath(`/admin/entities/${contactRow.entity_id}`);
   }
 
   return { success: true, avatarUrl: publicUrl };
@@ -165,12 +165,12 @@ export async function removeAdminAvatar(
       .from("contacts")
       .update({ avatar_url: null })
       .eq("id", contactRow.id);
-    revalidatePath(`/admin/clients/${contactRow.id}`);
-    revalidatePath("/admin/clients");
+    revalidatePath(`/admin/entities/${contactRow.id}`);
+    revalidatePath("/admin/entities");
   }
 
   if (contactRow?.entity_id) {
-    revalidatePath(`/admin/owners/${contactRow.entity_id}`);
+    revalidatePath(`/admin/entities/${contactRow.entity_id}`);
   }
 
   return { success: true };

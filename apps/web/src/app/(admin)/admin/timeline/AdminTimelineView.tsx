@@ -12,6 +12,7 @@ import {
   Lightning,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
+import { CustomSelect } from "@/components/admin/CustomSelect";
 import { formatMedium, formatRelativeShort } from "@/lib/format";
 import {
   toggleTimelineVisibility,
@@ -77,6 +78,9 @@ const VISIBILITY_FILTERS = [
   { value: "owner", label: "Owner Visible" },
   { value: "admin_only", label: "Admin Only" },
 ] as const;
+
+const FORM_CATEGORY_OPTIONS = CATEGORIES.filter((category) => category.value !== "all");
+const FORM_VISIBILITY_OPTIONS = VISIBILITY_FILTERS.filter((filter) => filter.value !== "all");
 
 const TEMPLATES = [
   { label: "Welcome", eventType: "welcome", category: "account", title: "Welcome to Parcel", isPinned: true, visibility: "owner" },
@@ -401,27 +405,17 @@ export function AdminTimelineView({
           </div>
 
           {/* Owner filter */}
-          <select
+          <CustomSelect
             value={ownerFilter}
-            onChange={(e) => setOwnerFilter(e.target.value)}
-            className="rounded-xl border py-2.5 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-offset-1"
-            style={{
-              borderColor: "var(--color-warm-gray-200)",
-              backgroundColor: "var(--color-white)",
-              color: "var(--color-text-secondary)",
-              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
-              minWidth: 160,
-            }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-brand)"; }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = "var(--color-warm-gray-200)"; }}
-          >
-            <option value="all">All owners</option>
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.full_name || p.email}
-              </option>
-            ))}
-          </select>
+            onChange={setOwnerFilter}
+            options={[
+              { value: "all", label: "All owners" },
+              ...profiles.map((profile) => ({
+                value: profile.id,
+                label: profile.full_name || profile.email,
+              })),
+            ]}
+          />
 
           {/* Export button */}
           <button
@@ -1152,11 +1146,6 @@ function AddEntryForm({
     color: "var(--color-text-primary)",
   };
 
-  const selectStyle = {
-    ...inputStyle,
-    color: "var(--color-text-secondary)" as const,
-  };
-
   return (
     <div
       className="rounded-xl border p-5"
@@ -1175,38 +1164,26 @@ function AddEntryForm({
         <div className="flex flex-col gap-3">
           {/* Row 1: Owner + Category */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <select
+            <CustomSelect
               name="owner_id"
               required
               value={selectedOwnerId}
-              onChange={(e) => setSelectedOwnerId(e.target.value)}
-              className="rounded-lg border px-3 py-2 text-sm outline-none"
-              style={selectStyle}
-            >
-              <option value="">Select owner...</option>
-              {profiles
-                .filter((p) => p.id)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.full_name || p.email}
-                  </option>
-                ))}
-            </select>
+              onChange={setSelectedOwnerId}
+              placeholder="Select owner..."
+              options={profiles
+                .filter((profile) => profile.id)
+                .map((profile) => ({
+                  value: profile.id,
+                  label: profile.full_name || profile.email,
+                }))}
+            />
 
-            <select
+            <CustomSelect
               name="category"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="rounded-lg border px-3 py-2 text-sm outline-none"
-              style={selectStyle}
-            >
-              <option value="account">Account</option>
-              <option value="property">Property</option>
-              <option value="financial">Financial</option>
-              <option value="calendar">Calendar</option>
-              <option value="document">Document</option>
-              <option value="communication">Communication</option>
-            </select>
+              onChange={setCategory}
+              options={[...FORM_CATEGORY_OPTIONS]}
+            />
           </div>
 
           {/* Row 2: Event type + Title */}
@@ -1243,29 +1220,24 @@ function AddEntryForm({
 
           {/* Row 4: Property + Visibility + Icon */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <select
+            <CustomSelect
               name="property_id"
-              className="rounded-lg border px-3 py-2 text-sm outline-none"
-              style={selectStyle}
-            >
-              <option value="">No property</option>
-              {ownerProperties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+              defaultValue=""
+              options={[
+                { value: "", label: "No property" },
+                ...ownerProperties.map((property) => ({
+                  value: property.id,
+                  label: property.label,
+                })),
+              ]}
+            />
 
-            <select
+            <CustomSelect
               name="visibility"
               value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              className="rounded-lg border px-3 py-2 text-sm outline-none"
-              style={selectStyle}
-            >
-              <option value="owner">Visible to owner</option>
-              <option value="admin_only">Admin only</option>
-            </select>
+              onChange={setVisibility}
+              options={[...FORM_VISIBILITY_OPTIONS]}
+            />
 
             <input
               name="icon"
@@ -1304,4 +1276,3 @@ function AddEntryForm({
 // ---------------------------------------------------------------------------
 // Shared small components
 // ---------------------------------------------------------------------------
-

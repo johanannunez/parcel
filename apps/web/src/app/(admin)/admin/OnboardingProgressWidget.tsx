@@ -26,7 +26,7 @@ export function OnboardingProgressWidget({ data }: { data: OnboardingProgressDat
     <WidgetShell
       label="Onboarding"
       count={data.total}
-      href="/admin/contacts?view=onboarding"
+      href="/admin/people?view=onboarding"
     >
       {data.contacts.length === 0 ? (
         <div className={styles.empty}>No owners in onboarding</div>
@@ -39,7 +39,7 @@ export function OnboardingProgressWidget({ data }: { data: OnboardingProgressDat
                 {idx > 0 && <div className={styles.separator} />}
                 <div className={styles.contactRow}>
                   <Link
-                    href={`/admin/contacts/${contact.id}`}
+                    href={`/admin/people/${contact.id}`}
                     className={styles.contactHeader}
                   >
                     <span className={styles.contactName}>{contact.name}</span>

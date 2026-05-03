@@ -143,6 +143,8 @@ export function RichDescriptionEditor({
 }: Props) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [imageOpen, setImageOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
   const [aiPending, setAiPending] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -200,12 +202,14 @@ export function RichDescriptionEditor({
     setLinkUrl('');
   };
 
-  const addImage = () => {
+  const applyImage = () => {
     if (!editor) return;
-    const url = window.prompt('Image URL');
+    const url = imageUrl.trim();
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
+    setImageOpen(false);
+    setImageUrl('');
   };
 
   // ── AI assist ─────────────────────────────────────────────────────────────
@@ -238,7 +242,7 @@ export function RichDescriptionEditor({
       }
       onChange(editor.getHTML());
     } catch {
-      showToast('Network error — please try again.');
+      showToast('Network error. Please try again.');
     } finally {
       setAiPending(false);
     }
@@ -348,6 +352,7 @@ export function RichDescriptionEditor({
             const prev = editor.getAttributes('link').href ?? '';
             setLinkUrl(prev);
             setLinkOpen((v) => !v);
+            setImageOpen(false);
           }}
           active={isActive('link')}
           title="Insert link"
@@ -356,7 +361,14 @@ export function RichDescriptionEditor({
         </TB>
 
         {/* Image */}
-        <TB onClick={addImage} title="Insert image">
+        <TB
+          onClick={() => {
+            setImageUrl('');
+            setImageOpen((v) => !v);
+            setLinkOpen(false);
+          }}
+          title="Insert image"
+        >
           <IconImage />
         </TB>
 
@@ -377,6 +389,27 @@ export function RichDescriptionEditor({
             />
             <button type="button" className={styles.linkApply} onClick={applyLink}>
               Apply
+            </button>
+          </div>
+        ) : null}
+
+        {/* Image popover */}
+        {imageOpen ? (
+          <div className={styles.linkPopover}>
+            <input
+              className={styles.linkInput}
+              type="url"
+              placeholder="Image URL"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); applyImage(); }
+                if (e.key === 'Escape') { setImageOpen(false); }
+              }}
+              autoFocus
+            />
+            <button type="button" className={styles.linkApply} onClick={applyImage}>
+              Insert
             </button>
           </div>
         ) : null}

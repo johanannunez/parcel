@@ -13,6 +13,7 @@ import {
   FolderOpen,
   Files,
   UsersThree,
+  AddressBook,
   UserPlus,
   Key,
   Toolbox,
@@ -20,6 +21,7 @@ import {
   List as HamburgerIcon,
   CaretDown,
   CalendarBlank,
+  Receipt,
 } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import { AdminSidebarFooter } from "@/components/admin/AdminSidebarFooter";
@@ -64,21 +66,23 @@ const navEntries: NavEntry[] = [
   { kind: "item", href: "/admin", label: "Dashboard", icon: <House size={18} weight="duotone" /> },
   { kind: "item", href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={18} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { kind: "item", href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={18} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { kind: "item", href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/calendar" },
-  { kind: "item", href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
-  { kind: "item", href: "/admin/documents", label: "Documents", icon: <Files size={18} weight="duotone" />, matchPrefix: "/admin/documents" },
+  { kind: "item", href: "/admin/meetings", label: "Meetings", icon: <CalendarBlank size={18} weight="duotone" />, matchPrefix: "/admin/meetings" },
   {
     kind: "group",
-    label: "People",
+    label: "Relationships",
     icon: <UsersThree size={18} weight="duotone" />,
     storageKey: "nav-people-expanded",
     items: [
-      { href: "/admin/clients", label: "Owners", icon: <Key size={16} weight="duotone" />, matchPrefix: "/admin/clients" },
-      { href: "/admin/leads", label: "Leads", icon: <UserPlus size={16} weight="duotone" />, matchPrefix: "/admin/leads" },
+      { href: "/admin/prospects", label: "Prospects", icon: <UserPlus size={16} weight="duotone" />, matchPrefix: "/admin/prospects" },
+      { href: "/admin/entities?view=active-owners", label: "Entities", icon: <Key size={16} weight="duotone" />, matchPrefix: "/admin/entities" },
+      { href: "/admin/people?mode=compact", label: "People", icon: <AddressBook size={16} weight="duotone" />, matchPrefix: "/admin/people" },
       { href: "/admin/vendors", label: "Vendors", icon: <Toolbox size={16} weight="duotone" />, matchPrefix: "/admin/vendors" },
     ],
   },
   { kind: "item", href: "/admin/properties", label: "Properties", icon: <Buildings size={18} weight="duotone" />, matchPrefix: "/admin/properties" },
+  { kind: "item", href: "/admin/documents", label: "Documents", icon: <Files size={18} weight="duotone" />, matchPrefix: "/admin/documents" },
+  { kind: "item", href: "/admin/projects", label: "Projects", icon: <FolderOpen size={18} weight="duotone" />, matchPrefix: "/admin/projects" },
+  { kind: "item", href: "/admin/billing", label: "Billing", icon: <Receipt size={18} weight="duotone" />, matchPrefix: "/admin/billing" },
   { kind: "item", href: "/admin/help", label: "Help Center", icon: <BookOpenText size={18} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
@@ -107,6 +111,10 @@ const springCollapse = { type: "spring" as const, stiffness: 380, damping: 36, m
 
 /* ─── NavItemRow ─── */
 
+function shouldPrefetchAdminHref(href: string): boolean {
+  return !href.startsWith("/admin/entities");
+}
+
 function NavItemRow({
   href,
   label,
@@ -134,6 +142,7 @@ function NavItemRow({
     >
       <Link
         href={href}
+        prefetch={shouldPrefetchAdminHref(href)}
         aria-current={active ? "page" : undefined}
         className={css.navLink}
         style={{
@@ -415,8 +424,6 @@ export function AdminSidebar({
   userEmail,
   initials,
   avatarUrl = null,
-  pendingBlockCount,
-  showTestData: _showTestData = false,
 }: {
   userName: string;
   userEmail: string;
@@ -564,7 +571,6 @@ export function AdminSidebar({
 
 export function AdminTopBar({
   initials,
-  pendingBlockCount: _pendingBlockCount = 0,
 }: {
   userName: string;
   initials: string;
@@ -575,8 +581,9 @@ export function AdminTopBar({
   const pageTitle = (() => {
     if (!pathname) return "";
     if (pathname === "/admin") return "";
-    if (pathname.startsWith("/admin/clients")) return "Clients";
-    if (pathname.startsWith("/admin/contacts")) return "Contacts";
+    if (pathname.startsWith("/admin/entities")) return "Entities";
+    if (pathname.startsWith("/admin/people")) return "People";
+    if (pathname.startsWith("/admin/prospects")) return "Prospects";
     if (pathname.startsWith("/admin/properties")) return "Properties";
     if (pathname.startsWith("/admin/inbox")) return "Inbox";
     if (pathname.startsWith("/admin/tasks")) return "Tasks";
@@ -586,6 +593,8 @@ export function AdminTopBar({
     if (pathname.startsWith("/admin/help")) return "Help Center";
     if (pathname.startsWith("/admin/treasury")) return "Treasury";
     if (pathname.startsWith("/admin/calendar")) return "Calendar";
+    if (pathname.startsWith("/admin/meetings")) return "Meetings";
+    if (pathname.startsWith("/admin/billing")) return "Billing";
     if (pathname.startsWith("/admin/timeline")) return "Timeline";
     return "";
   })();
@@ -678,19 +687,26 @@ const adminRailItems: Array<{
   icon: ReactNode;
   label: string;
   matchPrefix?: string;
+  matchPrefixes?: string[];
 }> = [
   { href: "/admin", icon: <House size={20} weight="duotone" />, label: "Dashboard" },
   { href: "/admin/inbox", icon: <ChatCircle size={20} weight="duotone" />, label: "Inbox", matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", icon: <ListChecks size={20} weight="duotone" />, label: "Tasks", matchPrefix: "/admin/tasks" },
-  { href: "/admin/calendar", icon: <CalendarBlank size={20} weight="duotone" />, label: "Calendar", matchPrefix: "/admin/calendar" },
-  { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
-  { href: "/admin/documents", icon: <Files size={20} weight="duotone" />, label: "Documents", matchPrefix: "/admin/documents" },
-  { href: "/admin/clients", icon: <UsersThree size={20} weight="duotone" />, label: "People", matchPrefix: "/admin/clients" },
+  { href: "/admin/meetings", icon: <CalendarBlank size={20} weight="duotone" />, label: "Meetings", matchPrefix: "/admin/meetings" },
+  {
+    href: "/admin/entities?view=active-owners",
+    icon: <UsersThree size={20} weight="duotone" />,
+    label: "Relationships",
+    matchPrefixes: ["/admin/entities", "/admin/prospects", "/admin/people", "/admin/vendors"],
+  },
   { href: "/admin/properties", icon: <Buildings size={20} weight="duotone" />, label: "Properties", matchPrefix: "/admin/properties" },
+  { href: "/admin/documents", icon: <Files size={20} weight="duotone" />, label: "Documents", matchPrefix: "/admin/documents" },
+  { href: "/admin/projects", icon: <FolderOpen size={20} weight="duotone" />, label: "Projects", matchPrefix: "/admin/projects" },
+  { href: "/admin/billing", icon: <Receipt size={20} weight="duotone" />, label: "Billing", matchPrefix: "/admin/billing" },
   { href: "/admin/help", icon: <BookOpenText size={20} weight="duotone" />, label: "Help Center", matchPrefix: "/admin/help" },
 ];
 
-export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { pendingBlockCount?: number }) {
+export function AdminIconRail() {
   const pathname = usePathname();
 
   return (
@@ -754,7 +770,9 @@ export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { p
       {/* Nav */}
       <nav style={{ display: "flex", flex: 1, flexDirection: "column", alignItems: "center", gap: "4px" }}>
         {adminRailItems.map((item) => {
-          const active = item.matchPrefix
+          const active = item.matchPrefixes
+            ? item.matchPrefixes.some((prefix) => pathname?.startsWith(prefix))
+            : item.matchPrefix
             ? pathname?.startsWith(item.matchPrefix)
             : pathname === item.href;
 
@@ -768,6 +786,7 @@ export function AdminIconRail({ pendingBlockCount: _pendingBlockCount = 0 }: { p
             >
               <Link
                 href={item.href}
+                prefetch={shouldPrefetchAdminHref(item.href)}
                 title={item.label}
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}

@@ -19,10 +19,13 @@ import {
   Moon,
   CalendarBlank,
   FolderOpen,
+  Files,
   Key,
   UserPlus,
   Toolbox,
+  AddressBook,
   CaretDown,
+  Receipt,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -73,11 +76,11 @@ const navItems: NavItem[] = [
     matchPrefix: "/admin/tasks",
   },
   {
-    href: "/admin/clients",
-    label: "People",
+    href: "/admin/entities?view=active-owners",
+    label: "Relations",
     icon: <UsersThree size={22} weight="regular" />,
     activeIcon: <UsersThree size={22} weight="fill" />,
-    matchPrefixes: ["/admin/clients", "/admin/leads", "/admin/vendors"],
+    matchPrefixes: ["/admin/entities", "/admin/prospects", "/admin/people", "/admin/vendors"],
   },
 ];
 
@@ -87,20 +90,23 @@ const sheetItems: SheetEntry[] = [
   { href: "/admin", label: "Dashboard", icon: <House size={19} weight="duotone" /> },
   { href: "/admin/inbox", label: "Inbox", icon: <ChatCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
   { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/calendar", label: "Calendar", icon: <CalendarBlank size={19} weight="duotone" />, matchPrefix: "/admin/calendar" },
-  { href: "/admin/projects", label: "Projects", icon: <FolderOpen size={19} weight="duotone" />, matchPrefix: "/admin/projects" },
+  { href: "/admin/meetings", label: "Meetings", icon: <CalendarBlank size={19} weight="duotone" />, matchPrefix: "/admin/meetings" },
   {
     kind: "group",
-    label: "People",
+    label: "Relationships",
     icon: <UsersThree size={19} weight="duotone" />,
     storageKey: "mobile-nav-people-expanded",
     items: [
-      { href: "/admin/clients", label: "Owners", icon: <Key size={17} weight="duotone" />, matchPrefix: "/admin/clients" },
-      { href: "/admin/leads", label: "Leads", icon: <UserPlus size={17} weight="duotone" />, matchPrefix: "/admin/leads" },
+      { href: "/admin/prospects", label: "Prospects", icon: <UserPlus size={17} weight="duotone" />, matchPrefix: "/admin/prospects" },
+      { href: "/admin/entities?view=active-owners", label: "Entities", icon: <Key size={17} weight="duotone" />, matchPrefix: "/admin/entities" },
+      { href: "/admin/people?mode=compact", label: "People", icon: <AddressBook size={17} weight="duotone" />, matchPrefix: "/admin/people" },
       { href: "/admin/vendors", label: "Vendors", icon: <Toolbox size={17} weight="duotone" />, matchPrefix: "/admin/vendors" },
     ],
   },
   { href: "/admin/properties", label: "Properties", icon: <Buildings size={19} weight="duotone" />, matchPrefix: "/admin/properties" },
+  { href: "/admin/documents", label: "Documents", icon: <Files size={19} weight="duotone" />, matchPrefix: "/admin/documents" },
+  { href: "/admin/projects", label: "Projects", icon: <FolderOpen size={19} weight="duotone" />, matchPrefix: "/admin/projects" },
+  { href: "/admin/billing", label: "Billing", icon: <Receipt size={19} weight="duotone" />, matchPrefix: "/admin/billing" },
   { href: "/admin/help", label: "Help Center", icon: <BookOpenText size={19} weight="duotone" />, matchPrefix: "/admin/help" },
 ];
 
@@ -109,10 +115,15 @@ const sheetItems: SheetEntry[] = [
 const mainNavPrefixes = [
   "/admin",
   "/admin/tasks",
-  "/admin/clients",
-  "/admin/leads",
+  "/admin/entities",
+  "/admin/prospects",
+  "/admin/people",
   "/admin/vendors",
 ];
+
+function shouldPrefetchAdminHref(href: string): boolean {
+  return !href.startsWith("/admin/entities");
+}
 
 const springCollapse = { type: "spring" as const, stiffness: 380, damping: 36, mass: 0.7 };
 
@@ -194,6 +205,7 @@ function SheetGroupRow({
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={shouldPrefetchAdminHref(item.href)}
                   onClick={closeMore}
                   className="flex items-center gap-3 rounded-lg text-sm font-medium"
                   style={{
@@ -225,7 +237,6 @@ function SheetGroupRow({
 /* ── Component ── */
 
 export function AdminBottomNav({
-  pendingBlockCount: _pendingBlockCount = 0,
   signOutSlot,
   userName,
   userEmail,
@@ -247,6 +258,7 @@ export function AdminBottomNav({
     const map: Array<[string, string]> = [
       ["/admin/properties", "/portal/properties"],
       ["/admin/calendar", "/portal/calendar"],
+      ["/admin/meetings", "/portal/meetings"],
       ["/admin/inbox", "/portal/messages"],
       ["/admin/tasks", "/portal/tasks"],
       ["/admin/timeline", "/portal/timeline"],
@@ -302,6 +314,7 @@ export function AdminBottomNav({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={shouldPrefetchAdminHref(item.href)}
                 onClick={closeMore}
                 className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
                 style={{
@@ -465,6 +478,7 @@ export function AdminBottomNav({
                     <Link
                       key={entry.href ?? i}
                       href={entry.href!}
+                      prefetch={shouldPrefetchAdminHref(entry.href!)}
                       onClick={closeMore}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
                       style={{

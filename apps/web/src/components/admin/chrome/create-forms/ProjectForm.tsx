@@ -8,6 +8,8 @@ import {
   PROJECT_TYPE_EMOJI,
   type ProjectType,
 } from '@/lib/admin/project-types';
+import { CustomSelect } from '@/components/admin/CustomSelect';
+import { DatePickerInput } from '@/components/admin/DatePickerInput';
 import styles from './ProjectForm.module.css';
 
 const TYPES: ProjectType[] = [
@@ -18,6 +20,11 @@ const TYPES: ProjectType[] = [
   'vendor_onboarding',
   'internal',
 ];
+
+const TYPE_OPTIONS = TYPES.map((type) => ({
+  value: type,
+  label: `${PROJECT_TYPE_EMOJI[type]} ${PROJECT_TYPE_LABEL[type]}`,
+}));
 
 export function ProjectForm({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('');
@@ -67,28 +74,21 @@ export function ProjectForm({ onClose }: { onClose: () => void }) {
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="proj-type">Type</label>
-        <select
+        <CustomSelect
           id="proj-type"
-          className={styles.select}
           value={projectType}
-          onChange={(e) => setProjectType(e.target.value as ProjectType)}
-        >
-          {TYPES.map((t) => (
-            <option key={t} value={t}>
-              {PROJECT_TYPE_EMOJI[t]} {PROJECT_TYPE_LABEL[t]}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => setProjectType(value as ProjectType)}
+          options={TYPE_OPTIONS}
+        />
       </div>
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="proj-target">Target date</label>
-        <input
+        <DatePickerInput
           id="proj-target"
-          type="date"
           className={styles.input}
           value={targetDate}
-          onChange={(e) => setTargetDate(e.target.value)}
+          onChange={setTargetDate}
         />
       </div>
 
@@ -100,7 +100,7 @@ export function ProjectForm({ onClose }: { onClose: () => void }) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          placeholder="Optional — what is this project about?"
+          placeholder="Optional context for this project"
         />
       </div>
 

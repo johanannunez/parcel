@@ -433,7 +433,7 @@ function OwnerChip({ owner }: { owner: Owner }) {
   const label = owner.shortName ?? owner.name ?? "Unknown";
   return (
     <Link
-      href={`/admin/owners/${owner.id}`}
+      href="/admin/entities?view=active-owners"
       className={css.ownerChip}
       style={{
         display: "inline-flex",

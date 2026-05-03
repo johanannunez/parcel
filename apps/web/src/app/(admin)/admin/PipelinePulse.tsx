@@ -30,7 +30,7 @@ export function PipelinePulse({ data }: { data: PipelinePulseData }) {
   return (
     <WidgetShell
       label="Pipeline"
-      href="/admin/contacts?view=lead-pipeline"
+      href="/admin/people?view=lead-pipeline"
     >
       <div className={styles.card}>
         <div className={styles.totalMrr}>

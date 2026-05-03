@@ -29,7 +29,7 @@ function KindBadge({ kind }: { kind: string }) {
 
 function InvoiceRow({ invoice }: { invoice: OpenInvoiceRow }) {
   return (
-    <Link href={`/admin/owners/${invoice.ownerId}`} className={styles.invoiceRow}>
+    <Link href="/admin/entities?view=active-owners" className={styles.invoiceRow}>
       <div className={styles.rowMain}>
         <span className={styles.ownerName}>{invoice.ownerName}</span>
         <KindBadge kind={invoice.kind} />
@@ -56,8 +56,8 @@ export function OpenInvoicesWidget({ data }: { data: OpenInvoicesData }) {
     <WidgetShell
       label="Invoices"
       count={data.total > 0 ? data.total : undefined}
-      href="/admin/owners"
-      hrefLabel="View owners"
+      href="/admin/billing"
+      hrefLabel="View billing"
     >
       {!isEmpty && (
         <div className={styles.totalOwed}>

@@ -72,5 +72,5 @@ export async function seedOnboardingTasks(contactId: string): Promise<void> {
   if (insertError) throw new Error(`Failed to seed onboarding tasks: ${insertError.message}`);
 
   revalidatePath('/admin/tasks');
-  revalidatePath('/admin/owners');
+  revalidatePath('/admin/entities');
 }

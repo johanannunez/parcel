@@ -54,7 +54,7 @@ export function ScopePicker({ anchorStyle, onPick }: Props) {
       <input
         autoFocus
         className={styles.input}
-        placeholder="Search owners or properties..."
+        placeholder="Search entities or properties..."
         value={q}
         onChange={(e) => setQ(e.target.value)}
       />
@@ -65,7 +65,7 @@ export function ScopePicker({ anchorStyle, onPick }: Props) {
 
       {owners.length > 0 ? (
         <>
-          <div className={styles.sectionHead}>Owners</div>
+          <div className={styles.sectionHead}>Entities</div>
           {owners.map((r) => (
             <button
               key={`o-${r.id}`}

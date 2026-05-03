@@ -4,6 +4,7 @@ import type { LifecycleStage } from './contact-types';
 
 export type ContactDetail = {
   id: string;
+  entityId: string | null;
   profileId: string | null;
   fullName: string;
   displayName: string | null;
@@ -45,6 +46,10 @@ export async function fetchContactDetail(
 
   if (error || !data) return null;
 
+  const entityId = data.profile_id
+    ? await fetchEntityIdForProfile(data.profile_id)
+    : null;
+
   const assignedProfile =
     Array.isArray(data.assigned_profile)
       ? data.assigned_profile[0]
@@ -60,6 +65,7 @@ export async function fetchContactDetail(
 
   return {
     id: data.id,
+    entityId,
     profileId: data.profile_id,
     fullName: data.full_name,
     displayName: data.display_name,
@@ -78,4 +84,15 @@ export async function fetchContactDetail(
     createdAt: data.created_at,
     properties,
   };
+}
+
+async function fetchEntityIdForProfile(profileId: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('profiles')
+    .select('entity_id')
+    .eq('id', profileId)
+    .maybeSingle();
+
+  return data?.entity_id ?? null;
 }

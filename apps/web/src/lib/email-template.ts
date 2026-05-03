@@ -112,7 +112,7 @@ export function buildFollowUpDigestEmail(args: {
   }>;
 }) {
   const count = args.contacts.length;
-  const subject = `Follow-up reminders — ${count} contact${count === 1 ? "" : "s"} need attention`;
+  const subject = `Follow-up reminders: ${count} ${count === 1 ? "person needs" : "people need"} attention`;
 
   const rows = args.contacts
     .map((c) => {
@@ -123,7 +123,7 @@ export function buildFollowUpDigestEmail(args: {
       const badgeBg = isOverdue ? "#fef2f2" : "#fff7ed";
       const badgeColor = isOverdue ? "#b91c1c" : "#92600a";
       const badgeBorder = isOverdue ? "#fecaca" : "#fde68a";
-      const detailUrl = `${ADMIN_URL}/clients/${c.id}`;
+      const detailUrl = `${ADMIN_URL}/people/${c.id}`;
 
       return `
       <tr style="border-bottom: 1px solid #f0eeec;">
@@ -163,14 +163,14 @@ export function buildFollowUpDigestEmail(args: {
 
       <div style="padding: 28px 40px 8px;">
         <h2 style="margin: 0 0 6px; font-size: 18px; font-weight: 700; color: ${TEXT_PRIMARY}; letter-spacing: -0.3px;">Follow-up reminders</h2>
-        <p style="margin: 0 0 20px; font-size: 14px; color: ${TEXT_SECONDARY};">${count} contact${count === 1 ? "" : "s"} ${count === 1 ? "needs" : "need"} follow-up today.</p>
+        <p style="margin: 0 0 20px; font-size: 14px; color: ${TEXT_SECONDARY};">${count} ${count === 1 ? "person needs" : "people need"} follow-up today.</p>
       </div>
 
       <div style="padding: 0 40px;">
         <table style="width: 100%; border-collapse: collapse; border: 1px solid #f0eeec; border-radius: 8px; overflow: hidden;">
           <thead>
             <tr style="background: #fafafa; border-bottom: 1px solid #f0eeec;">
-              <th style="padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${TEXT_SECONDARY};">Contact</th>
+              <th style="padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${TEXT_SECONDARY};">Person</th>
               <th style="padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${TEXT_SECONDARY};">Follow-up date</th>
               <th style="padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${TEXT_SECONDARY};">Status</th>
               <th style="padding: 10px 16px;"></th>
@@ -183,7 +183,7 @@ export function buildFollowUpDigestEmail(args: {
       </div>
 
       <div style="padding: 24px 40px; text-align: center;">
-        <a href="${ADMIN_URL}/clients" style="display: inline-block; padding: 11px 24px; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600;">Open admin dashboard</a>
+        <a href="${ADMIN_URL}/people" style="display: inline-block; padding: 11px 24px; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600;">Open admin dashboard</a>
       </div>
 
       <div style="padding: 20px 40px; border-top: 1px solid #f0eeec; text-align: center;">

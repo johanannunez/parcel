@@ -189,7 +189,7 @@ export function AdminMapView({ owners, properties, unmappedOwners }: Props) {
       avatarUrl: o.avatarUrl,
       lifecycleStage: o.lifecycleStage,
       kind: 'owner' as const,
-      href: `/admin/contacts/${o.contactId}`,
+      href: `/admin/people/${o.contactId}`,
     }));
   }, [layers.owners, unmappedOwners]);
 
@@ -362,7 +362,7 @@ export function AdminMapView({ owners, properties, unmappedOwners }: Props) {
                 return count > 0 ? `${count} ${count === 1 ? 'property' : 'properties'}` : null;
               })()}
               ctaLabel="View contact"
-              ctaHref={`/admin/contacts/${selected.feature.properties.contactId}`}
+              ctaHref={`/admin/people/${selected.feature.properties.contactId}`}
               onClose={() => setSelected(null)}
             />
           </Popup>

@@ -61,6 +61,48 @@
   border-radius: 7px;
 }
 
+.choiceGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.choiceChip {
+  padding: 7px 10px;
+  border: 1px solid #d7dfe8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #3c5266;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.choiceChip:hover,
+.choiceChip:focus-visible {
+  border-color: #02aaeb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(2, 170, 235, 0.1);
+}
+
+.choiceChipSelected {
+  border-color: rgba(27, 119, 190, 0.32);
+  background: rgba(2, 170, 235, 0.1);
+  color: #0b5f9d;
+}
+
+.note {
+  padding: 9px 10px;
+  border: 1px solid rgba(27, 119, 190, 0.16);
+  border-radius: 8px;
+  background: rgba(2, 170, 235, 0.07);
+  color: #3c5266;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

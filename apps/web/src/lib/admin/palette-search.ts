@@ -52,7 +52,7 @@ async function queryContacts(q: string, limit: number): Promise<PaletteHit[]> {
       kind: "contact",
       label: name,
       subtitle,
-      href: `/admin/contacts/${r.id}`,
+      href: `/admin/people/${r.id}`,
     };
   });
 }
@@ -61,7 +61,7 @@ async function queryOwners(q: string, limit: number): Promise<PaletteHit[]> {
   const supabase = await createClient();
   let query = supabase
     .from("profiles")
-    .select("id, full_name, email")
+    .select("id, full_name, email, entity_id")
     .eq("role", "owner");
 
   if (q) {
@@ -78,7 +78,7 @@ async function queryOwners(q: string, limit: number): Promise<PaletteHit[]> {
       kind: "owner",
       label: name,
       subtitle: r.email ?? undefined,
-      href: `/admin/owners/${r.id}`,
+      href: r.entity_id ? `/admin/entities/${r.entity_id}` : "/admin/entities?view=active-owners",
     };
   });
 }
@@ -119,7 +119,6 @@ async function queryTasks(q: string, limit: number): Promise<PaletteHit[]> {
     .select("id, title, status, due_at");
 
   if (q) {
-    const pattern = ilikePattern(q);
     query = query.ilike("title", `%${q.replace(/[%_]/g, (c) => `\\${c}`)}%`);
   }
   query = query.order("created_at", { ascending: false }).limit(limit);

@@ -10,6 +10,8 @@ import {
 } from '@/lib/admin/project-types';
 import { updateProject, archiveProject } from '@/lib/admin/project-actions';
 import ConfirmModal from '@/components/admin/ConfirmModal';
+import { CustomSelect } from '@/components/admin/CustomSelect';
+import { DatePickerInput } from '@/components/admin/DatePickerInput';
 import styles from './SettingsTab.module.css';
 
 const TYPES: ProjectType[] = [
@@ -22,6 +24,16 @@ const TYPES: ProjectType[] = [
 ];
 
 const STATUSES: ProjectStatus[] = ['not_started', 'in_progress', 'blocked', 'done', 'archived'];
+
+const TYPE_OPTIONS = TYPES.map((type) => ({
+  value: type,
+  label: `${PROJECT_TYPE_EMOJI[type]} ${PROJECT_TYPE_LABEL[type]}`,
+}));
+
+const STATUS_OPTIONS = STATUSES.map((status) => ({
+  value: status,
+  label: PROJECT_STATUS_LABEL[status],
+}));
 
 export function SettingsTab({ project }: { project: ProjectRow }) {
   const [name, setName] = useState(project.name);
@@ -91,42 +103,31 @@ export function SettingsTab({ project }: { project: ProjectRow }) {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="settings-type">Type</label>
-            <select
+            <CustomSelect
               id="settings-type"
-              className={styles.select}
               value={projectType}
-              onChange={(e) => setProjectType(e.target.value as ProjectType)}
-            >
-              {TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {PROJECT_TYPE_EMOJI[t]} {PROJECT_TYPE_LABEL[t]}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setProjectType(value as ProjectType)}
+              options={TYPE_OPTIONS}
+            />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="settings-status">Status</label>
-            <select
+            <CustomSelect
               id="settings-status"
-              className={styles.select}
               value={status}
-              onChange={(e) => setStatus(e.target.value as ProjectStatus)}
-            >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>{PROJECT_STATUS_LABEL[s]}</option>
-              ))}
-            </select>
+              onChange={(value) => setStatus(value as ProjectStatus)}
+              options={STATUS_OPTIONS}
+            />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="settings-target">Target date</label>
-            <input
+            <DatePickerInput
               id="settings-target"
-              type="date"
               className={styles.input}
               value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
+              onChange={setTargetDate}
             />
           </div>
 
