@@ -69,6 +69,13 @@ const navItems: NavItem[] = [
     activeIcon: <Gauge size={22} weight="fill" />,
   },
   {
+    href: "/admin/inbox",
+    label: "Inbox",
+    icon: <ChatsCircle size={22} weight="regular" />,
+    activeIcon: <ChatsCircle size={22} weight="fill" />,
+    matchPrefix: "/admin/inbox",
+  },
+  {
     href: "/admin/tasks",
     label: "Tasks",
     icon: <ListChecks size={22} weight="regular" />,
@@ -76,21 +83,17 @@ const navItems: NavItem[] = [
     matchPrefix: "/admin/tasks",
   },
   {
-    href: "/admin/workspaces?view=active-owners",
-    label: "Relations",
-    icon: <ShareNetwork size={22} weight="regular" />,
-    activeIcon: <ShareNetwork size={22} weight="fill" />,
-    matchPrefixes: ["/admin/workspaces", "/admin/prospects", "/admin/people", "/admin/vendors"],
+    href: "/admin/meetings",
+    label: "Meetings",
+    icon: <CalendarDots size={22} weight="regular" />,
+    activeIcon: <CalendarDots size={22} weight="fill" />,
+    matchPrefix: "/admin/meetings",
   },
 ];
 
 /* ── Sheet items (mirrors desktop sidebar) ── */
 
 const sheetItems: SheetEntry[] = [
-  { href: "/admin", label: "Dashboard", icon: <Gauge size={19} weight="duotone" /> },
-  { href: "/admin/inbox", label: "Inbox", icon: <ChatsCircle size={19} weight="duotone" />, matchPrefix: "/admin/inbox" },
-  { href: "/admin/tasks", label: "Tasks", icon: <ListChecks size={19} weight="duotone" />, matchPrefix: "/admin/tasks" },
-  { href: "/admin/meetings", label: "Meetings", icon: <CalendarDots size={19} weight="duotone" />, matchPrefix: "/admin/meetings" },
   {
     kind: "group",
     label: "Relationships",
@@ -114,11 +117,9 @@ const sheetItems: SheetEntry[] = [
 
 const mainNavPrefixes = [
   "/admin",
+  "/admin/inbox",
   "/admin/tasks",
-  "/admin/workspaces",
-  "/admin/prospects",
-  "/admin/people",
-  "/admin/vendors",
+  "/admin/meetings",
 ];
 
 function shouldPrefetchAdminHref(href: string): boolean {
